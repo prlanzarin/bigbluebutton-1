@@ -222,6 +222,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private String getUsername() {
 		String username = (String) Red5.getConnectionLocal().getAttribute("USERNAME");
 		if ((username == null) || ("".equals(username))) username = "UNKNOWN-CALLER";
-		return username;
+		//return username;
+		return "Hello";
 	}
 }
