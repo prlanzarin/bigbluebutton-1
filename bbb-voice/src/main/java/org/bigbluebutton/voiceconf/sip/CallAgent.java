@@ -50,12 +50,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private ExtendedCall call;
     private CallStream callStream;    
     private String localSession = null;
-    private Codec sipCodec = null;    
+    private Codec sipAudioCodec = null;
+    private Codec sipVideoCodec = null;    
     private CallStreamFactory callStreamFactory;
     private ClientConnectionManager clientConnManager; 
     private final String clientId;
-    private final AudioConferenceProvider portProvider;
-    private DatagramSocket localSocket;
+    private final ConferenceProvider portProvider;
+    private DatagramSocket localAudioSocket;
+    private DatagramSocket localVideoSocket;
     
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
@@ -66,7 +68,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private CallState callState;
 
-    public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile, AudioConferenceProvider portProvider, String clientId) {
+    public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile, ConferenceProvider portProvider, String clientId) {
         this.sipProvider = sipProvider;
         this.clientRtpIp = sipClientRtpIp;
         this.userProfile = userProfile;
@@ -79,7 +81,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     private void initSessionDescriptor() {        
-        log.debug("initSessionDescriptor");
+        log.debug("initSessionDescriptor => userProfile.videoPort = " + userProfile.videoPort + " userProfile.audioPort =" + userProfile.audioPort);
         SessionDescriptor newSdp = SdpUtils.createInitialSdp(userProfile.username, 
         		this.clientRtpIp, userProfile.audioPort, 
         		userProfile.videoPort, userProfile.audioCodecsPrecedence );
@@ -90,8 +92,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void call(String callerName, String destination) {
     	log.debug("{} making a call to {}", callerName, destination);  
     	try {
-			localSocket = getLocalAudioSocket();
-			userProfile.audioPort = localSocket.getLocalPort();	    	
+
+			localAudioSocket = getLocalAudioSocket();
+			userProfile.audioPort = localAudioSocket.getLocalPort();
+
+            localVideoSocket = getLocalVideoSocket();  
+            userProfile.videoPort = localVideoSocket.getLocalPort();
+
 		} catch (Exception e) {
 			log.debug("{} failed to allocate local port for call to {}. Notifying client that call failed.", callerName, destination); 
 			notifyListenersOnOutgoingCallFailed();
@@ -134,7 +141,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	log.debug("hangup");
     	
     	if (callState == CallState.UA_IDLE) return;    	
-    	closeVoiceStreams();        
+    	closeStreams();        
     	if (call != null) call.hangup();    
     	callState = CallState.UA_IDLE; 
     }
@@ -149,7 +156,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     		try {    			
         		socket = new DatagramSocket(freePort);
         		failedToGetSocket = false;
-        		log.info("Successfully setup local audio port {}. {}", freePort, failedPorts);
+        		log.info("Successfully setup local AUDIO port {}. {}", freePort, failedPorts);
         		break;
     		} catch (SocketException e) {
     			failedPorts.append(freePort + ", ");   			
@@ -157,14 +164,39 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	}
     	
     	if (failedToGetSocket) {
-			log.warn("Failed to setup local audio port {}.", failedPorts); 
+			log.warn("Failed to setup local AUDIO port {}.", failedPorts); 
     		throw new Exception("Exception while initializing CallStream");
     	}
     	
     	return socket;
     }
+
+    private DatagramSocket getLocalVideoSocket() throws Exception {
+        DatagramSocket socket = null;
+        boolean failedToGetSocket = true;
+        StringBuilder failedPorts = new StringBuilder("Failed ports: ");
+        
+        for (int i = portProvider.getStartVideoPort(); i <= portProvider.getStopVideoPort(); i++) {
+            int freePort = portProvider.getFreeVideoPort();
+            try {               
+                socket = new DatagramSocket(freePort);
+                failedToGetSocket = false;
+                log.info("Successfully setup local VIDEO port {}. {}", freePort, failedPorts);
+                break;
+            } catch (SocketException e) {
+                failedPorts.append(freePort + ", ");            
+            }
+        }
+        
+        if (failedToGetSocket) {
+            log.warn("Failed to setup local VIDEO port {}.", failedPorts); 
+            throw new Exception("Exception while initializing CallStream");
+        }
+        
+        return socket;
+    }
     
-    private void createVoiceStreams() {
+    private void createStreams() {
         if (callStream != null) {            
         	log.debug("Media application is already running.");
             return;
@@ -173,30 +205,47 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());        
         SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         String remoteMediaAddress = SessionDescriptorUtil.getRemoteMediaAddress(remoteSdp);
-        int remoteAudioPort = SessionDescriptorUtil.getRemoteAudioPort(remoteSdp);
-        int localAudioPort = SessionDescriptorUtil.getLocalAudioPort(localSdp);
-    	
-    	SipConnectInfo connInfo = new SipConnectInfo(localSocket, remoteMediaAddress, remoteAudioPort);
-        try {
-			localSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteAudioPort);
-	        log.debug("[localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
 
-	        if (userProfile.audio && localAudioPort != 0 && remoteAudioPort != 0) {
-	            if ((callStream == null) && (sipCodec != null)) {               	
-	            	try {
-						callStream = callStreamFactory.createCallStream(sipCodec, connInfo);
-						callStream.addCallStreamObserver(this);
-						callStream.start();
-						notifyListenersOnCallConnected(callStream.getTalkStreamName(), callStream.getListenStreamName());
-					} catch (Exception e) {
-						log.error("Failed to create Call Stream.");
-						System.out.println(StackTraceUtil.getStackTrace(e));
-					}                
-	            }
-	        }
-		} catch (UnknownHostException e1) {
-			log.error(StackTraceUtil.getStackTrace(e1));
-		}
+        int remoteAudioPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
+        int localAudioPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
+        createAudioStream(remoteMediaAddress,localAudioPort,remoteAudioPort); 
+
+        int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+        int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
+        createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+    }
+
+    private void createAudioStream(String remoteMediaAddress, int localAudioPort, int remoteAudioPort) {
+ 
+       SipConnectInfo connInfo = new SipConnectInfo(localAudioSocket, remoteMediaAddress, remoteAudioPort);
+       try {
+
+            localAudioSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteAudioPort);
+            log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
+
+            if (userProfile.audio && localAudioPort != 0 && remoteAudioPort != 0) {
+                if ((callStream == null) && (sipAudioCodec != null)) {                  
+                    try {
+                        callStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo);
+                        callStream.addCallStreamObserver(this);
+                        callStream.start();
+                        notifyListenersOnCallConnected(callStream.getTalkStreamName(), callStream.getListenStreamName());
+                    } catch (Exception e) {
+                        log.error("Failed to create Call Stream.");
+                        System.out.println(StackTraceUtil.getStackTrace(e));
+                    }                
+                }
+            }
+
+        } catch (UnknownHostException e1) {
+            log.error("Failed to create voice stream");
+            log.error(StackTraceUtil.getStackTrace(e1));
+        }
+
+    }
+
+    private void createVideoStream(String remoteMediaAddress, int localVideoPort, int remoteVideoPort) {
+        log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");   
     }
 
         
@@ -215,7 +264,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	}
     }
     
-    private void closeVoiceStreams() {        
+    private void closeStreams() {        
     	log.debug("Shutting down the voice streams.");         
         if (callStream != null) {
         	callStream.stop();
@@ -227,7 +276,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     // ********************** Call callback functions **********************
     private void createAudioCodec(SessionDescriptor newSdp) {
-    	sipCodec = SdpUtils.getNegotiatedAudioCodec(newSdp);
+    	sipAudioCodec = SdpUtils.getNegotiatedAudioCodec(newSdp);
+    }
+
+    private void createVideoCodec(SessionDescriptor newSdp) {
+        sipVideoCodec = SdpUtils.getNegotiatedVideoCodec(newSdp);
     }
         
     private void setupSdpAndCodec(String sdp) {
@@ -240,6 +293,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         // First we need to make payloads negotiation so the related attributes can be then matched.
         SessionDescriptor newSdp = SdpUtils.makeMediaPayloadsNegotiation(localSdp, remoteSdp);        
         createAudioCodec(newSdp);
+        createVideoCodec(newSdp);
         
         // Now we complete the SDP negotiation informing the selected 
         // codec, so it can be internally updated during the process.
@@ -249,8 +303,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         log.debug("newSdp = " + localSession + "." );
         
         // Finally, we use the "newSdp" and "remoteSdp" to initialize the lasting codec informations.
-        CodecUtils.initSipAudioCodec(sipCodec, userProfile.audioDefaultPacketization, 
+        CodecUtils.initSipAudioCodec(sipAudioCodec, userProfile.audioDefaultPacketization, 
                 userProfile.audioDefaultPacketization, newSdp, remoteSdp);
+
+        //In the future, we're going to modify or remove this....
+        //For now, this function won't modify the H264 Codec
+        CodecUtils.initSipVideoCodec(sipVideoCodec, userProfile.audioDefaultPacketization, 
+                userProfile.audioDefaultPacketization, newSdp, remoteSdp);
+
     }
 
 
@@ -271,7 +331,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             call.ackWithAnswer(localSession);
         }
 
-        createVoiceStreams();
+        createStreams();
     }
 
     /** Callback function called when arriving an ACK method (call confirmed) */
@@ -280,7 +340,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         
     	if (!isCurrentCall(call)) return;        
         callState = CallState.UA_ONCALL;
-        createVoiceStreams();
+        createStreams();
     }
 
     /** Callback function called when arriving a 4xx (call failure) */
@@ -315,7 +375,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private void notifyListenersOnCallConnected(String talkStream, String listenStream) {
     	log.debug("notifyListenersOnCallConnected for {}", clientId);
-    	clientConnManager.joinConferenceSuccess(clientId, talkStream, listenStream, sipCodec.getCodecName());
+    	clientConnManager.joinConferenceSuccess(clientId, talkStream, listenStream, sipAudioCodec.getCodecName());
     }
   
     private void notifyListenersOnOutgoingCallFailed() {
@@ -336,11 +396,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     private void cleanup() {
-    	log.debug("Closing local audio port {}", localSocket.getLocalPort());
-    	if (localSocket != null) {
-    		localSocket.close();
+    	log.debug("Closing local audio port {}", localAudioSocket.getLocalPort());
+    	if (localAudioSocket != null) {
+    		localAudioSocket.close();
     	} else {
-    		log.debug("Trying to close un-allocated port {}", localSocket.getLocalPort());
+    		log.debug("Trying to close un-allocated port {}", localAudioSocket.getLocalPort());
     	}
     }
     
@@ -349,7 +409,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	log.info("Received a BYE from the other end telling us to hangup.");
         
     	if (!isCurrentCall(call)) return;               
-        closeVoiceStreams();
+        closeStreams();
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
 

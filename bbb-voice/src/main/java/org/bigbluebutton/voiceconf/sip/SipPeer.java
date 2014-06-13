@@ -48,15 +48,15 @@ public class SipPeer implements SipRegisterAgentListener {
     private String clientRtpIp;
     private SipRegisterAgent registerAgent;
     private final String id;
-    private final AudioConferenceProvider audioconfProvider;
+    private final ConferenceProvider confProvider;
     
     private boolean registered = false;
     private SipPeerProfile registeredProfile;
     
-    public SipPeer(String id, String sipClientRtpIp, String host, int sipPort, int startAudioPort, int stopAudioPort) {
+    public SipPeer(String id, String sipClientRtpIp, String host, int sipPort, int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort) {
         this.id = id;
         this.clientRtpIp = sipClientRtpIp;
-        audioconfProvider = new AudioConferenceProvider(host, sipPort, startAudioPort, stopAudioPort);
+        confProvider = new ConferenceProvider(host, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
         initSipProvider(host, sipPort);
     }
     
@@ -80,12 +80,12 @@ public class SipPeer implements SipRegisterAgentListener {
     
     private void createRegisterUserProfile(String username, String password) {    	    	
     	registeredProfile = new SipPeerProfile();
-    	registeredProfile.audioPort = audioconfProvider.getStartAudioPort();
+    	registeredProfile.audioPort = confProvider.getStartAudioPort();
             	
-        String fromURL = "\"" + username + "\" <sip:" + username + "@" + audioconfProvider.getHost() + ">";
+        String fromURL = "\"" + username + "\" <sip:" + username + "@" + confProvider.getHost() + ">";
         registeredProfile.username = username;
         registeredProfile.passwd = password;
-        registeredProfile.realm = audioconfProvider.getHost();
+        registeredProfile.realm = confProvider.getHost();
         registeredProfile.fromUrl = fromURL;
         registeredProfile.contactUrl = "sip:" + username + "@" + sipProvider.getViaAddress();
         if (sipProvider.getPort() != SipStack.default_port) {
@@ -114,7 +114,7 @@ public class SipPeer implements SipRegisterAgentListener {
     	}
     	
     	SipPeerProfile callerProfile = SipPeerProfile.copy(registeredProfile);    	
-    	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, audioconfProvider, clientId);
+    	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
     	callManager.add(ca);
