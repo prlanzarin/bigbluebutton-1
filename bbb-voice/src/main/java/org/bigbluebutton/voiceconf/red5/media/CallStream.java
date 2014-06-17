@@ -35,65 +35,95 @@ import org.red5.server.api.stream.IBroadcastStream;
 public class CallStream implements StreamObserver {
     private final static Logger log = Red5LoggerFactory.getLogger(CallStream.class, "sip");
 
-    private FlashToSipAudioStream userTalkStream;
-    private SipToFlashAudioStream userListenStream;
+    public final static String MEDIA_TYPE_AUDIO = "audio";
+    public final static String MEDIA_TYPE_VIDEO = "video";
+
+    private String mediaType; 
+    private FlashToSipAudioStream userSenderStream;  //renomear para FlashToSipStream
+    private SipToFlashAudioStream userReceiverStream;  //renomear para SipToFlashStream
     private final Codec sipCodec;
     private final SipConnectInfo connInfo;
     private final IScope scope;
     private CallStreamObserver callStreamObserver;
     
-    public CallStream(Codec sipCodec, SipConnectInfo connInfo, IScope scope) {        
+    public CallStream(Codec sipCodec, SipConnectInfo connInfo, IScope scope, String mediaType) {        
     	this.sipCodec = sipCodec;
     	this.connInfo = connInfo;
     	this.scope = scope;
+        this.mediaType = mediaType;
     }
     
     public void addCallStreamObserver(CallStreamObserver observer) {
     	callStreamObserver = observer;
     }
     
-    public void start() {        
-    	SipToFlashTranscoder sipToFlashTranscoder = new SpeexSipToFlashTranscoderImp(sipCodec);
-    	FlashToSipTranscoder flashToSipTranscoder = new SpeexFlashToSipTranscoderImp(sipCodec);
+    public void start() {
+        SipToFlashTranscoder sipToFlashTranscoder;
+        FlashToSipTranscoder flashToSipTranscoder;
+        //if(mediaType == MEDIA_TYPE_AUDIO) {
 
-		if (sipCodec.getCodecId() != SpeexCodec.codecId) {			
-			flashToSipTranscoder = new NellyFlashToSipTranscoderImp(sipCodec);
-			sipToFlashTranscoder = new NellySipToFlashTranscoderImp(sipCodec);
-		} 
-		
-		log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
-		log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
-		log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
-		log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
 
-		userListenStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket());
-		userListenStream.addListenStreamObserver(this);	
-		log.debug("Starting userListenStream so that users with no mic can listen.");
-		userListenStream.start();
-		userTalkStream = new FlashToSipAudioStream(flashToSipTranscoder, connInfo.getSocket(), connInfo); 
+        	sipToFlashTranscoder = new SpeexSipToFlashTranscoderImp(sipCodec);
+        	flashToSipTranscoder = new SpeexFlashToSipTranscoderImp(sipCodec);
+
+    		if (sipCodec.getCodecId() != SpeexCodec.codecId) {			
+    			flashToSipTranscoder = new NellyFlashToSipTranscoderImp(sipCodec);
+    			sipToFlashTranscoder = new NellySipToFlashTranscoderImp(sipCodec);
+    		} 
+    		
+    		log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
+    		log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
+    		log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
+    		log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
+        //} else {
+
+            //VIDEO
+            /*
+            SipToFlashTranscoder sipToFlashTranscoder = new H264SipToFlashTranscoderImp(sipCodec);
+            FlashToSipTranscoder flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
+
+            if (sipCodec.getCodecId() != H264Codec.codecId) {          
+                flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
+                sipToFlashTranscoder = new H264SipToFlashTranscoderImp(sipCodec);
+            } 
+            
+            log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
+            log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
+            log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
+            log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
+            */
+        //}
+
+		userReceiverStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket()); //renomear para SipToFlashStream
+		userReceiverStream.addListenStreamObserver(this);	
+		log.debug("Starting userReceiverStream so that users with no mic can listen.");
+		userReceiverStream.start();
+		userSenderStream = new FlashToSipAudioStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);  //renomear para FlashToSipStream
+
+        
     }
     
     public String getTalkStreamName() {
-    	return userTalkStream.getStreamName();
+    	return userSenderStream.getStreamName();
     }
     
     public String getListenStreamName() {
-    	return userListenStream.getStreamName();
+    	return userReceiverStream.getStreamName();
     }
     
     public void startTalkStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
-    	log.debug("userTalkStream setup");
-    	userTalkStream.start(broadcastStream, scope);
-    	log.debug("userTalkStream Started");
+    	log.debug("userSenderStream setup");
+    	userSenderStream.start(broadcastStream, scope);
+    	log.debug("userSenderStream Started");
     }
     
     public void stopTalkStream(IBroadcastStream broadcastStream, IScope scope) {
-    	userTalkStream.stop(broadcastStream, scope);
+    	userSenderStream.stop(broadcastStream, scope);
     }
 
     public void stop() {
     	log.debug("Stopping call stream");
-        userListenStream.stop();
+        userReceiverStream.stop();
     }
 
 	@Override

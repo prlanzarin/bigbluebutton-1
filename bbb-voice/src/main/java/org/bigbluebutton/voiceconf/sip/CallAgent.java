@@ -198,22 +198,22 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     private void createStreams() {
-        if (audioCallStream != null) {            
-        	log.debug("Media application is already running.");
-            return;
-        }
-        
         SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());        
         SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         String remoteMediaAddress = SessionDescriptorUtil.getRemoteMediaAddress(remoteSdp);
 
-        int remoteAudioPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
-        int localAudioPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
-        createAudioStream(remoteMediaAddress,localAudioPort,remoteAudioPort); 
-
-        int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
-        int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
-        createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+        if (audioCallStream == null) {            
+            int remoteAudioPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
+            int localAudioPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
+            createAudioStream(remoteMediaAddress,localAudioPort,remoteAudioPort); 
+                    	
+        }else log.debug("AUDIO application is already running.");
+        
+        if (videoCallStream == null) {        
+            int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+            int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
+            createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+        }else log.debug("VIDEO application is already running.");
     }
 
     private void createAudioStream(String remoteMediaAddress, int localAudioPort, int remoteAudioPort) {
@@ -227,7 +227,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 if ((audioCallStream == null) && (sipAudioCodec != null)) {                  
                     try {
                         log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
-                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo);
+                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
                         notifyListenersOnCallConnected(audioCallStream.getTalkStreamName(), audioCallStream.getListenStreamName());
