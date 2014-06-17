@@ -56,7 +56,7 @@ public class CodecUtils {
         return audioCodec;
     }
 
-    // For now, we don't want to modify the H264 Codec..in the future maybe we'll remove this method
+    // For now, we don't know we're going to use this..in the future maybe we'll remove this method
     public static Codec initSipVideoCodec( Codec videoCodec, int defaultEncodePacketization, 
             int defaultDecodePacketization, SessionDescriptor localSDP, SessionDescriptor remoteSDP ) {
         
@@ -65,10 +65,10 @@ public class CodecUtils {
                 getAttribute( Codec.ATTRIBUTE_PTIME );
         
         if ( remotePtimeAttribute != null ) {
-            log.debug("$$ remotePtimeAttribute.getAttributeValue(): " + Integer.valueOf( remotePtimeAttribute.getAttributeValue() ));
+            log.debug("remotePtimeAttribute.getAttributeValue(): " + Integer.valueOf( remotePtimeAttribute.getAttributeValue() ));
             
         }
-        else log.debug("$$ remotePtimeAttribute is null");
+        else log.debug("remotePtimeAttribute is null");
         
         AttributeField localPtimeAttribute = 
                 localSDP.getMediaDescriptor( Codec.MEDIA_TYPE_VIDEO ).
@@ -79,9 +79,9 @@ public class CodecUtils {
         }
         else log.debug("$$ localPtimeAttribute is null");
 
-        // Initialize encode and decode codec.
-        // videoCodec.encodeInit( defaultEncodePacketization );
-        // videoCodec.decodeInit( defaultDecodePacketization );
+        //Initialize encode and decode codec.
+        videoCodec.encodeInit( defaultEncodePacketization );
+        videoCodec.decodeInit( defaultDecodePacketization );
         
         return videoCodec;
     }    
