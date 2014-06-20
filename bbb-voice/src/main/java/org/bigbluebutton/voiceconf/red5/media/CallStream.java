@@ -24,9 +24,12 @@ import org.bigbluebutton.voiceconf.red5.media.transcoder.NellySipToFlashTranscod
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexFlashToSipTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexSipToFlashTranscoderImp;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.H264FlashToSipTranscoderImp;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.H264SipToFlashTranscoderImp;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.SpeexCodec;
+import org.red5.app.sip.codecs.H264Codec;
 import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.scope.IScope;
@@ -39,8 +42,8 @@ public class CallStream implements StreamObserver {
     public final static String MEDIA_TYPE_VIDEO = "video";
 
     private String mediaType; 
-    private FlashToSipAudioStream userSenderStream;  //renomear para FlashToSipStream
-    private SipToFlashAudioStream userReceiverStream;  //renomear para SipToFlashStream
+    private FlashToSipStream userSenderStream;  
+    private SipToFlashStream userReceiverStream;  
     private final Codec sipCodec;
     private final SipConnectInfo connInfo;
     private final IScope scope;
@@ -60,13 +63,16 @@ public class CallStream implements StreamObserver {
     public void start() {
         SipToFlashTranscoder sipToFlashTranscoder;
         FlashToSipTranscoder flashToSipTranscoder;
-        //if(mediaType == MEDIA_TYPE_AUDIO) {
+
+        if(mediaType == MEDIA_TYPE_AUDIO) {
 
 
-        	sipToFlashTranscoder = new SpeexSipToFlashTranscoderImp(sipCodec);
-        	flashToSipTranscoder = new SpeexFlashToSipTranscoderImp(sipCodec);
+            if(sipCodec.getCodecId() == SpeexCodec.codecId) {
+        	   sipToFlashTranscoder = new SpeexSipToFlashTranscoderImp(sipCodec);
+        	   flashToSipTranscoder = new SpeexFlashToSipTranscoderImp(sipCodec);
+            }
 
-    		if (sipCodec.getCodecId() != SpeexCodec.codecId) {			
+    		else {		
     			flashToSipTranscoder = new NellyFlashToSipTranscoderImp(sipCodec);
     			sipToFlashTranscoder = new NellySipToFlashTranscoderImp(sipCodec);
     		} 
@@ -75,32 +81,38 @@ public class CallStream implements StreamObserver {
     		log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
     		log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
     		log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
-        //} else {
 
-            //VIDEO
-            /*
-            SipToFlashTranscoder sipToFlashTranscoder = new H264SipToFlashTranscoderImp(sipCodec);
-            FlashToSipTranscoder flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
 
-            if (sipCodec.getCodecId() != H264Codec.codecId) {          
-                flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
+            userReceiverStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket());
+            userReceiverStream.addListenStreamObserver(this);   
+            log.debug("Starting userReceiverStream so that users with no mic can listen.");
+            userReceiverStream.start();
+            userSenderStream = new FlashToSipAudioStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);
+        } 
+
+        else {
+
+
+            if (sipCodec.getCodecId() == H264Codec.codecId) {  
+
                 sipToFlashTranscoder = new H264SipToFlashTranscoderImp(sipCodec);
-            } 
-            
-            log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
-            log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
-            log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
-            log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
-            */
-        //}
+                flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
 
-		userReceiverStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket()); //renomear para SipToFlashStream
-		userReceiverStream.addListenStreamObserver(this);	
-		log.debug("Starting userReceiverStream so that users with no mic can listen.");
-		userReceiverStream.start();
-		userSenderStream = new FlashToSipAudioStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);  //renomear para FlashToSipStream
+                log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
+                log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
+                log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
+                log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
 
-        
+                userReceiverStream = new SipToFlashVideoStream(scope, sipToFlashTranscoder, connInfo.getSocket()); 
+                userReceiverStream.addListenStreamObserver(this);   
+                log.debug("Starting userReceiverStream so that users with no mic can listen.");
+                userReceiverStream.start();
+                userSenderStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);            
+            }
+
+            else
+                log.debug("CallStream => Received VIDEO Codec is NOT H264: Doing nothing.");    
+        }      
     }
     
     public String getTalkStreamName() {

@@ -16,7 +16,7 @@ public class H264Codec implements Codec {
     private int outgoingPacketization = 90000;
     private int incomingPacketization = 90000;
 
-    private static final int codecId = 35;
+    public static final int codecId = 35;
         
     @Override
     public void encodeInit(int defaultEncodePacketization) {
