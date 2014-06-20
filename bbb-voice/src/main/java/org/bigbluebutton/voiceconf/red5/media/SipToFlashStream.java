@@ -37,5 +37,10 @@ public class SipToFlashStream {
 
 	public void addListenStreamObserver(StreamObserver o) {
 		observer = o;
-	}	
+	}
+
+
+	public void stop() {}	
+
+	public void start() {}
 }

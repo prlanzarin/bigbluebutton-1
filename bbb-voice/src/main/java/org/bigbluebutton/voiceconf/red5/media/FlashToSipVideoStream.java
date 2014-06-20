@@ -18,14 +18,14 @@
 */
 package org.bigbluebutton.voiceconf.red5.media;
 
-import org.red5.server.api.scope.IScope;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.FlashToSipTranscoder;
 import java.net.DatagramSocket;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
+import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 
-public class SipToFlashVideoStream extends SipToFlashStream {
+public class FlashToSipVideoStream extends FlashToSipStream {
 
-	public SipToFlashVideoStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
-
+	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {
+		
 	}
 
 }

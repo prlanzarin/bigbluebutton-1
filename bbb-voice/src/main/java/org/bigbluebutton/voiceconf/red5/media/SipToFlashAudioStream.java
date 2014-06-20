@@ -69,6 +69,7 @@ public class SipToFlashAudioStream  extends SipToFlashStream implements Transcod
 		transcoder.setTranscodedAudioListener(this);
 	}
 
+	@Override
 	public void stop() {
 			if (log.isDebugEnabled()) log.debug("Stopping stream for {}", listenStreamName);
 			transcoder.stop();
@@ -83,7 +84,8 @@ public class SipToFlashAudioStream  extends SipToFlashStream implements Transcod
 				if (log.isDebugEnabled()) log.debug("audioBroadcastStream is null, couldn't stop");
 		    if (log.isDebugEnabled()) log.debug("Stream(s) stopped");
 	}
-		
+
+	@Override	
 	public void start() {
 		if (log.isDebugEnabled()) log.debug("started publishing stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
 		audioBroadcastStream = new AudioBroadcastStream(listenStreamName);

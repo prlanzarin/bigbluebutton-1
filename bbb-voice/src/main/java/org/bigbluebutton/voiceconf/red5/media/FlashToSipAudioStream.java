@@ -32,7 +32,7 @@ import org.red5.server.net.rtmp.event.AudioData;
 import org.red5.server.net.rtmp.event.SerializeUtils;
 import org.slf4j.Logger;
 
-public class FlashToSipAudioStream {
+public class FlashToSipAudioStream extends FlashToSipStream {
 	private final static Logger log = Red5LoggerFactory.getLogger(FlashToSipAudioStream.class, "sip");
 	
 	private final FlashToSipTranscoder transcoder;	
@@ -51,8 +51,9 @@ public class FlashToSipAudioStream {
 		talkStreamName = "microphone_" + System.currentTimeMillis();
 		transcodedAudioListener = new TranscodedAudioListener();
 		transcoder.setTranscodedAudioListener(transcodedAudioListener);
-}
+	}
 	
+	@Override
 	public void start(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
 		if (log.isDebugEnabled())
 			log.debug("startTranscodingStream({},{})", broadcastStream.getPublishedName(), scope.getName());
@@ -81,6 +82,7 @@ public class FlashToSipAudioStream {
 		transcoder.start();
 	}
 
+	@Override
 	public void stop(IBroadcastStream broadcastStream, IScope scope) {
 		broadcastStream.removeStreamListener(mInputListener);
 		if (broadcastStream != null) {
@@ -91,6 +93,7 @@ public class FlashToSipAudioStream {
 	    srcSocket.close();		
 	}
 
+	@Override
 	public String getStreamName() {
 		return talkStreamName;
 	}

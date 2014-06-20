@@ -254,7 +254,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             if (userProfile.video && localVideoPort != 0 && remoteVideoPort != 0) {
                 if ((videoCallStream == null) && (sipVideoCodec != null)) {                  
                     try {
-                        log.debug("Creating VIDEO streama: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
+                        log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
                         //videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo);
                         //videoCallStream.addCallStreamObserver(this);
                         //videoCallStream.start();
