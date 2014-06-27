@@ -145,7 +145,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, TranscodedMediaD
 	}
 
 	@Override
-	public void onAudioDataReceived(byte[] audioData, int offset, int len) {
+	public void onMediaDataReceived(byte[] audioData, int offset, int len) {
 		transcoder.handleData(audioData, offset, len);
 	}
 
