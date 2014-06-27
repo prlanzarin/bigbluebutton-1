@@ -22,10 +22,26 @@ import org.red5.server.api.scope.IScope;
 import java.net.DatagramSocket;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
 
-public class SipToFlashVideoStream extends SipToFlashStream {
+public class SipToFlashVideoStream implements SipToFlashStream {
 
-	public SipToFlashVideoStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
+	//empty class for now 
+	
+	public SipToFlashVideoStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {}
 
+
+	@Override
+	public String getStreamName() 
+	{
+		return null;
 	}
+
+	@Override
+	public void addListenStreamObserver(StreamObserver o) {}
+
+	@Override
+	public void stop() {}	
+
+	@Override
+	public void start() {}
 
 }

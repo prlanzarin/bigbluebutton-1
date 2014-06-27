@@ -21,11 +21,27 @@ package org.bigbluebutton.voiceconf.red5.media;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.FlashToSipTranscoder;
 import java.net.DatagramSocket;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
+import org.red5.server.api.scope.IScope;
+import org.red5.server.api.stream.IBroadcastStream;
 
-public class FlashToSipVideoStream extends FlashToSipStream {
+public class FlashToSipVideoStream implements FlashToSipStream {
 
-	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {
-		
+	//empty class for now...
+
+	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {}
+
+	@Override
+	public void start(IBroadcastStream broadcastStream, IScope scope) {}
+
+	@Override
+	public void stop(IBroadcastStream broadcastStream, IScope scope) {}
+
+	@Override
+	public String getStreamName()
+	{
+		return null;
 	}
+
+
 
 }

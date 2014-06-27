@@ -79,7 +79,7 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 	private final PipedOutputStream streamFromSip;
 	private PipedInputStream streamToFlash;
 
-	private TranscodedAudioDataListener transcodedAudioListener;
+	private TranscodedMediaDataListener transcodedMediaListener;
 	private boolean processAudioData;
 
 	private final Executor exec = Executors.newSingleThreadExecutor();
@@ -139,7 +139,7 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 				}    					
 			} 
 				
-			if (sendPacket) transcodedAudioListener.handleTranscodedAudioData(nellyBytes, timestamp += TS_INCREMENT);			
+			if (sendPacket) transcodedMediaListener.handleTranscodedMediaData(nellyBytes, timestamp += TS_INCREMENT);			
         }
         
         if (l16Audio.position() == l16Audio.capacity()) {
@@ -210,8 +210,8 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void setTranscodedAudioListener(SipToFlashAudioStream sipToFlashAudioStream) {
-		this.transcodedAudioListener = sipToFlashAudioStream;		
+	public void setTranscodedMediaListener(SipToFlashAudioStream sipToFlashAudioStream) {
+		this.transcodedMediaListener = sipToFlashAudioStream;		
 	}
 
 	

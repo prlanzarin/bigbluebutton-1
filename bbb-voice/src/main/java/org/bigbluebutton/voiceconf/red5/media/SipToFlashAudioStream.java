@@ -19,8 +19,9 @@
 package org.bigbluebutton.voiceconf.red5.media;
 
 import java.net.DatagramSocket;
+import org.apache.mina.core.buffer.IoBuffer;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedAudioDataListener;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaDataListener;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IScope;
@@ -32,16 +33,18 @@ import org.red5.server.stream.IProviderService;
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
 
-public class SipToFlashAudioStream  extends SipToFlashStream implements TranscodedAudioDataListener, RtpStreamReceiverListener {
+public class SipToFlashAudioStream implements SipToFlashStream, TranscodedMediaDataListener, RtpStreamReceiverListener {
 	private static final Logger log = Red5LoggerFactory.getLogger(SipToFlashAudioStream.class, "sip");
 
 	private AudioBroadcastStream audioBroadcastStream;
 	private IScope scope;
-
+	private final String listenStreamName;
 	private RtpStreamReceiver rtpStreamReceiver;
+	private StreamObserver observer;
 
 	private SipToFlashTranscoder transcoder;
 	private boolean sentMetadata = false;
+	private IoBuffer mBuffer;
 
 	private AudioData audioData;
 
@@ -58,36 +61,65 @@ public class SipToFlashAudioStream  extends SipToFlashStream implements Transcod
 	};
 
 	public SipToFlashAudioStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
-		super();
-		this.scope = scope;
 		this.transcoder = transcoder;
+		this.scope = scope;		
 		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
+		listenStreamName = "speaker_" + System.currentTimeMillis();	
+		mBuffer = IoBuffer.allocate(1024);
+		mBuffer = mBuffer.setAutoExpand(true);
 
 		audioData = new AudioData();
-		transcoder.setTranscodedAudioListener(this);
+		transcoder.setTranscodedMediaListener(this);
+	}
+
+	@Override
+	public String getStreamName() {
+		return listenStreamName;
+	}
+
+	@Override
+	public void addListenStreamObserver(StreamObserver o) {
+		observer = o;
 	}
 
 	@Override
 	public void stop() {
-			if (log.isDebugEnabled()) log.debug("Stopping stream for {}", listenStreamName);
+			if (log.isDebugEnabled()) 
+				log.debug("Stopping AUDIO stream for {}", listenStreamName);
+
 			transcoder.stop();
 			rtpStreamReceiver.stop();
-			if (log.isDebugEnabled()) log.debug("Stopped RTP Stream Receiver for {}", listenStreamName);
+
+			if (log.isDebugEnabled()) 
+				log.debug("Stopped RTP AUDIO Stream Receiver for {}", listenStreamName);
+
 			if (audioBroadcastStream != null) {
 				audioBroadcastStream.stop();
-				if (log.isDebugEnabled()) log.debug("Stopped audioBroadcastStream for {}", listenStreamName);
+
+				if (log.isDebugEnabled()) 
+					log.debug("Stopped audioBroadcastStream for {}", listenStreamName);
+
 				audioBroadcastStream.close();
-			    if (log.isDebugEnabled()) log.debug("Closed audioBroadcastStream for {}", listenStreamName);
-			} else
-				if (log.isDebugEnabled()) log.debug("audioBroadcastStream is null, couldn't stop");
-		    if (log.isDebugEnabled()) log.debug("Stream(s) stopped");
+
+			    if (log.isDebugEnabled()) 
+			    	log.debug("Closed audioBroadcastStream for {}", listenStreamName);
+			} 
+
+			else
+				if (log.isDebugEnabled()) 
+					log.debug("audioBroadcastStream is null, couldn't stop");
+
+		    if (log.isDebugEnabled()) 
+		    	log.debug("AUDIO Stream(s) stopped");
 	}
 
 	@Override	
 	public void start() {
-		if (log.isDebugEnabled()) log.debug("started publishing stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
+		if (log.isDebugEnabled()) 
+			log.debug("started publishing AUDIO stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
+
 		audioBroadcastStream = new AudioBroadcastStream(listenStreamName);
 		audioBroadcastStream.setPublishedName(listenStreamName);
 		audioBroadcastStream.setScope(scope);
@@ -118,7 +150,7 @@ public class SipToFlashAudioStream  extends SipToFlashStream implements Transcod
 	}
 
 	@Override
-	public void handleTranscodedAudioData(byte[] audioData, long timestamp) {
+	public void handleTranscodedMediaData(byte[] audioData, long timestamp) {
 		if (audioData != null) {
 			pushAudio(audioData, timestamp);
 		} else {

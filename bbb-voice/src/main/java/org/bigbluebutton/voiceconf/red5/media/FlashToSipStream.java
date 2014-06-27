@@ -21,14 +21,9 @@ package org.bigbluebutton.voiceconf.red5.media;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 
-public class FlashToSipStream {	
-
-	public void start(IBroadcastStream broadcastStream, IScope scope) throws StreamException {}
-
-	public void stop(IBroadcastStream broadcastStream, IScope scope)  {}	
-
-	public String getStreamName() {
-		return null;
-	}
+public interface FlashToSipStream {	
+	void start(IBroadcastStream broadcastStream, IScope scope) throws StreamException;
+	void stop(IBroadcastStream broadcastStream, IScope scope);	
+	String getStreamName();
 
 }

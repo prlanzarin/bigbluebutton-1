@@ -42,8 +42,14 @@ public class CallStream implements StreamObserver {
     public final static String MEDIA_TYPE_VIDEO = "video";
 
     private String mediaType; 
+
     private FlashToSipStream userSenderStream;  
-    private SipToFlashStream userReceiverStream;  
+    private SipToFlashStream userReceiverStream; 
+
+    private SipToFlashTranscoder sipToFlashTranscoder;
+    private FlashToSipTranscoder flashToSipTranscoder;
+
+
     private final Codec sipCodec;
     private final SipConnectInfo connInfo;
     private final IScope scope;
@@ -61,9 +67,7 @@ public class CallStream implements StreamObserver {
     }
     
     public void start() {
-        SipToFlashTranscoder sipToFlashTranscoder;
-        FlashToSipTranscoder flashToSipTranscoder;
-
+        
         if(mediaType == MEDIA_TYPE_AUDIO) {
 
 

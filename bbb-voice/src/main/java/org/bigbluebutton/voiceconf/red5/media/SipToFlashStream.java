@@ -16,31 +16,12 @@
 * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 *
 */
+
 package org.bigbluebutton.voiceconf.red5.media;
-import org.apache.mina.core.buffer.IoBuffer;
 
-public class SipToFlashStream {	
-	
-	public final String listenStreamName;
-	public StreamObserver observer;
-	public IoBuffer mBuffer;
-
-	public SipToFlashStream() {		
-		listenStreamName = "speaker_" + System.currentTimeMillis();	
-		mBuffer = IoBuffer.allocate(1024);
-		mBuffer = mBuffer.setAutoExpand(true);
-	}		
-	
-	public String getStreamName() {
-		return listenStreamName;
-	}
-
-	public void addListenStreamObserver(StreamObserver o) {
-		observer = o;
-	}
-
-
-	public void stop() {}	
-
-	public void start() {}
+public interface SipToFlashStream {		
+	String getStreamName();
+	void addListenStreamObserver(StreamObserver o);
+	void stop();
+	void start();
 }

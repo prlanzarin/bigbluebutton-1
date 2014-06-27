@@ -37,7 +37,7 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 	private Codec audioCodec = null;
 	private long timestamp = 0;
 	private static final int TS_INCREMENT = 20; // Determined from PCAP traces.
-	private TranscodedAudioDataListener transcodedAudioListener;
+	private TranscodedMediaDataListener transcodedMediaListener;
 
 	public SpeexSipToFlashTranscoderImp(Codec codec) {
 		this.audioCodec = codec;
@@ -47,7 +47,7 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 
 	@Override
 	public void transcode(byte[] audioData ) {
-		transcodedAudioListener.handleTranscodedAudioData(audioData, timestamp += TS_INCREMENT);
+		transcodedMediaListener.handleTranscodedMediaData(audioData, timestamp += TS_INCREMENT);
 	}
 	
 	@Override
@@ -68,8 +68,8 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void setTranscodedAudioListener(SipToFlashAudioStream sipToFlashAudioStream) {
-		this.transcodedAudioListener = sipToFlashAudioStream;
+	public void setTranscodedMediaListener(SipToFlashAudioStream sipToFlashAudioStream) {
+		this.transcodedMediaListener = sipToFlashAudioStream;
 		
 	}
 
