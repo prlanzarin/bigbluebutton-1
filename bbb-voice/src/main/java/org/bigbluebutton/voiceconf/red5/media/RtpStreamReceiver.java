@@ -205,9 +205,8 @@ public class RtpStreamReceiver {
     	return false;
     }
 
-    private void processRtpPacket(byte[] rtpMedia, int offset, int len) {
-        //log.debug("Ola eu sou feliz");
-		if (listener != null) listener.onMediaDataReceived(rtpMedia, offset, len);
-		else log.debug("No listener for incoming audio packet");    	
+    private void processRtpPacket(byte[] rtpMediaData, int offset, int len) {
+		if (listener != null) listener.onMediaDataReceived(rtpMediaData, offset, len);
+		else log.debug("No listener for incoming media packet");    	
     }
 }

@@ -33,10 +33,10 @@ import org.red5.server.stream.IProviderService;
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
 
-public class SipToFlashAudioStream implements SipToFlashStream, TranscodedMediaDataListener, RtpStreamReceiverListener {
+public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceiverListener {
 	private static final Logger log = Red5LoggerFactory.getLogger(SipToFlashAudioStream.class, "sip");
 
-	private AudioBroadcastStream audioBroadcastStream;
+	private BroadcastStream audioBroadcastStream;
 	private IScope scope;
 	private final String listenStreamName;
 	private RtpStreamReceiver rtpStreamReceiver;
@@ -66,7 +66,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, TranscodedMediaD
 		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		listenStreamName = "speaker_" + System.currentTimeMillis();	
+		listenStreamName = "speakerAudioStream_" + System.currentTimeMillis();	
 		mBuffer = IoBuffer.allocate(1024);
 		mBuffer = mBuffer.setAutoExpand(true);
 
@@ -120,7 +120,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, TranscodedMediaD
 		if (log.isDebugEnabled()) 
 			log.debug("started publishing AUDIO stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
 
-		audioBroadcastStream = new AudioBroadcastStream(listenStreamName);
+		audioBroadcastStream = new BroadcastStream(listenStreamName);
 		audioBroadcastStream.setPublishedName(listenStreamName);
 		audioBroadcastStream.setScope(scope);
 		
@@ -154,7 +154,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, TranscodedMediaD
 		if (audioData != null) {
 			pushAudio(audioData, timestamp);
 		} else {
-			log.warn("Transcoded audio is null. Discarding.");
+			log.warn("Transcoded AUDIO is null. Discarding.");
 		}
 	}
 
