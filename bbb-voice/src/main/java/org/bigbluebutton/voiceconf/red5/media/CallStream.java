@@ -119,11 +119,11 @@ public class CallStream implements StreamObserver {
         }      
     }
     
-    public String getTalkStreamName() {
+    public String getSenderStreamName() {
     	return userSenderStream.getStreamName();
     }
     
-    public String getListenStreamName() {
+    public String getReceiverStreamName() {
     	return userReceiverStream.getStreamName();
     }
     

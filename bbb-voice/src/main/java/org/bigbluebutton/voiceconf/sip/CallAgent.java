@@ -230,7 +230,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
-                        notifyListenersOnCallConnected(audioCallStream.getTalkStreamName(), audioCallStream.getListenStreamName());
+                        notifyListenersOnCallConnected(audioCallStream.getSenderStreamName(), audioCallStream.getReceiverStreamName());
                     } catch (Exception e) {
                         log.error("Failed to create AUDIO Call Stream.");
                         System.out.println(StackTraceUtil.getStackTrace(e));
@@ -258,7 +258,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         //videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo);
                         //videoCallStream.addCallStreamObserver(this);
                         //videoCallStream.start();
-                        //notifyListenersOnCallConnected(videoCallStream.getTalkStreamName(), videoCallStream.getListenStreamName());
+                        //notifyListenersOnCallConnected(videoCallStream.getSenderStreamName(), videoCallStream.getReceiverStreamName());
                     } catch (Exception e) {
                         log.error("Failed to create VIDEO Call Stream.");
                         System.out.println(StackTraceUtil.getStackTrace(e));
@@ -405,9 +405,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOfOnIncomingCallCancelled();
     }
 
-    private void notifyListenersOnCallConnected(String talkStream, String listenStream) {
+    private void notifyListenersOnCallConnected(String senderStream, String receiverStream) {
     	log.debug("notifyListenersOnCallConnected for {}", clientId);
-    	clientConnManager.joinConferenceSuccess(clientId, talkStream, listenStream, sipAudioCodec.getCodecName());
+    	clientConnManager.joinConferenceSuccess(clientId, senderStream, receiverStream, sipAudioCodec.getCodecName());
     }
   
     private void notifyListenersOnOutgoingCallFailed() {
