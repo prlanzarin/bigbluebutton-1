@@ -20,6 +20,7 @@ package org.bigbluebutton.voiceconf.red5.media;
 
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaListener;
 
 public interface FlashToSipStream {	
 	void start(IBroadcastStream broadcastStream, IScope scope) throws StreamException;

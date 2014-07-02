@@ -273,18 +273,18 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
         
-    public void startTalkStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void startStream(IBroadcastStream broadcastStream, IScope scope) {
     	try {
-			audioCallStream.startTalkStream(broadcastStream, scope);
+			audioCallStream.startStream(broadcastStream, scope);
 		} catch (StreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}   	
     }
     
-    public void stopTalkStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void stopStream(IBroadcastStream broadcastStream, IScope scope) {
     	if (audioCallStream != null) {
-    		audioCallStream.stopTalkStream(broadcastStream, scope);   	
+    		audioCallStream.stopStream(broadcastStream, scope);   	
     	}
     }
     

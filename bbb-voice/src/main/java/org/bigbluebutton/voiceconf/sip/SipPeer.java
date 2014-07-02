@@ -160,14 +160,14 @@ public class SipPeer implements SipRegisterAgentListener {
     public void startTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.startTalkStream(broadcastStream, scope);
+           ca.startStream(broadcastStream, scope);
         }
     }
     
     public void stopTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.stopTalkStream(broadcastStream, scope);
+           ca.stopStream(broadcastStream, scope);
         }
     }
 

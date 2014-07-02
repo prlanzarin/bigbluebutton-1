@@ -21,7 +21,7 @@ package org.bigbluebutton.voiceconf.red5.media;
 import java.net.DatagramSocket;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.FlashToSipTranscoder;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaDataListener;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaListener;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.scope.IScope;
@@ -31,6 +31,7 @@ import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.event.AudioData;
 import org.red5.server.net.rtmp.event.SerializeUtils;
 import org.slf4j.Logger;
+
 
 public class FlashToSipAudioStream implements FlashToSipStream {
 	private final static Logger log = Red5LoggerFactory.getLogger(FlashToSipAudioStream.class, "sip");
@@ -43,14 +44,15 @@ public class FlashToSipAudioStream implements FlashToSipStream {
 	private RtpStreamSender rtpSender;
 	private TranscodedMediaListener transcodedMediaListener;
 
-	public FlashToSipAudioStream(final FlashToSipTranscoder transcoder, DatagramSocket srcSocket, 
-									SipConnectInfo connInfo) {
+	public FlashToSipAudioStream(final FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {
 		this.transcoder = transcoder;
 		this.srcSocket = srcSocket;
 		this.connInfo = connInfo;		
 		talkStreamName = "microphone_" + System.currentTimeMillis();
-		transcodedMediaListener = new TranscodedMediaListener();
-		transcoder.setTranscodedMediaListener(transcodedMediaListener);
+		rtpSender = new RtpStreamSender(srcSocket, connInfo);		
+	    transcodedMediaListener = new TranscodedMediaListener(rtpSender,transcoder);
+	    transcoder.setTranscodedMediaListener(transcodedMediaListener);
+		
 	}
 	
 	@Override
@@ -76,8 +78,7 @@ public class FlashToSipAudioStream implements FlashToSipStream {
 			}
 		};
 				
-	    broadcastStream.addStreamListener(mInputListener);    
-	    rtpSender = new RtpStreamSender(srcSocket, connInfo);
+	    broadcastStream.addStreamListener(mInputListener);	    
 		rtpSender.connect();
 		transcoder.start();
 	}
@@ -96,16 +97,6 @@ public class FlashToSipAudioStream implements FlashToSipStream {
 	@Override
 	public String getStreamName() {
 		return talkStreamName;
-	}
+	}	
 	
-	public class TranscodedMediaListener implements TranscodedMediaDataListener {
-		@Override
-		public void handleTranscodedMediaData(byte[] audioData, long timestamp) {
-			if (audioData != null) {
-	  		  rtpSender.sendAudio(audioData, transcoder.getCodecId(), timestamp);
-	  	  } else {
-	  		  log.warn("Transcodec audio is null. Discarding.");
-	  	  }
-		}		
-	}
 }

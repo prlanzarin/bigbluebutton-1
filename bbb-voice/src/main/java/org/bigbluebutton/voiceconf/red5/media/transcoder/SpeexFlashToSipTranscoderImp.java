@@ -20,7 +20,7 @@ package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
 import java.util.Random;
 
-import org.bigbluebutton.voiceconf.red5.media.FlashToSipAudioStream.TranscodedMediaListener;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaListener;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;

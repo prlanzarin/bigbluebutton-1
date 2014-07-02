@@ -24,23 +24,91 @@ import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 
+import org.slf4j.Logger;
+import org.red5.logging.Red5LoggerFactory;
+import org.red5.server.api.stream.IStreamListener;
+import org.red5.server.api.stream.IStreamPacket;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaListener;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.server.net.rtmp.event.VideoData;
+import org.red5.server.net.rtmp.event.SerializeUtils;
+
+
+
 public class FlashToSipVideoStream implements FlashToSipStream {
 
-	//empty class for now...
+	//empty class for now..
+	private final static Logger log = Red5LoggerFactory.getLogger(FlashToSipVideoStream.class, "sip");
+	
+	private final FlashToSipTranscoder transcoder;	
+	private IStreamListener mInputListener;
+	private final DatagramSocket srcSocket;
+	private final SipConnectInfo connInfo;
+	private String videoStreamName;	
+	private RtpStreamSender rtpSender;
+	private TranscodedMediaListener transcodedMediaListener;
 
-	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {}
+
+	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {
+
+		this.transcoder = transcoder;
+		this.srcSocket = srcSocket;
+		this.connInfo = connInfo;		
+		videoStreamName = "video_" + System.currentTimeMillis();
+		rtpSender = new RtpStreamSender(srcSocket, connInfo);
+	    transcodedMediaListener = new TranscodedMediaListener(rtpSender,transcoder);
+		transcoder.setTranscodedMediaListener(transcodedMediaListener);	    
+		
+	}
 
 	@Override
-	public void start(IBroadcastStream broadcastStream, IScope scope) {}
+	public void start(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
+
+		if (log.isDebugEnabled())
+			log.debug("startTranscodingStream({},{})", broadcastStream.getPublishedName(), scope.getName());
+		mInputListener = new IStreamListener() {
+			public void packetReceived(IBroadcastStream broadcastStream, IStreamPacket packet) {
+		      IoBuffer buf = packet.getData();
+		      if (buf != null)
+		    	  buf.rewind();
+		    
+		      if (buf == null || buf.remaining() == 0){
+		    	  log.debug("skipping empty packet with no data");
+		    	  return;
+		      }
+		      	      
+		      if (packet instanceof VideoData) {
+		    	  byte[] data = SerializeUtils.ByteBufferToByteArray(buf);
+		    	  // Remove the first byte as it is the codec id.
+		    	  transcoder.handlePacket(data, 1, data.length-1);   
+		      } 
+			}
+		};
+				
+	    broadcastStream.addStreamListener(mInputListener);    	    
+		rtpSender.connect();
+		transcoder.start();
+
+	}
 
 	@Override
-	public void stop(IBroadcastStream broadcastStream, IScope scope) {}
+	public void stop(IBroadcastStream broadcastStream, IScope scope) {
+		broadcastStream.removeStreamListener(mInputListener);
+		if (broadcastStream != null) {
+			broadcastStream.stop();
+			broadcastStream.close();
+		} 
+	    transcoder.stop();
+	    srcSocket.close();	
+	}
 
 	@Override
 	public String getStreamName()
 	{
-		return null;
+		return videoStreamName;
 	}
+
+	
 
 
 

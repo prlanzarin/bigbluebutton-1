@@ -81,6 +81,11 @@ public class RtpStreamSender {
 			e.printStackTrace();
 		}  
     }
+
+    public void sendVideo(byte[] videoData, int codecId, long timestamp) {
+
+
+    }
         
     private synchronized void rtpSocketSend(RtpPacket rtpPacket) throws StreamException  {
     	try {

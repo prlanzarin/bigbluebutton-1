@@ -127,13 +127,13 @@ public class CallStream implements StreamObserver {
     	return userReceiverStream.getStreamName();
     }
     
-    public void startTalkStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
+    public void startStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
     	log.debug("userSenderStream setup");
     	userSenderStream.start(broadcastStream, scope);
     	log.debug("userSenderStream Started");
     }
     
-    public void stopTalkStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void stopStream(IBroadcastStream broadcastStream, IScope scope) {
     	userSenderStream.stop(broadcastStream, scope);
     }
 
