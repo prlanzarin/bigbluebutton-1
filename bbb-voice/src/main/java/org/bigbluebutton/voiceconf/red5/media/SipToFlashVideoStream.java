@@ -74,7 +74,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		mBuffer = mBuffer.setAutoExpand(true);
 
 		videoData = new VideoData();
-		transcoder.setTranscodedMediaListener(this);
+		transcoder.setTranscodedMediaDataListener(this);
 	}
 
 

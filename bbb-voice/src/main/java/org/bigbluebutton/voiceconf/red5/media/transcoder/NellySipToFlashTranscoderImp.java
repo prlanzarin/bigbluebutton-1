@@ -27,7 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
-import org.bigbluebutton.voiceconf.red5.media.SipToFlashAudioStream;
+import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -79,7 +79,7 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 	private final PipedOutputStream streamFromSip;
 	private PipedInputStream streamToFlash;
 
-	private TranscodedMediaDataListener transcodedMediaListener;
+	private TranscodedMediaDataListener transcodedMediaDataListener;
 	private boolean processAudioData;
 
 	private final Executor exec = Executors.newSingleThreadExecutor();
@@ -139,7 +139,7 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 				}    					
 			} 
 				
-			if (sendPacket) transcodedMediaListener.handleTranscodedMediaData(nellyBytes, timestamp += TS_INCREMENT);			
+			if (sendPacket) transcodedMediaDataListener.handleTranscodedMediaData(nellyBytes, timestamp += TS_INCREMENT);			
         }
         
         if (l16Audio.position() == l16Audio.capacity()) {
@@ -210,8 +210,8 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void setTranscodedMediaListener(SipToFlashAudioStream sipToFlashAudioStream) {
-		this.transcodedMediaListener = sipToFlashAudioStream;		
+	public void setTranscodedMediaDataListener(SipToFlashStream sipToFlashStream) {
+		this.transcodedMediaDataListener = sipToFlashStream;		
 	}
 
 	

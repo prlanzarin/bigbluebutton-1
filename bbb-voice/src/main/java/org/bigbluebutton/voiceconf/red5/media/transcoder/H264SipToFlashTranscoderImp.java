@@ -39,7 +39,7 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 	private Codec videoCodec = null;
 	private long timestamp = 0;
 	private static final int TS_INCREMENT = 20; // Determined from PCAP traces. //qual o TS_INCREMENT do H264?
-	private TranscodedMediaDataListener transcodedMediaListener;
+	private TranscodedMediaDataListener transcodedMediaDataListener;
 
 
 	public H264SipToFlashTranscoderImp(Codec codec) {
@@ -50,7 +50,7 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 
 	@Override
 	public void transcode(byte[] videoData ) {
-		transcodedMediaListener.handleTranscodedMediaData(videoData, timestamp += TS_INCREMENT);
+		transcodedMediaDataListener.handleTranscodedMediaData(videoData, timestamp += TS_INCREMENT);
 	}
 	
 	@Override
@@ -72,8 +72,8 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 
 
 	@Override
-	public void setTranscodedMediaListener(SipToFlashStream sipToFlashStream) {
-		this.transcodedMediaListener = sipToFlashStream;
+	public void setTranscodedMediaDataListener(SipToFlashStream sipToFlashStream) {
+		this.transcodedMediaDataListener = sipToFlashStream;
 		
 	}
 
