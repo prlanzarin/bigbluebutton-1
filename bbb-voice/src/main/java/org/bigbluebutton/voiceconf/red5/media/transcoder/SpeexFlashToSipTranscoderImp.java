@@ -20,10 +20,10 @@ package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
 import java.util.Random;
 
-import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaListener;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
+import org.bigbluebutton.voiceconf.red5.media.FlashToSipStream;
 
 /**
  * Speex wideband to Speex wideband Flash to SIP transcoder.
@@ -36,7 +36,7 @@ public class SpeexFlashToSipTranscoderImp implements FlashToSipTranscoder {
 	private Codec audioCodec;
 	private long timestamp = 0;
 	private final static int TS_INCREMENT = 320; // Determined from PCAP traces.
-	private TranscodedMediaListener transcodedMediaListener;
+	private TranscodedMediaDataListener transcodedMediaDataListener;
 	
 	public SpeexFlashToSipTranscoderImp(Codec audioCodec) {
 		this.audioCodec = audioCodec;
@@ -49,7 +49,7 @@ public class SpeexFlashToSipTranscoderImp implements FlashToSipTranscoder {
 		// Just copy the audio data removing the codec id which is the first-byte
 		// represented by the startOffset var.
 		System.arraycopy(audioData, startOffset, transcodedAudio, 0, length);
-		transcodedMediaListener.handleTranscodedMediaData(transcodedAudio, timestamp += TS_INCREMENT);
+		transcodedMediaDataListener.handleTranscodedMediaData(transcodedAudio, timestamp += TS_INCREMENT);
 	}
 	
 	public int getCodecId() {
@@ -70,8 +70,8 @@ public class SpeexFlashToSipTranscoderImp implements FlashToSipTranscoder {
 	}
 
 	@Override
-	public void setTranscodedMediaListener(TranscodedMediaListener transcodedMediaListener) {
-		this.transcodedMediaListener = transcodedMediaListener;		
+	public void setTranscodedMediaDataListener(FlashToSipStream flashToSipStream) {
+		this.transcodedMediaDataListener = flashToSipStream;		
 	}
 
 	@Override

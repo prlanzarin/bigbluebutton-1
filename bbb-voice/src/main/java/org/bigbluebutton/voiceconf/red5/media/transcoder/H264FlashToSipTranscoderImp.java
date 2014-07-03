@@ -20,10 +20,10 @@ package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
 import java.util.Random;
 
-import org.bigbluebutton.voiceconf.red5.media.FlashToSipAudioStream.TranscodedMediaListener;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
+import org.bigbluebutton.voiceconf.red5.media.FlashToSipStream;
 
 /**
  * H264 wideband to H264 wideband Flash to SIP transcoder.
@@ -31,12 +31,12 @@ import org.slf4j.Logger;
  *
  */
 public class H264FlashToSipTranscoderImp implements FlashToSipTranscoder {
-	protected static Logger log = Red5LoggerFactory.getLogger(SpeexFlashToSipTranscoderImp.class, "sip");
+	protected static Logger log = Red5LoggerFactory.getLogger(H264FlashToSipTranscoderImp.class, "sip");
 	
 	private Codec videoCodec;
 	private long timestamp = 0;
 	private final static int TS_INCREMENT = 320; // Determined from PCAP traces. //qual o TS_INCREMENT do H264?
-	private TranscodedMediaListener transcodedMediaListener;
+	private TranscodedMediaDataListener transcodedMediaDataListener;
 	
 	public H264FlashToSipTranscoderImp(Codec videoCodec) {
 		this.videoCodec = videoCodec;
@@ -49,7 +49,7 @@ public class H264FlashToSipTranscoderImp implements FlashToSipTranscoder {
 		// Just copy the audio data removing the codec id which is the first-byte
 		// represented by the startOffset var.
 		System.arraycopy(videoData, startOffset, transcodedVideo, 0, length);
-		transcodedMediaListener.handleTranscodedMediaData(transcodedVideo, timestamp += TS_INCREMENT);
+		transcodedMediaDataListener.handleTranscodedMediaData(transcodedVideo, timestamp += TS_INCREMENT);
 	}
 	
 	public int getCodecId() {
@@ -70,8 +70,8 @@ public class H264FlashToSipTranscoderImp implements FlashToSipTranscoder {
 	}
 
 	@Override
-	public void setTranscodedMediaListener(TranscodedMediaListener transcodedMediaListener) {
-		this.transcodedMediaListener = transcodedMediaListener;		
+	public void setTranscodedMediaDataListener(FlashToSipStream flashToSipStream) {
+		this.transcodedMediaDataListener = flashToSipStream;		
 	}
 
 	@Override

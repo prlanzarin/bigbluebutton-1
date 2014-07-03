@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaListener;
+
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.event.SerializeUtils;
@@ -46,8 +46,7 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 	private final SipConnectInfo connInfo;
 	private String videoStreamName;	
 	private RtpStreamSender rtpSender;
-	private TranscodedMediaListener transcodedMediaListener;
-
+	
 
 	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {
 
@@ -55,9 +54,8 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 		this.srcSocket = srcSocket;
 		this.connInfo = connInfo;		
 		videoStreamName = "video_" + System.currentTimeMillis();
-		rtpSender = new RtpStreamSender(srcSocket, connInfo);
-	    transcodedMediaListener = new TranscodedMediaListener(rtpSender,transcoder);
-		transcoder.setTranscodedMediaListener(transcodedMediaListener);	    
+		rtpSender = new RtpStreamSender(srcSocket, connInfo);	    
+		transcoder.setTranscodedMediaDataListener(this);	    
 		
 	}
 
@@ -100,6 +98,15 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 		} 
 	    transcoder.stop();
 	    srcSocket.close();	
+	}
+
+	@Override
+	public void handleTranscodedMediaData(byte[] videoData, long timestamp) {
+		if (videoData != null) {
+  		  rtpSender.sendVideo(videoData, transcoder.getCodecId(), timestamp);
+  	  } else {
+  		  log.warn("Transcodec video is null. Discarding.");
+  	  }
 	}
 
 	@Override
