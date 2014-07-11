@@ -136,6 +136,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         if (peerId != null) {
         	super.streamPublishStart(stream);
 	    	sipPeerManager.startTalkStream(peerId, clientId, stream, conn.getScope());
+            //sipPeerManager.startVideoStream(peerId, clientId, stream, conn.getScope());
 //	    	recordStream(stream);
         }
     }
@@ -168,6 +169,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
         if (peerId != null) {	    	
 	    	sipPeerManager.stopTalkStream(peerId, clientId, stream, conn.getScope());
+            //sipPeerManager.stopVideoStream(peerId, clientId, stream, conn.getScope());
 	    	super.streamBroadcastClose(stream);
         }
     }

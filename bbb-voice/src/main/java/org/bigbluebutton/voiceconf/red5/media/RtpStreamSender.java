@@ -83,7 +83,26 @@ public class RtpStreamSender {
     }
 
     public void sendVideo(byte[] videoData, int codecId, long timestamp) {
-
+        byte[] transcodedVideoDataBuffer = new byte[videoData.length + RTP_HEADER_SIZE];
+        System.arraycopy(videoData, 0, transcodedVideoDataBuffer, RTP_HEADER_SIZE, videoData.length);
+        RtpPacket rtpPacket = new RtpPacket(transcodedVideoDataBuffer, transcodedVideoDataBuffer.length);
+        if (!marked) {
+            rtpPacket.setMarker(true);
+            marked = true;
+            startTimestamp = System.currentTimeMillis();
+        }
+        rtpPacket.setPadding(false);
+        rtpPacket.setExtension(false);
+        rtpPacket.setPayloadType(codecId);
+        rtpPacket.setSeqNum(sequenceNum++);   
+        rtpPacket.setTimestamp(timestamp);
+        rtpPacket.setPayloadLength(videoData.length);
+        try {
+            rtpSocketSend(rtpPacket);
+        } catch (StreamException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }  
 
     }
         

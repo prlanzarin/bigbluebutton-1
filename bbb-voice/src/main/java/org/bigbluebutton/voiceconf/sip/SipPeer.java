@@ -171,6 +171,20 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
+    public void startVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           ca.startVideoStream(broadcastStream, scope);
+        }
+    }
+    
+    public void stopVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           ca.stopVideoStream(broadcastStream, scope);
+        }
+    }
+
 	@Override
 	public void onRegistrationFailure(String result) {
 		log.error("Failed to register with Sip Server.");

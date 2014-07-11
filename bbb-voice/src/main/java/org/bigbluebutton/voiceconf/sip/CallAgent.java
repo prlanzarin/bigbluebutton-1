@@ -288,6 +288,21 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	}
     }
     
+     public void startVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+        try {
+            videoCallStream.startStream(broadcastStream, scope);
+        } catch (StreamException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }       
+    }
+    
+    public void stopVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+        if (videoCallStream != null) {
+            videoCallStream.stopStream(broadcastStream, scope);     
+        }
+    }
+
     private void closeStreams() {        
     	log.debug("Shutting down the AUDIO stream...");         
         if (audioCallStream != null) {

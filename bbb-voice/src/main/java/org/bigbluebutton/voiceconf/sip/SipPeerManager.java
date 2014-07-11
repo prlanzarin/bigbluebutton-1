@@ -93,6 +93,20 @@ public final class SipPeerManager {
     		sipUser.stopTalkStream(clientId, broadcastStream, scope);
     	}
     }
+
+    public void startVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            //sipUser.startVideoStream(clientId, broadcastStream, scope);
+        }
+    }
+    
+    public void stopVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.stopVideoStream(clientId, broadcastStream, scope);
+        }
+    }
  
     
     private void remove(String userid) {
