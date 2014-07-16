@@ -24,7 +24,7 @@ public interface SipToFlashTranscoder {
 	void transcode(byte[] mediaData);
     int getCodecId();
     int getIncomingEncodedFrameSize();
-    void handleData(byte[] mediaData, int offset, int len);
+    void handleData(byte[] mediaData, int offset, int len, long timestampDelta);
     void setTranscodedMediaDataListener(SipToFlashStream sipToFlashStream);
     void start();
     void stop();

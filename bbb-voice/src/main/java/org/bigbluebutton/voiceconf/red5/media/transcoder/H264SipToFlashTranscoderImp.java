@@ -35,22 +35,26 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 
 	protected static Logger log = Red5LoggerFactory.getLogger(H264SipToFlashTranscoderImp.class, "sip");
 	
-	private static final int H264_CODEC = 178; /* 1011 1111 : see flv spec  */ //qual é o do H264?
+	private static final int H264_CODEC = 178; //which is the H264 Id?
 	private Codec videoCodec = null;
 	private long timestamp = 0;
-	private static final int TS_INCREMENT = 20; // Determined from PCAP traces. //qual o TS_INCREMENT do H264?
+
+	//The timestamp delta between 2 video packets is variable
+	private long currentTimestampIncrement = 0; 
+
+
 	private TranscodedMediaDataListener transcodedMediaDataListener;
 
 
 	public H264SipToFlashTranscoderImp(Codec codec) {
 		this.videoCodec = codec;
-        Random rgen = new Random();
-        timestamp = rgen.nextInt(1000);
+        //Random rgen = new Random();
+        //timestamp = rgen.nextInt(1000);
 	}
 
 	@Override
 	public void transcode(byte[] videoData ) {
-		transcodedMediaDataListener.handleTranscodedMediaData(videoData, timestamp += TS_INCREMENT);
+		transcodedMediaDataListener.handleTranscodedMediaData(videoData, timestamp += currentTimestampIncrement);
 	}
 	
 	@Override
@@ -64,9 +68,11 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void handleData(byte[] videoData, int offset, int len) {
+	public void handleData(byte[] videoData, int offset, int len, long timestampDelta) {
 		byte[] data = new byte[len];
 		System.arraycopy(videoData, offset, data, 0, len);
+
+		currentTimestampIncrement = timestampDelta;
 		transcode(data);		
 	}
 

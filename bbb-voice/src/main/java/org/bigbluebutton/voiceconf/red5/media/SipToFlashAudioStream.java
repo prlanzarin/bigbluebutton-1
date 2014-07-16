@@ -145,8 +145,8 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onMediaDataReceived(byte[] audioData, int offset, int len) {
-		transcoder.handleData(audioData, offset, len);
+	public void onMediaDataReceived(byte[] audioData, int offset, int len, long timestampDelta) {
+		transcoder.handleData(audioData, offset, len, timestampDelta);
 	}
 
 	@Override

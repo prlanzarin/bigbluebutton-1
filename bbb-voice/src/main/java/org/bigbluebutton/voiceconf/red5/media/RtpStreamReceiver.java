@@ -40,7 +40,10 @@ public class RtpStreamReceiver {
 	private RtpStreamReceiverListener listener;
     private final int payloadLength;
     private int lastSequenceNumber = 0;
+
     private long lastPacketTimestamp = 0;
+    private long lastTimestampDelta = 0;
+
     private boolean firstPacket = true;
     private boolean lastPacketDropped = false;
     private int successivePacketDroppedCount = 0;
@@ -97,11 +100,25 @@ public class RtpStreamReceiver {
         				log.debug("RTCP packet [" + rtpPacket.getRtcpPayloadType() + ", length=" + rtpPacket.getPayloadLength() + "] seqNum[rtpSeqNum=" + rtpPacket.getSeqNum() + ",lastSeqNum=" + lastSequenceNumber 
         					+ "][rtpTS=" + rtpPacket.getTimestamp() + ",lastTS=" + lastPacketTimestamp + "][port=" + rtpSocket.getDatagramSocket().getLocalPort() + "]");          			
         		} else {
-            		if (shouldHandlePacket(rtpPacket)) {        			            			
+            		if (shouldHandlePacket(rtpPacket)) {
+
+                        lastTimestampDelta = rtpPacket.getTimestamp() - lastPacketTimestamp;
+                        
+                        //for debuging...
+                        //if(rtpPacket.getTimestamp() < 7000)
+                            //log.debug("$$ lastPacketTimestamp= " + lastPacketTimestamp 
+                                //+      " rtpPacket.getTimestamp()= " + rtpPacket.getTimestamp()
+                                //+       " lastTimestampDelta= " + lastTimestampDelta);
+
+
+
+                        lastPacketTimestamp = rtpPacket.getTimestamp();
+
             			lastSequenceNumber = rtpPacket.getSeqNum();
-            			lastPacketTimestamp = rtpPacket.getTimestamp();
+
             			processRtpPacket(internalBuffer, RTP_HEADER_SIZE, rtpPacket.getPayloadLength());
-            		} else {
+            		
+                    } else {
             			if (log.isDebugEnabled())
             				log.debug("Corrupt packet [" + rtpPacket.getRtcpPayloadType() + "," + rtpPacket.getPayloadType() + ", length=" + rtpPacket.getPayloadLength() + "] seqNum[rtpSeqNum=" + rtpPacket.getSeqNum() + ",lastSeqNum=" + lastSequenceNumber 
             					+ "][rtpTS=" + rtpPacket.getTimestamp() + ",lastTS=" + lastPacketTimestamp + "][port=" + rtpSocket.getDatagramSocket().getLocalPort() + "]");          			       			
@@ -206,7 +223,7 @@ public class RtpStreamReceiver {
     }
 
     private void processRtpPacket(byte[] rtpMediaData, int offset, int len) {
-		if (listener != null) listener.onMediaDataReceived(rtpMediaData, offset, len);
+		if (listener != null) listener.onMediaDataReceived(rtpMediaData, offset, len, lastTimestampDelta);
 		else log.debug("No listener for incoming media packet");    	
     }
 }
