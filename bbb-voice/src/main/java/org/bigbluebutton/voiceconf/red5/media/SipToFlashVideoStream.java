@@ -69,7 +69,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		videoReceiverStreamName = "speakerVideoStream_" + System.currentTimeMillis();	
+		videoReceiverStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
 		mBuffer = IoBuffer.allocate(1024);
 		mBuffer = mBuffer.setAutoExpand(true);
 
