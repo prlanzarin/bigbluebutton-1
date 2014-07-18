@@ -42,8 +42,11 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 
 	public SpeexSipToFlashTranscoderImp(Codec codec) {
 		this.audioCodec = codec;
-        Random rgen = new Random();
-        timestamp = rgen.nextInt(1000);
+        //Random rgen = new Random();
+        //timestamp = rgen.nextInt(1000); //for now, we're going to start the audio timestamp with 0
+        								  //this way, we hope a better synchronizing with the video packets
+										  //because we're going to start the video timestamp with 0 as well.
+										  // - see H264SipToFlashTranscoderImp.java.
 	}
 
 	@Override
@@ -62,9 +65,11 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void handleData(byte[] audioData, int offset, int len) {
+	public void handleData(byte[] audioData, int offset, int len, long timestampDelta) {
 		byte[] data = new byte[len];
 		System.arraycopy(audioData, offset, data, 0, len);
+
+		//Here, we don't use the timestampDelta: instead, we use the constant TS_INCREMENT
 		transcode(data);		
 	}
 

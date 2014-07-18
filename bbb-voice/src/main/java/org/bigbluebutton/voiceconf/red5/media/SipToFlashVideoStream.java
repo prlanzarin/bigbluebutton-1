@@ -150,8 +150,8 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onMediaDataReceived(byte[] videoData, int offset, int len) {
-		transcoder.handleData(videoData, offset, len);
+	public void onMediaDataReceived(byte[] videoData, int offset, int len, long timestampDelta) {
+		transcoder.handleData(videoData, offset, len, timestampDelta);
 	}	
 
 
