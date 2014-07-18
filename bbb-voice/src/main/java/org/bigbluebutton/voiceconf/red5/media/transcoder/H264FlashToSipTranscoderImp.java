@@ -46,7 +46,7 @@ public class H264FlashToSipTranscoderImp implements FlashToSipTranscoder {
 	
 	public void transcode(byte[] videoData, int startOffset, int length) {
 		byte[] transcodedVideo = new byte[length];
-		// Just copy the audio data removing the codec id which is the first-byte
+		// Just copy the video data removing the codec id which is the first-byte
 		// represented by the startOffset var.
 		System.arraycopy(videoData, startOffset, transcodedVideo, 0, length);
 		transcodedMediaDataListener.handleTranscodedMediaData(transcodedVideo, timestamp += TS_INCREMENT);

@@ -65,6 +65,7 @@ package org.bigbluebutton.modules.phone.managers {
 			this.username  = username;
 			this.room = room;
 			this.uri   = uri;
+			LogUtil.info("Client URI**********:" +uri);
 			connectToServer(externUID, username);
 		}
 		

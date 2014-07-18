@@ -136,7 +136,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         if (peerId != null) {
         	super.streamPublishStart(stream);
 	    	sipPeerManager.startTalkStream(peerId, clientId, stream, conn.getScope());
-            //sipPeerManager.startVideoStream(peerId, clientId, stream, conn.getScope());
+            sipPeerManager.startVideoStream(peerId, clientId, stream, conn.getScope());
 //	    	recordStream(stream);
         }
     }

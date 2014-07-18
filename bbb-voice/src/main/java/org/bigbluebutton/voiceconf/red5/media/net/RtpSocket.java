@@ -39,6 +39,9 @@ public class RtpSocket {
    int r_port;
 
    private final byte[] payload = new byte[10];
+
+   private final DatagramPacket txDatagram = new DatagramPacket(payload, payload.length);
+   private final DatagramPacket rxDatagram = new DatagramPacket(payload, payload.length);
    
    /** Creates a new RTP socket (only receiver) */ 
    public RtpSocket(DatagramSocket datagram_socket) {  
@@ -59,7 +62,7 @@ public class RtpSocket {
 	   return socket;
    }
 
-   private final DatagramPacket rxDatagram = new DatagramPacket(payload, payload.length);
+   
    
    /** Receives a RTP packet from this socket */
    public void receive(RtpPacket rtpp) throws IOException {  
@@ -68,7 +71,7 @@ public class RtpSocket {
 	   rtpp.setPacketLength(rxDatagram.getLength());     
    }
    
-   private final DatagramPacket txDatagram = new DatagramPacket(payload, payload.length);
+   
    
    /** Sends a RTP packet from this socket */      
    public void send(RtpPacket rtpp) throws IOException {  

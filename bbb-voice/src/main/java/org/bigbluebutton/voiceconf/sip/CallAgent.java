@@ -213,6 +213,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
             createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+            //log.debug("VIDEO stream created");
         }else log.debug("VIDEO application is already running.");
     }
 
@@ -250,15 +251,19 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
        SipConnectInfo connInfo = new SipConnectInfo(localVideoSocket, remoteMediaAddress, remoteVideoPort);
        try {
             localVideoSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteVideoPort);        
-
+            
             if (userProfile.video && localVideoPort != 0 && remoteVideoPort != 0) {
                 if ((videoCallStream == null) && (sipVideoCodec != null)) {                  
                     try {
                         log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
-                        //videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo);
-                        //videoCallStream.addCallStreamObserver(this);
-                        //videoCallStream.start();
+                        videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo,CallStream.MEDIA_TYPE_VIDEO);                                                
+                        log.debug("VIDEO stream created");
+                        videoCallStream.addCallStreamObserver(this);
+                        videoCallStream.start();
+                        log.debug("VIDEO stream : Sender - "+videoCallStream.getSenderStreamName()+" Receiver - "+ videoCallStream.getReceiverStreamName());
                         //notifyListenersOnCallConnected(videoCallStream.getSenderStreamName(), videoCallStream.getReceiverStreamName());
+                        
+                            
                     } catch (Exception e) {
                         log.error("Failed to create VIDEO Call Stream.");
                         System.out.println(StackTraceUtil.getStackTrace(e));
@@ -276,6 +281,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void startStream(IBroadcastStream broadcastStream, IScope scope) {
     	try {
 			audioCallStream.startStream(broadcastStream, scope);
+
 		} catch (StreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

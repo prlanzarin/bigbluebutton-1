@@ -53,7 +53,7 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 		this.transcoder = transcoder;
 		this.srcSocket = srcSocket;
 		this.connInfo = connInfo;		
-		videoStreamName = "video_" + System.currentTimeMillis();
+		videoStreamName = "BbbToFreeswitchVideoStream_" + System.currentTimeMillis();
 		rtpSender = new RtpStreamSender(srcSocket, connInfo);	    
 		transcoder.setTranscodedMediaDataListener(this);	    
 		

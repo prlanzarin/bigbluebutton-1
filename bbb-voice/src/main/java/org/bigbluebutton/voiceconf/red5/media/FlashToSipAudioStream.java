@@ -48,7 +48,7 @@ public class FlashToSipAudioStream implements FlashToSipStream {
 		this.transcoder = transcoder;
 		this.srcSocket = srcSocket;
 		this.connInfo = connInfo;		
-		talkStreamName = "microphone_" + System.currentTimeMillis();
+		talkStreamName = "BbbToFreeswitchAudioStream_" + System.currentTimeMillis();
 		rtpSender = new RtpStreamSender(srcSocket, connInfo);			    
 	    transcoder.setTranscodedMediaDataListener(this);
 		
