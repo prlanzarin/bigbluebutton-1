@@ -38,7 +38,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 
 	private BroadcastStream audioBroadcastStream;
 	private IScope scope;
-	private final String listenStreamName;
+	private final String freeswitchToBbbAudioStreamName;
 	private RtpStreamReceiver rtpStreamReceiver;
 	private StreamObserver observer;
 
@@ -66,7 +66,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		listenStreamName = "speakerAudioStream_" + System.currentTimeMillis();	
+		freeswitchToBbbAudioStreamName = "freeswitchToBbbAudioStream_" + System.currentTimeMillis();	
 		mBuffer = IoBuffer.allocate(1024);
 		mBuffer = mBuffer.setAutoExpand(true);
 
@@ -76,7 +76,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 
 	@Override
 	public String getStreamName() {
-		return listenStreamName;
+		return freeswitchToBbbAudioStreamName;
 	}
 
 	@Override
@@ -87,24 +87,24 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	@Override
 	public void stop() {
 			if (log.isDebugEnabled()) 
-				log.debug("Stopping AUDIO stream for {}", listenStreamName);
+				log.debug("Stopping AUDIO stream for {}", freeswitchToBbbAudioStreamName);
 
 			transcoder.stop();
 			rtpStreamReceiver.stop();
 
 			if (log.isDebugEnabled()) 
-				log.debug("Stopped RTP AUDIO Stream Receiver for {}", listenStreamName);
+				log.debug("Stopped RTP AUDIO Stream Receiver for {}", freeswitchToBbbAudioStreamName);
 
 			if (audioBroadcastStream != null) {
 				audioBroadcastStream.stop();
 
 				if (log.isDebugEnabled()) 
-					log.debug("Stopped audioBroadcastStream for {}", listenStreamName);
+					log.debug("Stopped audioBroadcastStream for {}", freeswitchToBbbAudioStreamName);
 
 				audioBroadcastStream.close();
 
 			    if (log.isDebugEnabled()) 
-			    	log.debug("Closed audioBroadcastStream for {}", listenStreamName);
+			    	log.debug("Closed audioBroadcastStream for {}", freeswitchToBbbAudioStreamName);
 			} 
 
 			else
@@ -120,14 +120,14 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 		if (log.isDebugEnabled()) 
 			log.debug("started publishing AUDIO stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
 
-		audioBroadcastStream = new BroadcastStream(listenStreamName);
-		audioBroadcastStream.setPublishedName(listenStreamName);
+		audioBroadcastStream = new BroadcastStream(freeswitchToBbbAudioStreamName);
+		audioBroadcastStream.setPublishedName(freeswitchToBbbAudioStreamName);
 		audioBroadcastStream.setScope(scope);
 		
 		IContext context = scope.getContext();
 		
 		IProviderService providerService = (IProviderService) context.getBean(IProviderService.BEAN_NAME);
-		if (providerService.registerBroadcastStream(scope, listenStreamName, audioBroadcastStream)){
+		if (providerService.registerBroadcastStream(scope, freeswitchToBbbAudioStreamName, audioBroadcastStream)){
 			// Do nothing. Successfully registered a live broadcast stream. (ralam Sept. 4, 2012)
 		} else{
 			log.error("could not register broadcast stream");

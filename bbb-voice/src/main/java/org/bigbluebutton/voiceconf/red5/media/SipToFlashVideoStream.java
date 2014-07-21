@@ -40,7 +40,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	private BroadcastStream videoBroadcastStream;
 	private IScope scope;
-	private final String videoReceiverStreamName;
+	private final String freeswitchToBbbVideoStreamName;
 	private RtpStreamReceiver rtpStreamReceiver;
 	private StreamObserver observer;
 
@@ -69,7 +69,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		videoReceiverStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
+		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
 		mBuffer = IoBuffer.allocate(1024);
 		mBuffer = mBuffer.setAutoExpand(true);
 
@@ -80,7 +80,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	@Override
 	public String getStreamName() {
-		return videoReceiverStreamName;
+		return freeswitchToBbbVideoStreamName;
 	}
 
 	@Override
@@ -91,24 +91,24 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	@Override
 	public void stop() {
 			if (log.isDebugEnabled()) 
-				log.debug("Stopping VIDEO stream for {}", videoReceiverStreamName);
+				log.debug("Stopping VIDEO stream for {}", freeswitchToBbbVideoStreamName);
 
 			transcoder.stop();
 			rtpStreamReceiver.stop();
 
 			if (log.isDebugEnabled()) 
-				log.debug("Stopped RTP VIDEO Stream Receiver for {}", videoReceiverStreamName);
+				log.debug("Stopped RTP VIDEO Stream Receiver for {}", freeswitchToBbbVideoStreamName);
 
 			if (videoBroadcastStream != null) {
 				videoBroadcastStream.stop();
 
 				if (log.isDebugEnabled()) 
-					log.debug("Stopped videoBroadcastStream for {}", videoReceiverStreamName);
+					log.debug("Stopped videoBroadcastStream for {}", freeswitchToBbbVideoStreamName);
 
 				videoBroadcastStream.close();
 
 			    if (log.isDebugEnabled()) 
-			    	log.debug("Closed videoBroadcastStream for {}", videoReceiverStreamName);
+			    	log.debug("Closed videoBroadcastStream for {}", freeswitchToBbbVideoStreamName);
 			} 
 
 			else
@@ -125,14 +125,14 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		if (log.isDebugEnabled()) 
 			log.debug("started publishing VIDEO stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
 
-		videoBroadcastStream = new BroadcastStream(videoReceiverStreamName);
-		videoBroadcastStream.setPublishedName(videoReceiverStreamName);
+		videoBroadcastStream = new BroadcastStream(freeswitchToBbbVideoStreamName);
+		videoBroadcastStream.setPublishedName(freeswitchToBbbVideoStreamName);
 		videoBroadcastStream.setScope(scope);
 		
 		IContext context = scope.getContext();
 		
 		IProviderService providerService = (IProviderService) context.getBean(IProviderService.BEAN_NAME);
-		if (providerService.registerBroadcastStream(scope, videoReceiverStreamName, videoBroadcastStream)){
+		if (providerService.registerBroadcastStream(scope, freeswitchToBbbVideoStreamName, videoBroadcastStream)){
 			// Do nothing. Successfully registered a live broadcast stream. (ralam Sept. 4, 2012)
 		} else{
 			log.error("could not register broadcast stream");

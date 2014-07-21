@@ -213,7 +213,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
             createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
-            //log.debug("VIDEO stream created");
         }else log.debug("VIDEO application is already running.");
     }
 
@@ -231,7 +230,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
-                        notifyListenersOnCallConnected(audioCallStream.getSenderStreamName(), audioCallStream.getReceiverStreamName());
+                        notifyListenersOnCallConnected(audioCallStream.getBbbToFreeswitchStreamName(), 
+                                                       audioCallStream.getFreeswitchToBbbStreamName());
                     } catch (Exception e) {
                         log.error("Failed to create AUDIO Call Stream.");
                         System.out.println(StackTraceUtil.getStackTrace(e));
@@ -260,8 +260,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         log.debug("VIDEO stream created");
                         videoCallStream.addCallStreamObserver(this);
                         videoCallStream.start();
-                        log.debug("VIDEO stream : Sender - "+videoCallStream.getSenderStreamName()+" Receiver - "+ videoCallStream.getReceiverStreamName());
-                        //notifyListenersOnCallConnected(videoCallStream.getSenderStreamName(), videoCallStream.getReceiverStreamName());
+                        log.debug("VIDEO stream : Sender - "+videoCallStream.getBbbToFreeswitchStreamName()+" Receiver - "+ videoCallStream.getFreeswitchToBbbStreamName());
+                        /*notifyListenersOnCallConnected(videoCallStream.getBbbToFreeswitchStreamName(), 
+                                                       videoCallStream.getFreeswitchToBbbStreamName());*/
                         
                             
                     } catch (Exception e) {
@@ -272,7 +273,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             }
 
         } catch (UnknownHostException e1) {
-            log.error("$$ Failed to connect for VIDEO Stream.");
+            log.error("Failed to connect for VIDEO Stream.");
             log.error(StackTraceUtil.getStackTrace(e1));
         }       
     }
