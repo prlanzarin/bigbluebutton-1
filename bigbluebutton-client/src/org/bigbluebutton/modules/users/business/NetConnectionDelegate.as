@@ -89,6 +89,23 @@ package org.bigbluebutton.modules.users.business
 			_netConnection.call("meetmeService.muteUnmuteUser", null, userid, mute);
 		}
 
+		public function dial(options:Array, params:Array):void
+		{
+			LogUtil.info(LOGNAME + "Dialing.");
+			_netConnection.call("meetmeService.dial", null, options, params);
+		}
+		
+		public function cancelDial(cancelDialIdName:String, cancelDialDestination:String):void
+		{
+			LogUtil.info(LOGNAME + "Cancelling dial.");
+			_netConnection.call("meetmeService.cancelDial", null, cancelDialIdName, cancelDialDestination);
+		}
+		
+		public function clearDial(cancelDialIdName:String, cancelDialDestination:String):void
+		{
+			LogUtil.info(LOGNAME + "Clearing dial.");
+			_netConnection.call("meetmeService.clearDial", null, cancelDialIdName, cancelDialDestination);
+		}
 
 		public function ejectUser(userid:Number) : void
 		{

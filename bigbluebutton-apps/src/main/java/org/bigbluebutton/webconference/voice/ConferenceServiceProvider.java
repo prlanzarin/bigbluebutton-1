@@ -17,12 +17,16 @@
 *
 */
 package org.bigbluebutton.webconference.voice;
+import java.util.HashMap;
 
 public interface ConferenceServiceProvider {
 	public boolean startup();
 	public void shutdown();
 	public void populateRoom(String room);
-	public void mute(String room, Integer participant, Boolean mute);	
+	public void mute(String room, Integer participant, Boolean mute);
+	public void dial(String room, HashMap<String, String> options, HashMap<String, String> params);
+	public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination);
+	public void clearDial(String room, String cancelDialIdName, String cancelDialDestination);
 	public void eject(String room, Integer participant);
 	public void ejectAll(String room);
 	public void record(String room, String meetingid);

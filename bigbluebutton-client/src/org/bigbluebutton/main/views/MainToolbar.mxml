@@ -42,6 +42,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import com.asfusion.mate.events.Dispatcher;
 			
 			import mx.core.UIComponent;
+			import mx.managers.PopUpManager;
 			
 			import org.bigbluebutton.common.IBbbToolbarComponent;
 			import org.bigbluebutton.common.LogUtil;
@@ -55,6 +56,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.events.LogoutEvent;
 			import org.bigbluebutton.main.events.SettingsEvent;
 			import org.bigbluebutton.main.events.ShortcutEvent;
+			import org.bigbluebutton.core.events.VoiceConfEvent;
 			import org.bigbluebutton.main.events.SuccessfulLoginEvent;
 			import org.bigbluebutton.main.model.LayoutOptions;
 			import org.bigbluebutton.main.model.users.events.ConferenceCreatedEvent;
@@ -89,6 +91,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			 */
 			
 			private var xml:XML;
+			private var dialPopup:DialWindow = null;
 			
 			private function init():void{
 				if (Capabilities.hasAccessibility) {
@@ -319,6 +322,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				d.dispatchEvent(new ShortcutEvent(ShortcutEvent.OPEN_SHORTCUT_WIN));
 			}
 			
+			private function onDialButtonClick(e:Event = null):void {			
+				dialPopup = DialWindow(PopUpManager.createPopUp(this.parent, DialWindow, true));
+			}
+			
 			private function focusShortcutButton(e:ShortcutEvent):void{
 				shortcutKeysBtn.setFocus();
 			}
@@ -350,9 +357,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mx:Spacer width="50%"/>
     <mx:Label id="meetingNameLbl" styleName="meetingNameLabelStyle" />
     <mx:Spacer width="50%"/>
+    <mx:Button id="dialBtn" label="{ResourceUtil.getInstance().getString('bbb.mainToolbar.dialBtn')}" 
+                click="onDialButtonClick()" toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.dialBtn.toolTip')}"
+                height="22" tabIndex="{baseIndex+numButtons+11}" />
 	<views:LanguageSelector id="langSelector" 
 							visible="false" 
-							tabIndex="{baseIndex+numButtons+11}"
+							tabIndex="{baseIndex+numButtons+12}"
 							accessibilityName="{ResourceUtil.getInstance().getString('bbb.mainToolbar.langSelector')}"
 							styleName="languageSelectorStyle" />
 <!--
@@ -361,12 +371,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mx:Button id="shortcutKeysBtn" label="{ResourceUtil.getInstance().getString('bbb.mainToolbar.shortcutBtn')}" styleName="shortcutButtonStyle"
              click="onShortcutButtonClick()" height="22" 
              toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.shortcutBtn.toolTip')}" 
-             tabIndex="{baseIndex+numButtons+12}" />
+             tabIndex="{baseIndex+numButtons+13}" />
 	<mx:LinkButton id="helpBtn" visible="{showHelpBtn}" label="?" click="onHelpButtonClicked()" height="22" 
-                   styleName="helpLinkButtonStyle" tabIndex="{baseIndex+numButtons+13}" 
+                   styleName="helpLinkButtonStyle" tabIndex="{baseIndex+numButtons+14}" 
                    toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.helpBtn')}" 
 				   accessibilityDescription="{ResourceUtil.getInstance().getString('bbb.mainToolbar.helpBtn')}"/>
 	<mx:Button label="" id="btnLogout" styleName="logoutButtonStyle"
                  toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.logoutBtn.toolTip')}" right="10" click="confirmLogout()" height="22"
-                 tabIndex="{baseIndex+numButtons+14}" />
+                 tabIndex="{baseIndex+numButtons+15}" />
 </mx:ApplicationControlBar>

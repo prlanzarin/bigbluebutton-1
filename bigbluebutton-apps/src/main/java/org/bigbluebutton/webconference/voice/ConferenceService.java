@@ -21,11 +21,13 @@ package org.bigbluebutton.webconference.voice;
 import java.util.ArrayList;
 import org.bigbluebutton.webconference.red5.voice.ClientManager;
 import org.bigbluebutton.webconference.voice.events.ConferenceEvent;
+import org.bigbluebutton.webconference.voice.events.DialEvent;
 import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.events.ParticipantLockedEvent;
 import org.bigbluebutton.webconference.voice.internal.RoomManager;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
+import java.util.HashMap;
 
 public class ConferenceService implements ConferenceEventListener {
 	private static Logger log = Red5LoggerFactory.getLogger(ConferenceService.class, "bigbluebutton");
@@ -105,7 +107,19 @@ public class ConferenceService implements ConferenceEventListener {
 	}
 	
 	private void muteParticipant(Integer participant, String room, Boolean mute) {
-		confProvider.mute(room, participant, mute);		
+		confProvider.mute(room, participant, mute);	
+	}
+
+	public void dial(String room, HashMap<String, String> options, HashMap<String, String> params) {
+		confProvider.dial(room, options, params);
+	}
+	
+	public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination) {
+		confProvider.cancelDial(room, cancelDialIdName, cancelDialDestination);
+	}
+	
+	public void clearDial(String room, String cancelDialIdName, String cancelDialDestination) {
+		confProvider.clearDial(room, cancelDialIdName, cancelDialDestination);
 	}
 	
 	public void eject(Integer participant, String room) {
@@ -133,6 +147,10 @@ public class ConferenceService implements ConferenceEventListener {
 	public void handleConferenceEvent(ConferenceEvent event) {
 		roomMgr.processConferenceEvent(event);
 		clientManager.handleConferenceEvent(event);
+	}
+	
+	public void handleDialEvent(DialEvent event) {
+	    clientManager.handleDialEvent(event);
 	}
 	
 	public void setClientManager(ClientManager c) {

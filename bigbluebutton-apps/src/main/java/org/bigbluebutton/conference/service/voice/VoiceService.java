@@ -17,12 +17,20 @@
 *
 */
 package org.bigbluebutton.conference.service.voice;
-import org.slf4j.Logger;import org.red5.server.api.Red5;import org.bigbluebutton.conference.BigBlueButtonSession;import org.bigbluebutton.conference.Constants;import org.red5.logging.Red5LoggerFactory;
-import org.bigbluebutton.webconference.voice.ConferenceService;import java.util.ArrayList;import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.red5.server.api.Red5;
+import org.bigbluebutton.conference.BigBlueButtonSession;
+import org.bigbluebutton.conference.Constants;
+import org.red5.logging.Red5LoggerFactory;
+import org.bigbluebutton.webconference.voice.ConferenceService;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.bigbluebutton.webconference.voice.Participant;
+import org.bigbluebutton.webconference.voice.Participant;
+
 public class VoiceService {
 	
 	private static Logger log = Red5LoggerFactory.getLogger( VoiceService.class, "bigbluebutton" );
@@ -80,8 +88,47 @@ public class VoiceService {
 	
 	public void muteUnmuteUser(Integer userid,Boolean mute) {
 		String conference = getBbbSession().getVoiceBridge();    	
-    	log.debug("MuteUnmute request for user [" + userid + "] in room[" + conference + "]");
-    	conferenceService.mute(userid, conference, mute);
+    		log.debug("MuteUnmute request for user [" + userid + "] in room[" + conference + "]");
+    		conferenceService.mute(userid, conference, mute);
+
+		/*String room = conference;
+		HashMap<String, String> options = new HashMap<String, String>(10);
+		options.put("origination_callee_id_name", "Professor");
+		options.put("effective_caller_id_name", "Student");
+		options.put("origination_caller_id_name", "Student");
+
+		HashMap<String, String> params = new HashMap<String, String>(10);
+		params.put("module_profile", "sofia/external/");
+		params.put("destination", "72013@10.0.3.211");
+		params.put("caller_number", "72100");
+		params.put("caller_name", "Professor");
+
+		System.out.println("[VoiceService] conferenceService.dial()");
+		conferenceService.dial(room, options, params);*/
+	}
+
+	public void dial(Map<String, String> opt, Map<String, String> par) {
+		String conference = getBbbSession().getVoiceBridge();
+		log.debug("Dial from [" + conference + "] to destination [" + par.get("destination") + "]");
+
+		HashMap<String, String> options = new HashMap<String, String>(opt);
+		HashMap<String, String> params = new HashMap<String, String>(par);
+                                        
+		conferenceService.dial(conference, options, params);
+	}
+	
+	public void cancelDial(String cancelDialIdName, String cancelDialDestination) {
+		String conference = getBbbSession().getVoiceBridge();
+		log.debug("Cancel dial from [" + conference + "].");
+
+		conferenceService.cancelDial(conference, cancelDialIdName, cancelDialDestination);
+	}
+	
+	public void clearDial(String cancelDialIdName, String cancelDialDestination) {
+		String conference = getBbbSession().getVoiceBridge();
+		log.debug("Clear dial from [" + conference + "].");
+
+		conferenceService.clearDial(conference, cancelDialIdName, cancelDialDestination);
 	}
 
 	public void lockMuteUser(Integer userid, Boolean lock) {

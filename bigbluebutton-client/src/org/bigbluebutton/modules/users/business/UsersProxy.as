@@ -80,6 +80,21 @@ package org.bigbluebutton.modules.users.business
 		{
 			_listenersService.muteUnmuteUser(command.userid, command.mute);		
 		}
+
+		public function dial(command:VoiceConfEvent):void
+		{
+			_listenersService.dial(command.dialOptions, command.dialParams);
+		}
+		
+		public function cancelDial(command:VoiceConfEvent):void
+		{
+			_listenersService.cancelDial(command.cancelDialIdName, command.cancelDialDestination);
+		}
+		
+		public function clearDial(command:VoiceConfEvent):void
+		{
+			_listenersService.clearDial(command.cancelDialIdName, command.cancelDialDestination);
+		}
 		
 		public function muteAllUsers(command:VoiceConfEvent):void
 		{	

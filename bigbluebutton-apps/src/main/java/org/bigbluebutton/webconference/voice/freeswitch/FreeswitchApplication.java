@@ -35,9 +35,12 @@ import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectAllUsersCom
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectParticipantCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.PopulateRoomCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.MuteParticipantCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.DialCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.CancelDialCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.RecordConferenceCommand;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
+import java.util.HashMap;
 
 
 public class FreeswitchApplication implements ConferenceServiceProvider {
@@ -65,6 +68,31 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
     public void mute(String room, Integer participant, Boolean mute) {
         MuteParticipantCommand mpc = new MuteParticipantCommand(room, participant, mute, USER);
         manager.mute(mpc);
+    }
+
+    @Override
+    public void dial(String room, HashMap<String, String> options, HashMap<String, String> params) {
+	    DialCommand dc = new DialCommand(room, options, params, USER);
+	    manager.dial(dc);
+    }
+    
+    @Override
+    public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination) {
+	    System.out.println("[FreeswitchApplication] room: " + room);
+	    System.out.println("[FreeswitchApplication] cancelDialIdName: " + cancelDialIdName);
+	    System.out.println("[FreeswitchApplication] cancelDialDestination: " + cancelDialDestination);
+	    
+	    CancelDialCommand cdc = new CancelDialCommand(room);
+	    manager.cancelDial(cdc, cancelDialIdName, cancelDialDestination);
+    }
+    
+    @Override
+    public void clearDial(String room, String cancelDialIdName, String cancelDialDestination) {
+	    System.out.println("[FreeswitchApplication] room: " + room);
+	    System.out.println("[FreeswitchApplication] cancelDialIdName: " + cancelDialIdName);
+	    System.out.println("[FreeswitchApplication] cancelDialDestination: " + cancelDialDestination);
+	    
+	    manager.removeDialReference(cancelDialIdName, cancelDialDestination);
     }
 
     @Override

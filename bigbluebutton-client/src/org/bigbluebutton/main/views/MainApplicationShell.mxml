@@ -45,6 +45,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mate:Listener type="{ToolbarButtonEvent.ADD}" method="handleAddToolbarComponent" />	
 	<mate:Listener type="{ToolbarButtonEvent.REMOVE}" method="handleRemoveToolbarComponent"/>
 	<mate:Listener type="{ShortcutEvent.OPEN_SHORTCUT_WIN}" method="openShortcutHelpWindow" />
+	
   	<mate:Listener type="{BBBEvent.OPEN_WEBCAM_PREVIEW}" method="openVideoPreviewWindow" />
 	  
 	<mx:Script>
@@ -81,6 +82,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.events.PortTestEvent;
 			import org.bigbluebutton.main.events.RecordStatusEvent;
 			import org.bigbluebutton.main.events.ShortcutEvent;
+			import org.bigbluebutton.core.events.VoiceConfEvent;
 			import org.bigbluebutton.main.events.SuccessfulLoginEvent;
 			import org.bigbluebutton.main.model.LayoutOptions;
 			import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
@@ -108,7 +110,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			[Bindable] private var fullscreen_icon:Class = images.full_screen;
 			[Bindable] private var logs_icon:Class = images.table;
 			[Bindable] private var reset_layout_icon:Class = images.layout;
-      [Bindable] private var statsIcon:Class = images.bandwidth;
+                        [Bindable] private var statsIcon:Class = images.bandwidth;
       
 			private var receivedConfigLocaleVer:Boolean = false;
 			private var receivedResourceLocaleVer:Boolean = false;
@@ -121,11 +123,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			
 			[Bindable] private var showToolbarOpt:Boolean = true;
 			[Bindable] private var toolbarHeight:Number = 32;
-      [Bindable] private var toolbarPaddingTop:Number = 4;
-      [Bindable] private var showFooterOpt:Boolean = true;
-      [Bindable] private var footerHeight:Number = 24;
+                        [Bindable] private var toolbarPaddingTop:Number = 4;
+                        [Bindable] private var showFooterOpt:Boolean = true;
+                        [Bindable] private var footerHeight:Number = 24;
       
-      [Bindable] private var isTunneling:Boolean = false;
+                        [Bindable] private var isTunneling:Boolean = false;
 			
 			private var confirmingLogout:Boolean = false;
       
@@ -241,7 +243,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				mdiCanvas.windowManager.absPos(scWindow, mdiCanvas.width/2 - 150, mdiCanvas.height/2 - 150);
 				
 				scWindow.focusHead();
-			}
+			}		
 			
 			private function toggleFullScreen():void{
 	   			LogUtil.debug("Toggling fullscreen");

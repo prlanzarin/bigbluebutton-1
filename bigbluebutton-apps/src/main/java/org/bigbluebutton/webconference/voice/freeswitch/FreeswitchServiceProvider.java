@@ -25,6 +25,7 @@ import org.bigbluebutton.webconference.voice.ConferenceServiceProvider;
 import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
+import java.util.HashMap;
 
 public class FreeswitchServiceProvider implements ConferenceServiceProvider {
 	private static Logger log = Red5LoggerFactory.getLogger(FreeswitchServiceProvider.class, "bigbluebutton");
@@ -64,6 +65,21 @@ public class FreeswitchServiceProvider implements ConferenceServiceProvider {
 	@Override
 	public void mute(String room, Integer participant, Boolean mute) {
 		appDelegate.mute(room, participant, mute);
+	}
+
+	@Override
+	public void dial(String room, HashMap<String, String> options, HashMap<String, String> params) {
+		appDelegate.dial(room, options, params);
+	}
+	
+	@Override
+	public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination) {
+		appDelegate.cancelDial(room, cancelDialIdName, cancelDialDestination);
+	}
+	
+	@Override
+	public void clearDial(String room, String cancelDialIdName, String cancelDialDestination) {
+		appDelegate.clearDial(room, cancelDialIdName, cancelDialDestination);
 	}
 
 	@Override

@@ -33,6 +33,7 @@ package org.bigbluebutton.modules.users.business
 	import org.bigbluebutton.main.model.users.BBBUser;
 	import org.bigbluebutton.main.model.users.Conference;
 	import org.bigbluebutton.modules.users.events.UsersEvent;
+	import org.bigbluebutton.core.events.VoiceConfEvent;
 	
 	public class ListenersSOService {
 		private static const LOGNAME:String = "[ListenersSOService]";		
@@ -216,6 +217,19 @@ package org.bigbluebutton.modules.users.business
 			}	
 		}
 		
+		public function dialing(state:String):void {
+		    var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.DIALING);
+		    event.dialState = state;
+		    globalDispatcher.dispatchEvent(event);
+		}
+		
+		public function hangingup(state:String, hangupCause:String):void {
+		    var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.HANGINGUP);
+		    event.dialState = state;
+		    event.dialHangupCause = hangupCause;
+		    globalDispatcher.dispatchEvent(event);
+		}
+		
 		public function userLeft(userID:Number):void {
 			var l:BBBUser = _conference.getVoiceUser(userID);
 			/**
@@ -278,7 +292,7 @@ package org.bigbluebutton.modules.users.business
 		}
 		
 		public function muteUnmuteUser(userid:Number, mute:Boolean):void {
-			var nc:NetConnection = _module.connection;
+			var nc:NetConnection = _module.connection;			
 			nc.call(
 				"voice.muteUnmuteUser",// Remote function name
 				new Responder(
@@ -296,7 +310,73 @@ package org.bigbluebutton.modules.users.business
 				),//new Responder
 				userid,
 				mute
-			); //_netConnection.call		
+			); //_netConnection.call
+		}
+
+		public function dial(options:Array, params:Array):void {
+			var nc:NetConnection = _module.connection;			
+			nc.call(
+				"voice.dial",// Remote function name
+				new Responder(
+					// participants - On successful result
+					function(result:Object):void { 
+						LogUtil.debug("Successfully dial"); 	
+					},	
+					// status - On error occurred
+					function(status:Object):void { 
+						LogUtil.error("Error occurred:"); 
+						for (var x:Object in status) { 
+							LogUtil.error(x + " : " + status[x]); 
+						} 
+					}
+				),//new Responder
+				options,
+				params
+			); //_netConnection.call
+		}
+		
+		public function cancelDial(cancelDialIdName:String, cancelDialDestination:String):void {
+			var nc:NetConnection = _module.connection;			
+			nc.call(
+				"voice.cancelDial",// Remote function name
+				new Responder(
+					// participants - On successful result
+					function(result:Object):void { 
+						LogUtil.debug("Successfully cancelling dial"); 	
+					},	
+					// status - On error occurred
+					function(status:Object):void { 
+						LogUtil.error("Error occurred:"); 
+						for (var x:Object in status) { 
+							LogUtil.error(x + " : " + status[x]); 
+						} 
+					}
+				),//new Responder
+				cancelDialIdName,
+				cancelDialDestination
+			); //_netConnection.call
+		}
+		
+		public function clearDial(cancelDialIdName:String, cancelDialDestination:String):void {
+			var nc:NetConnection = _module.connection;			
+			nc.call(
+				"voice.clearDial",// Remote function name
+				new Responder(
+					// participants - On successful result
+					function(result:Object):void { 
+						LogUtil.debug("Successfully clearing dial"); 	
+					},	
+					// status - On error occurred
+					function(status:Object):void { 
+						LogUtil.error("Error occurred:"); 
+						for (var x:Object in status) { 
+							LogUtil.error(x + " : " + status[x]); 
+						} 
+					}
+				),//new Responder
+				cancelDialIdName,
+				cancelDialDestination
+			); //_netConnection.call
 		}
 		
 		public function muteAllUsers(mute:Boolean):void {	

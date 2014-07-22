@@ -61,6 +61,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<EventHandlers type="{VoiceConfEvent.MUTE_USER}" >
 		<MethodInvoker generator="{UsersProxy}" method="muteUnmuteUser" arguments="{event}" />
 	</EventHandlers>
+
+	<EventHandlers type="{VoiceConfEvent.DIAL}" >
+		<MethodInvoker generator="{UsersProxy}" method="dial" arguments="{event}" />
+	</EventHandlers>
+	
+	<EventHandlers type="{VoiceConfEvent.CANCEL_DIAL}" >
+		<MethodInvoker generator="{UsersProxy}" method="cancelDial" arguments="{event}" />
+	</EventHandlers>
+	
+	<EventHandlers type="{VoiceConfEvent.CLEAR_DIAL}" >
+		<MethodInvoker generator="{UsersProxy}" method="clearDial" arguments="{event}" />
+	</EventHandlers>
 	
 	<EventHandlers type="{VoiceConfEvent.MUTE_ALL}" >
 		<MethodInvoker generator="{UsersProxy}" method="muteAllUsers" arguments="{event}" />

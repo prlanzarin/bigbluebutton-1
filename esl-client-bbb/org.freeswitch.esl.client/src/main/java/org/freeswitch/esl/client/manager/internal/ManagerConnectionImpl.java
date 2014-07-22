@@ -64,6 +64,8 @@ public class ManagerConnectionImpl implements ManagerConnection
         esl_client.addEventFilter( "Event-Name", "heartbeat" );
         esl_client.addEventFilter( "Event-Name", "custom" );
         esl_client.addEventFilter( "Event-Name", "background_job" );
+        esl_client.addEventFilter( "Event-Name", "channel_callstate" );
+        esl_client.addEventFilter( "Event-Name", "channel_hangup_complete" );        
         
         try {
             Thread.sleep(5000);

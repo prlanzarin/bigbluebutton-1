@@ -24,18 +24,32 @@ package org.bigbluebutton.core.events
 	{
 		public static const MUTE_ALL:String = "VOICECONF_MUTE_ALL";
 		public static const UNMUTE_ALL:String = "VOICECONF_UNMUTE_ALL";
-    public static const LOCK_MUTE_USER:String = "LOCK_MUTE_USER";
+                public static const LOCK_MUTE_USER:String = "LOCK_MUTE_USER";
 		public static const MUTE_ALMOST_ALL:String = "VOICECONF_MUTE_ALMOST_ALL";
 		
 		public static const MUTE_USER:String = "VOICECONF_MUTE_USER";
 		public static const UNMUTE_USER:String = "VOICECONF_UNMUTE_USER";
 		
 		public static const EJECT_USER:String = "VOICECONF_EJECT_USER";
+
+		public static const DIAL:String = "VOICECONF_DIAL";
+		
+		public static const DIALING:String = "VOICECONF_DIALING";
+		public static const HANGINGUP:String = "VOICECONF_HANGINGUP";
+		public static const CANCEL_DIAL:String = "VOICECONF_CANCEL_DIAL";
+		public static const CLEAR_DIAL:String = "VOICECONF_CLEAR_DIAL";
 		
 		public var userid:int;
 		public var mute:Boolean;
-    public var lock:Boolean;
+        public var lock:Boolean;
 		
+		public var dialOptions:Array;
+		public var dialParams:Array;
+		public var dialState:String;
+		public var dialHangupCause:String;
+		public var cancelDialIdName:String;
+		public var cancelDialDestination:String;
+				
 		public function VoiceConfEvent(type:String)
 		{
 			super(type, true, false);

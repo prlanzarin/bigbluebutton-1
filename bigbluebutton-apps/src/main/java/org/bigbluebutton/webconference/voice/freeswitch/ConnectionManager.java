@@ -27,6 +27,8 @@ import org.bigbluebutton.webconference.voice.freeswitch.actions.BroadcastConfere
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectParticipantCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.MuteParticipantCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.DialCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.CancelDialCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.PopulateRoomCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.RecordConferenceCommand;
 import org.freeswitch.esl.client.inbound.Client;
@@ -118,6 +120,57 @@ public class ConnectionManager  {
 		}
 	}
 	
+	public void dial(DialCommand dc) {
+	    DialReferenceKeyPair key = 
+	            new DialReferenceKeyPair(dc.getOriginationCallerIdName(),
+	                                     dc.getCompleteDestination());
+	                                     
+        DialReferenceValuePair value =
+                new DialReferenceValuePair(dc.getRoom());
+                
+        this.eslEventListener.addDialReference(key, value);
+	
+	    System.out.println("[ConnectionManager] key: " + 
+	                        key.getOriginationCallerIdName() + " " + 
+	                        key.getCompleteDestination());
+	                        
+		Client c = manager.getESLClient();
+		if (c.canSend()) {
+	        c.sendAsyncApiCommand(dc.getCommand(), dc.getCommandArgs());			
+		}
+	}
+	
+	public void cancelDial(CancelDialCommand cdc, 
+            String cancelDialIdName, String cancelDialDestination) {
+	    DialReferenceKeyPair key = 
+	            new DialReferenceKeyPair(cancelDialIdName, cancelDialDestination);
+	            
+        DialReferenceValuePair value = 
+                this.eslEventListener.getDialReferenceValue(key);
+        
+        if(value == null) {
+            System.out.println("[ConnectionManager] There is no such reference.");
+            return;
+        }
+        
+        String uuid = value.getUuid();
+        cdc.setUuid(uuid);
+        
+        Client c = manager.getESLClient();
+		if (c.canSend()) {
+	        c.sendAsyncApiCommand(cdc.getCommand(), cdc.getCommandArgs());			
+		}
+		
+		this.eslEventListener.removeDialReference(key);
+	}
+	
+	public void removeDialReference(String cancelDialIdName, String cancelDialDestination) {
+	    DialReferenceKeyPair keyToRemove = 
+	            new DialReferenceKeyPair(cancelDialIdName, cancelDialDestination);
+	            
+        this.eslEventListener.removeDialReference(keyToRemove);
+	}
+
 	public void eject(EjectParticipantCommand mpc) {
 		Client c = manager.getESLClient();
 		if (c.canSend()) {
@@ -146,6 +199,7 @@ public class ConnectionManager  {
     
     public void setESLEventListener(ESLEventListener listener) {
     	this.eslEventListener = listener;
+    	this.eslEventListener.initDialReferences();
     }
     
     public void setConferenceEventListener(ConferenceEventListener listener) {

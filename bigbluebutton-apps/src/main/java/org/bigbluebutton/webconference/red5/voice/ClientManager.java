@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.bigbluebutton.webconference.voice.events.ConferenceEvent;
+import org.bigbluebutton.webconference.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.webconference.voice.events.ChannelHangupCompleteEvent;
+import org.bigbluebutton.webconference.voice.events.DialEvent;
 import org.bigbluebutton.webconference.voice.events.ParticipantJoinedEvent;
 import org.bigbluebutton.webconference.voice.events.ParticipantLeftEvent;
 import org.bigbluebutton.webconference.voice.events.ParticipantLockedEvent;
@@ -37,10 +40,14 @@ public class ClientManager implements ClientNotifier {
 
 	private final ConcurrentMap<String, RoomInfo> voiceRooms;
 	private final ConcurrentMap<String, RoomInfo> webRooms;
+	
+	private final ConcurrentMap<String, DialStates> dials;
 
 	public ClientManager() {
 		voiceRooms = new ConcurrentHashMap<String, RoomInfo>();
 		webRooms = new ConcurrentHashMap<String, RoomInfo>();
+		
+		dials = new ConcurrentHashMap<String, DialStates>();
 	}
 	
 	public void addSharedObject(String webRoom, String voiceRoom, ISharedObject so) {
@@ -130,5 +137,72 @@ public class ClientManager implements ClientNotifier {
 			ParticipantLockedEvent ple = (ParticipantLockedEvent) event;
 			locked(ple.getRoom(), ple.getParticipantId(), ple.isLocked());
 		}
+	}
+	
+	private void dialing(String room, String state) {
+	    RoomInfo soi = voiceRooms.get(room);
+	    List<Object> list = new ArrayList<Object>();
+	    list.add(state);
+	    soi.getSharedObject().sendMessage("dialing", list);
+	}
+	
+	private void hangingup(String room, String state, String hangupCause) {
+	    RoomInfo soi = voiceRooms.get(room);
+	    List<Object> list = new ArrayList<Object>();
+	    list.add(state);
+	    list.add(hangupCause);
+	    soi.getSharedObject().sendMessage("hangingup", list);
+	}
+	
+	public void handleDialEvent(DialEvent event) {	    	    
+	    if(event instanceof ChannelCallStateEvent) {
+	        ChannelCallStateEvent cse = (ChannelCallStateEvent) event;
+	        String uniqueId = cse.getUniqueId();
+	        String callState = cse.getCallState();
+	        String room = cse.getRoom();  
+            
+            DialStates dialStates;
+	        if (!dials.containsKey(uniqueId))
+                dials.put(uniqueId, new DialStates(uniqueId, callState));
+                
+            dialStates = dials.get(uniqueId);
+                
+	        System.out.println("[ClientManager] Unique-ID: " + dialStates.getUniqueId());	        
+	        
+	        dialStates.updateState(callState);
+	        System.out.println("[ClientManager] CallState: " + dialStates.getCurrentState());
+	        
+	        System.out.println("[ClientManager] idName: " + cse.getIdName());
+	        System.out.println("[ClientManager] channelName: " + cse.getChannelName());
+	        
+	        dialing(room, callState);
+	    }
+	    else if(event instanceof ChannelHangupCompleteEvent) {
+	        ChannelHangupCompleteEvent hce = (ChannelHangupCompleteEvent) event;
+	        
+	        String uniqueId = hce.getUniqueId();
+	        String callState = hce.getCallState();
+	        String room = hce.getRoom();
+	        
+	        DialStates dialStates;
+	        if (!dials.containsKey(uniqueId))
+                dials.put(uniqueId, new DialStates(uniqueId, callState));
+
+            dialStates = dials.get(uniqueId);
+	        
+	        System.out.println("[ClientManager] Unique-ID: " + dialStates.getUniqueId());
+
+	        String hangupCause = hce.getHangupCause();
+	        dialStates.setHangupCause(hangupCause);
+	        dialStates.updateState(callState);
+	        System.out.println("[ClientManager] Hangup Cause: " + dialStates.getHangupCause());
+	        
+	        System.out.println("[ClientManager] idName: " + hce.getIdName());
+	        System.out.println("[ClientManager] channelName: " + hce.getChannelName());
+	        
+	        hangingup(room, callState, hangupCause);
+	    }
+	    else
+	        System.out.println("[ClientManager] It was not supposed to be here.");
 	}
 }

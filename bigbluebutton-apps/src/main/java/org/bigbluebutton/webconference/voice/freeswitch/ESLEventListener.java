@@ -1,13 +1,16 @@
 package org.bigbluebutton.webconference.voice.freeswitch;
 
-
 import java.util.Map;
+import java.util.HashMap;
 import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.events.ParticipantJoinedEvent;
 import org.bigbluebutton.webconference.voice.events.ParticipantLeftEvent;
 import org.bigbluebutton.webconference.voice.events.ParticipantMutedEvent;
 import org.bigbluebutton.webconference.voice.events.ParticipantTalkingEvent;
 import org.bigbluebutton.webconference.voice.events.StartRecordingEvent;
+import org.bigbluebutton.webconference.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.webconference.voice.events.ChannelHangupCompleteEvent;
+import org.bigbluebutton.webconference.voice.events.DialEvent;
 import org.freeswitch.esl.client.IEslEventListener;
 import org.freeswitch.esl.client.transport.event.EslEvent;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -23,6 +26,8 @@ public class ESLEventListener implements IEslEventListener {
     private static final String STOP_RECORDING_EVENT = "stop-recording";
     
     private ConferenceEventListener conferenceEventListener;
+    
+    private HashMap<DialReferenceKeyPair, DialReferenceValuePair> dialReferences;
     
     @Override
     public void conferenceEventPlayFile(String uniqueId, String confName, int confSize, EslEvent event) {
@@ -56,6 +61,11 @@ public class ESLEventListener implements IEslEventListener {
     @Override
     public void conferenceEventLeave(String uniqueId, String confName, int confSize, EslEvent event) {
         Integer memberId = this.getMemberIdFromEvent(event);
+        
+        if(memberId == null) {
+            return;
+        }
+           
         ParticipantLeftEvent pl = new ParticipantLeftEvent(memberId, confName);
         conferenceEventListener.handleConferenceEvent(pl);
     }
@@ -141,17 +151,142 @@ public class ESLEventListener implements IEslEventListener {
     }
 
 
-	@Override
-	public void eventReceived(EslEvent event) {
+    @Override
+    public void eventReceived(EslEvent event) {
         if (event.getEventName().equals(FreeswitchHeartbeatMonitor.EVENT_HEARTBEAT)) {
-//            setChanged();
- //           notifyObservers(event);
+            //setChanged();
+            //notifyObservers(event);
             return; 
         }
-	}
+        else if(event.getEventName().equals("CHANNEL_CALLSTATE")) {
+            String uniqueId = this.getUniqueIdFromEvent(event);
+            String callState = this.getChannelCallStateFromEvent(event);
+            String originalCallState = this.getOriginalChannelCallStateFromEvent(event);
+            String idName = this.getCallerOrigCallerIDNameFromEvent(event);
+            String channelName = this.getCallerChannelNameFromEvent(event);
+            
+            DialReferenceKeyPair key = new DialReferenceKeyPair(idName, channelName);
+            
+            System.out.println("[ESLEventListener] 1. Caller-Orig-Caller-ID-Name: " + idName);
+            System.out.println("[ESLEventListener] 1. Caller-Channel-Name: " + channelName);
+            
+            if(!this.dialReferences.containsKey(key)) {
+                System.out.println("[ESLEventListener] Not a dial command.");
+                return;
+            }
+            
+            DialReferenceValuePair dialValue = this.dialReferences.get(key);
+            String room = dialValue.getRoom();
+            
+            dialValue.setUuid(uniqueId);
+            
+            System.out.println("[ESLEventListener] Unique-ID: " + uniqueId);
+            System.out.println("[ESLEventListener] Channel-Call-State: " + callState);
+            System.out.println("[ESLEventListener] Original-Channel-Call-State: " + originalCallState);
+            System.out.println("[ESLEventListener] Caller-Orig-Caller-ID-Name: " + idName);
+            System.out.println("[ESLEventListener] Caller-Channel-Name: " + channelName);
+            System.out.println("[ESLEventListener] Room: " + room);
+                         
+            ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, 
+                                                    idName, channelName, callState, 
+                                                    originalCallState, room);
+            
+            conferenceEventListener.handleDialEvent(cse);
+            
+            return;
+        }
+        else if(event.getEventName().equals("CHANNEL_HANGUP_COMPLETE")) {
+            String uniqueId = this.getUniqueIdFromEvent(event);
+            String callState = this.getChannelCallStateFromEvent(event);
+            String hangupCause = this.getHangupCauseFromEvent(event);
+            String idName = this.getCallerOrigCallerIDNameFromEvent(event);
+            String channelName = this.getCallerChannelNameFromEvent(event);
+            
+            DialReferenceKeyPair key = new DialReferenceKeyPair(idName, channelName);
+            
+            if(!this.dialReferences.containsKey(key)) {
+                System.out.println("[ESLEventListener] Not a dial command.");
+                return;
+            }
+            
+            DialReferenceValuePair dialValue = this.dialReferences.get(key);
+            String room = dialValue.getRoom();
+            
+            System.out.println("[ESLEventListener] Unique-ID: " + uniqueId);
+            System.out.println("[ESLEventListener] Channel-Call-State: " + callState);
+            System.out.println("[ESLEventListener] Hangup-Cause: " + hangupCause);
+            System.out.println("[ESLEventListener] Caller-Orig-Caller-ID-Name: " + idName);
+            System.out.println("[ESLEventListener] Caller-Channel-Name: " + channelName);
+            System.out.println("[ESLEventListener] Room: " + room);
+            
+            ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uniqueId, 
+                                                    idName, channelName, callState, 
+                                                    hangupCause, room);
+            
+            conferenceEventListener.handleDialEvent(hce);
+            
+            return;
+        }
+    }
 
+    public void initDialReferences() {
+        this.dialReferences = new HashMap<DialReferenceKeyPair, DialReferenceValuePair>();
+    }
+    
+    public void addDialReference(DialReferenceKeyPair keyPair, DialReferenceValuePair value) {
+        if (!dialReferences.containsKey(keyPair))
+            dialReferences.put(keyPair, value);
+    }
+    
+    public void removeDialReference(DialReferenceKeyPair keyToRemove) {
+        if (dialReferences.containsKey(keyToRemove)) {
+            dialReferences.remove(keyToRemove);
+            System.out.println("[ESLEventListener] Key removed sucessfully.");
+            if(dialReferences.isEmpty())
+                System.out.println("[ESLEventListener] dialReferences is empty.");
+        }
+    }
+    
+    public DialReferenceValuePair getDialReferenceValue(DialReferenceKeyPair keyToRetrieve) {
+        if (dialReferences.containsKey(keyToRetrieve)) {
+            return dialReferences.get(keyToRetrieve);
+        }
+        else {
+            return null;
+        }
+    }
+    
+    private String getChannelCallStateFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Channel-Call-State");
+    }
+    
+    private String getHangupCauseFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Hangup-Cause");
+    }
+    
+    private String getCallerChannelNameFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Caller-Channel-Name");
+    }
+    
+    private String getOriginalChannelCallStateFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Original-Channel-Call-State");
+    }
+    
+    private String getUniqueIdFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Unique-ID");
+    }
+    
+    private String getCallerOrigCallerIDNameFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Caller-Orig-Caller-ID-Name");
+    }
+    
     private Integer getMemberIdFromEvent(EslEvent e) {
-        return new Integer(e.getEventHeaders().get("Member-ID"));
+        try {
+            return new Integer(e.getEventHeaders().get("Member-ID"));
+        }
+        catch(NumberFormatException ex) {
+            return null;
+        }
     }
 
     private String getCallerIdFromEvent(EslEvent e) {

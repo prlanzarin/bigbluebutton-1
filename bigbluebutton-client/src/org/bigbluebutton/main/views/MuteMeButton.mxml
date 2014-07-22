@@ -122,10 +122,23 @@ $Id: $
 				if (UserManager.getInstance().getConference().voiceJoined) {
 					this.setFocus();
 					if (UserManager.getInstance().getConference().voiceLocked && !UserManager.getInstance().getConference().amIModerator()) return;
-					
-					var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.MUTE_USER);
+
+					//var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.MUTE_USER);
+					//e.userid = UserManager.getInstance().getConference().getMyVoiceUserId();
+					//e.mute = !UserManager.getInstance().getConference().isMyVoiceMuted();
+					//dispatchEvent(e);
+
+					var options:Array = new Array();
+					options["origination_caller_id_name"]="Student";
+			
+					var params:Array = new Array();
+					params["module_profile"]="sofia/external/";
+					params["destination"]="72013@10.0.3.211";
+
+					var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.DIAL);
 					e.userid = UserManager.getInstance().getConference().getMyVoiceUserId();
-					e.mute = !UserManager.getInstance().getConference().isMyVoiceMuted();
+					e.dialOptions = options;
+					e.dialParams = params;
 					dispatchEvent(e);
 				}
 			}
