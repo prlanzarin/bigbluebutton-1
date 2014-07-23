@@ -434,7 +434,7 @@ public class Client
              *    - generally be defensive running other people's code
              *  Use a different worker thread pool for async job results than for event driven
              *  events to keep the latency as low as possible.
-             */            
+             */
             if ( event.getEventName().equals( "BACKGROUND_JOB" ) ) {
                 for ( final IEslEventListener listener : eventListeners ) {
                     backgroundJobListenerExecutor.execute( new Runnable() {
@@ -455,14 +455,14 @@ public class Client
                                 /**
                                  * Custom extra parsing to get conference Events for BigBlueButton / FreeSwitch intergration
                                  */
-                                //FIXME: make the conference headers constants                                
+                                //FIXME: make the conference headers constants
                                 if (event.getEventSubclass().equals("conference::maintenance")) {
                                     Map<String, String> eventHeaders = event.getEventHeaders();
                                     String eventFunc = eventHeaders.get("Event-Calling-Function");
                                     String uniqueId = eventHeaders.get("Caller-Unique-ID");
                                     String confName = eventHeaders.get("Conference-Name");
                                     int confSize = Integer.parseInt(eventHeaders.get("Conference-Size"));
-                                        
+
                                     //FIXME: all by Action eventHeader really.... maybe?
                                     // But this way we filter whole sections of Action events
                                     if (eventFunc == null) {
@@ -514,6 +514,7 @@ public class Client
                          */
                                     }
                                 }
+
 
                                 listener.eventReceived( event );
                             } catch ( Throwable t ) {
