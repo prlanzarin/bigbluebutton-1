@@ -160,8 +160,6 @@ public class ConnectionManager  {
 		if (c.canSend()) {
 	        c.sendAsyncApiCommand(cdc.getCommand(), cdc.getCommandArgs());			
 		}
-		
-		this.eslEventListener.removeDialReference(key);
 	}
 	
 	public void removeDialReference(String cancelDialIdName, String cancelDialDestination) {
