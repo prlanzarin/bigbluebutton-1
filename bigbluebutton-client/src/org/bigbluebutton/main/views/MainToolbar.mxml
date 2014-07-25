@@ -118,7 +118,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
           meetingNameLbl.width = 0;
           langSelector.width = 0;
           shortcutKeysBtn.width = 0;
-          helpBtn.width = 0;          
+          helpBtn.width = 0;
+          dialBtn.visible = false;
         }
       }
       
@@ -322,10 +323,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				d.dispatchEvent(new ShortcutEvent(ShortcutEvent.OPEN_SHORTCUT_WIN));
 			}
 			
-			private function onDialButtonClick(e:Event = null):void {			
-				dialPopup = DialWindow(PopUpManager.createPopUp(this.parent, DialWindow, true));
-			}
-			
 			private function focusShortcutButton(e:ShortcutEvent):void{
 				shortcutKeysBtn.setFocus();
 			}
@@ -357,9 +354,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mx:Spacer width="50%"/>
     <mx:Label id="meetingNameLbl" styleName="meetingNameLabelStyle" />
     <mx:Spacer width="50%"/>
-    <mx:Button id="dialBtn" label="{ResourceUtil.getInstance().getString('bbb.mainToolbar.dialBtn')}" 
-                click="onDialButtonClick()" toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.dialBtn.toolTip')}"
-                height="22" tabIndex="{baseIndex+numButtons+11}" />
+    <views:DialButton id="dialBtn"  height="22" tabIndex="{baseIndex+numButtons+11}"/>
 	<views:LanguageSelector id="langSelector" 
 							visible="false" 
 							tabIndex="{baseIndex+numButtons+12}"

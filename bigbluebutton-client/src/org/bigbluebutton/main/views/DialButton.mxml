@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org
+
+Copyright (c) 2010 BigBlueButton Inc. and by respective authors (see below).
+
+BigBlueButton is free software; you can redistribute it and/or modify it under the 
+terms of the GNU Lesser General Public License as published by the Free Software 
+Foundation; either version 2.1 of the License, or (at your option) any later 
+version. 
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY 
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along 
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+$Id: $
+--> 
+
+<mx:Button
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:mate="http://mate.asfusion.com/"
+	creationComplete="onCreationComplete()"
+	toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.dialBtn.toolTip')}"
+	click="onDialButtonClick()"
+	label="{ResourceUtil.getInstance().getString('bbb.mainToolbar.dialBtn')}">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.binding.utils.BindingUtils;
+
+			import mx.managers.PopUpManager;
+
+			import org.bigbluebutton.common.LogUtil;
+			import org.bigbluebutton.common.events.LocaleChangeEvent;
+			import org.bigbluebutton.core.EventConstants;
+			import org.bigbluebutton.core.events.CoreEvent;
+			import org.bigbluebutton.core.events.VoiceConfEvent;
+			import org.bigbluebutton.core.managers.UserManager;
+			import org.bigbluebutton.main.events.ShortcutEvent;
+			import org.bigbluebutton.util.i18n.ResourceUtil;
+			
+			private var dialPopup:DialWindow = null;
+
+			private function onCreationComplete():void {
+				this.visible = this.includeInLayout = UserManager.getInstance().getConference().amIModerator();
+			}
+			
+			private function onDialButtonClick():void {	
+				dialPopup = DialWindow(PopUpManager.createPopUp(this.parent, DialWindow, true));
+			}
+		]]>
+	</mx:Script>
+</mx:Button>
