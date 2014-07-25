@@ -129,10 +129,6 @@ public class ConnectionManager  {
                 new DialReferenceValuePair(dc.getRoom());
                 
         this.eslEventListener.addDialReference(key, value);
-	
-	    System.out.println("[ConnectionManager] key: " + 
-	                        key.getOriginationCallerIdName() + " " + 
-	                        key.getCompleteDestination());
 	                        
 		Client c = manager.getESLClient();
 		if (c.canSend()) {
@@ -149,7 +145,6 @@ public class ConnectionManager  {
                 this.eslEventListener.getDialReferenceValue(key);
         
         if(value == null) {
-            System.out.println("[ConnectionManager] There is no such reference.");
             return;
         }
         

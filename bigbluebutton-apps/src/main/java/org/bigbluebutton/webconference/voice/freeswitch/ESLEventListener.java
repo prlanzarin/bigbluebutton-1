@@ -167,11 +167,7 @@ public class ESLEventListener implements IEslEventListener {
             
             DialReferenceKeyPair key = new DialReferenceKeyPair(idName, channelName);
             
-            System.out.println("[ESLEventListener] 1. Caller-Orig-Caller-ID-Name: " + idName);
-            System.out.println("[ESLEventListener] 1. Caller-Channel-Name: " + channelName);
-            
             if(!this.dialReferences.containsKey(key)) {
-                System.out.println("[ESLEventListener] Not a dial command.");
                 return;
             }
             
@@ -179,13 +175,6 @@ public class ESLEventListener implements IEslEventListener {
             String room = dialValue.getRoom();
             
             dialValue.setUuid(uniqueId);
-            
-            System.out.println("[ESLEventListener] Unique-ID: " + uniqueId);
-            System.out.println("[ESLEventListener] Channel-Call-State: " + callState);
-            System.out.println("[ESLEventListener] Original-Channel-Call-State: " + originalCallState);
-            System.out.println("[ESLEventListener] Caller-Orig-Caller-ID-Name: " + idName);
-            System.out.println("[ESLEventListener] Caller-Channel-Name: " + channelName);
-            System.out.println("[ESLEventListener] Room: " + room);
                          
             ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, 
                                                     idName, channelName, callState, 
@@ -205,19 +194,11 @@ public class ESLEventListener implements IEslEventListener {
             DialReferenceKeyPair key = new DialReferenceKeyPair(idName, channelName);
             
             if(!this.dialReferences.containsKey(key)) {
-                System.out.println("[ESLEventListener] Not a dial command.");
                 return;
             }
             
             DialReferenceValuePair dialValue = this.dialReferences.get(key);
             String room = dialValue.getRoom();
-            
-            System.out.println("[ESLEventListener] Unique-ID: " + uniqueId);
-            System.out.println("[ESLEventListener] Channel-Call-State: " + callState);
-            System.out.println("[ESLEventListener] Hangup-Cause: " + hangupCause);
-            System.out.println("[ESLEventListener] Caller-Orig-Caller-ID-Name: " + idName);
-            System.out.println("[ESLEventListener] Caller-Channel-Name: " + channelName);
-            System.out.println("[ESLEventListener] Room: " + room);
             
             ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uniqueId, 
                                                     idName, channelName, callState, 
@@ -241,9 +222,6 @@ public class ESLEventListener implements IEslEventListener {
     public void removeDialReference(DialReferenceKeyPair keyToRemove) {
         if (dialReferences.containsKey(keyToRemove)) {
             dialReferences.remove(keyToRemove);
-            System.out.println("[ESLEventListener] Key removed sucessfully.");
-            if(dialReferences.isEmpty())
-                System.out.println("[ESLEventListener] dialReferences is empty.");
         }
     }
     

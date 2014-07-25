@@ -77,21 +77,13 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
     }
     
     @Override
-    public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination) {
-	    System.out.println("[FreeswitchApplication] room: " + room);
-	    System.out.println("[FreeswitchApplication] cancelDialIdName: " + cancelDialIdName);
-	    System.out.println("[FreeswitchApplication] cancelDialDestination: " + cancelDialDestination);
-	    
+    public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination) {	    
 	    CancelDialCommand cdc = new CancelDialCommand(room);
 	    manager.cancelDial(cdc, cancelDialIdName, cancelDialDestination);
     }
     
     @Override
-    public void clearDial(String room, String cancelDialIdName, String cancelDialDestination) {
-	    System.out.println("[FreeswitchApplication] room: " + room);
-	    System.out.println("[FreeswitchApplication] cancelDialIdName: " + cancelDialIdName);
-	    System.out.println("[FreeswitchApplication] cancelDialDestination: " + cancelDialDestination);
-	    
+    public void clearDial(String room, String cancelDialIdName, String cancelDialDestination) {	    
 	    manager.removeDialReference(cancelDialIdName, cancelDialDestination);
     }
 

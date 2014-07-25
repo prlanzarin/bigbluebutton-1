@@ -165,15 +165,9 @@ public class ClientManager implements ClientNotifier {
 	        if (!dials.containsKey(uniqueId))
                 dials.put(uniqueId, new DialStates(uniqueId, callState));
                 
-            dialStates = dials.get(uniqueId);
-                
-	        System.out.println("[ClientManager] Unique-ID: " + dialStates.getUniqueId());	        
+            dialStates = dials.get(uniqueId);       
 	        
 	        dialStates.updateState(callState);
-	        System.out.println("[ClientManager] CallState: " + dialStates.getCurrentState());
-	        
-	        System.out.println("[ClientManager] idName: " + cse.getIdName());
-	        System.out.println("[ClientManager] channelName: " + cse.getChannelName());
 	        
 	        dialing(room, callState);
 	    }
@@ -189,20 +183,14 @@ public class ClientManager implements ClientNotifier {
                 dials.put(uniqueId, new DialStates(uniqueId, callState));
 
             dialStates = dials.get(uniqueId);
-	        
-	        System.out.println("[ClientManager] Unique-ID: " + dialStates.getUniqueId());
 
 	        String hangupCause = hce.getHangupCause();
 	        dialStates.setHangupCause(hangupCause);
 	        dialStates.updateState(callState);
-	        System.out.println("[ClientManager] Hangup Cause: " + dialStates.getHangupCause());
-	        
-	        System.out.println("[ClientManager] idName: " + hce.getIdName());
-	        System.out.println("[ClientManager] channelName: " + hce.getChannelName());
 	        
 	        hangingup(room, callState, hangupCause);
 	    }
 	    else
-	        System.out.println("[ClientManager] It was not supposed to be here.");
+	        return;
 	}
 }

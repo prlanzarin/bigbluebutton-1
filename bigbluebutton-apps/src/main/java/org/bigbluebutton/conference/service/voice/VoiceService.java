@@ -90,21 +90,6 @@ public class VoiceService {
 		String conference = getBbbSession().getVoiceBridge();    	
     		log.debug("MuteUnmute request for user [" + userid + "] in room[" + conference + "]");
     		conferenceService.mute(userid, conference, mute);
-
-		/*String room = conference;
-		HashMap<String, String> options = new HashMap<String, String>(10);
-		options.put("origination_callee_id_name", "Professor");
-		options.put("effective_caller_id_name", "Student");
-		options.put("origination_caller_id_name", "Student");
-
-		HashMap<String, String> params = new HashMap<String, String>(10);
-		params.put("module_profile", "sofia/external/");
-		params.put("destination", "72013@10.0.3.211");
-		params.put("caller_number", "72100");
-		params.put("caller_name", "Professor");
-
-		System.out.println("[VoiceService] conferenceService.dial()");
-		conferenceService.dial(room, options, params);*/
 	}
 
 	public void dial(Map<String, String> opt, Map<String, String> par) {

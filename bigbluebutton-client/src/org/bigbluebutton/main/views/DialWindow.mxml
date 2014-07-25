@@ -122,6 +122,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		        else if(event.dialState == "DOWN") {
 		            cancelDial(false, false);
                     clearDial(false, false);
+                    dialCancelBtn.enabled = true;
 			        /*statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.down');*/
 		        }
 		        else {
