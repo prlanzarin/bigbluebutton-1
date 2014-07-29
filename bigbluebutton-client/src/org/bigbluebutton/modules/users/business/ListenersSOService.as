@@ -217,14 +217,16 @@ package org.bigbluebutton.modules.users.business
 			}	
 		}
 		
-		public function dialing(state:String):void {
+		public function dialing(userID:Number, state:String):void {
 		    var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.DIALING);
 		    event.dialState = state;
+		    event.userid = userID;
 		    globalDispatcher.dispatchEvent(event);
 		}
 		
-		public function hangingup(state:String, hangupCause:String):void {
+		public function hangingup(userID:Number, state:String, hangupCause:String):void {
 		    var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.HANGINGUP);
+		    event.userid = userID;
 		    event.dialState = state;
 		    event.dialHangupCause = hangupCause;
 		    globalDispatcher.dispatchEvent(event);
@@ -313,7 +315,7 @@ package org.bigbluebutton.modules.users.business
 			); //_netConnection.call
 		}
 
-		public function dial(options:Array, params:Array):void {
+		public function dial(userid:Number, options:Array, params:Array):void {
 			var nc:NetConnection = _module.connection;			
 			nc.call(
 				"voice.dial",// Remote function name
@@ -330,6 +332,7 @@ package org.bigbluebutton.modules.users.business
 						} 
 					}
 				),//new Responder
+				userid,
 				options,
 				params
 			); //_netConnection.call

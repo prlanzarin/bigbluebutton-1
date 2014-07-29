@@ -24,12 +24,14 @@ public class DialEvent {
 	private final String idName;
 	private final String channelName;
 	private final String room;
+	private final Integer participant;
 	
-	public DialEvent(String uniqueId, String idName, String channelName, String room) {
+	public DialEvent(String uniqueId, String idName, String channelName, String room, Integer participant) {
 		this.uniqueId = uniqueId;
 		this.idName = idName;
 		this.channelName = channelName;
 		this.room = room;
+		this.participant = participant;
 	}
 	
 	public String getUniqueId() {
@@ -46,5 +48,9 @@ public class DialEvent {
 	
 	public String getRoom() {
 	    return this.room;
+	}
+
+	public Integer getParticipant() {
+		return this.participant;
 	}
 }

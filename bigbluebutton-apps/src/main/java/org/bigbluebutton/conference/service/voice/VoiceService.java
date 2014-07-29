@@ -92,14 +92,14 @@ public class VoiceService {
     		conferenceService.mute(userid, conference, mute);
 	}
 
-	public void dial(Map<String, String> opt, Map<String, String> par) {
+	public void dial(Integer userid, Map<String, String> opt, Map<String, String> par) {
 		String conference = getBbbSession().getVoiceBridge();
 		log.debug("Dial from [" + conference + "] to destination [" + par.get("destination") + "]");
 
 		HashMap<String, String> options = new HashMap<String, String>(opt);
 		HashMap<String, String> params = new HashMap<String, String>(par);
                                         
-		conferenceService.dial(conference, options, params);
+		conferenceService.dial(conference, userid, options, params);
 	}
 	
 	public void cancelDial(String cancelDialIdName, String cancelDialDestination) {

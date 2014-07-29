@@ -29,19 +29,25 @@ public class DialCommand extends FreeswitchCommand {
     private static final Logger log = Red5LoggerFactory.getLogger(DialCommand.class, "bigbluebutton");
     private final HashMap<String, String> options;
     private final HashMap<String, String> params;
+    private final Integer participant;
     
     private static final String MODULE_DEFAULT = "sofia";
     private static final String PROFILE_DEFAULT = "external";
 
-    public DialCommand(String room, HashMap<String, String> options,
+    public DialCommand(String room, Integer participant, HashMap<String, String> options,
 			HashMap<String, String> params, Integer requesterId) {
         super(room, requesterId);
+        this.participant = participant;
 	    this.options = new HashMap<String, String>(options);
 	    this.params = new HashMap<String, String>(params);
 	    
 	    String module_profile = this.MODULE_DEFAULT + "/" + this.PROFILE_DEFAULT + "/";
         this.params.put("module_profile", module_profile);
         this.params.put("caller_number", room);
+    }
+
+    public Integer getParticipant() {
+    	return this.participant;
     }
 
     public String getCompleteDestination() {

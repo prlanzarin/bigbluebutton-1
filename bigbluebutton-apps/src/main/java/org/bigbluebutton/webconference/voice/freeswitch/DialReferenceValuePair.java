@@ -23,14 +23,17 @@ public final class DialReferenceValuePair {
 
     private final String room;
     private String uuid;
+    private final Integer participant;
 
-    public DialReferenceValuePair(String room) {
+    public DialReferenceValuePair(String room, Integer participant) {
         this.room = room;
+        this.participant = participant;
         this.uuid = null;
     }
     
-    public DialReferenceValuePair(String room, String uuid) {
+    public DialReferenceValuePair(String room, Integer participant, String uuid) {
         this.room = room;
+        this.participant = participant;
         this.uuid = uuid;
     }
 
@@ -38,6 +41,10 @@ public final class DialReferenceValuePair {
         return this.room;
     }
     
+    public Integer getParticipant() {
+        return this.participant;
+    }
+
     public String getUuid() {
         return this.uuid;
     }

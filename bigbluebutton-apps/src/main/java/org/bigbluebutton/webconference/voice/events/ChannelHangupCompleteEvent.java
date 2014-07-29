@@ -25,8 +25,8 @@ public class ChannelHangupCompleteEvent extends DialEvent {
 	
 	public ChannelHangupCompleteEvent(String uniqueId, 
                     String idName, String channelName, 
-                    String callState, String hangupCause, String room) {
-	    super(uniqueId, idName, channelName, room);
+                    String callState, String hangupCause, String room, Integer participant) {
+	    super(uniqueId, idName, channelName, room, participant);
 		this.callState = callState;
 		this.hangupCause = hangupCause;
 	}

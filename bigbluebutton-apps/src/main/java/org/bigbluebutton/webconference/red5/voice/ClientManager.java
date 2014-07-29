@@ -139,16 +139,18 @@ public class ClientManager implements ClientNotifier {
 		}
 	}
 	
-	private void dialing(String room, String state) {
+	private void dialing(String room, Integer participant, String state) {
 	    RoomInfo soi = voiceRooms.get(room);
 	    List<Object> list = new ArrayList<Object>();
+	    list.add(participant);
 	    list.add(state);
 	    soi.getSharedObject().sendMessage("dialing", list);
 	}
 	
-	private void hangingup(String room, String state, String hangupCause) {
+	private void hangingup(String room, Integer participant, String state, String hangupCause) {
 	    RoomInfo soi = voiceRooms.get(room);
 	    List<Object> list = new ArrayList<Object>();
+	    list.add(participant);
 	    list.add(state);
 	    list.add(hangupCause);
 	    soi.getSharedObject().sendMessage("hangingup", list);
@@ -159,7 +161,8 @@ public class ClientManager implements ClientNotifier {
 	        ChannelCallStateEvent cse = (ChannelCallStateEvent) event;
 	        String uniqueId = cse.getUniqueId();
 	        String callState = cse.getCallState();
-	        String room = cse.getRoom();  
+	        String room = cse.getRoom();
+	        Integer participant = cse.getParticipant(); 
             
             DialStates dialStates;
 	        if (!dials.containsKey(uniqueId))
@@ -169,7 +172,7 @@ public class ClientManager implements ClientNotifier {
 	        
 	        dialStates.updateState(callState);
 	        
-	        dialing(room, callState);
+	        dialing(room, participant, callState);
 	    }
 	    else if(event instanceof ChannelHangupCompleteEvent) {
 	        ChannelHangupCompleteEvent hce = (ChannelHangupCompleteEvent) event;
@@ -177,6 +180,7 @@ public class ClientManager implements ClientNotifier {
 	        String uniqueId = hce.getUniqueId();
 	        String callState = hce.getCallState();
 	        String room = hce.getRoom();
+	        Integer participant = hce.getParticipant();
 	        
 	        DialStates dialStates;
 	        if (!dials.containsKey(uniqueId))
@@ -188,7 +192,7 @@ public class ClientManager implements ClientNotifier {
 	        dialStates.setHangupCause(hangupCause);
 	        dialStates.updateState(callState);
 	        
-	        hangingup(room, callState, hangupCause);
+	        hangingup(room, participant, callState, hangupCause);
 	    }
 	    else
 	        return;

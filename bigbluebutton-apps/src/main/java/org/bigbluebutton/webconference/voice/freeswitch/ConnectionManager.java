@@ -126,7 +126,7 @@ public class ConnectionManager  {
 	                                     dc.getCompleteDestination());
 	                                     
         DialReferenceValuePair value =
-                new DialReferenceValuePair(dc.getRoom());
+                new DialReferenceValuePair(dc.getRoom(), dc.getParticipant());
                 
         this.eslEventListener.addDialReference(key, value);
 	                        

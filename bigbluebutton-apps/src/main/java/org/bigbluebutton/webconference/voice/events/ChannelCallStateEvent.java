@@ -25,8 +25,8 @@ public class ChannelCallStateEvent extends DialEvent {
 	
 	public ChannelCallStateEvent(String uniqueId, 
 	                String idName, String channelName, 
-                    String callState, String originalCallState, String room) {
-	    super(uniqueId, idName, channelName, room);
+                    String callState, String originalCallState, String room, Integer participant) {
+	    super(uniqueId, idName, channelName, room, participant);
 		this.callState = callState;
 		this.originalCallState = originalCallState;
 	}

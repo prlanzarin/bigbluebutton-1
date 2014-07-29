@@ -71,8 +71,8 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
     }
 
     @Override
-    public void dial(String room, HashMap<String, String> options, HashMap<String, String> params) {
-	    DialCommand dc = new DialCommand(room, options, params, USER);
+    public void dial(String room, Integer participant, HashMap<String, String> options, HashMap<String, String> params) {
+	    DialCommand dc = new DialCommand(room, participant, options, params, USER);
 	    manager.dial(dc);
     }
     

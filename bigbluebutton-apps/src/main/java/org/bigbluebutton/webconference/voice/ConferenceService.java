@@ -110,8 +110,8 @@ public class ConferenceService implements ConferenceEventListener {
 		confProvider.mute(room, participant, mute);	
 	}
 
-	public void dial(String room, HashMap<String, String> options, HashMap<String, String> params) {
-		confProvider.dial(room, options, params);
+	public void dial(String room, Integer participant, HashMap<String, String> options, HashMap<String, String> params) {
+		confProvider.dial(room, participant, options, params);
 	}
 	
 	public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination) {

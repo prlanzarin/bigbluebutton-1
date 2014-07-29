@@ -83,7 +83,7 @@ package org.bigbluebutton.modules.users.business
 
 		public function dial(command:VoiceConfEvent):void
 		{
-			_listenersService.dial(command.dialOptions, command.dialParams);
+			_listenersService.dial(command.userid, command.dialOptions, command.dialParams);
 		}
 		
 		public function cancelDial(command:VoiceConfEvent):void

@@ -24,7 +24,7 @@ public interface ConferenceServiceProvider {
 	public void shutdown();
 	public void populateRoom(String room);
 	public void mute(String room, Integer participant, Boolean mute);
-	public void dial(String room, HashMap<String, String> options, HashMap<String, String> params);
+	public void dial(String room, Integer participant, HashMap<String, String> options, HashMap<String, String> params);
 	public void cancelDial(String room, String cancelDialIdName, String cancelDialDestination);
 	public void clearDial(String room, String cancelDialIdName, String cancelDialDestination);
 	public void eject(String room, Integer participant);

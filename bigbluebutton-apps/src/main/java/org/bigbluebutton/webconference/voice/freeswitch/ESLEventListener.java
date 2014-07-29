@@ -173,12 +173,15 @@ public class ESLEventListener implements IEslEventListener {
             
             DialReferenceValuePair dialValue = this.dialReferences.get(key);
             String room = dialValue.getRoom();
-            
+            Integer participant = dialValue.getParticipant();
+
+            System.out.println("[ESLEventListener] participant: " + participant);
+
             dialValue.setUuid(uniqueId);
                          
             ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, 
                                                     idName, channelName, callState, 
-                                                    originalCallState, room);
+                                                    originalCallState, room, participant);
             
             conferenceEventListener.handleDialEvent(cse);
             
@@ -199,10 +202,13 @@ public class ESLEventListener implements IEslEventListener {
             
             DialReferenceValuePair dialValue = this.dialReferences.get(key);
             String room = dialValue.getRoom();
+            Integer participant = dialValue.getParticipant();
             
+            System.out.println("[ESLEventListener] participant: " + participant);
+
             ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uniqueId, 
                                                     idName, channelName, callState, 
-                                                    hangupCause, room);
+                                                    hangupCause, room, participant);
             
             conferenceEventListener.handleDialEvent(hce);
             
