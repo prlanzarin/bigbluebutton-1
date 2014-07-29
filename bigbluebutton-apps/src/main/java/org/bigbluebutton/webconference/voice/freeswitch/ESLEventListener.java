@@ -175,8 +175,6 @@ public class ESLEventListener implements IEslEventListener {
             String room = dialValue.getRoom();
             Integer participant = dialValue.getParticipant();
 
-            System.out.println("[ESLEventListener] participant: " + participant);
-
             dialValue.setUuid(uniqueId);
                          
             ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, 
@@ -203,8 +201,6 @@ public class ESLEventListener implements IEslEventListener {
             DialReferenceValuePair dialValue = this.dialReferences.get(key);
             String room = dialValue.getRoom();
             Integer participant = dialValue.getParticipant();
-            
-            System.out.println("[ESLEventListener] participant: " + participant);
 
             ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uniqueId, 
                                                     idName, channelName, callState, 
