@@ -34,17 +34,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 <![CDATA[
         	import mx.events.ItemClickEvent;
             import mx.managers.PopUpManager;
-            import mx.core.UIComponent;
-                        
+            import mx.core.UIComponent;                     
 			import flash.events.Event;
 			import com.asfusion.mate.events.Dispatcher;
-			import flexlib.mdi.events.MDIWindowEvent;
-			
-			import flexlib.controls.textClasses.StringBoundaries;
-			
+			import flexlib.mdi.events.MDIWindowEvent;			
+			import flexlib.controls.textClasses.StringBoundaries;			
 			import mx.collections.ArrayCollection;
-			import mx.collections.ArrayList;
-			
+			import mx.collections.ArrayList;			
 			import org.bigbluebutton.common.LogUtil;
 			import org.bigbluebutton.common.events.LocaleChangeEvent;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
@@ -55,6 +51,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private var options:Array;
 			private var params:Array;
 			private var meetingTitle:String;
+            private var rung:Boolean;
 			
 			[Bindable]
 			private var statusString:String;
@@ -84,6 +81,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			    if(event.dialState == "RINGING") {
 			        statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.ringing');
+                    rung = true;
 		        }
 			    else if(event.dialState == "EARLY") {
 			        statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.early');
@@ -128,11 +126,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		            cancelDial(false, false);
                     clearDial(false, false);
                     dialCancelBtn.enabled = true;
+                    rung = false;
 			        /*statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.down');*/
 		        }
 		        else {
 		            statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.unknown');
 		            clearDial(false, true);
+                    rung = false;
 		        }
 		    }
 			
@@ -143,16 +143,20 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 statusString = "";
 		        destination.setFocus();
 		        isDial = true;
+                rung = false;
 			}
 			
 			private function dialOrCancel():void {
-			    if(isDial)
-			    {
+			    if(isDial) {
 			        configureDial();
 			    }
-                else
-                {
+                else {
                     cancelDial(true, true);
+
+                    if(!rung) {
+                        clearDial(false, false);
+                        dialCancelBtn.enabled = true;
+                    }
                 }
 			}
 			
@@ -169,6 +173,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     				dialCancelBtn.label = ResourceUtil.getInstance().getString('bbb.dialWindow.cancelBtn');
     				closeBtn.enabled = false;
     				isDial = false;
+                    statusString = "";
     				
     				dial(options, params);
                 }
