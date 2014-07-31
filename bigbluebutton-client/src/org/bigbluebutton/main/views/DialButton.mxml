@@ -42,11 +42,22 @@ $Id: $
 			import org.bigbluebutton.core.managers.UserManager;
 			import org.bigbluebutton.main.events.ShortcutEvent;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
+
+			import org.bigbluebutton.core.BBB;
+			import org.bigbluebutton.modules.phone.PhoneOptions;
 			
 			private var dialPopup:DialWindow = null;
 
 			private function onCreationComplete():void {
-				this.visible = this.includeInLayout = UserManager.getInstance().getConference().amIModerator();
+				var amIModerator:Boolean = this.includeInLayout = UserManager.getInstance().getConference().amIModerator();
+
+				var vxml:XML = BBB.getConfigForModule("PhoneModule");
+					var phoneOptions:PhoneOptions = new PhoneOptions();
+					if (vxml != null) {
+						phoneOptions.enableOutboundCalls = (vxml.@enableOutboundCalls.toString().toUpperCase() == "TRUE") ? true : false;
+					}
+
+				this.visible = (amIModerator && phoneOptions.enableOutboundCalls);
 			}
 			
 			private function onDialButtonClick():void {	

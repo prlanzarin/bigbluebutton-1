@@ -30,5 +30,8 @@ package org.bigbluebutton.modules.phone
 		
 		[Bindable]
 		public var enabledEchoCancel:Boolean = false;
+
+		[Bindable]
+		public var enableOutboundCalls:Boolean = false;
 	}
 }
