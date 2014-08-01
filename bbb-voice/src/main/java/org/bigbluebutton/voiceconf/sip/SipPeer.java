@@ -157,31 +157,31 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.startStream(broadcastStream, scope);
+           ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
         }
     }
     
-    public void stopTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.stopStream(broadcastStream, scope);
+           ca.stopBbbToFreeswitchAudioStream(broadcastStream, scope);
         }
     }
 
-    public void startVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.startVideoStream(broadcastStream, scope);
+           ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
         }
     }
     
-    public void stopVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.stopVideoStream(broadcastStream, scope);
+           ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
         }
     }
 

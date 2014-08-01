@@ -128,13 +128,13 @@ public class CallStream implements StreamObserver {
     	return freeswitchToBbbStream.getStreamName();
     }
     
-    public void startStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
+    public void startBbbToFreeswitchStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
     	log.debug("bbbToFreeswitchStream setup");
     	bbbToFreeswitchStream.start(broadcastStream, scope);
     	log.debug("bbbToFreeswitchStream Started");
     }
     
-    public void stopStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchStream(IBroadcastStream broadcastStream, IScope scope) {
     	bbbToFreeswitchStream.stop(broadcastStream, scope);
     }
 

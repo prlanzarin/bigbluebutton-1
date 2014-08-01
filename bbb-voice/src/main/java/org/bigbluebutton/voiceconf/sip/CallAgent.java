@@ -256,13 +256,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 if ((videoCallStream == null) && (sipVideoCodec != null)) {                  
                     try {
                         log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
-                        videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo,CallStream.MEDIA_TYPE_VIDEO);                                                
-                        log.debug("VIDEO stream created");
-                        videoCallStream.addCallStreamObserver(this);
-                        videoCallStream.start();
-                        log.debug("VIDEO stream : Sender - "+videoCallStream.getBbbToFreeswitchStreamName()+" Receiver - "+ videoCallStream.getFreeswitchToBbbStreamName());
-                        /*notifyListenersOnCallConnected(videoCallStream.getBbbToFreeswitchStreamName(), 
-                                                       videoCallStream.getFreeswitchToBbbStreamName());*/
+                        //videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo, CallStream.MEDIA_TYPE_VIDEO);                                                
+                        //videoCallStream.addCallStreamObserver(this);
+                        //videoCallStream.start();
+                        //notifyListenersOnCallConnected(videoCallStream.getBbbToFreeswitchStreamName(), 
+                                                       //videoCallStream.getFreeswitchToBbbStreamName());
                         
                             
                     } catch (Exception e) {
@@ -279,35 +277,35 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
         
-    public void startStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
     	try {
-			audioCallStream.startStream(broadcastStream, scope);
+			audioCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
 
 		} catch (StreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}   	
+		} 	
     }
     
-    public void stopStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
     	if (audioCallStream != null) {
-    		audioCallStream.stopStream(broadcastStream, scope);   	
+    		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
     	}
     }
     
-     public void startVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        try {
-            videoCallStream.startStream(broadcastStream, scope);
+     public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+        /*try {
+            videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (StreamException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }       
+        } */    
     }
     
-    public void stopVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        if (videoCallStream != null) {
-            videoCallStream.stopStream(broadcastStream, scope);     
-        }
+    public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+        /*if (videoCallStream != null) {
+            videoCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);     
+        }*/
     }
 
     private void closeStreams() {        

@@ -50,6 +50,10 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	private VideoData videoData;
 
+	//for debugging...
+	private int eventCounter = 0;
+	private long lastTimeMillis = 0;
+
 	private final byte[] fakeMetadata = new byte[] {
 			0x02, 0x00, 0x0a, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x44, 0x61, 0x74, 0x61, 0x08, 0x00, 0x00,  
 			0x00, 0x06, 0x00, 0x08, 0x64, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x00, 0x40, 0x31, (byte)0xaf,  
@@ -70,7 +74,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
 		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
-		mBuffer = IoBuffer.allocate(1024);
+		mBuffer = IoBuffer.allocate(8192);
 		mBuffer = mBuffer.setAutoExpand(true);
 
 		videoData = new VideoData();
@@ -190,21 +194,39 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		sendFakeMetadata(timestamp);
 		        mBuffer.clear();
 		        mBuffer.put((byte) transcoder.getCodecId());
+
+
+
 		mBuffer.put(video);
 		mBuffer.flip();
-		videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
 
-		// O COMENTÁRIO ABAIXO VALE PRA VIDEO TAMBÉM???!!!
-		/*
-		* Use timestamp increments passed in by codecs (i.e. 32 for nelly). This will force
-		* Flash Player to playback audio at proper timestamp. If we calculate timestamp using
-		* System.currentTimeMillis() - startTimestamp, the audio has tendency to drift and
-		* introduce delay. (ralam dec 14, 2010)
-		*/
+		videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
         videoData.setTimestamp((int)(timestamp));
         videoData.setData(mBuffer);
 		videoBroadcastStream.dispatchEvent(videoData);
 		videoData.release();
+
+
+		//for debugging only: print the first 20 packets and then print a packet every 10 seconds
+		/*if( (System.currentTimeMillis() - lastTimeMillis) > 10000  || eventCounter < 21) {
+
+			String type = "";
+			switch(videoData.getFrameType())
+			{
+				case UNKNOWN: type = "UNKNOWN";
+				break;
+				case KEYFRAME: type = "KEYFRAME";
+				break;
+				case INTERFRAME: type = "INTERFRAME";
+				break;
+				case DISPOSABLE_INTERFRAME: type = "DISPOSABLE_INTERFRAME";
+				break;
+			}
+			log.debug("timestamp = " + videoData.getTimestamp() + " type = " + type);
+
+			lastTimeMillis = System.currentTimeMillis();
+			eventCounter++;
+		}*/
     }	
 
 }
