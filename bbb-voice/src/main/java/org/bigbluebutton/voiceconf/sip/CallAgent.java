@@ -311,7 +311,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private void closeStreams() {        
     	log.debug("Shutting down the AUDIO stream...");         
         if (audioCallStream != null) {
-        	audioCallStream.stop();
+        	audioCallStream.stopFreeswitchToBbbStream();
         	audioCallStream = null;
         } else {
         	log.debug("Can't shutdown AUDIO stream: already NULL");
@@ -319,7 +319,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         log.debug("Shutting down the VIDEO stream...");         
         if (videoCallStream != null) {
-            videoCallStream.stop();
+            videoCallStream.stopFreeswitchToBbbStream();
             videoCallStream = null;
         } else {
             log.debug("Can't shutdown VIDEO stream: already NULL");

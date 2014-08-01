@@ -138,7 +138,7 @@ public class CallStream implements StreamObserver {
     	bbbToFreeswitchStream.stop(broadcastStream, scope);
     }
 
-    public void stop() {
+    public void stopFreeswitchToBbbStream() {
     	log.debug("Stopping call stream");
         freeswitchToBbbStream.stop();
     }
