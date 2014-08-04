@@ -40,7 +40,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	private BroadcastStream videoBroadcastStream;
 	private IScope scope;
-	private final String videoReceiverStreamName;
+	private final String freeswitchToBbbVideoStreamName;
 	private RtpStreamReceiver rtpStreamReceiver;
 	private StreamObserver observer;
 
@@ -49,6 +49,10 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	private IoBuffer mBuffer;
 
 	private VideoData videoData;
+
+	//for debugging...
+	private int eventCounter = 0;
+	private long lastTimeMillis = 0;
 
 	private final byte[] fakeMetadata = new byte[] {
 			0x02, 0x00 , 0x0a , 0x6f,0x6e,0x4d,0x65,0x74,0x61,0x44,0x61,0x74,0x61,0x8,0x00, 0x00, 0x00, 0x00,0x00, 0x08,0x64,0x75,0x72,0x61,0x74,0x69,0x6f,0x6e,0x0,0x40,(byte) 0x84,0x6f,0x10,0x62,0x4d,(byte) 0xd2,(byte) 0xf2
@@ -61,8 +65,8 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		videoReceiverStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
-		mBuffer = IoBuffer.allocate(1024);
+		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
+		mBuffer = IoBuffer.allocate(8192);
 		mBuffer = mBuffer.setAutoExpand(true);
 
 		videoData = new VideoData();
@@ -72,7 +76,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	@Override
 	public String getStreamName() {
-		return videoReceiverStreamName;
+		return freeswitchToBbbVideoStreamName;
 	}
 
 	@Override
@@ -83,24 +87,24 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	@Override
 	public void stop() {
 			if (log.isDebugEnabled()) 
-				log.debug("Stopping VIDEO stream for {}", videoReceiverStreamName);
+				log.debug("Stopping VIDEO stream for {}", freeswitchToBbbVideoStreamName);
 
 			transcoder.stop();
 			rtpStreamReceiver.stop();
 
 			if (log.isDebugEnabled()) 
-				log.debug("Stopped RTP VIDEO Stream Receiver for {}", videoReceiverStreamName);
+				log.debug("Stopped RTP VIDEO Stream Receiver for {}", freeswitchToBbbVideoStreamName);
 
 			if (videoBroadcastStream != null) {
 				videoBroadcastStream.stop();
 
 				if (log.isDebugEnabled()) 
-					log.debug("Stopped videoBroadcastStream for {}", videoReceiverStreamName);
+					log.debug("Stopped videoBroadcastStream for {}", freeswitchToBbbVideoStreamName);
 
 				videoBroadcastStream.close();
 
 			    if (log.isDebugEnabled()) 
-			    	log.debug("Closed videoBroadcastStream for {}", videoReceiverStreamName);
+			    	log.debug("Closed videoBroadcastStream for {}", freeswitchToBbbVideoStreamName);
 			} 
 
 			else
@@ -117,14 +121,14 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		if (log.isDebugEnabled()) 
 			log.debug("started publishing VIDEO stream in scope=[" + scope.getName() + "] path=[" + scope.getPath() + "]");
 
-		videoBroadcastStream = new BroadcastStream(videoReceiverStreamName);
-		videoBroadcastStream.setPublishedName(videoReceiverStreamName);
+		videoBroadcastStream = new BroadcastStream(freeswitchToBbbVideoStreamName);
+		videoBroadcastStream.setPublishedName(freeswitchToBbbVideoStreamName);
 		videoBroadcastStream.setScope(scope);
 		
 		IContext context = scope.getContext();
 		
 		IProviderService providerService = (IProviderService) context.getBean(IProviderService.BEAN_NAME);
-		if (providerService.registerBroadcastStream(scope, videoReceiverStreamName, videoBroadcastStream)){
+		if (providerService.registerBroadcastStream(scope, freeswitchToBbbVideoStreamName, videoBroadcastStream)){
 			// Do nothing. Successfully registered a live broadcast stream. (ralam Sept. 4, 2012)
 		} else{
 			log.error("could not register broadcast stream");
@@ -182,22 +186,38 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		sendFakeMetadata(timestamp);
 		        mBuffer.clear();
 		        mBuffer.put((byte) transcoder.getCodecId());
+
+
+
 		mBuffer.put(video);
 		mBuffer.flip();
-		videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
 
-		// O COMENTÁRIO ABAIXO VALE PRA VIDEO TAMBÉM???!!!
-		/*
-		* Use timestamp increments passed in by codecs (i.e. 32 for nelly). This will force
-		* Flash Player to playback audio at proper timestamp. If we calculate timestamp using
-		* System.currentTimeMillis() - startTimestamp, the audio has tendency to drift and
-		* introduce delay. (ralam dec 14, 2010)
-		*/
+		videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
         videoData.setTimestamp((int)(timestamp));
         videoData.setData(mBuffer);
 		videoBroadcastStream.dispatchEvent(videoData);
 		videoData.release();
 		
+		//for debugging only: print the first 20 packets and then print a packet every 10 seconds
+		/*if( (System.currentTimeMillis() - lastTimeMillis) > 10000  || eventCounter < 21) {
+
+			String type = "";
+			switch(videoData.getFrameType())
+			{
+				case UNKNOWN: type = "UNKNOWN";
+				break;
+				case KEYFRAME: type = "KEYFRAME";
+				break;
+				case INTERFRAME: type = "INTERFRAME";
+				break;
+				case DISPOSABLE_INTERFRAME: type = "DISPOSABLE_INTERFRAME";
+				break;
+			}
+			log.debug("timestamp = " + videoData.getTimestamp() + " type = " + type);
+
+			lastTimeMillis = System.currentTimeMillis();
+			eventCounter++;
+		}*/
     }	
 
 }

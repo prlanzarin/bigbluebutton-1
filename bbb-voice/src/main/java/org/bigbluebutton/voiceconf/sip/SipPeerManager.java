@@ -80,31 +80,31 @@ public final class SipPeerManager {
     }
 
     
-    public void startTalkStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.startTalkStream(clientId, broadcastStream, scope);
+    		sipUser.startBbbToFreeswitchAudioStream(clientId, broadcastStream, scope);
     	}
     }
     
-    public void stopTalkStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.stopTalkStream(clientId, broadcastStream, scope);
+    		sipUser.stopBbbToFreeswitchAudioStream(clientId, broadcastStream, scope);
     	}
     }
 
-    public void startVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            //sipUser.startVideoStream(clientId, broadcastStream, scope);
+            sipUser.startBbbToFreeswitchVideoStream(clientId, broadcastStream, scope);
         }
     }
     
-    public void stopVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.stopVideoStream(clientId, broadcastStream, scope);
+            sipUser.stopBbbToFreeswitchVideoStream(clientId, broadcastStream, scope);
         }
     }
  

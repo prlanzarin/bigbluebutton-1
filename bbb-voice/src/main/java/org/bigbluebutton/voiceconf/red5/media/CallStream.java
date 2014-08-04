@@ -43,8 +43,8 @@ public class CallStream implements StreamObserver {
 
     private String mediaType; 
 
-    private FlashToSipStream userSenderStream;  
-    private SipToFlashStream userReceiverStream; 
+    private FlashToSipStream bbbToFreeswitchStream;  
+    private SipToFlashStream freeswitchToBbbStream; 
 
     private SipToFlashTranscoder sipToFlashTranscoder;
     private FlashToSipTranscoder flashToSipTranscoder;
@@ -87,31 +87,32 @@ public class CallStream implements StreamObserver {
     		log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
 
 
-            userReceiverStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket());
-            userReceiverStream.addListenStreamObserver(this);   
-            log.debug("Starting userReceiverStream so that users with no mic can listen.");
-            userReceiverStream.start();
-            userSenderStream = new FlashToSipAudioStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);
+            freeswitchToBbbStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket());
+            freeswitchToBbbStream.addListenStreamObserver(this);   
+            log.debug("Starting freeswitchToBbbStream so that users with no mic can listen.");
+            freeswitchToBbbStream.start();
+            bbbToFreeswitchStream = new FlashToSipAudioStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);
         } 
 
         else {
 
+            //mediaType is VIDEO
 
             if (sipCodec.getCodecId() == H264Codec.codecId) {  
 
                 sipToFlashTranscoder = new H264SipToFlashTranscoderImp(sipCodec);
                 flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
 
-                log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
-                log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
-                log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
-                log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
+                log.info("$$ Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
+                log.debug("$$ Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
+                log.debug("$$ Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
+                log.debug("$$ Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
 
-                userReceiverStream = new SipToFlashVideoStream(scope, sipToFlashTranscoder, connInfo.getSocket()); 
-                userReceiverStream.addListenStreamObserver(this);   
-                log.debug("Starting userReceiverStream so that users with no mic can listen.");
-                userReceiverStream.start();
-                userSenderStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);            
+                freeswitchToBbbStream = new SipToFlashVideoStream(scope, sipToFlashTranscoder, connInfo.getSocket()); 
+                freeswitchToBbbStream.addListenStreamObserver(this);   
+                log.debug("$$ Starting freeswitchToBbbStream so that users with no cam can view.");
+                freeswitchToBbbStream.start();
+                bbbToFreeswitchStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);            
             }
 
             else
@@ -119,27 +120,27 @@ public class CallStream implements StreamObserver {
         }      
     }
     
-    public String getSenderStreamName() {
-    	return userSenderStream.getStreamName();
+    public String getBbbToFreeswitchStreamName() {
+    	return bbbToFreeswitchStream.getStreamName();
     }
     
-    public String getReceiverStreamName() {
-    	return userReceiverStream.getStreamName();
+    public String getFreeswitchToBbbStreamName() {
+    	return freeswitchToBbbStream.getStreamName();
     }
     
-    public void startStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
-    	log.debug("userSenderStream setup");
-    	userSenderStream.start(broadcastStream, scope);
-    	log.debug("userSenderStream Started");
+    public void startBbbToFreeswitchStream(IBroadcastStream broadcastStream, IScope scope) throws StreamException {
+    	log.debug("bbbToFreeswitchStream setup");
+    	bbbToFreeswitchStream.start(broadcastStream, scope);
+    	log.debug("bbbToFreeswitchStream Started");
     }
     
-    public void stopStream(IBroadcastStream broadcastStream, IScope scope) {
-    	userSenderStream.stop(broadcastStream, scope);
+    public void stopBbbToFreeswitchStream(IBroadcastStream broadcastStream, IScope scope) {
+    	bbbToFreeswitchStream.stop(broadcastStream, scope);
     }
 
-    public void stop() {
+    public void stopFreeswitchToBbbStream() {
     	log.debug("Stopping call stream");
-        userReceiverStream.stop();
+        freeswitchToBbbStream.stop();
     }
 
 	@Override

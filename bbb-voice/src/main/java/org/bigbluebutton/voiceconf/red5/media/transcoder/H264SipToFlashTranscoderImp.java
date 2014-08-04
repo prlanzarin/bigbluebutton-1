@@ -35,7 +35,7 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 
 	protected static Logger log = Red5LoggerFactory.getLogger(H264SipToFlashTranscoderImp.class, "sip");
 	
-	private static final int H264_CODEC = 178; //which is the H264 Id?
+	private static final int H264_CODEC = 35; //which is the H264 Id?
 	private Codec videoCodec = null;
 	private long timestamp = 0;
 
