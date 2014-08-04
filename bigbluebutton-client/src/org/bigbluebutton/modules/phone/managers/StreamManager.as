@@ -160,7 +160,7 @@ package org.bigbluebutton.modules.phone.managers {
 			 */
 			incomingStream.bufferTime = 0;	
 			incomingStream.receiveAudio(true);
-			incomingStream.receiveVideo(false);
+			incomingStream.receiveVideo(true);
 		}
 		
 		private function setupOutgoingStream():void {

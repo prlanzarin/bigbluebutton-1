@@ -171,15 +171,15 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 
 			Notify notifyData = new Notify(mBuffer);
 			notifyData.setTimestamp((int)timestamp);
-			notifyData.setSourceType(Constants.SOURCE_TYPE_LIVE);
+			notifyData.setSourceType(Constants.SOURCE_TYPE_LIVE);			
 			audioBroadcastStream.dispatchEvent(notifyData);
 			notifyData.release();
 			sentMetadata = true;
 		}	
 	}
 
-	private void pushAudio(byte[] audio, long timestamp) {	
-		sendFakeMetadata(timestamp);
+	private void pushAudio(byte[] audio, long timestamp) {		
+		sendFakeMetadata(timestamp);		
 		        mBuffer.clear();
 		        mBuffer.put((byte) transcoder.getCodecId());
 		mBuffer.put(audio);
@@ -195,5 +195,6 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
         audioData.setData(mBuffer);
 		audioBroadcastStream.dispatchEvent(audioData);
 		audioData.release();
+
     }
 }

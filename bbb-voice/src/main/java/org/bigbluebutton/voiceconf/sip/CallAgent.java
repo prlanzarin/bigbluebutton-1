@@ -213,7 +213,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
             createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
-            //log.debug("VIDEO stream created");
+            log.debug("VIDEO stream created");
         }else log.debug("VIDEO application is already running.");
     }
 
@@ -229,9 +229,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                     try {
                         log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
                         audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
-                        audioCallStream.addCallStreamObserver(this);
+                        /*audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
-                        notifyListenersOnCallConnected(audioCallStream.getSenderStreamName(), audioCallStream.getReceiverStreamName());
+                        notifyListenersOnCallConnected(audioCallStream.getSenderStreamName(), audioCallStream.getReceiverStreamName());*/
                     } catch (Exception e) {
                         log.error("Failed to create AUDIO Call Stream.");
                         System.out.println(StackTraceUtil.getStackTrace(e));
@@ -261,7 +261,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         videoCallStream.addCallStreamObserver(this);
                         videoCallStream.start();
                         log.debug("VIDEO stream : Sender - "+videoCallStream.getSenderStreamName()+" Receiver - "+ videoCallStream.getReceiverStreamName());
-                        //notifyListenersOnCallConnected(videoCallStream.getSenderStreamName(), videoCallStream.getReceiverStreamName());
+                        notifyListenersOnCallConnected(videoCallStream.getSenderStreamName(), videoCallStream.getReceiverStreamName());
+                        
                         
                             
                     } catch (Exception e) {
@@ -279,19 +280,19 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         
     public void startStream(IBroadcastStream broadcastStream, IScope scope) {
-    	try {
+    	/*try {
 			audioCallStream.startStream(broadcastStream, scope);
 
 		} catch (StreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}   	
+		} */ 	
     }
     
     public void stopStream(IBroadcastStream broadcastStream, IScope scope) {
-    	if (audioCallStream != null) {
+    	/*if (audioCallStream != null) {
     		audioCallStream.stopStream(broadcastStream, scope);   	
-    	}
+    	}*/
     }
     
      public void startVideoStream(IBroadcastStream broadcastStream, IScope scope) {

@@ -55,7 +55,12 @@ public class ESLEventListener implements IEslEventListener {
 
     @Override
     public void conferenceEventLeave(String uniqueId, String confName, int confSize, EslEvent event) {
+        
+
         Integer memberId = this.getMemberIdFromEvent(event);
+        if (memberId== null){
+            return;
+        }
         ParticipantLeftEvent pl = new ParticipantLeftEvent(memberId, confName);
         conferenceEventListener.handleConferenceEvent(pl);
     }
@@ -150,8 +155,12 @@ public class ESLEventListener implements IEslEventListener {
         }
 	}
 
-    private Integer getMemberIdFromEvent(EslEvent e) {
-        return new Integer(e.getEventHeaders().get("Member-ID"));
+    private Integer getMemberIdFromEvent(EslEvent e) {        
+        try{
+            return new Integer(e.getEventHeaders().get("Member-ID"));
+        }catch (NumberFormatException excp){
+            return null;
+        }
     }
 
     private String getCallerIdFromEvent(EslEvent e) {
