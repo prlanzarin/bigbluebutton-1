@@ -11,13 +11,14 @@ import org.red5.app.sip.codecs.Codec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.red5.logging.Red5LoggerFactory;
 
 //import local.net.RtpPacket;
 import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
 
 public class H264ProtocolConverter {
 
-    private static final Logger log = LoggerFactory.getLogger(H264ProtocolConverter.class);
+    private static final Logger log = Red5LoggerFactory.getLogger(H264ProtocolConverter.class, "sip");
         
     // rtp => rtmp
     private byte[] sps1;
@@ -49,7 +50,7 @@ public class H264ProtocolConverter {
         startTm = -1;
     } 
 
-	private List<RTMPPacketInfo> rtpToRTMP(RtpPacket packet) {
+	public List<RTMPPacketInfo> rtpToRTMP(RtpPacket packet) {
 
         List<RTMPPacketInfo> result = new ArrayList<RTMPPacketInfo>();
         byte[] payload = packet.getPayload();
@@ -59,11 +60,11 @@ public class H264ProtocolConverter {
         switch (nalType) {
         case 7: // SPS
                 sps1 = payload;
-                log.debug("SPS received: " + Arrays.toString(sps1));
+                //log.debug("$$ SPS received: " + Arrays.toString(sps1));
                 break;
         case 8: // PPS
                 pps = payload;
-                log.debug("PPS received: " + Arrays.toString(pps));
+                //log.debug("$$ PPS received: " + Arrays.toString(pps));
                 break;
         default:
                 if (payload.length > 1) {
@@ -78,11 +79,11 @@ public class H264ProtocolConverter {
                                         switch (nt) {
                                         case 7:
                                                 sps1 = naldata;
-                                                log.debug("SPS received: " + Arrays.toString(sps1));
+                                                //log.debug("SPS received: " + Arrays.toString(sps1));
                                                 break;
                                         case 8:
                                                 pps = naldata;
-                                                log.debug("PPS received: " + Arrays.toString(pps));
+                                                //log.debug("PPS received: " + Arrays.toString(pps));
                                                 break;
                                         default:
                                                 break;
@@ -101,7 +102,7 @@ public class H264ProtocolConverter {
                 RtpPacket last = packetsQueue.get(packetsQueue.size() - 1).packet;
                 RtpPacket preLast = packetsQueue.get(packetsQueue.size() - 2).packet;
                 if (last.getTimestamp() != preLast.getTimestamp()) {
-                        log.debug("Clearing queue since new packet has different ts. old ts=" + preLast.getTimestamp() + 
+                        log.debug("$$ Clearing queue since new packet has different ts. old ts=" + preLast.getTimestamp() + 
                                         " new ts=" + last.getTimestamp());
                         packetsQueue.clear();
                 }
