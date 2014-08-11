@@ -35,6 +35,12 @@ import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
+
+import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter.RTMPPacketInfo;
+import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
+
+
 public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceiverListener {
 	private static final Logger log = Red5LoggerFactory.getLogger(SipToFlashAudioStream.class, "sip");
 
@@ -46,13 +52,17 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	private SipToFlashTranscoder transcoder;
 	private boolean sentMetadata = false;
-	private IoBuffer mBuffer;
+	private IoBuffer videoBuffer;
 
 	private VideoData videoData;
 
 	//for debugging...
 	private int eventCounter = 0;
 	private long lastTimeMillis = 0;
+
+	private H264ProtocolConverter converter;
+
+
 
 	private final byte[] fakeMetadata = new byte[] {
 		0x02, 0x00 , 0x0a , 0x6f,0x6e,0x4d,0x65,0x74,0x61,0x44,0x61,0x74,0x61,0x8,0x00, 0x00, 0x00, 0x00,0x00, 0x05,0x77,0x69,0x64,0x74,0x68,0x0,0x40,(byte) 0x84,0x0,0x0,0x0,0x0,0x0,0x0,0x00, 0x06,0x68,0x65,0x69,0x67,0x68,0x74,0x0,0x40,0x7e,0x0,0x0,0x0,0x0,0x0,0x0,0x00, 0x0c , 0x76,0x69,0x64,0x65,0x6f,0x63,0x6f,0x64,0x65,0x63,0x69,0x64 , 0x2, 0x00, 0x4 , 0x61,0x76,0x63,0x31,0x00, 0x0a,0x61,0x76,0x63,0x70,0x72,0x6f,0x66,0x69,0x6c,0x65,0x0,0x40,0x50,(byte) 0x80,0x0,0x0,0x0,0x0,0x0,0x00, 0x08,0x61,0x76,0x63,0x6c,0x65,0x76,0x65,0x6c,0x0,0x40,0x3e,0x0,0x0,0x0,0x0,0x0,0x0,0x00, 0x0e,0x76,0x69,0x64,0x65,0x6f,0x66,0x72,0x61,0x6d,0x65,0x72,0x61,0x74,0x65,0x0,0x40,0x2e,0x0,0x0,0x0,0x0,0x0,0x0
@@ -66,11 +76,13 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
 		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
-		mBuffer = IoBuffer.allocate(8192);
-		mBuffer = mBuffer.setAutoExpand(true);
+		videoBuffer = IoBuffer.allocate(8192);
+		videoBuffer = videoBuffer.setAutoExpand(true);
 
 		videoData = new VideoData();
 		transcoder.setTranscodedMediaDataListener(this);
+
+		converter = new H264ProtocolConverter();
 	}
 
 
@@ -146,8 +158,13 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onMediaDataReceived(byte[] videoData, int offset, int len, long timestampDelta) {
-		transcoder.handleData(videoData, offset, len, timestampDelta);
+	public void onMediaDataReceived(byte[] mediaData, int offset, int len, long timestampDelta) {
+		//transcoder.handleData(videoData, offset, len, timestampDelta);
+
+		for (RTMPPacketInfo packetInfo: converter.rtpToRTMP(  new RtpPacket(mediaData,mediaData.length) )) {
+                pushVideo(packetInfo.data, packetInfo.ts);
+        }   		
+
 	}	
 
 
@@ -169,37 +186,37 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 			* We create a fake one here to get it going. Red5 should do this automatically
 			* but for Red5 0.91, doesn't yet. (ralam Sept 24, 2010).
 			*/
-			mBuffer.clear();	
-			mBuffer.put(fakeMetadata);
-			mBuffer.flip();
+			videoBuffer.clear();	
+			videoBuffer.put(fakeMetadata);
+			videoBuffer.flip();
 
-			Notify notifyData = new Notify(mBuffer);
+			Notify notifyData = new Notify(videoBuffer);
 			notifyData.setTimestamp((int)timestamp);
 			notifyData.setSourceType(Constants.SOURCE_TYPE_LIVE);
 			videoBroadcastStream.dispatchEvent(notifyData);
 			notifyData.release();
 			sentMetadata = true;
+
+			log.debug("$$ fakeMetadata sent... ");
 		}	
 	}
 
 	private void pushVideo(byte[] video, long timestamp) {	
-		//sendFakeMetadata(timestamp);
-		        mBuffer.clear();
-		        mBuffer.put((byte) transcoder.getCodecId());
 		
+		videoBuffer.clear();
+		//videoBuffer.put((byte) transcoder.getCodecId());
+		videoBuffer.put(video);
+		videoBuffer.flip();
 
 
-		mBuffer.put(video);
-		mBuffer.flip();
-
-		videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
+		//videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
         videoData.setTimestamp((int)(timestamp));
-        videoData.setData(mBuffer);
+        videoData.setData(videoBuffer);
+
 		videoBroadcastStream.dispatchEvent(videoData);
-		videoData.release();
 		
 		//for debugging only: print the first 20 packets and then print a packet every 10 seconds
-		/*if( (System.currentTimeMillis() - lastTimeMillis) > 10000  || eventCounter < 21) {
+		if( (System.currentTimeMillis() - lastTimeMillis) > 10000  || eventCounter < 21) {
 
 			String type = "";
 			switch(videoData.getFrameType())
@@ -213,11 +230,14 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 				case DISPOSABLE_INTERFRAME: type = "DISPOSABLE_INTERFRAME";
 				break;
 			}
-			log.debug("timestamp = " + videoData.getTimestamp() + " type = " + type);
+			log.debug("$$ timestamp = " + videoData.getTimestamp() + " type = " + type);
 
 			lastTimeMillis = System.currentTimeMillis();
 			eventCounter++;
-		}*/
+		}
+
+
+		videoData.release();
     }	
 
 }
