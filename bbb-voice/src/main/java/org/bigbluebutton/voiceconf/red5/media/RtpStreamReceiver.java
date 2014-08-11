@@ -102,13 +102,13 @@ public class RtpStreamReceiver {
         		} else {
             		if (shouldHandlePacket(rtpPacket)) {
 
+                        //CHECK lastTimestampDelta
                         lastTimestampDelta = rtpPacket.getTimestamp() - lastPacketTimestamp;
                         
                         //for debuging...
-                        //if(rtpPacket.getTimestamp() < 7000)
-                            //log.debug("$$ lastPacketTimestamp= " + lastPacketTimestamp 
-                                //+      " rtpPacket.getTimestamp()= " + rtpPacket.getTimestamp()
-                                //+       " lastTimestampDelta= " + lastTimestampDelta);
+                        if(packetReceivedCounter < 5000)
+                            log.debug(" rtpPacket.getTimestamp()= " + rtpPacket.getTimestamp());
+                                
 
 
 
@@ -116,6 +116,7 @@ public class RtpStreamReceiver {
 
             			lastSequenceNumber = rtpPacket.getSeqNum();
 
+                        //check RTP_HEADER_SIZE
             			processRtpPacket(internalBuffer, RTP_HEADER_SIZE, rtpPacket.getPayloadLength());
             		
                     } else {
@@ -223,6 +224,7 @@ public class RtpStreamReceiver {
     }
 
     private void processRtpPacket(byte[] rtpMediaData, int offset, int len) {
+        //CHECK lastTimeStampDelta
 		if (listener != null) listener.onMediaDataReceived(rtpMediaData, offset, len, lastTimestampDelta);
 		else log.debug("No listener for incoming media packet");    	
     }

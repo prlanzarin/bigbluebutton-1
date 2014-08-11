@@ -229,10 +229,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                     try {
                         log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
                         audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
-                        /*audioCallStream.addCallStreamObserver(this);
+                        
+                        audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
                         notifyListenersOnCallConnected(audioCallStream.getBbbToFreeswitchStreamName(), 
-                                                       audioCallStream.getFreeswitchToBbbStreamName());*/
+                                                       audioCallStream.getFreeswitchToBbbStreamName());
+                        log.debug("AUDIO streams names: "+ audioCallStream.getBbbToFreeswitchStreamName() + " - "+ audioCallStream.getFreeswitchToBbbStreamName());
+                        
+
                     } catch (Exception e) {
                         log.error("Failed to create AUDIO Call Stream.");
                         System.out.println(StackTraceUtil.getStackTrace(e));
@@ -259,10 +263,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
                         videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo, CallStream.MEDIA_TYPE_VIDEO);                                                
                         videoCallStream.addCallStreamObserver(this);
-                        videoCallStream.start();
+                        /*videoCallStream.start();
                         notifyListenersOnCallConnected(videoCallStream.getBbbToFreeswitchStreamName(), 
                                                        videoCallStream.getFreeswitchToBbbStreamName());
-                        
+                        log.debug("VIDEO streams names: "+ videoCallStream.getBbbToFreeswitchStreamName() + " - "+ videoCallStream.getFreeswitchToBbbStreamName());
+                        */
                             
                     } catch (Exception e) {
                         log.error("Failed to create VIDEO Call Stream.");
@@ -279,34 +284,34 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         
    public void startBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
-    	/*try {
+    	try {
 			audioCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
 
 		} catch (StreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/	
+		}
     }
        
     public void stopBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
-    	/*if (audioCallStream != null) {
+    	if (audioCallStream != null) {
     		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
-    	}*/
+    	}
     }
     
      public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        try {
+        /*try {
             videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (StreamException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
+        }*/
     }
     
     public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        if (videoCallStream != null) {
+        /*if (videoCallStream != null) {
             videoCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);     
-        }
+        }*/
     }
 
     private void closeStreams() {        

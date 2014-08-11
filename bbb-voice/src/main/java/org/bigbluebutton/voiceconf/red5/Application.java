@@ -79,6 +79,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 
     @Override
     public boolean appConnect(IConnection conn, Object[] params) {
+        if (params.length == 0) {
+            params = new Object[2];
+            params[0] = "unknown-userid";
+            params[1] = "UNKNOWN-CALLER";
+        }
     	String userid = ((String) params[0]).toString();
         String username = ((String) params[1]).toString();
         String clientId = Red5.getConnectionLocal().getClient().getId();
