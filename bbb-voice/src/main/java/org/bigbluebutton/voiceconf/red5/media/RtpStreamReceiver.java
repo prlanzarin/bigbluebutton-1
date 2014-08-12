@@ -82,7 +82,7 @@ public class RtpStreamReceiver {
         int packetReceivedCounter = 0;
         int internalBufferLength = payloadLength + RTP_HEADER_SIZE;
         byte[] internalBuffer = new byte[internalBufferLength];
-        RtpPacket rtpPacket = new RtpPacket(internalBuffer, internalBufferLength);;
+        RtpPacket rtpPacket = new RtpPacket(internalBuffer, internalBufferLength);
         
         while (receivePackets) {
         	try {       			
