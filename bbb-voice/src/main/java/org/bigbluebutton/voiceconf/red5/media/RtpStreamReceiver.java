@@ -117,7 +117,8 @@ public class RtpStreamReceiver {
             			lastSequenceNumber = rtpPacket.getSeqNum();
 
                         //check RTP_HEADER_SIZE
-            			processRtpPacket(internalBuffer, RTP_HEADER_SIZE, rtpPacket.getPayloadLength());
+                        byte freshData[] = internalBuffer.clone();
+            			processRtpPacket(freshData, RTP_HEADER_SIZE, rtpPacket.getPayloadLength());
             		
                     } else {
             			if (log.isDebugEnabled())

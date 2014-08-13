@@ -19,9 +19,10 @@
 package org.bigbluebutton.modules.videoconf.maps
 {
   import flash.events.IEventDispatcher;
+  import flash.net.NetConnection;
   
   import mx.collections.ArrayCollection;
-  
+
   import org.bigbluebutton.common.LogUtil;
   import org.bigbluebutton.common.events.CloseWindowEvent;
   import org.bigbluebutton.common.events.OpenWindowEvent;
@@ -242,6 +243,18 @@ package org.bigbluebutton.modules.videoconf.maps
       webcamWindows.addWindow(window);        
       openWindow(window);
       dockWindow(window);  
+    }
+
+    public function openFreeswitchVideo(streamName:String, connection:NetConnection):void {
+      var window:VideoWindow = new VideoWindow();
+      window.title = "FreeSWITCH video";
+      window.videoOptions = options;       
+      window.resolutions = "640x480".split(",");
+
+      window.startVideo(connection, streamName);
+      webcamWindows.addWindow(window);
+      openWindow(window);
+      dockWindow(window);
     }
     
     private function openWindow(window:VideoWindowItf):void {

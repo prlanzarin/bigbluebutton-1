@@ -28,6 +28,7 @@ package org.bigbluebutton.modules.phone.managers {
 	import flash.net.NetConnection;
 	import flash.net.NetStream;	
 	import org.bigbluebutton.common.LogUtil;
+	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.modules.phone.events.CallConnectedEvent;
 	import org.bigbluebutton.modules.phone.events.CallDisconnectedEvent;
 	import org.bigbluebutton.modules.phone.events.ConnectionStatusEvent;
@@ -137,6 +138,11 @@ package org.bigbluebutton.modules.phone.managers {
 			event.playStreamName = playName;
 			event.codec = codec;
 			dispatcher.dispatchEvent(event);
+
+			var openStream:BBBEvent = new BBBEvent(BBBEvent.OPEN_FREESWITCH_VIDEO_STREAM_EVENT);
+			openStream.payload.streamName = playName;
+			openStream.payload.connection = netConnection;
+			dispatcher.dispatchEvent(openStream);
 		}
 						
 		//********************************************************************************************

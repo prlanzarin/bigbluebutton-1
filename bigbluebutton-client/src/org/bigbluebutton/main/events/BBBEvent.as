@@ -42,6 +42,8 @@ package org.bigbluebutton.main.events {
 	public static const MIC_SETTINGS_CLOSED:String = "MIC_SETTINGS_CLOSED";
 	public static const CAM_SETTINGS_CLOSED:String = "CAM_SETTINGS_CLOSED";
 	public static const JOIN_VOICE_FOCUS_HEAD:String = "JOIN_VOICE_FOCUS_HEAD";
+
+	public static const OPEN_FREESWITCH_VIDEO_STREAM_EVENT:String = "OPEN_FREESWITCH_VIDEO_STREAM";
    
 		public var message:String;
 		public var payload:Object = new Object();
