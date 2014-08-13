@@ -141,7 +141,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         if (peerId != null) {
         	super.streamPublishStart(stream);
 	    	sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
+            //sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
 //	    	recordStream(stream);
         }
     }

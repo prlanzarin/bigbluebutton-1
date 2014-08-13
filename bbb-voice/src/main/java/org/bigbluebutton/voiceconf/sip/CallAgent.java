@@ -228,14 +228,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 if ((audioCallStream == null) && (sipAudioCodec != null)) {                  
                     try {
                         log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
-                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
-                        
-                        /*audioCallStream.addCallStreamObserver(this);
+                        /*audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
+                        audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
                         notifyListenersOnCallConnected(audioCallStream.getBbbToFreeswitchStreamName(), 
-                                                       audioCallStream.getFreeswitchToBbbStreamName());
-                        log.debug("AUDIO streams names: "+ audioCallStream.getBbbToFreeswitchStreamName() + " - "+ audioCallStream.getFreeswitchToBbbStreamName());
-                        */
+                                                       audioCallStream.getFreeswitchToBbbStreamName());*/                 
 
                     } catch (Exception e) {
                         log.error("Failed to create AUDIO Call Stream.");
@@ -266,8 +263,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         videoCallStream.start();
                         notifyListenersOnCallConnected(videoCallStream.getBbbToFreeswitchStreamName(), 
                                                        videoCallStream.getFreeswitchToBbbStreamName());
-                        log.debug("VIDEO streams names: "+ videoCallStream.getBbbToFreeswitchStreamName() + " - "+ videoCallStream.getFreeswitchToBbbStreamName());
-                        
+                       
                             
                     } catch (Exception e) {
                         log.error("Failed to create VIDEO Call Stream.");

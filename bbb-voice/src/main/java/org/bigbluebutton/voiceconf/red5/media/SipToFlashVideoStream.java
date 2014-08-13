@@ -61,7 +61,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	private long lastTimeMillis = 0;
 
 	private H264ProtocolConverter converter;
-
+	private final int EXPECTED_MAXIMUM_PAYLOAD_LENGTH = 2048;
 
 
 	private final byte[] fakeMetadata = new byte[] {
@@ -72,12 +72,14 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	public SipToFlashVideoStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
 		this.transcoder = transcoder;
 		this.scope = scope;		
+
 		//rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
-		rtpStreamReceiver = new RtpStreamReceiver(socket, 2048);
+		rtpStreamReceiver = new RtpStreamReceiver(socket, EXPECTED_MAXIMUM_PAYLOAD_LENGTH);
+
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
 		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
-		videoBuffer = IoBuffer.allocate(2048*50);
+		videoBuffer = IoBuffer.allocate(EXPECTED_MAXIMUM_PAYLOAD_LENGTH*100);
 		videoBuffer = videoBuffer.setAutoExpand(true);
 
 		videoData = new VideoData();
@@ -159,9 +161,10 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onMediaDataReceived(byte[] mediaData, int offset, int len, long timestampDelta) {		
-		
-		for (RTMPPacketInfo packetInfo: converter.rtpToRTMP(  new RtpPacket(mediaData,offset + len) )) {
+	public void onMediaDataReceived(byte[] mediaData, int offset, int len, long timestampDelta) {
+		//transcoder.handleData(videoData, offset, len, timestampDelta);
+
+		for (RTMPPacketInfo packetInfo: converter.rtpToRTMP(  new RtpPacket(mediaData, (offset+len) ))) {
                 pushVideo(packetInfo.data, packetInfo.ts);
         }   		
 
@@ -202,14 +205,23 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	private void pushVideo(byte[] video, long timestamp) {	
-		
+
+		//red5phone implementation does not send the information below...but maybe we will need this...
+		//sendFakeMetadata(timestamp); 
+			
 		videoBuffer.clear();
-		//videoBuffer.put((byte) transcoder.getCodecId());
+
+		//red5phone implementation does not put this information...
+		//videoBuffer.put((byte) transcoder.getCodecId()); 
+
+
 		videoBuffer.put(video);
 		videoBuffer.flip();
 
-
+		//red5phone implementation does not put this information...
 		//videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
+
+
         videoData.setTimestamp((int)(timestamp));
         videoData.setData(videoBuffer);
 
@@ -230,7 +242,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 				case DISPOSABLE_INTERFRAME: type = "DISPOSABLE_INTERFRAME";
 				break;
 			}
-			log.debug("$$ timestamp = " + videoData.getTimestamp() + " type = " + type);
+			log.debug("$$ video.length = " + video.length + " timestamp = " + videoData.getTimestamp() + " type = " + type);
 
 			lastTimeMillis = System.currentTimeMillis();
 			eventCounter++;
