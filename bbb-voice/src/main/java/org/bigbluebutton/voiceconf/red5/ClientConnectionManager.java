@@ -44,10 +44,13 @@ public class ClientConnectionManager {
 		}
 	}
 	
-	public void joinConferenceSuccess(String clientId, String userSenderStream, String userReceiverStream, String codec) {
+	public void joinConferenceSuccess(String clientId, 
+									  String userSenderAudioStream, String userReceiverAudioStream, String audioCodec,
+									  String userSenderVideoStream, String userReceiverVideoStream, String videoCodec) {
 		ClientConnection cc = clients.get(clientId);
 		if (cc != null) {
-			cc.onJoinConferenceSuccess(userSenderStream, userReceiverStream, codec);
+			cc.onJoinConferenceSuccess(userSenderAudioStream, userReceiverAudioStream, audioCodec,
+									   userSenderVideoStream, userReceiverVideoStream, videoCodec);
 		} else {
 			log.warn("Can't find client {} to inform user that she has joined the conference.", clientId);
 		}

@@ -116,35 +116,46 @@ package org.bigbluebutton.modules.phone.managers {
 		//			CallBack Methods from Red5 
 		//
 		//********************************************************************************************		
-		public function failedToJoinVoiceConferenceCallback(msg:String):* {
-			LogUtil.debug("failedToJoinVoiceConferenceCallback " + msg);
+		public function failedToJoinConferenceCallback(msg:String):* {
+			LogUtil.debug("failedToJoinConferenceCallback " + msg);
 			var event:CallDisconnectedEvent = new CallDisconnectedEvent();
 			dispatcher.dispatchEvent(event);	
 			isConnected = false;
 		}
 		
-		public function disconnectedFromJoinVoiceConferenceCallback(msg:String):* {
-			LogUtil.debug("disconnectedFromJoinVoiceConferenceCallback " + msg);
+		public function disconnectedFromJoinConferenceCallback(msg:String):* {
+			LogUtil.debug("disconnectedFromJoinConferenceCallback " + msg);
 			var event:CallDisconnectedEvent = new CallDisconnectedEvent();
 			dispatcher.dispatchEvent(event);	
 			isConnected = false;
 		}	
 				
-        public function successfullyJoinedVoiceConferenceCallback(publishName:String, playName:String, codec:String):* {
-        	LogUtil.debug("successfullyJoinedVoiceConferenceCallback " + publishName + " : " + playName + " : " + codec);
-			isConnected = true;
-			var event:CallConnectedEvent = new CallConnectedEvent();
-			event.publishStreamName = publishName;
-			event.playStreamName = playName;
-			event.codec = codec;
-			dispatcher.dispatchEvent(event);
+        public function successfullyJoinedConferenceCallback(publishAudioName:String, playAudioName:String, audioCodec:String,
+        												     publishVideoName:String, playVideoName:String, videoCodec:String):* {
+        	LogUtil.debug("successfullyJoinedConferenceCallback | AUDIO Parameters: " + 
+        				   publishAudioName + " : " + playAudioName + " : " + audioCodec);
 
-			var openStream:BBBEvent = new BBBEvent(BBBEvent.OPEN_FREESWITCH_VIDEO_STREAM_EVENT);
-			openStream.payload.streamName = playName;
-			openStream.payload.connection = netConnection;
-			dispatcher.dispatchEvent(openStream);
+			isConnected = true;
+
+			var audioEvent:CallConnectedEvent = new CallConnectedEvent();
+			audioEvent.publishStreamName = publishAudioName;
+			audioEvent.playStreamName = playAudioName;
+			audioEvent.codec = audioCodec;
+			dispatcher.dispatchEvent(audioEvent);
+
+			if(playVideoName) {
+        		LogUtil.debug("successfullyJoinedConferenceCallback | VIDEO Parameters: " + 
+        				   	   publishVideoName + " : " + playVideoName + " : " + videoCodec);
+
+
+				var openStream:BBBEvent = new BBBEvent(BBBEvent.OPEN_FREESWITCH_VIDEO_STREAM_EVENT);
+				openStream.payload.streamName = playVideoName;
+				openStream.payload.connection = netConnection;
+				dispatcher.dispatchEvent(openStream);	
+			}
 		}
-						
+
+								
 		//********************************************************************************************
 		//			
 		//			SIP Actions
