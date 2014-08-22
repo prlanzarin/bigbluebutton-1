@@ -73,4 +73,14 @@ public class ClientConnectionManager {
 			log.warn("Can't find client {} to inform user that she has left the conference.", clientId);
 		}
 	}
+
+	public void pausedVideo(String clientId) {
+		ClientConnection cc = clients.get(clientId);
+		if(cc != null) {
+			cc.onPausedVideo();
+		}
+		else {
+			log.warn("Can't find client {} to inform user that the video has been paused.", clientId);
+		}
+	}
 }

@@ -22,6 +22,11 @@ import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.net.SocketException;
+
+import org.slf4j.Logger;
+import org.red5.logging.Red5LoggerFactory;
 
 
 /** RtpSocket implements a RTP socket for receiving and sending RTP packets. 
@@ -29,6 +34,8 @@ import java.io.IOException;
   * to send and/or receive RtpPackets.
   */
 public class RtpSocket {
+   protected static Logger log = Red5LoggerFactory.getLogger(RtpSocket.class, "sip");
+
    /** UDP socket */
    DatagramSocket socket;
         
@@ -48,6 +55,13 @@ public class RtpSocket {
 	   socket=datagram_socket;
 	   r_addr=null;
 	   r_port=0;
+
+      try {
+      socket.setSoTimeout(5000);
+      }
+      catch(SocketException e) {
+         log.debug("[RtpSocket] unable to set socket timeout.");
+      }
    }
 
    /** Creates a new RTP socket (sender and receiver) */ 
@@ -65,7 +79,7 @@ public class RtpSocket {
    
    
    /** Receives a RTP packet from this socket */
-   public void receive(RtpPacket rtpp) throws IOException {  
+   public void receive(RtpPacket rtpp) throws IOException, SocketTimeoutException {  
 	   rxDatagram.setData(rtpp.getPacket());
 	   socket.receive(rxDatagram);
 	   rtpp.setPacketLength(rxDatagram.getLength());     

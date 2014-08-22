@@ -474,6 +474,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	clientConnManager.leaveConference(clientId);
     	cleanup();
     }
+
+    private void notifyListenersOfOnCallPaused() {
+        log.debug("notifyListenersOfOnCallPaused for {}", clientId);
+        clientConnManager.pausedVideo(clientId);
+    }
     
     private void cleanup() {
     	log.debug("Closing local audio port {}", localAudioSocket.getLocalPort());
@@ -528,6 +533,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void onCallStreamStopped() {
     	log.info("Call stream has been stopped");
     	notifyListenersOfOnCallClosed();
+    }
+
+    public void onCallStreamPaused() {
+        log.info("Call stream has been paused");
+        notifyListenersOfOnCallPaused();
     }
     
     private boolean isCurrentCall(Call call) {

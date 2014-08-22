@@ -155,6 +155,11 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
+	public void onPausedReceiving() {
+		if(observer != null) observer.onStreamPaused();
+	}
+
+	@Override
 	public void onMediaDataReceived(byte[] mediaData, int offset, int len) {
 
 		for (RTMPPacketInfo packetInfo: converter.rtpToRTMP(  new RtpPacket(mediaData, (offset+len) ))) {
