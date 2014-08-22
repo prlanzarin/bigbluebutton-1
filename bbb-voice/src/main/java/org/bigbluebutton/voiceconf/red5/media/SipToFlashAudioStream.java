@@ -39,7 +39,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	private BroadcastStream audioBroadcastStream;
 	private IScope scope;
 	private final String freeswitchToBbbAudioStreamName;
-	private RtpStreamReceiver rtpStreamReceiver;
+	private RtpAudioStreamReceiver rtpStreamReceiver;
 	private StreamObserver observer;
 
 	private SipToFlashTranscoder transcoder;
@@ -63,7 +63,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	public SipToFlashAudioStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
 		this.transcoder = transcoder;
 		this.scope = scope;		
-		rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
+		rtpStreamReceiver = new RtpAudioStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
 		freeswitchToBbbAudioStreamName = "freeswitchToBbbAudioStream_" + System.currentTimeMillis();	
@@ -145,8 +145,8 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onMediaDataReceived(byte[] audioData, int offset, int len, long timestampDelta) {
-		transcoder.handleData(audioData, offset, len, timestampDelta);
+	public void onMediaDataReceived(byte[] audioData, int offset, int len) {
+		transcoder.handleData(audioData, offset, len);
 	}
 
 	@Override

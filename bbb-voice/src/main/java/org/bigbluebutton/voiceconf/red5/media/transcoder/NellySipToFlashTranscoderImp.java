@@ -160,7 +160,7 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void handleData(byte[] audioData, int offset, int len, long timestampDelta) {
+	public void handleData(byte[] audioData, int offset, int len) {
 		try {
 			streamFromSip.write(audioData, offset, len);
 		} catch (IOException e) {

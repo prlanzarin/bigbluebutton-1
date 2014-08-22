@@ -68,11 +68,11 @@ public class H264SipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void handleData(byte[] videoData, int offset, int len, long timestampDelta) {
+	public void handleData(byte[] videoData, int offset, int len) {
 		byte[] data = new byte[len];
 		System.arraycopy(videoData, offset, data, 0, len);
 
-		currentTimestampIncrement = timestampDelta;
+		//currentTimestampIncrement = timestampDelta;
 		transcode(data);		
 	}
 

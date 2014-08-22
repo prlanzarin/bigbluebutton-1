@@ -65,11 +65,9 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void handleData(byte[] audioData, int offset, int len, long timestampDelta) {
+	public void handleData(byte[] audioData, int offset, int len) {
 		byte[] data = new byte[len];
 		System.arraycopy(audioData, offset, data, 0, len);
-
-		//Here, we don't use the timestampDelta: instead, we use the constant TS_INCREMENT
 		transcode(data);		
 	}
 

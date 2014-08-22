@@ -20,7 +20,6 @@ package org.bigbluebutton.voiceconf.red5.media;
 
 import org.red5.server.api.scope.IScope;
 import java.net.DatagramSocket;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaDataListener;
 import org.apache.mina.core.buffer.IoBuffer;
@@ -37,7 +36,8 @@ import org.slf4j.Logger;
 
 
 import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter.RTMPPacketInfo;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter.RTMPPacketInfo;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
 import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
 
 
@@ -47,10 +47,9 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	private BroadcastStream videoBroadcastStream;
 	private IScope scope;
 	private final String freeswitchToBbbVideoStreamName;
-	private RtpStreamReceiver rtpStreamReceiver;
+	private RtpVideoStreamReceiver rtpStreamReceiver;
 	private StreamObserver observer;
 
-	private SipToFlashTranscoder transcoder;
 	private boolean sentMetadata = false;
 	private IoBuffer videoBuffer;
 
@@ -60,7 +59,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	private int eventCounter = 0;
 	private long lastTimeMillis = 0;
 
-	private H264ProtocolConverter converter;
+	private VideoProtocolConverter converter;
 	private final int EXPECTED_MAXIMUM_PAYLOAD_LENGTH = 2048;
 
 
@@ -69,23 +68,20 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	};
 
 
-	public SipToFlashVideoStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
-		this.transcoder = transcoder;
+	public SipToFlashVideoStream(IScope scope, VideoProtocolConverter converter, DatagramSocket socket) {
 		this.scope = scope;		
 
-		//rtpStreamReceiver = new RtpStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
-		rtpStreamReceiver = new RtpStreamReceiver(socket, EXPECTED_MAXIMUM_PAYLOAD_LENGTH);
-
+		rtpStreamReceiver = new RtpVideoStreamReceiver(socket, EXPECTED_MAXIMUM_PAYLOAD_LENGTH);
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();	
+		freeswitchToBbbVideoStreamName = "freeswitchToBbbVideoStream_" + System.currentTimeMillis();
+
 		videoBuffer = IoBuffer.allocate(EXPECTED_MAXIMUM_PAYLOAD_LENGTH*100);
 		videoBuffer = videoBuffer.setAutoExpand(true);
 
 		videoData = new VideoData();
-		transcoder.setTranscodedMediaDataListener(this);
 
-		converter = new H264ProtocolConverter();
+		this.converter = converter;
 	}
 
 
@@ -104,7 +100,6 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 			if (log.isDebugEnabled()) 
 				log.debug("Stopping VIDEO stream for {}", freeswitchToBbbVideoStreamName);
 
-			transcoder.stop();
 			rtpStreamReceiver.stop();
 
 			if (log.isDebugEnabled()) 
@@ -150,8 +145,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 			throw new RuntimeException("could not register broadcast stream");
 		}
 		
-	    videoBroadcastStream.start();	    
-		transcoder.start();   	
+	    videoBroadcastStream.start();	      	
 	    rtpStreamReceiver.start();
 	}
 
@@ -161,8 +155,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onMediaDataReceived(byte[] mediaData, int offset, int len, long timestampDelta) {
-		//transcoder.handleData(videoData, offset, len, timestampDelta);
+	public void onMediaDataReceived(byte[] mediaData, int offset, int len) {
 
 		for (RTMPPacketInfo packetInfo: converter.rtpToRTMP(  new RtpPacket(mediaData, (offset+len) ))) {
                 pushVideo(packetInfo.data, packetInfo.ts);
@@ -200,7 +193,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 			notifyData.release();
 			sentMetadata = true;
 
-			log.debug("$$ fakeMetadata sent... ");
+			log.debug("FakeMetadata sent... ");
 		}	
 	}
 
@@ -210,16 +203,8 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		//sendFakeMetadata(timestamp); 
 			
 		videoBuffer.clear();
-
-		//red5phone implementation does not put this information...
-		//videoBuffer.put((byte) transcoder.getCodecId()); 
-
-
 		videoBuffer.put(video);
 		videoBuffer.flip();
-
-		//red5phone implementation does not put this information...
-		//videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
 
 
         videoData.setTimestamp((int)(timestamp));

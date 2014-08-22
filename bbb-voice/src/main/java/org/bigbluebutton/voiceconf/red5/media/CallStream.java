@@ -26,6 +26,8 @@ import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexFlashToSipTranscod
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexSipToFlashTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.H264FlashToSipTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.H264SipToFlashTranscoderImp;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.SpeexCodec;
@@ -48,6 +50,8 @@ public class CallStream implements StreamObserver {
 
     private SipToFlashTranscoder sipToFlashTranscoder;
     private FlashToSipTranscoder flashToSipTranscoder;
+
+    private VideoProtocolConverter videoConverter;
 
 
     private final Codec sipCodec;
@@ -100,18 +104,20 @@ public class CallStream implements StreamObserver {
 
             if (sipCodec.getCodecId() == H264Codec.codecId) {  
 
-                sipToFlashTranscoder = new H264SipToFlashTranscoderImp(sipCodec);
-                flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
+                log.info("Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
+                log.debug("Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
+                log.debug("Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
+                log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");                
 
-                log.info("$$ Using codec=" + sipCodec.getCodecName() + " id=" + sipCodec.getCodecId());
-                log.debug("$$ Packetization [" + sipCodec.getIncomingPacketization() + "," + sipCodec.getOutgoingPacketization() + "]");
-                log.debug("$$ Outgoing Frame size [" + sipCodec.getOutgoingEncodedFrameSize() + ", " + sipCodec.getOutgoingDecodedFrameSize() + "]");
-                log.debug("$$ Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
 
-                freeswitchToBbbStream = new SipToFlashVideoStream(scope, sipToFlashTranscoder, connInfo.getSocket()); 
-                freeswitchToBbbStream.addListenStreamObserver(this);   
-                log.debug("$$ Starting freeswitchToBbbStream so that users with no cam can view.");
+                videoConverter = new H264ProtocolConverter();                
+                freeswitchToBbbStream = new SipToFlashVideoStream(scope, videoConverter, connInfo.getSocket()); 
+                freeswitchToBbbStream.addListenStreamObserver(this); 
+                  
+                log.debug("Starting freeswitchToBbbStream so that users with no cam can view.");
                 freeswitchToBbbStream.start();
+
+                flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
                 bbbToFreeswitchStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);            
             }
 
