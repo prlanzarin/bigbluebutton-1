@@ -270,6 +270,11 @@ package org.bigbluebutton.modules.videoconf.maps
       dockWindow(publishWindow);  
     }
     
+    public function closeFreeswitchVideo():void {
+      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
+      closeWindow("FreeSWITCH video");
+    }
+
     private function closeWindow(userID:String):void {
       if (! webcamWindows.hasWindow(userID)) {
         trace("VideoEventMapDelegate:: [" + me + "] closeWindow:: No window for [" + userID + "] [" + UsersUtil.getUserName(userID) + "]");
@@ -310,6 +315,7 @@ package org.bigbluebutton.modules.videoconf.maps
     public function openFreeswitchVideo(streamName:String, connection:NetConnection):void {
       var window:VideoWindow = new VideoWindow();
       window.title = "FreeSWITCH video";
+      window.userID = "FreeSWITCH video";
       window.videoOptions = options;       
       window.resolutions = "640x480".split(",");
 

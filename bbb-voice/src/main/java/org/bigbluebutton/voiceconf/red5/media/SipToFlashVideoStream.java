@@ -160,6 +160,11 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
+	public void onRestartedReceiving() {
+		if(observer != null) observer.onStreamRestarted();
+	}
+
+	@Override
 	public void onMediaDataReceived(byte[] mediaData, int offset, int len) {
 
 		for (RTMPPacketInfo packetInfo: converter.rtpToRTMP(  new RtpPacket(mediaData, (offset+len) ))) {
@@ -218,6 +223,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		videoBroadcastStream.dispatchEvent(videoData);
 		
 		//for debugging only: print the first 20 packets and then print a packet every 10 seconds
+		/*
 		if( (System.currentTimeMillis() - lastTimeMillis) > 10000  || eventCounter < 21) {
 
 			String type = "";
@@ -237,6 +243,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 			lastTimeMillis = System.currentTimeMillis();
 			eventCounter++;
 		}
+		*/
 
 
 		videoData.release();

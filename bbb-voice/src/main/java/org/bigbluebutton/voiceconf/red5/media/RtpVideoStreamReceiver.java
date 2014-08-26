@@ -52,7 +52,7 @@ public class RtpVideoStreamReceiver {
     private long lastPacketReceived = 0;
     private long baseTimestamp = 0;
 
-    private boolean isVideoPaused = true;
+    private boolean isVideoPaused = false;
     
     public RtpVideoStreamReceiver(DatagramSocket socket, int expectedPayloadLength) {
     	this.payloadLength = expectedPayloadLength;
@@ -91,7 +91,15 @@ public class RtpVideoStreamReceiver {
         while (receivePackets) {
         	try {       			
         		rtpSocket.receive(rtpPacket);
-                isVideoPaused = false;        		
+                if(isVideoPaused)
+                {
+                    log.debug("[RtpVideoStreamReceiver] reopen video window");
+                    if(listener != null) {
+                        listener.onRestartedReceiving();
+                    }
+                }
+                isVideoPaused = false;
+
         		packetReceivedCounter++;  
         		if (shouldDropDelayedPacket(rtpPacket)) {
         			continue;
@@ -172,9 +180,11 @@ public class RtpVideoStreamReceiver {
     	 */
 		if (rtpPacket.hasMarker()) {
 			if (log.isDebugEnabled())
-				log.debug("Marked packet [" + rtpPacket.getPayloadType() + ", length=" + rtpPacket.getPayloadLength() + "] seqNum[rtpSeqNum=" + rtpPacket.getSeqNum() + ",lastSeqNum=" + lastSequenceNumber 
+				/*
+                log.debug("Marked packet [" + rtpPacket.getPayloadType() + ", length=" + rtpPacket.getPayloadLength() + "] seqNum[rtpSeqNum=" + rtpPacket.getSeqNum() + ",lastSeqNum=" + lastSequenceNumber 
    					+ "][rtpTS=" + rtpPacket.getTimestamp() + ",lastTS=" + lastPacketTimestamp + "][port=" + rtpSocket.getDatagramSocket().getLocalPort() + "]");       				        			
-   			return true;
+                */
+            return true;
 		}    	
 		
 		return false;

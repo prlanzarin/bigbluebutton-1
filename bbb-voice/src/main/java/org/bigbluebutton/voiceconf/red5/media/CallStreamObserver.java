@@ -22,4 +22,5 @@ public interface CallStreamObserver {
 
 	void onCallStreamStopped();
 	void onCallStreamPaused();
+	void onCallStreamRestarted();
 }

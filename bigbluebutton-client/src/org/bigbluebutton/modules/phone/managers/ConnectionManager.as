@@ -155,6 +155,20 @@ package org.bigbluebutton.modules.phone.managers {
 			}
 		}
 
+		public function videoIsPaused():void {
+			LogUtil.debug("video is paused. Closing video window");
+			var videoPaused:BBBEvent = new BBBEvent(BBBEvent.VIDEO_PAUSED);
+			dispatcher.dispatchEvent(videoPaused);
+		}
+
+		public function videoRestarted(videoStream:String):void {
+			LogUtil.debug("video is restarted. Reopening video window");
+			var videoRestarted:BBBEvent = new BBBEvent(BBBEvent.VIDEO_RESTARTED);
+			videoRestarted.payload.streamName = videoStream;
+			videoRestarted.payload.connection = netConnection;
+			dispatcher.dispatchEvent(videoRestarted);
+		}
+
 								
 		//********************************************************************************************
 		//			

@@ -83,4 +83,15 @@ public class ClientConnectionManager {
 			log.warn("Can't find client {} to inform user that the video has been paused.", clientId);
 		}
 	}
+
+	public void restartedVideo(String clientId, String videoStream) {
+		ClientConnection cc = clients.get(clientId);
+		if(cc != null) {
+			cc.onRestartedVideo(videoStream);
+		}
+		else {
+			log.warn("Can't find client {} to inform user that the video has been restarted.", clientId);
+		}
+	}
+
 }
