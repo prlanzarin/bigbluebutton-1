@@ -25,7 +25,6 @@ import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexFlashToSipTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexSipToFlashTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.H264FlashToSipTranscoderImp;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.H264SipToFlashTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;

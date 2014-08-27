@@ -28,7 +28,7 @@ import org.bigbluebutton.voiceconf.red5.media.net.RtpSocket;
 import org.red5.logging.Red5LoggerFactory;
 
 public class RtpAudioStreamReceiver {
-    protected static Logger log = Red5LoggerFactory.getLogger(RtpStreamReceiver.class, "sip");
+    protected static Logger log = Red5LoggerFactory.getLogger(RtpAudioStreamReceiver.class, "sip");
     
     // Maximum blocking time, spent waiting for reading new bytes [milliseconds]     
 //    private static final int SO_TIMEOUT = 200;

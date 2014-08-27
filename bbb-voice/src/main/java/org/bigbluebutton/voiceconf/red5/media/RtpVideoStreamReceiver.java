@@ -29,7 +29,7 @@ import org.bigbluebutton.voiceconf.red5.media.net.RtpSocket;
 import org.red5.logging.Red5LoggerFactory;
 
 public class RtpVideoStreamReceiver {
-    protected static Logger log = Red5LoggerFactory.getLogger(RtpStreamReceiver.class, "sip");
+    protected static Logger log = Red5LoggerFactory.getLogger(RtpVideoStreamReceiver.class, "sip");
     
     // Maximum blocking time, spent waiting for reading new bytes [milliseconds]     
 //    private static final int SO_TIMEOUT = 200;
@@ -121,8 +121,9 @@ public class RtpVideoStreamReceiver {
                         //if(packetReceivedCounter < 5000)
                             //log.debug(" rtpPacket.getTimestamp()= " + rtpPacket.getTimestamp());
                                 
+                        if ((lastTimestampDelta <  0) || (lastTimestampDelta > 1000))
+                            rtpPacket.setTimestamp(lastPacketTimestamp);                        
 
-                        rtpPacket.setTimestamp(1000);
 
                         lastPacketTimestamp = rtpPacket.getTimestamp();
 
