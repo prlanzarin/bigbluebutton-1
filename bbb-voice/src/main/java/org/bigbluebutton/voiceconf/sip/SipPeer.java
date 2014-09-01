@@ -185,6 +185,33 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
+    public String getStreamType(String clientId, String streamName) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           return ca.getStreamType(streamName);
+        }
+        else
+            return null;
+    }
+
+    public boolean isAudioStream(String clientId, IBroadcastStream broadcastStream) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           return ca.isAudioStream(broadcastStream);
+        }
+        else
+            return false;
+    }
+
+    public boolean isVideoStream(String clientId, IBroadcastStream broadcastStream) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           return ca.isVideoStream(broadcastStream);
+        }
+        else
+            return false;
+    }
+
 	@Override
 	public void onRegistrationFailure(String result) {
 		log.error("Failed to register with Sip Server.");

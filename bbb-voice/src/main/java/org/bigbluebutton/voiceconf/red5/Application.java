@@ -133,16 +133,35 @@ public class Application extends MultiThreadedApplicationAdapter {
     	String clientId = Red5.getConnectionLocal().getClient().getId();
     	String userid = getUserId();
     	String username = getUsername();
-    	
+
     	log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
     	System.out.println("streamPublishStart: " + stream.getPublishedName());
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
         if (peerId != null) {
+
+            String streamName = stream.getPublishedName();
+            String mediaType = sipPeerManager.getStreamType(peerId, clientId, streamName);
+            if(mediaType != null)
+                log.debug("Stream is of type: " + sipPeerManager.getStreamType(peerId, clientId, streamName));
+            else
+                log.debug("Stream type is null");
+
+            /* It is also possible to use the getStreamType method 
+               to retrieve the stream's type information. Currently,
+               we use isAudioStream and isVideoStream methods instead. */
         	super.streamPublishStart(stream);
-	    	sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-            //sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
-//	    	recordStream(stream);
+            if(sipPeerManager.isAudioStream(peerId, clientId, stream))
+            {
+                sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
+                log.debug("streamPublishStart has just received an audio stream");
+            }
+            else if(sipPeerManager.isVideoStream(peerId, clientId, stream))
+            {
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
+                log.debug("streamPublishStart has just received a video stream");
+            }
+            //recordStream(stream);
         }
     }
     

@@ -107,7 +107,33 @@ public final class SipPeerManager {
             sipUser.stopBbbToFreeswitchVideoStream(clientId, broadcastStream, scope);
         }
     }
- 
+
+    public String getStreamType(String peerId, String clientId, String streamName) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            return sipUser.getStreamType(clientId, streamName);
+        }
+        else
+            return null;
+    }
+
+    public boolean isAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            return sipUser.isAudioStream(clientId, broadcastStream);
+        }
+        else
+            return false;
+    }
+
+    public boolean isVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            return sipUser.isVideoStream(clientId, broadcastStream);
+        }
+        else
+            return false;
+    }
     
     private void remove(String userid) {
     	log.debug("Number of SipUsers in Manager before remove {}", sipPeers.size());

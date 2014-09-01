@@ -117,7 +117,7 @@ public class CallStream implements StreamObserver {
                 freeswitchToBbbStream.start();
 
                 flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
-                bbbToFreeswitchStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);            
+                bbbToFreeswitchStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);
             }
 
             else

@@ -41,6 +41,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Vector;
 
+import java.util.HashMap;
+
 public class CallAgent extends CallListenerAdapter implements CallStreamObserver  {
     private static Logger log = Red5LoggerFactory.getLogger(CallAgent.class, "sip");
     
@@ -60,6 +62,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private DatagramSocket localAudioSocket;
     private DatagramSocket localVideoSocket;
 
+    private HashMap<String, String> streamTypeManager = null;
     
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
@@ -76,6 +79,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.userProfile = userProfile;
         this.portProvider = portProvider;
         this.clientId = clientId;
+
+        if(this.streamTypeManager == null)
+            this.streamTypeManager = new HashMap<String, String>();
     }
     
     public String getCallId() {
@@ -252,6 +258,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
+                        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+                        if(!streamTypeManager.containsKey(streamName))
+                            streamTypeManager.put(audioCallStream.getBbbToFreeswitchStreamName(), CallStream.MEDIA_TYPE_AUDIO);
+                        
                         return true;                
 
                     } catch (Exception e) {
@@ -283,6 +293,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo, CallStream.MEDIA_TYPE_VIDEO);                                                
                         videoCallStream.addCallStreamObserver(this);
                         videoCallStream.start();
+                        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+                        if(!streamTypeManager.containsKey(streamName))
+                            streamTypeManager.put(videoCallStream.getBbbToFreeswitchStreamName(), CallStream.MEDIA_TYPE_VIDEO);
+                        
                         return true;        
                             
                     } catch (Exception e) {
@@ -315,6 +329,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	if (audioCallStream != null) {
     		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
     	}
+        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+        if(streamTypeManager.containsKey(streamName))
+            streamTypeManager.remove(streamName);
     }
     
      public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
@@ -330,6 +347,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (videoCallStream != null) {
             videoCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);     
         }
+        String streamName = videoCallStream.getBbbToFreeswitchStreamName();
+        if(streamTypeManager.containsKey(streamName))
+            streamTypeManager.remove(streamName);
     }
 
     private void closeStreams() {        
@@ -349,6 +369,29 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             log.debug("Can't shutdown VIDEO stream: already NULL");
         }
 
+    }
+
+    public String getStreamType(String streamName) {
+        if(streamTypeManager.containsKey(streamName))
+            return streamTypeManager.get(streamName);
+        else
+            return null;
+    }
+
+    public boolean isAudioStream(IBroadcastStream broadcastStream) {
+        String streamName = broadcastStream.getPublishedName();
+        if(streamTypeManager.containsKey(streamName))
+            return streamTypeManager.get(streamName).equals(CallStream.MEDIA_TYPE_AUDIO);
+        else
+            return false;
+    }
+
+    public boolean isVideoStream(IBroadcastStream broadcastStream) {
+        String streamName = broadcastStream.getPublishedName();
+        if(streamTypeManager.containsKey(streamName))
+            return streamTypeManager.get(streamName).equals(CallStream.MEDIA_TYPE_VIDEO);
+        else
+            return false;
     }
 
     // ********************** Call callback functions **********************

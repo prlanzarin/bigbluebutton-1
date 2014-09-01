@@ -49,6 +49,8 @@ public class RtpSocket {
 
    private final DatagramPacket txDatagram = new DatagramPacket(payload, payload.length);
    private final DatagramPacket rxDatagram = new DatagramPacket(payload, payload.length);
+
+   private static final int SO_TIMEOUT = 5000;
    
    /** Creates a new RTP socket (only receiver) */ 
    public RtpSocket(DatagramSocket datagram_socket) {  
@@ -57,7 +59,7 @@ public class RtpSocket {
 	   r_port=0;
 
       try {
-      socket.setSoTimeout(5000);
+      socket.setSoTimeout(this.SO_TIMEOUT);
       }
       catch(SocketException e) {
          log.debug("[RtpSocket] unable to set socket timeout.");
