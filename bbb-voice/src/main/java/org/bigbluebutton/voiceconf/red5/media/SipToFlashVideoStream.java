@@ -34,8 +34,6 @@ import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
-
-import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter.RTMPPacketInfo;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
 import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
@@ -172,7 +170,6 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
         }   		
 
 	}	
-
 
 	@Override
 	public void handleTranscodedMediaData(byte[] videoData, long timestamp) {

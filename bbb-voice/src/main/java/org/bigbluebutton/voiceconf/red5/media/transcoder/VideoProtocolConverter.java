@@ -23,6 +23,11 @@ public class VideoProtocolConverter {
 
 	}
 
+    public List<RtpPacket> rtmpToRTP(byte data[], long ts) {
+        return null;
+
+    }
+
 //------------------------------------------------- INNER CLASSES --------------------------------------------
     //1.
     public static class RTMPPacketInfo {

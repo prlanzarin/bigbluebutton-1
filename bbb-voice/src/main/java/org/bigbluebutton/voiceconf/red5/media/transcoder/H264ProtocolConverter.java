@@ -235,5 +235,141 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
         log.debug("requesting FIR...");
     }
 
+
+    @Override
+    public List<RtpPacket> rtmpToRTP(byte data[], long ts) {
+
+        List<RtpPacket> result = new ArrayList<RtpPacket>();
+
+        if (data[0] == 0x17 && data[1] == 0) {
+                byte[] pdata = Arrays.copyOfRange(data, 2, data.length);
+                int cfgVer = pdata[3];
+                log.debug("cfgVer=" + cfgVer);
+                if (cfgVer == 1) {
+                        int lenSize = pdata[7] & 0x03 + 1;
+                        int numSPS = pdata[8] & 0x1f;
+                        log.debug("lenSize=" + lenSize);
+                        log.debug("numSPS=" + numSPS);
+                        pdata = Arrays.copyOfRange(pdata, 9, pdata.length);
+                        byte[] sps = null;
+                        for (int i = 0; i < numSPS; i++) {
+                                int lenSPS = (pdata[0] & 0xff) << 8 | pdata[1] & 0xff;
+                                pdata = Arrays.copyOfRange(pdata, 2, pdata.length);
+                                if (sps == null) {
+                                        sps = Arrays.copyOf(pdata, lenSPS);
+                                }
+                                pdata = Arrays.copyOfRange(pdata, lenSPS, pdata.length);
+                        }
+                        int numPPS = pdata[0];
+                        log.debug("numPPS=" + numSPS);
+                        pdata = Arrays.copyOfRange(pdata, 1, pdata.length);
+                        byte[] pps = null;
+                        for (int i = 0; i < numPPS; i++) {
+                                int lenPPS = (pdata[0] & 0xff) << 8 | pdata[1] & 0xff;
+                                pdata = Arrays.copyOfRange(pdata, 2, pdata.length);
+                                if (pps == null) {
+                                        pps = Arrays.copyOf(pdata, lenPPS);
+                                }
+                                pdata = Arrays.copyOfRange(pdata, lenPPS, pdata.length);
+                        }
+                        this.lenSize = lenSize;
+                        if (sps != null) {
+                                spsSent = true;
+                                long ts1 = ts * 90;
+                                byte[] buffer = new byte[sps.length + 12];
+                                RtpPacket packet = new RtpPacket(buffer, 0);
+                                packet.setPayload(sps, sps.length);
+                                packet.setTimestamp(ts1);
+                                buffer[1] = (byte) 0xe3;
+                                result.add(packet);
+                        }
+                        if (pps != null) {
+                                ppsSent = true;
+                                long ts1 = ts * 90;
+                                byte[] buffer = new byte[pps.length + 12];
+                                RtpPacket packet = new RtpPacket(buffer, 0);
+                                packet.setPayload(pps, pps.length);
+                                packet.setTimestamp(ts1);
+                                buffer[1] = (byte) 0xe3;
+                                result.add(packet);
+                        }
+                }
+        } else if ((data[0] == 0x17 || data[0] == 0x27) && data[1] == 1) {
+                if (spsSent && ppsSent) {
+                        List<ByteArrayBuilder> nals = new ArrayList<ByteArrayBuilder>();
+                        byte[] pdata = Arrays.copyOfRange(data, 5, data.length);
+                        //log.debug("pdata.length=" + pdata.length);
+                        while (pdata.length > 0) {
+                                int nalSize = 0;
+                                switch (lenSize) {
+                                case 1:
+                                        nalSize = pdata[lenSize - 1] & 0xff;
+                                        break;
+                                case 2:
+                                        nalSize = (pdata[lenSize - 2] & 0xff) << 8 | pdata[lenSize - 1] & 0xff;
+                                        break;
+                                case 4:
+                                        nalSize = (pdata[lenSize - 4] & 0xff) << 24 |
+                                                          (pdata[lenSize - 3] & 0xff) << 16 | 
+                                                          (pdata[lenSize - 2] & 0xff) << 8  | 
+                                                          (pdata[lenSize - 1] & 0xff);
+                                        break;
+                                default:
+                                        throw new RuntimeException("Invalid length size: " + lenSize);
+                                }
+                                //log.debug("nalSize=" + nalSize);
+                                ByteArrayBuilder nalData = new ByteArrayBuilder(Arrays.copyOfRange(pdata, lenSize, lenSize + nalSize));
+                                nals.add(nalData);
+                                pdata = Arrays.copyOfRange(pdata, lenSize + nalSize, pdata.length);
+                        }
+                        //log.debug("nals.size()=" + nals.size());
+                        if (nals.size() > 0) {
+                                byte[] remaining = nals.get(nals.size() - 1).buildArray();
+                                int nalType = remaining[0] & 0x1f;
+                                int nri = remaining[0] & 0x60;
+                                int maxSize = 1446;
+                                //log.debug("nalType=" + nalType);
+                                if (nalType == 5 || nalType == 1) {
+                                        long ts1 = ts * 90;
+                                        if (remaining.length < maxSize) {
+                                                byte[] buffer = new byte[remaining.length + 12];
+                                                RtpPacket packet = new RtpPacket(buffer, 0);
+                                                packet.setPayload(remaining, remaining.length);
+                                                packet.setTimestamp(ts1);
+                                                buffer[1] = (byte) 0xe3; // marker and payload type
+                                                result.add(packet);
+                                        } else {
+                                                byte start = (byte) 0x80;
+                                                remaining = Arrays.copyOfRange(remaining, 1, remaining.length);
+                                                while (remaining.length > 0) {
+                                                        pdata = Arrays.copyOf(remaining, Math.min(maxSize - 2, remaining.length));
+                                                        remaining = Arrays.copyOfRange(remaining, Math.min(maxSize - 2, remaining.length), remaining.length);
+                                                        byte end = (byte) ((remaining.length > 0)? 0: 0x40);
+                                                        ByteArrayBuilder payload = new ByteArrayBuilder((byte) (nri | 28), (byte) (start | end | nalType));
+                                                        payload.putArray(pdata);
+                                                        start = 0;
+                                                        
+                                                        byte[] buffer = new byte[payload.getLength() + 12];
+                                                        RtpPacket packet = new RtpPacket(buffer, 0);
+                                                        packet.setPayload(payload.buildArray(), payload.getLength());
+                                                        packet.setTimestamp(ts1);
+                                                        buffer[1] = (byte) ((end == 0x40)? 0xe3: 0x63);
+                                                        result.add(packet);
+                                                }
+                                        }
+                                }
+                        }
+                }
+        }
+        //log.debug("result.size()=" + result.size());
+        return result;
+
+    }
+
+
+
+
+
+
 }
 

@@ -105,6 +105,15 @@ public class RtpStreamSender {
         }  
 
     }
+
+    public void sendVideo(RtpPacket rtpVideoPacket)
+    {
+        try {
+            rtpSocketSend(rtpVideoPacket);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }          
+    }
         
     private synchronized void rtpSocketSend(RtpPacket rtpPacket) throws StreamException  {
     	try {

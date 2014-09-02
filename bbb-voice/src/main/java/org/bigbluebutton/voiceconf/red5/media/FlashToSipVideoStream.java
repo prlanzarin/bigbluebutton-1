@@ -18,7 +18,6 @@
 */
 package org.bigbluebutton.voiceconf.red5.media;
 
-import org.bigbluebutton.voiceconf.red5.media.transcoder.FlashToSipTranscoder;
 import java.net.DatagramSocket;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 import org.red5.server.api.scope.IScope;
@@ -33,30 +32,31 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.event.SerializeUtils;
 
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
+import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
 
 
 public class FlashToSipVideoStream implements FlashToSipStream {
 
-	//empty class for now..
 	private final static Logger log = Red5LoggerFactory.getLogger(FlashToSipVideoStream.class, "sip");
 	
-	private final FlashToSipTranscoder transcoder;	
 	private IStreamListener mInputListener;
 	private final DatagramSocket srcSocket;
 	private final SipConnectInfo connInfo;
 	private String videoStreamName;	
 	private RtpStreamSender rtpSender;
+
+	private VideoProtocolConverter converter;
+	private int videoCodecId;
 	
 
-	public FlashToSipVideoStream(FlashToSipTranscoder transcoder, DatagramSocket srcSocket, SipConnectInfo connInfo) {
+	public FlashToSipVideoStream(VideoProtocolConverter converter, DatagramSocket srcSocket, SipConnectInfo connInfo) {
 
-		this.transcoder = transcoder;
 		this.srcSocket = srcSocket;
 		this.connInfo = connInfo;		
 		videoStreamName = "BbbToFreeswitchVideoStream_" + System.currentTimeMillis();
-		rtpSender = new RtpStreamSender(srcSocket, connInfo);	    
-		transcoder.setTranscodedMediaDataListener(this);	    
-		
+		rtpSender = new RtpStreamSender(srcSocket, connInfo);	 
+		this.converter = converter;	    
 	}
 
 	@Override
@@ -64,28 +64,40 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 
 		if (log.isDebugEnabled())
 			log.debug("startTranscodingStream({},{})", broadcastStream.getPublishedName(), scope.getName());
-		mInputListener = new IStreamListener() {
-			public void packetReceived(IBroadcastStream broadcastStream, IStreamPacket packet) {
-		      IoBuffer buf = packet.getData();
-		      if (buf != null)
-		    	  buf.rewind();
-		    
-		      if (buf == null || buf.remaining() == 0){
-		    	  log.debug("skipping empty packet with no data");
-		    	  return;
-		      }
-		      	      
-		      if (packet instanceof VideoData) {
-		    	  byte[] data = SerializeUtils.ByteBufferToByteArray(buf);
-		    	  // Remove the first byte as it is the codec id.
-		    	  transcoder.handlePacket(data, 1, data.length-1);   
-		      } 
-			}
-		};
+
+			mInputListener = new IStreamListener() {
+
+				public void packetReceived(IBroadcastStream broadcastStream, IStreamPacket packet) {
+
+					  if(packet == null) {
+					  	 log.debug("BBB to Freeswitch VIDEO Stream: packet is null...");
+				    	 return;	
+					  }
+
+				      IoBuffer buf = packet.getData();
+				      if (buf != null)
+				    	  buf.rewind();
+				    
+				      if (buf == null || buf.remaining() == 0){
+				    	  log.debug("BBB to Freeswitch VIDEO Stream: skipping empty packet with no data");
+				    	  return;
+				      }
+				      	      
+				      if (packet instanceof VideoData) {
+				    	  byte[] data = SerializeUtils.ByteBufferToByteArray(buf);
+				    	  
+						  for (RtpPacket rtpPacket: converter.rtmpToRTP(data, (long) packet.getTimestamp())) {
+		                         rtpSender.sendVideo(rtpPacket);
+		                         
+		                  }		    	  
+				      } 
+
+				}
+
+			};
 				
 	    broadcastStream.addStreamListener(mInputListener);    	    
 		rtpSender.connect();
-		transcoder.start();
 
 	}
 
@@ -96,18 +108,10 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 			broadcastStream.stop();
 			broadcastStream.close();
 		} 
-	    transcoder.stop();
+
 	    srcSocket.close();	
 	}
 
-	@Override
-	public void handleTranscodedMediaData(byte[] videoData, long timestamp) {
-		if (videoData != null) {
-  		  rtpSender.sendVideo(videoData, transcoder.getCodecId(), timestamp);
-  	  } else {
-  		  log.warn("Transcodec video is null. Discarding.");
-  	  }
-	}
 
 	@Override
 	public String getStreamName()
@@ -116,7 +120,14 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 	}
 
 	
-
+	@Override
+	public void handleTranscodedMediaData(byte[] videoData, long timestamp) {
+		if (videoData != null) {
+  		  rtpSender.sendVideo(videoData, 35, timestamp);
+  	  } else {
+  		  log.warn("Transcodec video is null. Discarding.");
+  	  }
+	}
 
 
 }

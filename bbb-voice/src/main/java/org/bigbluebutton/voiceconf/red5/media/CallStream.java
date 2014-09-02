@@ -50,8 +50,8 @@ public class CallStream implements StreamObserver {
     private SipToFlashTranscoder sipToFlashTranscoder;
     private FlashToSipTranscoder flashToSipTranscoder;
 
-    private VideoProtocolConverter videoConverter;
-
+    private VideoProtocolConverter freeswitchToBbbVideoConverter;
+    private VideoProtocolConverter bbbToFreeswitchVideoConverter;
 
     private final Codec sipCodec;
     private final SipConnectInfo connInfo;
@@ -109,15 +109,15 @@ public class CallStream implements StreamObserver {
                 log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");                
 
 
-                videoConverter = new H264ProtocolConverter();                
-                freeswitchToBbbStream = new SipToFlashVideoStream(scope, videoConverter, connInfo.getSocket()); 
+                freeswitchToBbbVideoConverter = new H264ProtocolConverter();                
+                freeswitchToBbbStream = new SipToFlashVideoStream(scope, freeswitchToBbbVideoConverter, connInfo.getSocket()); 
                 freeswitchToBbbStream.addListenStreamObserver(this); 
                   
                 log.debug("Starting freeswitchToBbbStream so that users with no cam can view.");
                 freeswitchToBbbStream.start();
 
-                flashToSipTranscoder = new H264FlashToSipTranscoderImp(sipCodec);
-                bbbToFreeswitchStream = new FlashToSipVideoStream(flashToSipTranscoder, connInfo.getSocket(), connInfo);
+                bbbToFreeswitchVideoConverter = new H264ProtocolConverter(); 
+                bbbToFreeswitchStream = new FlashToSipVideoStream(bbbToFreeswitchVideoConverter, connInfo.getSocket(), connInfo);
             }
 
             else
