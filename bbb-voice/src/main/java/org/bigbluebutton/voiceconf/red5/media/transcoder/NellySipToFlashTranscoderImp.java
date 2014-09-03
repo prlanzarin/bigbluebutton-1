@@ -27,7 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
-import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
+import org.bigbluebutton.voiceconf.red5.media.SipToFlashAudioStream;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -210,8 +210,8 @@ public class NellySipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void setTranscodedMediaDataListener(SipToFlashStream sipToFlashStream) {
-		this.transcodedMediaDataListener = sipToFlashStream;		
+	public void setTranscodedMediaDataListener(SipToFlashAudioStream sipToFlashAudioStream) {
+		this.transcodedMediaDataListener = sipToFlashAudioStream;		
 	}
 
 	

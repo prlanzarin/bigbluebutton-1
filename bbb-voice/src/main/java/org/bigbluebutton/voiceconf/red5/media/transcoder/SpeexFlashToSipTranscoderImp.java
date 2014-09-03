@@ -23,7 +23,7 @@ import java.util.Random;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
-import org.bigbluebutton.voiceconf.red5.media.FlashToSipStream;
+import org.bigbluebutton.voiceconf.red5.media.FlashToSipAudioStream;
 
 /**
  * Speex wideband to Speex wideband Flash to SIP transcoder.
@@ -70,8 +70,8 @@ public class SpeexFlashToSipTranscoderImp implements FlashToSipTranscoder {
 	}
 
 	@Override
-	public void setTranscodedMediaDataListener(FlashToSipStream flashToSipStream) {
-		this.transcodedMediaDataListener = flashToSipStream;		
+	public void setTranscodedMediaDataListener(FlashToSipAudioStream flashToSipAudioStream) {
+		this.transcodedMediaDataListener = flashToSipAudioStream;		
 	}
 
 	@Override

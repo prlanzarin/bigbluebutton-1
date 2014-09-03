@@ -32,7 +32,7 @@ import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.asao.Decoder;
 import org.red5.app.sip.codecs.asao.DecoderMap;
 
-import org.bigbluebutton.voiceconf.red5.media.FlashToSipStream;
+import org.bigbluebutton.voiceconf.red5.media.FlashToSipAudioStream;
 
 
 
@@ -223,8 +223,8 @@ public class NellyFlashToSipTranscoderImp implements FlashToSipTranscoder {
     	}
 	}	
 	
-	public void setTranscodedMediaDataListener(FlashToSipStream flashToSipStream) {
-		this.transcodedMediaDataListener = flashToSipStream;
+	public void setTranscodedMediaDataListener(FlashToSipAudioStream flashToSipAudioStream) {
+		this.transcodedMediaDataListener = flashToSipAudioStream;
 	}
 	
 	@Override

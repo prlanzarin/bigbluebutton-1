@@ -20,7 +20,7 @@ package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
 import java.util.Random;
 import org.red5.app.sip.codecs.Codec;
-import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
+import org.bigbluebutton.voiceconf.red5.media.SipToFlashAudioStream;
 
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
@@ -72,8 +72,8 @@ public class SpeexSipToFlashTranscoderImp implements SipToFlashTranscoder {
 	}
 
 	@Override
-	public void setTranscodedMediaDataListener(SipToFlashStream sipToFlashStream) {
-		this.transcodedMediaDataListener = sipToFlashStream;
+	public void setTranscodedMediaDataListener(SipToFlashAudioStream sipToFlashAudioStream) {
+		this.transcodedMediaDataListener = sipToFlashAudioStream;
 		
 	}
 

@@ -171,15 +171,6 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	}	
 
-	@Override
-	public void handleTranscodedMediaData(byte[] videoData, long timestamp) {
-		if (videoData != null) {
-			pushVideo(videoData, timestamp);
-		} else {
-			log.warn("Transcoded VIDEO is null. Discarding.");
-		}
-	}
-
 	private void sendFakeMetadata(long timestamp) {
 		if (!sentMetadata) {
 
@@ -206,7 +197,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	private void pushVideo(byte[] video, long timestamp) {	
 
-		//red5phone implementation does not send the information below...but maybe we will need this...
+		//red5phone sip-video implementation does not send the information below...but maybe we will need this...
 		//sendFakeMetadata(timestamp); 
 			
 		videoBuffer.clear();

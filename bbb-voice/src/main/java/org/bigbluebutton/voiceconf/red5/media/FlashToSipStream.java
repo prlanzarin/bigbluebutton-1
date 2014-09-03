@@ -22,7 +22,7 @@ import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaDataListener;
 
-public interface FlashToSipStream extends TranscodedMediaDataListener{	
+public interface FlashToSipStream {	
 	void start(IBroadcastStream broadcastStream, IScope scope) throws StreamException;
 	void stop(IBroadcastStream broadcastStream, IScope scope);	
 	String getStreamName();

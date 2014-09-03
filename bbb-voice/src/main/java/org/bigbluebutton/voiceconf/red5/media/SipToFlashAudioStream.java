@@ -33,7 +33,7 @@ import org.red5.server.stream.IProviderService;
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
 
-public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceiverListener {
+public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceiverListener, TranscodedMediaDataListener {
 	private static final Logger log = Red5LoggerFactory.getLogger(SipToFlashAudioStream.class, "sip");
 
 	private BroadcastStream audioBroadcastStream;

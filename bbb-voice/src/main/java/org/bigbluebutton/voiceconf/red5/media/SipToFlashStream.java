@@ -21,7 +21,7 @@ package org.bigbluebutton.voiceconf.red5.media;
 
 import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaDataListener;
 
-public interface SipToFlashStream extends TranscodedMediaDataListener {		
+public interface SipToFlashStream {		
 	String getStreamName();
 	void addListenStreamObserver(StreamObserver o);
 	void stop();

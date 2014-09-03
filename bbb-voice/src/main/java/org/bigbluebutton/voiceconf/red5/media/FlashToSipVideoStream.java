@@ -119,15 +119,4 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 		return videoStreamName;
 	}
 
-	
-	@Override
-	public void handleTranscodedMediaData(byte[] videoData, long timestamp) {
-		if (videoData != null) {
-  		  rtpSender.sendVideo(videoData, 35, timestamp);
-  	  } else {
-  		  log.warn("Transcodec video is null. Discarding.");
-  	  }
-	}
-
-
 }
