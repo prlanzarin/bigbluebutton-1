@@ -191,7 +191,10 @@ public class SipPeer implements SipRegisterAgentListener {
            return ca.getStreamType(streamName);
         }
         else
+        {
+            log.debug("[SipPeer] Invalid clientId");
             return null;
+        }
     }
 
     public boolean isAudioStream(String clientId, IBroadcastStream broadcastStream) {

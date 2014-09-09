@@ -260,7 +260,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         audioCallStream.start();
                         String streamName = audioCallStream.getBbbToFreeswitchStreamName();
                         if(!streamTypeManager.containsKey(streamName))
-                            streamTypeManager.put(audioCallStream.getBbbToFreeswitchStreamName(), CallStream.MEDIA_TYPE_AUDIO);
+                        {
+                            streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_AUDIO);
+                            log.debug("[CallAgent] streamTypeManager adding audio stream {} for {}", streamName, clientId);
+                        }
                         
                         return true;                
 
@@ -293,9 +296,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo, CallStream.MEDIA_TYPE_VIDEO);                                                
                         videoCallStream.addCallStreamObserver(this);
                         videoCallStream.start();
-                        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+                        String streamName = videoCallStream.getBbbToFreeswitchStreamName();
                         if(!streamTypeManager.containsKey(streamName))
-                            streamTypeManager.put(videoCallStream.getBbbToFreeswitchStreamName(), CallStream.MEDIA_TYPE_VIDEO);
+                        {
+                            streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_VIDEO);
+                            log.debug("[CallAgent] streamTypeManager adding video stream {} for {}", streamName, clientId);
+                        }
                         
                         return true;        
                             
@@ -349,7 +355,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
         String streamName = videoCallStream.getBbbToFreeswitchStreamName();
         if(streamTypeManager.containsKey(streamName))
+        {
             streamTypeManager.remove(streamName);
+            log.debug("[CallAgent] removing video stream: " + streamName);
+        }
     }
 
     private void closeStreams() {        
@@ -375,7 +384,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if(streamTypeManager.containsKey(streamName))
             return streamTypeManager.get(streamName);
         else
+        {
+            log.debug("[CallAgent] streamTypeManager does not contain " + streamName);
             return null;
+        }
     }
 
     public boolean isAudioStream(IBroadcastStream broadcastStream) {

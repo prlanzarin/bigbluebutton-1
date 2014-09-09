@@ -130,6 +130,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     
     @Override
     public void streamPublishStart(IBroadcastStream stream) {
+        /* Some clientId's have the hard-coded value of "4". */
     	String clientId = Red5.getConnectionLocal().getClient().getId();
     	String userid = getUserId();
     	String username = getUsername();
@@ -138,14 +139,17 @@ public class Application extends MultiThreadedApplicationAdapter {
     	System.out.println("streamPublishStart: " + stream.getPublishedName());
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
+        if(peerId == null)
+        {
+            peerId = "default";
+        }
         if (peerId != null) {
-
             String streamName = stream.getPublishedName();
-            String mediaType = sipPeerManager.getStreamType(peerId, clientId, streamName);
+            String mediaType = sipPeerManager.getStreamType(peerId, "4", streamName);
             if(mediaType != null)
-                log.debug("Stream is of type: " + sipPeerManager.getStreamType(peerId, clientId, streamName));
+                log.debug("[Application] Stream is of type: " + mediaType);
             else
-                log.debug("Stream type is null");
+                log.debug("[Application] Stream type is null");
 
             /* It is also possible to use the getStreamType method 
                to retrieve the stream's type information. Currently,
@@ -154,12 +158,12 @@ public class Application extends MultiThreadedApplicationAdapter {
             if(sipPeerManager.isAudioStream(peerId, clientId, stream))
             {
                 sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-                log.debug("streamPublishStart has just received an audio stream");
+                log.debug("streamPublishStart has started the audio stream");
             }
-            else if(sipPeerManager.isVideoStream(peerId, clientId, stream))
+            else if(sipPeerManager.isVideoStream(peerId, "4", stream))
             {
-                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
-                log.debug("streamPublishStart has just received a video stream");
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, "4", stream, conn.getScope());
+                log.debug("streamPublishStart has started the video stream");
             }
             //recordStream(stream);
         }
