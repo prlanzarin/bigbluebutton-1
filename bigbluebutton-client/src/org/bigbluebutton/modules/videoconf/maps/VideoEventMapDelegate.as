@@ -61,6 +61,7 @@ package org.bigbluebutton.modules.videoconf.maps
   {
     private var options:VideoConfOptions = new VideoConfOptions();
     private var uri:String;
+    private var fsWindow:VideoWindow = null;
     
     private var webcamWindows:WindowManager = new WindowManager();
     
@@ -313,17 +314,24 @@ package org.bigbluebutton.modules.videoconf.maps
     }
 
     public function openFreeswitchVideo(streamName:String, connection:NetConnection):void {
-      var window:VideoWindow = new VideoWindow();
-      window.title = "FreeSWITCH video";
-      window.userID = "FreeSWITCH video";
-      window.videoOptions = options;       
-      window.resolutions = "640x480".split(",");
 
-      window.startVideo(connection, streamName);
-      webcamWindows.addWindow(window);
-      openWindow(window);
-      dockWindow(window);
+
+      if(fsWindow != null) {
+        closeFreeswitchVideo();
+        fsWindow = null;
+      }
+        fsWindow = new VideoWindow();
+        fsWindow.title = "FreeSWITCH video";
+        fsWindow.userID = "FreeSWITCH video";
+        fsWindow.videoOptions = options;       
+        fsWindow.resolutions = "640x480".split(",");
+
+        fsWindow.startVideo(connection, streamName);
+        webcamWindows.addWindow(fsWindow);
+        openWindow(fsWindow);
+        dockWindow(fsWindow);
     }
+    
     
     private function openWindow(window:VideoWindowItf):void {
       var windowEvent:OpenWindowEvent = new OpenWindowEvent(OpenWindowEvent.OPEN_WINDOW_EVENT);

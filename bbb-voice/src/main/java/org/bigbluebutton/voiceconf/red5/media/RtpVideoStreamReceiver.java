@@ -53,6 +53,21 @@ public class RtpVideoStreamReceiver {
     private long baseTimestamp = 0;
 
     private boolean isVideoPaused = false;
+
+    private long timestampThreshold = 30000;    
+    private long realTimestamp = 0;
+    private long realLastTimestamp = 0;
+    private long realTimestampDelta = 0;
+
+    private long logicalTimestamp = 0;
+    private long logicalLastTimestamp = 0;
+    private long logicalTimestampDelta = 0;
+    private long logicalLastTimestampDelta = 0;
+
+    private long arrivedPacketTime= 0 ;
+    private long leftPacketTime = 0;
+    private long processingTime = 0;
+
     
     public RtpVideoStreamReceiver(DatagramSocket socket, int expectedPayloadLength) {
     	this.payloadLength = expectedPayloadLength;
@@ -80,6 +95,55 @@ public class RtpVideoStreamReceiver {
     
     public void stop() {
     	receivePackets = false;
+    }
+
+    public boolean shiftedStream(){
+        if ((logicalTimestampDelta >= timestampThreshold) || (logicalTimestampDelta < 0)) {
+            log.debug("* SWITCHED STREAM");
+            return true;
+        }else return false;
+    }
+
+    public boolean isFirstStream(){
+        return (realTimestamp == 0) && (realLastTimestamp == 0);        
+    }
+
+    public void switchTimestamp(RtpPacket packet) {
+        arrivedPacketTime = System.currentTimeMillis();
+        if(isFirstStream()){
+            realTimestamp = packet.getTimestamp()/90;
+            realLastTimestamp = realTimestamp;
+            logicalTimestamp = realTimestamp;
+            logicalLastTimestamp = realLastTimestamp;
+            log.debug("* FIRST STREAM");
+        }else{
+            logicalTimestamp = packet.getTimestamp()/90;
+            logicalLastTimestampDelta = logicalTimestampDelta;
+            logicalTimestampDelta = logicalTimestamp - logicalLastTimestamp;
+            logicalLastTimestamp = logicalTimestamp;
+
+            if(shiftedStream()) {                
+                //switched stream
+                logicalTimestamp = packet.getTimestamp()/90;
+                logicalLastTimestamp = logicalTimestamp;                
+                logicalTimestampDelta = 0;
+                leftPacketTime = System.currentTimeMillis();
+                processingTime = leftPacketTime - arrivedPacketTime;
+                realTimestamp = realLastTimestamp + logicalLastTimestampDelta + processingTime;
+                realLastTimestamp = realTimestamp;
+                packet.setTimestamp(realTimestamp); //dispatch with the realTimestamp + the lastDelta
+
+            }else {
+                //regular stream        
+                leftPacketTime = System.currentTimeMillis(); 
+                processingTime = (leftPacketTime - arrivedPacketTime);
+                realTimestamp = realLastTimestamp + logicalTimestampDelta + processingTime;
+                realLastTimestamp = realTimestamp;
+                //dispatch realTimestamp
+                packet.setTimestamp(realTimestamp);
+            
+            }           
+        }
     }
     
     public void receiveRtpPackets() {    
@@ -113,20 +177,9 @@ public class RtpVideoStreamReceiver {
         				log.debug("RTCP packet [" + rtpPacket.getRtcpPayloadType() + ", length=" + rtpPacket.getPayloadLength() + "] seqNum[rtpSeqNum=" + rtpPacket.getSeqNum() + ",lastSeqNum=" + lastSequenceNumber 
         					+ "][rtpTS=" + rtpPacket.getTimestamp() + ",lastTS=" + lastPacketTimestamp + "][port=" + rtpSocket.getDatagramSocket().getLocalPort() + "]");          			
         		} else {
-            		if (shouldHandlePacket(rtpPacket)) {
+            		if (shouldHandlePacket(rtpPacket)) {                        
                         
-                        lastTimestampDelta = rtpPacket.getTimestamp() - lastPacketTimestamp;
-                         
-                        //for debuging...
-                        //if(packetReceivedCounter < 5000)
-                            //log.debug(" rtpPacket.getTimestamp()= " + rtpPacket.getTimestamp());
-                                
-                        if ((lastTimestampDelta <  0) || (lastTimestampDelta > 1000))
-                            rtpPacket.setTimestamp(lastPacketTimestamp);                        
-
-
-                        lastPacketTimestamp = rtpPacket.getTimestamp();
-
+                        switchTimestamp(rtpPacket);
             			lastSequenceNumber = rtpPacket.getSeqNum();
 
                         byte newBuffer[] = internalBuffer.clone();
