@@ -114,7 +114,10 @@ public final class SipPeerManager {
             return sipUser.getStreamType(clientId, streamName);
         }
         else
+        {
+            log.debug("[SipPeerManager] Invalid peerId");
             return null;
+        }
     }
 
     public boolean isAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream) {

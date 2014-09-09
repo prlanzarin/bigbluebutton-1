@@ -203,8 +203,10 @@ public class RtpVideoStreamReceiver {
                         listener.onPausedReceiving();
                     }
                 }
+                /*
                 else
                     log.debug("[RtpVideoStreamReceiver] video is already paused.");
+                */
             }
             catch (IOException e) { // We get this when the socket closes when the call hangs up.        		
         		receivePackets = false;
