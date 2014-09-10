@@ -128,45 +128,25 @@ public class Application extends MultiThreadedApplicationAdapter {
         super.appDisconnect(conn);
     }
     
-    @Override
+     @Override
     public void streamPublishStart(IBroadcastStream stream) {
-        /* Some clientId's have the hard-coded value of "4". */
-    	String clientId = Red5.getConnectionLocal().getClient().getId();
-    	String userid = getUserId();
-    	String username = getUsername();
+        String clientId = Red5.getConnectionLocal().getClient().getId();
+        String userid = getUserId();
+        String username = getUsername();
+        log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
+        //System.out.println("streamPublishStart: " + stream.getPublishedName());
+        IConnection conn = Red5.getConnectionLocal();
+        String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
+        
+        if(isVideoStream(stream)){
+            userid = getBbbVideoUserId(stream);
+            log.debug("Video UserID: " + userid);
+            //sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
 
-    	log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
-    	System.out.println("streamPublishStart: " + stream.getPublishedName());
-    	IConnection conn = Red5.getConnectionLocal();
-    	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-        if(peerId == null)
-        {
-            peerId = "default";
-        }
-        if (peerId != null) {
-            String streamName = stream.getPublishedName();
-            String mediaType = sipPeerManager.getStreamType(peerId, "4", streamName);
-            if(mediaType != null)
-                log.debug("[Application] Stream is of type: " + mediaType);
-            else
-                log.debug("[Application] Stream type is null");
-
-            /* It is also possible to use the getStreamType method 
-               to retrieve the stream's type information. Currently,
-               we use isAudioStream and isVideoStream methods instead. */
-        	super.streamPublishStart(stream);
-            if(sipPeerManager.isAudioStream(peerId, clientId, stream))
-            {
-                sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-                log.debug("streamPublishStart has started the audio stream");
-            }
-            else if(sipPeerManager.isVideoStream(peerId, "4", stream))
-            {
-                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, "4", stream, conn.getScope());
-                log.debug("streamPublishStart has started the video stream");
-            }
-            //recordStream(stream);
-        }
+        }else if (peerId != null) {
+            super.streamPublishStart(stream);
+            sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
+        }        
     }
     
     /**
@@ -260,10 +240,25 @@ public class Application extends MultiThreadedApplicationAdapter {
 		if ((userid == null) || ("".equals(userid))) userid = "unknown-userid";
 		return userid;
 	}
-	
+
+    private boolean isVideoStream(IBroadcastStream stream){
+        return stream.getPublishedName().split("/")[5].matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+    }
+
+    private String getBbbVideoUserId(IBroadcastStream videoStream) {
+        String publishedName = videoStream.getPublishedName();
+        String streamName = publishedName.split("/")[5];
+        String userId = "";        
+
+        streamName = publishedName.split("/")[5];
+        userId = streamName.split("-")[1];
+        
+        return userId;
+    }
+    
 	private String getUsername() {
 		String username = (String) Red5.getConnectionLocal().getAttribute("USERNAME");
 		if ((username == null) || ("".equals(username))) username = "UNKNOWN-CALLER";
 		return username;
-	}
+	}    
 }

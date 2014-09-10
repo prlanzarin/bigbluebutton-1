@@ -115,8 +115,8 @@ public class CallStream implements StreamObserver {
                 log.debug("Starting freeswitchToBbbStream so that users with no cam can view.");
                 freeswitchToBbbStream.start();
 
-                bbbToFreeswitchVideoConverter = new H264ProtocolConverter(); 
-                bbbToFreeswitchStream = new FlashToSipVideoStream(bbbToFreeswitchVideoConverter, connInfo.getSocket(), connInfo);
+                //bbbToFreeswitchVideoConverter = new H264ProtocolConverter(); 
+                //bbbToFreeswitchStream = new FlashToSipVideoStream(bbbToFreeswitchVideoConverter, connInfo.getSocket(), connInfo);
             }
 
             else
