@@ -461,7 +461,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             // Answer with the local sdp.
             call.ackWithAnswer(localSession);
         }
-
+        
         createStreams();
     }
 
@@ -617,4 +617,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
+
+    public String getUserID() {
+        String userName = userProfile.username;
+        return userName.substring( 0, userName.indexOf("-") );
+    }
 }
