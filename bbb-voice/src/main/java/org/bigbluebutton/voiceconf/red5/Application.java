@@ -242,16 +242,13 @@ public class Application extends MultiThreadedApplicationAdapter {
 	}
 
     private boolean isVideoStream(IBroadcastStream stream){
-        return stream.getPublishedName().split("/")[5].matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+        return stream.getPublishedName().matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
     }
 
     private String getBbbVideoUserId(IBroadcastStream videoStream) {
         String publishedName = videoStream.getPublishedName();
-        String streamName = publishedName.split("/")[5];
         String userId = "";        
-
-        streamName = publishedName.split("/")[5];
-        userId = streamName.split("-")[1];
+        userId = publishedName.split("-")[1];
         
         return userId;
     }
