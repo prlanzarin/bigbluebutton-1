@@ -171,15 +171,15 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
-        CallAgent ca = callManager.get(clientId);
+    public void startBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) {
            ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
         }
     }
     
-    public void stopBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
-        CallAgent ca = callManager.get(clientId);
+    public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) {
            ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
         }

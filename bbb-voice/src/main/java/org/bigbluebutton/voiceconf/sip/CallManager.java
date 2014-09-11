@@ -25,17 +25,49 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CallManager {
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
+	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
+		System.out.println("[CallManager] ca.getUserId(): " + ca.getUserId());
+		System.out.println("[CallManager] ca.getCallId(): " + ca.getCallId());
+		
+		identifiers.put(ca.getUserId(), ca.getCallId());
 		return calls.put(ca.getCallId(), ca);
 	}
 	
 	public CallAgent remove(String id) {
+		CallAgent ca = calls.get(id);
+		String userId = ca.getUserId();
+
+		identifiers.remove(userId);
 		return calls.remove(id);
+	}
+
+	public CallAgent removeByUserId(String userId) {
+		String uid = userId;
+		String id;
+
+		if( (id = identifiers.get(uid)) == null )
+			return null;
+		else {
+			identifiers.remove(uid);
+			return calls.remove(id);
+		}
 	}
 	
 	public CallAgent get(String id) {
 		return calls.get(id);
+	}
+
+	public CallAgent getByUserId(String userId) {
+		String uid = userId;
+		String id;
+
+		if( (id = identifiers.get(uid)) == null )
+			return null;
+		else {
+			return calls.get(id);
+		}
 	}
 	
 	public Collection<CallAgent> getAll() {

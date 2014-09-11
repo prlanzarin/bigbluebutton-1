@@ -94,17 +94,17 @@ public final class SipPeerManager {
     	}
     }
 
-    public void startBbbToFreeswitchVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchVideoStream(clientId, broadcastStream, scope);
+            sipUser.startBbbToFreeswitchVideoStream(userId, broadcastStream, scope);
         }
     }
     
-    public void stopBbbToFreeswitchVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.stopBbbToFreeswitchVideoStream(clientId, broadcastStream, scope);
+            sipUser.stopBbbToFreeswitchVideoStream(userId, broadcastStream, scope);
         }
     }
 

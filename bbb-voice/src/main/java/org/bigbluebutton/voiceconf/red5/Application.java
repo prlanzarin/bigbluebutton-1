@@ -131,17 +131,18 @@ public class Application extends MultiThreadedApplicationAdapter {
      @Override
     public void streamPublishStart(IBroadcastStream stream) {
         String clientId = Red5.getConnectionLocal().getClient().getId();
-        String userid = getUserId();
+        String userId = getUserId();
         String username = getUsername();
-        log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
+        log.debug("{} has started publishing stream [{}]", username + "[uid=" + userId + "][clientid=" + clientId + "]", stream.getPublishedName());
         //System.out.println("streamPublishStart: " + stream.getPublishedName());
         IConnection conn = Red5.getConnectionLocal();
         String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
         
         if(isVideoStream(stream)){
-            userid = getBbbVideoUserId(stream);
-            log.debug("Video UserID: " + userid);
-            //sipPeerManager.startBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
+            userId = getBbbVideoUserId(stream);
+            log.debug("Video UserId: " + userId);
+            peerId = "default";
+            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
 
         }else if (peerId != null) {
             super.streamPublishStart(stream);
