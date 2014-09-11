@@ -621,7 +621,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 		clientConnManager = ccm;
 	}
 
-    public String getUserID() {
+    public String getUserId() {
         return userProfile.userID;
     }
 }

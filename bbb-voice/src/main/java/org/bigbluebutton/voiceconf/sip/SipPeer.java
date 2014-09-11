@@ -117,8 +117,8 @@ public class SipPeer implements SipRegisterAgentListener {
     	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
-    	callManager.add(ca);
     	ca.call(callerName, destination);
+        callManager.add(ca);
     }
 
 	public void close() {
@@ -173,16 +173,20 @@ public class SipPeer implements SipRegisterAgentListener {
 
     public void startBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.getByUserId(userId);
-        if (ca != null) {
+        if (ca != null) 
            ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
-        }
+        else
+            log.debug("$$ CA NULL");
+        
     }
     
-    public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
-        CallAgent ca = callManager.getByUserId(userId);
-        if (ca != null) {
+    public void stopBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) 
            ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
-        }
+        else
+            log.debug("$$ CA NULL");
+        
     }
 
     public String getStreamType(String clientId, String streamName) {

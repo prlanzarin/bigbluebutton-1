@@ -84,6 +84,8 @@ public class FlashToSipVideoStream implements FlashToSipStream {
 				      }
 				      	      
 				      if (packet instanceof VideoData) {
+
+				      	  log.debug("VideoData arrived");
 				    	  byte[] data = SerializeUtils.ByteBufferToByteArray(buf);
 				    	  
 						  for (RtpPacket rtpPacket: converter.rtmpToRTP(data, (long) packet.getTimestamp())) {

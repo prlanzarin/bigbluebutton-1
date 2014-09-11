@@ -22,14 +22,19 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+import org.slf4j.Logger;
+import org.red5.logging.Red5LoggerFactory;
+
+
 public class CallManager {
+	private static Logger log = Red5LoggerFactory.getLogger(CallManager.class, "sip");
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
 	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
-		System.out.println("[CallManager] ca.getUserId(): " + ca.getUserId());
-		System.out.println("[CallManager] ca.getCallId(): " + ca.getCallId());
+		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
 		
 		identifiers.put(ca.getUserId(), ca.getCallId());
 		return calls.put(ca.getCallId(), ca);
@@ -60,6 +65,10 @@ public class CallManager {
 	}
 
 	public CallAgent getByUserId(String userId) {
+
+		//first we retrieve the 'clientId' using the 'userId' as key, then - with the 'clientId' - we retrieve the CallAgent
+		//this is necessary to get the CallAgent in order to start the sip video publish.
+
 		String uid = userId;
 		String id;
 
