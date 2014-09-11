@@ -142,6 +142,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (sipProvider.getPort() != SipStack.default_port) {
             userProfile.contactUrl += ":" + sipProvider.getPort();
         }
+
+        userProfile.userID = callerName.substring( 0, callerName.indexOf("-") );
+        log.debug("userID: " + userProfile.userID);
     }
     
     /** Closes an ongoing, incoming, or pending call */
@@ -619,7 +622,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	}
 
     public String getUserID() {
-        String userName = userProfile.username;
-        return userName.substring( 0, userName.indexOf("-") );
+        return userProfile.userID;
     }
 }
