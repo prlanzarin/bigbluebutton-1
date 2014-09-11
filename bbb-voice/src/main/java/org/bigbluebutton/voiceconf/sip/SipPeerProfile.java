@@ -46,6 +46,9 @@ public class SipPeerProfile {
     /** User's name (used to build the contact_url if not explitely defined) */
     public String username = null;
 
+     /** User's ID (build from username ) */
+    public String userID = null;
+
     /** User's realm. */
     public String realm = null;
 
