@@ -164,6 +164,7 @@ public class RtpVideoStreamReceiver {
                 }
                 isVideoPaused = false;
 
+                log.debug("[RtpVideoStreamReceiver] video data are coming");
         		packetReceivedCounter++;  
         		if (shouldDropDelayedPacket(rtpPacket)) {
         			continue;

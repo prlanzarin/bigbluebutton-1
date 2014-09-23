@@ -109,7 +109,13 @@ public class RtpStreamSender {
     public void sendVideo(RtpPacket rtpVideoPacket)
     {
         try {
+            rtpVideoPacket.setVersion(2);
+            rtpVideoPacket.setPayloadType(35);
+            rtpVideoPacket.setSeqNum(sequenceNum++);
+            rtpVideoPacket.setSsrc(1622737496);
             rtpSocketSend(rtpVideoPacket);
+            log.debug("Sending video to " + connInfo.getRemoteAddr() 
+                            + ":" + connInfo.getRemotePort());
         } catch (Exception e) {
             e.printStackTrace();
         }          
