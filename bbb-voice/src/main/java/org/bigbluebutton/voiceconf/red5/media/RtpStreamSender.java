@@ -114,8 +114,8 @@ public class RtpStreamSender {
             rtpVideoPacket.setSeqNum(sequenceNum++);
             rtpVideoPacket.setSsrc(1622737496);
             rtpSocketSend(rtpVideoPacket);
-            log.debug("Sending video to " + connInfo.getRemoteAddr() 
-                            + ":" + connInfo.getRemotePort());
+            /*log.debug("Sending video to " + connInfo.getRemoteAddr() 
+                            + ":" + connInfo.getRemotePort());*/
         } catch (Exception e) {
             e.printStackTrace();
         }          

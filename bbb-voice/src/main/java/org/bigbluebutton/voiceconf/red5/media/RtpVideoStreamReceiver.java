@@ -164,7 +164,6 @@ public class RtpVideoStreamReceiver {
                 }
                 isVideoPaused = false;
 
-                log.debug("[RtpVideoStreamReceiver] video data are coming");
         		packetReceivedCounter++;  
         		if (shouldDropDelayedPacket(rtpPacket)) {
         			continue;
@@ -185,6 +184,8 @@ public class RtpVideoStreamReceiver {
 
                         byte newBuffer[] = internalBuffer.clone();
             			processRtpPacket(newBuffer, RTP_HEADER_SIZE, rtpPacket.getPayloadLength());
+
+                        log.debug("VIDEO TS = " + rtpPacket.getTimestamp());
             		
                     } else {
             			if (log.isDebugEnabled())
