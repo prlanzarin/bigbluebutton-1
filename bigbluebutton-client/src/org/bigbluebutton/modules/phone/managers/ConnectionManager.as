@@ -32,7 +32,7 @@ package org.bigbluebutton.modules.phone.managers {
 	import org.bigbluebutton.common.LogUtil;
 	import org.bigbluebutton.core.BBB;
 	import org.bigbluebutton.main.api.JSLog;
-	import org.bigbluebutton.modules.phone.events.ConnectionStatusEvent;
+	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallConnectedEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallDisconnectedEvent;
 	import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
@@ -150,26 +150,53 @@ package org.bigbluebutton.modules.phone.managers {
 		//
 		//********************************************************************************************		
 		public function failedToJoinVoiceConferenceCallback(msg:String):* {
-			trace(LOG + "failedToJoinVoiceConferenceCallback " + msg);
-      JSLog.debug(LOG + "failedToJoinVoiceConferenceCallback " + msg);
+			trace(LOG + "failedToJoinConferenceCallback " + msg);
+      JSLog.debug(LOG + "failedToJoinConferenceCallback " + msg);
 			var event:FlashCallDisconnectedEvent = new FlashCallDisconnectedEvent();
 			dispatcher.dispatchEvent(event);	
 		}
 		
 		public function disconnectedFromJoinVoiceConferenceCallback(msg:String):* {
-			trace(LOG + "disconnectedFromJoinVoiceConferenceCallback " + msg);
-      JSLog.debug(LOG + "disconnectedFromJoinVoiceConferenceCallback " + msg);
+			trace(LOG + "disconnectedFromJoinConferenceCallback " + msg);
+      JSLog.debug(LOG + "disconnectedFromJoinConferenceCallback " + msg);
 			var event:FlashCallDisconnectedEvent = new FlashCallDisconnectedEvent();
 			dispatcher.dispatchEvent(event);	
 		}	
 				
-     public function successfullyJoinedVoiceConferenceCallback(publishName:String, playName:String, codec:String):* {
-      trace(LOG + "successfullyJoinedVoiceConferenceCallback [" + publishName + "] : [" + playName + "] : [" + codec + "]");
-      JSLog.debug(LOG + "successfullyJoinedVoiceConferenceCallback [" + publishName + "] : [" + playName + "] : [" + codec + "]");
-			var event:FlashCallConnectedEvent = new FlashCallConnectedEvent(publishName, playName, codec);
-			dispatcher.dispatchEvent(event);
+		public function successfullyJoinedConferenceCallback(publishAudioName:String, playAudioName:String, audioCodec:String,
+															 publishVideoName:String, playVideoName:String, videoCodec:String):* {
+			trace(LOG + "successfullyJoinedConferenceCallback [" + publishAudioName + "] : [" + playAudioName + "] : [" + audioCodec + "]");
+			JSLog.debug(LOG + "successfullyJoinedConferenceCallback [" + publishAudioName + "] : [" + playAudioName + "] : [" + audioCodec + "]");
+
+			var audioEvent:FlashCallConnectedEvent = new FlashCallConnectedEvent(publishAudioName, playAudioName, audioCodec);
+			dispatcher.dispatchEvent(audioEvent);
+
+			if(playVideoName) {
+				LogUtil.debug("successfullyJoinedConferenceCallback | VIDEO Parameters: " + 
+						   	   publishVideoName + " : " + playVideoName + " : " + videoCodec);
+
+				var openStream:BBBEvent = new BBBEvent(BBBEvent.OPEN_FREESWITCH_VIDEO_STREAM_EVENT);
+				openStream.payload.streamName = playVideoName;
+				openStream.payload.connection = netConnection;
+				dispatcher.dispatchEvent(openStream);	
+			}
 		}
-						
+
+		public function videoIsPaused():void {
+			LogUtil.debug("video is paused. Closing video window");
+			var videoPaused:BBBEvent = new BBBEvent(BBBEvent.VIDEO_PAUSED);
+			dispatcher.dispatchEvent(videoPaused);
+		}
+
+		public function videoRestarted(videoStream:String):void {
+			LogUtil.debug("video is restarted. Reopening video window");
+			var videoRestarted:BBBEvent = new BBBEvent(BBBEvent.VIDEO_RESTARTED);
+			videoRestarted.payload.streamName = videoStream;
+			videoRestarted.payload.connection = netConnection;
+			dispatcher.dispatchEvent(videoRestarted);
+		}
+
+								
 		//********************************************************************************************
 		//			
 		//			SIP Actions

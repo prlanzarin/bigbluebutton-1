@@ -48,18 +48,17 @@ public class SipPeer implements SipRegisterAgentListener {
     private String clientRtpIp;
     private SipRegisterAgent registerAgent;
     private final String id;
-    private final AudioConferenceProvider audioconfProvider;
+    private final ConferenceProvider confProvider;
     
     private boolean registered = false;
     private SipPeerProfile registeredProfile;
     
     public SipPeer(String id, String sipClientRtpIp, String host, int sipPort, 
-    		int startAudioPort, int stopAudioPort, IMessagingService messagingService) {
-    	
+			int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort, IMessagingService messagingService) {
         this.id = id;
         this.clientRtpIp = sipClientRtpIp;
         this.messagingService = messagingService;
-        audioconfProvider = new AudioConferenceProvider(host, sipPort, startAudioPort, stopAudioPort);
+        confProvider = new ConferenceProvider(host, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
         initSipProvider(host, sipPort);
     }
     
@@ -83,12 +82,12 @@ public class SipPeer implements SipRegisterAgentListener {
     
     private void createRegisterUserProfile(String username, String password) {    	    	
     	registeredProfile = new SipPeerProfile();
-    	registeredProfile.audioPort = audioconfProvider.getStartAudioPort();
+    	registeredProfile.audioPort = confProvider.getStartAudioPort();
             	
-        String fromURL = "\"" + username + "\" <sip:" + username + "@" + audioconfProvider.getHost() + ">";
+        String fromURL = "\"" + username + "\" <sip:" + username + "@" + confProvider.getHost() + ">";
         registeredProfile.username = username;
         registeredProfile.passwd = password;
-        registeredProfile.realm = audioconfProvider.getHost();
+        registeredProfile.realm = confProvider.getHost();
         registeredProfile.fromUrl = fromURL;
         registeredProfile.contactUrl = "sip:" + username + "@" + sipProvider.getViaAddress();
         if (sipProvider.getPort() != SipStack.default_port) {
@@ -128,7 +127,7 @@ public class SipPeer implements SipRegisterAgentListener {
 
     private CallAgent createCallAgent(String clientId) {
     	SipPeerProfile callerProfile = SipPeerProfile.copy(registeredProfile);
-    	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, audioconfProvider, clientId, messagingService);
+    	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, messagingService);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
     	callManager.add(ca);
@@ -191,20 +190,68 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.startTalkStream(broadcastStream, scope);
-        } 
+           ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
+        }
     }
     
-    public void stopTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
         if (ca != null) {
-           ca.stopTalkStream(broadcastStream, scope);
+           ca.stopBbbToFreeswitchAudioStream(broadcastStream, scope);
         } else {
         	log.info("Can't stop talk stream as stream may have already been stopped.");
         }
+    }
+
+    public void startBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.getByUserId(userId);
+        if (ca != null) 
+           ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
+        else
+            log.debug("$$ CA NULL");
+        
+    }
+    
+    public void stopBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) 
+           ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
+        else
+            log.debug("$$ CA NULL");
+        
+    }
+
+    public String getStreamType(String clientId, String streamName) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           return ca.getStreamType(streamName);
+        }
+        else
+        {
+            log.debug("[SipPeer] Invalid clientId");
+            return null;
+        }
+    }
+
+    public boolean isAudioStream(String clientId, IBroadcastStream broadcastStream) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           return ca.isAudioStream(broadcastStream);
+        }
+        else
+            return false;
+    }
+
+    public boolean isVideoStream(String clientId, IBroadcastStream broadcastStream) {
+        CallAgent ca = callManager.get(clientId);
+        if (ca != null) {
+           return ca.isVideoStream(broadcastStream);
+        }
+        else
+            return false;
     }
 
 	@Override

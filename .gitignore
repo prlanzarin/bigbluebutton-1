@@ -1,4 +1,5 @@
 .metadata/
+bbb-voice/src/main/webapp/WEB-INF/bigbluebutton-sip.properties
 record-and-playback/playback-client-js/testmeeting/
 record-and-playback/playback-web/playback-web-0.1.war
 record-and-playback/.project

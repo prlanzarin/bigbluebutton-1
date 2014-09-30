@@ -24,6 +24,7 @@ package org.bigbluebutton.modules.videoconf.maps
   import flash.events.IEventDispatcher;
   import flash.external.ExternalInterface;
   import flash.media.Camera;
+  import flash.net.NetConnection;
   
   import mx.collections.ArrayCollection;
   
@@ -67,6 +68,7 @@ package org.bigbluebutton.modules.videoconf.maps
 
     private var options:VideoConfOptions = new VideoConfOptions();
     private var uri:String;
+    private var fsWindow:VideoWindow = null;
     
     private var webcamWindows:WindowManager = new WindowManager();
     
@@ -278,6 +280,11 @@ package org.bigbluebutton.modules.videoconf.maps
       dockWindow(publishWindow);  
     }
     
+    public function closeFreeswitchVideo():void {
+      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
+      closeWindow("FreeSWITCH video");
+    }
+
     private function closeWindow(userID:String):void {
       if (! webcamWindows.hasWindow(userID)) {
         trace("VideoEventMapDelegate:: [" + me + "] closeWindow:: No window for [" + userID + "] [" + UsersUtil.getUserName(userID) + "]");
@@ -314,6 +321,26 @@ package org.bigbluebutton.modules.videoconf.maps
       openWindow(window);
       dockWindow(window);  
     }
+
+    public function openFreeswitchVideo(streamName:String, connection:NetConnection):void {
+
+
+      if(fsWindow != null) {
+        closeFreeswitchVideo();
+        fsWindow = null;
+      }
+        fsWindow = new VideoWindow();
+        fsWindow.title = "FreeSWITCH video";
+        fsWindow.userID = "FreeSWITCH video";
+        fsWindow.videoOptions = options;       
+        fsWindow.resolutions = "640x480".split(",");
+
+        fsWindow.startVideo(connection, streamName);
+        webcamWindows.addWindow(fsWindow);
+        openWindow(fsWindow);
+        dockWindow(fsWindow);
+    }
+    
     
     private function openWindow(window:VideoWindowItf):void {
       var windowEvent:OpenWindowEvent = new OpenWindowEvent(OpenWindowEvent.OPEN_WINDOW_EVENT);

@@ -42,8 +42,12 @@ public class Application extends MultiThreadedApplicationAdapter {
     private String sipServerHost = "localhost";
     private String sipClientRtpIp = "";
     private int sipPort = 5070;
+
     private int startAudioPort = 3000;
 	private int stopAudioPort = 3029;
+    private int startVideoPort = 3030;
+    private int stopVideoPort = 3059;
+
 	private String password = "secret";
 	private String username;
 	private CallStreamFactory callStreamFactory;
@@ -56,7 +60,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     	callStreamFactory.setScope(scope);
     	sipPeerManager.setCallStreamFactory(callStreamFactory);
         sipPeerManager.setClientConnectionManager(clientConnManager);
-        sipPeerManager.createSipPeer("default", sipClientRtpIp, sipServerHost, sipPort, startAudioPort, stopAudioPort);
+        sipPeerManager.createSipPeer("default", sipClientRtpIp, sipServerHost, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
         try {
 			sipPeerManager.register("default", username, password);
 		} catch (PeerNotFoundException e) {
@@ -75,6 +79,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 
     @Override
     public boolean appConnect(IConnection conn, Object[] params) {
+        if (params.length == 0) {
+            params = new Object[2];
+            params[0] = "unknown-userid";
+            params[1] = "UNKNOWN-CALLER";
+        }
     	String userid = ((String) params[0]).toString();
         String username = ((String) params[1]).toString();
         String clientId = Red5.getConnectionLocal().getClient().getId();
@@ -119,21 +128,26 @@ public class Application extends MultiThreadedApplicationAdapter {
         super.appDisconnect(conn);
     }
     
-    @Override
+     @Override
     public void streamPublishStart(IBroadcastStream stream) {
-    	String clientId = Red5.getConnectionLocal().getClient().getId();
-    	String userid = getUserId();
-    	String username = getUsername();
-    	
-    	log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
-    	System.out.println("streamPublishStart: " + stream.getPublishedName());
-    	IConnection conn = Red5.getConnectionLocal();
-    	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-        if (peerId != null) {
-        	super.streamPublishStart(stream);
-	    	sipPeerManager.startTalkStream(peerId, clientId, stream, conn.getScope());
-//	    	recordStream(stream);
-        }
+        String clientId = Red5.getConnectionLocal().getClient().getId();
+        String userId = getUserId();
+        String username = getUsername();
+        log.debug("{} has started publishing stream [{}]", username + "[uid=" + userId + "][clientid=" + clientId + "]", stream.getPublishedName());
+        //System.out.println("streamPublishStart: " + stream.getPublishedName());
+        IConnection conn = Red5.getConnectionLocal();
+        String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
+        
+        if(isVideoStream(stream)){
+            userId = getBbbVideoUserId(stream);
+            log.debug("Video UserId: " + userId);
+            peerId = "default";
+            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
+
+        }else if (peerId != null) {
+            super.streamPublishStart(stream);
+            sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
+        }        
     }
     
     /**
@@ -163,7 +177,8 @@ public class Application extends MultiThreadedApplicationAdapter {
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
         if (peerId != null) {	    	
-	    	sipPeerManager.stopTalkStream(peerId, clientId, stream, conn.getScope());
+	    	sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
+            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
 	    	super.streamBroadcastClose(stream);
         }
     }
@@ -204,6 +219,14 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public void setStopAudioPort(int stopRTPPort) {
 		this.stopAudioPort = stopRTPPort;
 	}
+
+    public void setStartVideoPort(int startRTPPort) {
+        this.startVideoPort = startRTPPort;
+    }
+
+    public void setStopVideoPort(int stopRTPPort) {
+        this.stopVideoPort = stopRTPPort;
+    }    
 	
 	public void setSipPeerManager(SipPeerManager spm) {
 		sipPeerManager = spm;
@@ -218,10 +241,22 @@ public class Application extends MultiThreadedApplicationAdapter {
 		if ((userid == null) || ("".equals(userid))) userid = "unknown-userid";
 		return userid;
 	}
-	
+
+    private boolean isVideoStream(IBroadcastStream stream){
+        return stream.getPublishedName().matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+    }
+
+    private String getBbbVideoUserId(IBroadcastStream videoStream) {
+        String publishedName = videoStream.getPublishedName();
+        String userId = "";        
+        userId = publishedName.split("-")[1];
+        
+        return userId;
+    }
+    
 	private String getUsername() {
 		String username = (String) Red5.getConnectionLocal().getAttribute("USERNAME");
 		if ((username == null) || ("".equals(username))) username = "UNKNOWN-CALLER";
 		return username;
-	}
+	}    
 }

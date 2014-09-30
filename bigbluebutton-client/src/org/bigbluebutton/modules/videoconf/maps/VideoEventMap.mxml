@@ -40,6 +40,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       import org.bigbluebutton.modules.videoconf.events.VideoModuleStartEvent;
       import org.bigbluebutton.modules.videoconf.events.VideoModuleStopEvent;
       import org.bigbluebutton.modules.videoconf.events.WebRTCWebcamRequestEvent;		
+      import org.bigbluebutton.modules.users.events.ViewCameraEvent;		
 		]]>
 	</mx:Script>
 	
@@ -116,6 +117,19 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <EventHandlers type="{BBBEvent.CAM_SETTINGS_CLOSED}">
     <MethodInvoker generator="{VideoEventMapDelegate}" method="handleCamSettingsClosedEvent"  arguments="{event}"/>
   </EventHandlers>
+
+  <EventHandlers type="{BBBEvent.OPEN_FREESWITCH_VIDEO_STREAM_EVENT}">
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="openFreeswitchVideo"  arguments="{[event.payload.streamName, event.payload.connection]}"/>
+  </EventHandlers>
+
+  <EventHandlers type="{BBBEvent.VIDEO_PAUSED}">
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="closeFreeswitchVideo"/>
+  </EventHandlers>
+
+  <EventHandlers type="{BBBEvent.VIDEO_RESTARTED}">
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="openFreeswitchVideo"  arguments="{[event.payload.streamName, event.payload.connection]}"/>
+  </EventHandlers>
+
   
   <!-- ~~~~~~~~~~~~~~~~~~    INJECTORS     ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   

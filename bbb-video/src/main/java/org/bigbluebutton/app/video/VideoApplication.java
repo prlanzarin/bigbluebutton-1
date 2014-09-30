@@ -69,6 +69,7 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
     
     @Override
     public void streamPublishStart(IBroadcastStream stream) {
+        log.info("[VideoApplication] video stream has been published");
     	super.streamPublishStart(stream);
     }
     

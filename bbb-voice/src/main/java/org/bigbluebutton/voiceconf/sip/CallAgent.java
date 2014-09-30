@@ -18,8 +18,6 @@
 */
 package org.bigbluebutton.voiceconf.sip;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.zoolu.sip.call.*;
 import org.zoolu.sip.provider.SipProvider;
 import org.zoolu.sip.provider.SipStack;
@@ -44,6 +42,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Vector;
 
+import java.util.HashMap;
+
 public class CallAgent extends CallListenerAdapter implements CallStreamObserver  {
     private static Logger log = Red5LoggerFactory.getLogger(CallAgent.class, "sip");
     
@@ -51,18 +51,23 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private final SipProvider sipProvider;
     private final String clientRtpIp;
     private ExtendedCall call;
-    private CallStream callStream;    
+    private CallStream audioCallStream; 
+    private CallStream videoCallStream;    
     private String localSession = null;
-    private Codec sipCodec = null;    
+    private Codec sipAudioCodec = null;
+    private Codec sipVideoCodec = null;    
     private CallStreamFactory callStreamFactory;
     private ClientConnectionManager clientConnManager; 
     private final String clientId;
-    private final AudioConferenceProvider portProvider;
-    private DatagramSocket localSocket = null;
+    private final ConferenceProvider portProvider;
+    private DatagramSocket localAudioSocket;
+    private DatagramSocket localVideoSocket;
     private String _callerName;
     private String _destination;
     private Boolean listeningToGlobal = false;
     private IMessagingService messagingService;
+
+    private HashMap<String, String> streamTypeManager = null;
     
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
@@ -77,14 +82,17 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return _destination;
     }
 
-    public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile, 
-    		AudioConferenceProvider portProvider, String clientId, IMessagingService messagingService) {
+    public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile,
+    		ConferenceProvider portProvider, String clientId, IMessagingService messagingService) {
         this.sipProvider = sipProvider;
         this.clientRtpIp = sipClientRtpIp;
         this.userProfile = userProfile;
         this.portProvider = portProvider;
         this.clientId = clientId;
         this.messagingService = messagingService;
+
+        if(this.streamTypeManager == null)
+            this.streamTypeManager = new HashMap<String, String>();
     }
     
     public String getCallId() {
@@ -92,7 +100,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     private void initSessionDescriptor() {        
-        log.debug("initSessionDescriptor");
+        log.debug("initSessionDescriptor => userProfile.videoPort = " + userProfile.videoPort + " userProfile.audioPort =" + userProfile.audioPort);
         SessionDescriptor newSdp = SdpUtils.createInitialSdp(userProfile.username, 
         		this.clientRtpIp, userProfile.audioPort, 
         		userProfile.videoPort, userProfile.audioCodecsPrecedence );
@@ -109,8 +117,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	_destination = destination;
     	log.debug("{} making a call to {}", callerName, destination);  
     	try {
-			localSocket = getLocalAudioSocket();
-			userProfile.audioPort = localSocket.getLocalPort();	    	
+
+			localAudioSocket = getLocalAudioSocket();
+			userProfile.audioPort = localAudioSocket.getLocalPort();
+
+            localVideoSocket = getLocalVideoSocket();  
+            userProfile.videoPort = localVideoSocket.getLocalPort();
+
 		} catch (Exception e) {
 			log.debug("{} failed to allocate local port for call to {}. Notifying client that call failed.", callerName, destination); 
 			notifyListenersOnOutgoingCallFailed();
@@ -146,6 +159,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (sipProvider.getPort() != SipStack.default_port) {
             userProfile.contactUrl += ":" + sipProvider.getPort();
         }
+
+        userProfile.userID = callerName.substring( 0, callerName.indexOf("-") );
+        log.debug("userID: " + userProfile.userID);
     }
     
     /** Closes an ongoing, incoming, or pending call */
@@ -156,7 +172,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     		log.debug("Hanging up of a call connected to the global audio stream");
     		notifyListenersOfOnCallClosed();
     	} else {
-    		closeVoiceStreams();
+    		closeStreams();
     		if (call != null) call.hangup();
     	}
     	callState = CallState.UA_IDLE; 
@@ -190,64 +206,215 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private boolean isGlobalAudioStream() {
         return (_callerName != null && _callerName.startsWith("GLOBAL_AUDIO_"));
     }
-    
-    private void createVoiceStreams() {
-        if (callStream != null) {            
-        	log.debug("Media application is already running.");
-            return;
+
+    private DatagramSocket getLocalVideoSocket() throws Exception {
+        DatagramSocket socket = null;
+        boolean failedToGetSocket = true;
+        StringBuilder failedPorts = new StringBuilder("Failed ports: ");
+        
+        for (int i = portProvider.getStartVideoPort(); i <= portProvider.getStopVideoPort(); i++) {
+            int freePort = portProvider.getFreeVideoPort();
+            try {               
+                socket = new DatagramSocket(freePort);
+                failedToGetSocket = false;
+                log.info("Successfully setup local VIDEO port {}. {}", freePort, failedPorts);
+                break;
+            } catch (SocketException e) {
+                failedPorts.append(freePort + ", ");            
+            }
         }
         
+        if (failedToGetSocket) {
+            log.warn("Failed to setup local VIDEO port {}.", failedPorts); 
+            throw new Exception("Exception while initializing CallStream");
+        }
+        
+        return socket;
+    }
+    
+    private void createStreams() {
+        boolean audioStreamCreatedSuccesfully = false;
+        boolean videoStreamCreatedSuccesfully = false;
+
         SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());        
         SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         String remoteMediaAddress = SessionDescriptorUtil.getRemoteMediaAddress(remoteSdp);
-        int remoteAudioPort = SessionDescriptorUtil.getRemoteAudioPort(remoteSdp);
-        int localAudioPort = SessionDescriptorUtil.getLocalAudioPort(localSdp);
-    	
-    	SipConnectInfo connInfo = new SipConnectInfo(localSocket, remoteMediaAddress, remoteAudioPort);
-        try {
-			localSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteAudioPort);
-	        log.debug("[localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
 
-	        if (userProfile.audio && localAudioPort != 0 && remoteAudioPort != 0) {
-	            if ((callStream == null) && (sipCodec != null)) {               	
-	            	try {
-						callStream = callStreamFactory.createCallStream(sipCodec, connInfo);
-						callStream.addCallStreamObserver(this);
-						callStream.start();
-						if (isGlobalAudioStream()) {
-							GlobalCall.addGlobalAudioStream(_destination, callStream.getListenStreamName(), sipCodec, connInfo);
-						} else {
-							notifyListenersOnCallConnected(callStream.getTalkStreamName(), callStream.getListenStreamName());
-						}
-					} catch (Exception e) {
-						log.error("Failed to create Call Stream.");
-						System.out.println(StackTraceUtil.getStackTrace(e));
-					}                
-	            }
-	        }
-		} catch (UnknownHostException e1) {
-			log.error(StackTraceUtil.getStackTrace(e1));
-		}
+        if (audioCallStream == null) {            
+            int remoteAudioPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
+            int localAudioPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_AUDIO);
+            audioStreamCreatedSuccesfully = createAudioStream(remoteMediaAddress,localAudioPort,remoteAudioPort); 
+                    	
+        }else log.debug("AUDIO application is already running.");
+        
+        if (videoCallStream == null) {        
+            int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+            int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
+            videoStreamCreatedSuccesfully = createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+            log.debug("VIDEO stream created");
+        }else log.debug("VIDEO application is already running.");
+
+        if(audioStreamCreatedSuccesfully && !isGlobalAudioStream()) {
+
+            String userSenderAudioStream = audioCallStream.getBbbToFreeswitchStreamName();
+            String userReceiverAudioStream = audioCallStream.getFreeswitchToBbbStreamName();
+
+            String userSenderVideoStream = "";
+            String userReceiverVideoStream = "";  
+
+            if(videoStreamCreatedSuccesfully) {
+                userSenderVideoStream = videoCallStream.getBbbToFreeswitchStreamName();
+                userReceiverVideoStream = videoCallStream.getFreeswitchToBbbStreamName();
+            }
+
+            notifyListenersOnCallConnected(userSenderAudioStream, userReceiverAudioStream,
+                                           userSenderVideoStream, userReceiverVideoStream); 
+        }
+    }
+
+    private boolean createAudioStream(String remoteMediaAddress, int localAudioPort, int remoteAudioPort) {
+
+       SipConnectInfo connInfo = new SipConnectInfo(localAudioSocket, remoteMediaAddress, remoteAudioPort);
+       try {
+
+            localAudioSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteAudioPort);
+
+            if (userProfile.audio && localAudioPort != 0 && remoteAudioPort != 0) {
+                if ((audioCallStream == null) && (sipAudioCodec != null)) {                  
+                    try {
+                        log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
+                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
+                        audioCallStream.addCallStreamObserver(this);
+                        audioCallStream.start();
+                        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+
+                        if(!streamTypeManager.containsKey(streamName))
+                        {
+                            streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_AUDIO);
+                            log.debug("[CallAgent] streamTypeManager adding audio stream {} for {}", streamName, clientId);
+                        }
+
+                        if (isGlobalAudioStream())
+                        {
+                        	GlobalCall.addGlobalAudioStream(_destination, streamName, sipAudioCodec, connInfo);
+                        }
+
+                        return true;
+
+                    } catch (Exception e) {
+                        log.error("Failed to create AUDIO Call Stream.");
+                        System.out.println(StackTraceUtil.getStackTrace(e));
+                    }                
+                }
+            }
+
+        } catch (UnknownHostException e1) {
+            log.error("Failed to connect for AUDIO Stream.");
+            log.error(StackTraceUtil.getStackTrace(e1));
+        }
+
+        return false;
+
+    }
+
+    private boolean createVideoStream(String remoteMediaAddress, int localVideoPort, int remoteVideoPort) {
+
+       SipConnectInfo connInfo = new SipConnectInfo(localVideoSocket, remoteMediaAddress, remoteVideoPort);
+       try {
+            localVideoSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteVideoPort);        
+            
+            if (userProfile.video && localVideoPort != 0 && remoteVideoPort != 0) {
+                if ((videoCallStream == null) && (sipVideoCodec != null)) {                  
+                    try {
+                        log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
+                        videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo, CallStream.MEDIA_TYPE_VIDEO);                                                
+                        videoCallStream.addCallStreamObserver(this);
+                        videoCallStream.start();
+                        String streamName = videoCallStream.getBbbToFreeswitchStreamName();
+                        if(!streamTypeManager.containsKey(streamName))
+                        {
+                            streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_VIDEO);
+                            log.debug("[CallAgent] streamTypeManager adding video stream {} for {}", streamName, clientId);
+                        }
+                        
+                        return true;        
+                            
+                    } catch (Exception e) {
+                        log.error("Failed to create VIDEO Call Stream.");
+                        System.out.println(StackTraceUtil.getStackTrace(e));
+                    }                
+                }
+            }
+
+        } catch (UnknownHostException e1) {
+            log.error("Failed to connect for VIDEO Stream.");
+            log.error(StackTraceUtil.getStackTrace(e1));
+        }
+
+        return false;
     }
 
         
-    public void startTalkStream(IBroadcastStream broadcastStream, IScope scope) {
+   public void startBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
     	try {
-			callStream.startTalkStream(broadcastStream, scope);
+			audioCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
+
 		} catch (StreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}   	
+		}
     }
-    
-    public void stopTalkStream(IBroadcastStream broadcastStream, IScope scope) {
-    	if (callStream != null) {
-    		callStream.stopTalkStream(broadcastStream, scope);   	
+       
+    public void stopBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
+    	if (audioCallStream != null) {
+    		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
     	} else {
     		log.info("Can't stop talk stream as stream may have already stopped.");
     	}
+        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+        if(streamTypeManager.containsKey(streamName))
+            streamTypeManager.remove(streamName);
+    }
+    
+     public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+        try {
+            videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
+        } catch (StreamException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    
+    public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+        if (videoCallStream != null) {
+            videoCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);     
+        }
+        String streamName = videoCallStream.getBbbToFreeswitchStreamName();
+        if(streamTypeManager.containsKey(streamName))
+        {
+            streamTypeManager.remove(streamName);
+            log.debug("[CallAgent] removing video stream: " + streamName);
+        }
     }
 
+    private void closeStreams() {        
+    	log.debug("Shutting down the AUDIO stream...");         
+        if (audioCallStream != null) {
+        	audioCallStream.stopFreeswitchToBbbStream();
+        	audioCallStream = null;
+        } else {
+        	log.debug("Can't shutdown AUDIO stream: already NULL");
+        }
+
+        log.debug("Shutting down the VIDEO stream...");         
+        if (videoCallStream != null) {
+            videoCallStream.stopFreeswitchToBbbStream();
+            videoCallStream = null;
+        } else {
+            log.debug("Can't shutdown VIDEO stream: already NULL");
+        }
+
+    }
 
     
     public void connectToGlobalStream(String clientId, String callerIdName, String voiceConf) {
@@ -262,31 +429,50 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             }
             globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         }
-
-
 		    
         GlobalCall.addUser(clientId, callerIdName, _destination);
-        sipCodec = GlobalCall.getRoomCodec(voiceConf);
+        sipAudioCodec = GlobalCall.getRoomCodec(voiceConf);
         callState = CallState.UA_ONCALL;
-        notifyListenersOnCallConnected("", globalAudioStreamName);
+        notifyListenersOnCallConnected("", globalAudioStreamName, "", "");
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
         messagingService.userConnectedToGlobalAudio(voiceConf, callerIdName);
         
     }
-    
-    private void closeVoiceStreams() {        
-    	log.debug("Shutting down the voice streams.");         
-      if (callStream != null) {
-      	callStream.stop();
-       	callStream = null;
-       } else {
-       	log.debug("Can't shutdown voice stream. callstream is NULL");
-      }
+
+
+    public String getStreamType(String streamName) {
+        if(streamTypeManager.containsKey(streamName))
+            return streamTypeManager.get(streamName);
+        else
+        {
+            log.debug("[CallAgent] streamTypeManager does not contain " + streamName);
+            return null;
+        }
+    }
+
+    public boolean isAudioStream(IBroadcastStream broadcastStream) {
+        String streamName = broadcastStream.getPublishedName();
+        if(streamTypeManager.containsKey(streamName))
+            return streamTypeManager.get(streamName).equals(CallStream.MEDIA_TYPE_AUDIO);
+        else
+            return false;
+    }
+
+    public boolean isVideoStream(IBroadcastStream broadcastStream) {
+        String streamName = broadcastStream.getPublishedName();
+        if(streamTypeManager.containsKey(streamName))
+            return streamTypeManager.get(streamName).equals(CallStream.MEDIA_TYPE_VIDEO);
+        else
+            return false;
     }
 
     // ********************** Call callback functions **********************
     private void createAudioCodec(SessionDescriptor newSdp) {
-    	sipCodec = SdpUtils.getNegotiatedAudioCodec(newSdp);
+    	sipAudioCodec = SdpUtils.getNegotiatedAudioCodec(newSdp);
+    }
+
+    private void createVideoCodec(SessionDescriptor newSdp) {
+        sipVideoCodec = SdpUtils.getNegotiatedVideoCodec(newSdp);
     }
         
     private void setupSdpAndCodec(String sdp) {
@@ -299,6 +485,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         // First we need to make payloads negotiation so the related attributes can be then matched.
         SessionDescriptor newSdp = SdpUtils.makeMediaPayloadsNegotiation(localSdp, remoteSdp);        
         createAudioCodec(newSdp);
+        createVideoCodec(newSdp);
         
         // Now we complete the SDP negotiation informing the selected 
         // codec, so it can be internally updated during the process.
@@ -308,8 +495,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         log.debug("newSdp = " + localSession + "." );
         
         // Finally, we use the "newSdp" and "remoteSdp" to initialize the lasting codec informations.
-        CodecUtils.initSipAudioCodec(sipCodec, userProfile.audioDefaultPacketization, 
+        CodecUtils.initSipAudioCodec(sipAudioCodec, userProfile.audioDefaultPacketization, 
                 userProfile.audioDefaultPacketization, newSdp, remoteSdp);
+
+        //Init the video codec? we don't know yet...
+        //CodecUtils.initSipVideoCodec(sipVideoCodec, userProfile.audioDefaultPacketization, 
+                //userProfile.audioDefaultPacketization, newSdp, remoteSdp);
+
     }
 
 
@@ -320,6 +512,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	log.debug("Received 200/OK. So user has successfully joined the conference.");        
     	if (!isCurrentCall(call)) return;
         callState = CallState.UA_ONCALL;
+
         setupSdpAndCodec(sdp);
 
         if (userProfile.noOffer) {
@@ -327,7 +520,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             call.ackWithAnswer(localSession);
         }
 
-        createVoiceStreams();
+        createStreams();
     }
 
     /** Callback function called when arriving an ACK method (call confirmed) */
@@ -336,7 +529,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         
     	if (!isCurrentCall(call)) return;        
         callState = CallState.UA_ONCALL;
-        createVoiceStreams();
+        createStreams();
     }
 
     /** Callback function called when arriving a 4xx (call failure) */
@@ -369,11 +562,15 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOfOnIncomingCallCancelled();
     }
 
-    private void notifyListenersOnCallConnected(String talkStream, String listenStream) {
-    	log.debug("notifyListenersOnCallConnected for {}", clientId);
-    	clientConnManager.joinConferenceSuccess(clientId, talkStream, listenStream, sipCodec.getCodecName());
-    }
-  
+    private void notifyListenersOnCallConnected(String userSenderAudioStream, String userReceiverAudioStream,
+                                                String userSenderVideoStream, String userReceiverVideoStream) {
+        log.debug("notifyListenersOnCallConnected for {}", clientId);
+        clientConnManager.joinConferenceSuccess(clientId, 
+                                                userSenderAudioStream, userReceiverAudioStream, sipAudioCodec.getCodecName(),
+                                                userSenderVideoStream, userReceiverVideoStream, sipVideoCodec.getCodecName());
+    }    
+
+
     private void notifyListenersOnOutgoingCallFailed() {
     	log.debug("notifyListenersOnOutgoingCallFailed for {}", clientId);
     	clientConnManager.joinConferenceFailed(clientId);
@@ -392,22 +589,32 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	clientConnManager.leaveConference(clientId);
     	cleanup();
     }
-    
-    private void cleanup() {
-        if (localSocket == null) return;
 
-        log.debug("Closing local audio port {}", localSocket.getLocalPort());
+    private void notifyListenersOfOnCallPaused() {
+        log.debug("notifyListenersOfOnCallPaused for {}", clientId);
+        clientConnManager.pausedVideo(clientId);
+    }
+
+    private void notifyListenersOfOnCallRestarted(String videoStream) {
+        log.debug("notifyListenersOfOnCallRestarted for {}", clientId);
+        clientConnManager.restartedVideo(clientId, videoStream);
+    }
+
+    private void cleanup() {
+        if (localAudioSocket == null) return;
+
+        log.debug("Closing local audio port {}", localAudioSocket.getLocalPort());
         if (!listeningToGlobal) {
-            localSocket.close();
+            localAudioSocket.close();
         }
     }
-    
+
     /** Callback function called when arriving a BYE request */
     public void onCallClosing(Call call, Message bye) {
     	log.info("Received a BYE from the other end telling us to hangup.");
         
     	if (!isCurrentCall(call)) return;               
-        closeVoiceStreams();
+        closeStreams();
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
 
@@ -447,6 +654,17 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	log.info("Call stream has been stopped");
     	notifyListenersOfOnCallClosed();
     }
+
+    public void onCallStreamPaused() {
+        log.info("Call stream has been paused");
+        notifyListenersOfOnCallPaused();
+    }
+
+    public void onCallStreamRestarted() {
+        log.info("Call stream has been restarted");
+        String videoStream = videoCallStream.getFreeswitchToBbbStreamName();
+        notifyListenersOfOnCallRestarted(videoStream);
+    }
     
     private boolean isCurrentCall(Call call) {
     	return this.call == call;
@@ -459,4 +677,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
+
+    public String getUserId() {
+        return userProfile.userID;
+    }
 }

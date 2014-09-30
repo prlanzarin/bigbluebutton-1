@@ -81,6 +81,45 @@ public class RtpStreamSender {
 			e.printStackTrace();
 		}  
     }
+
+    public void sendVideo(byte[] videoData, int codecId, long timestamp) {
+        byte[] transcodedVideoDataBuffer = new byte[videoData.length + RTP_HEADER_SIZE];
+        System.arraycopy(videoData, 0, transcodedVideoDataBuffer, RTP_HEADER_SIZE, videoData.length);
+        RtpPacket rtpPacket = new RtpPacket(transcodedVideoDataBuffer, transcodedVideoDataBuffer.length);
+        if (!marked) {
+            rtpPacket.setMarker(true);
+            marked = true;
+            startTimestamp = System.currentTimeMillis();
+        }
+        rtpPacket.setPadding(false);
+        rtpPacket.setExtension(false);
+        rtpPacket.setPayloadType(codecId);
+        rtpPacket.setSeqNum(sequenceNum++);   
+        rtpPacket.setTimestamp(timestamp);
+        rtpPacket.setPayloadLength(videoData.length);
+        try {
+            rtpSocketSend(rtpPacket);
+        } catch (StreamException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }  
+
+    }
+
+    public void sendVideo(RtpPacket rtpVideoPacket)
+    {
+        try {
+            rtpVideoPacket.setVersion(2);
+            rtpVideoPacket.setPayloadType(35);
+            rtpVideoPacket.setSeqNum(sequenceNum++);
+            rtpVideoPacket.setSsrc(1622737496);
+            rtpSocketSend(rtpVideoPacket);
+            /*log.debug("Sending video to " + connInfo.getRemoteAddr() 
+                            + ":" + connInfo.getRemotePort());*/
+        } catch (Exception e) {
+            e.printStackTrace();
+        }          
+    }
         
     private synchronized void rtpSocketSend(RtpPacket rtpPacket) throws StreamException  {
     	try {

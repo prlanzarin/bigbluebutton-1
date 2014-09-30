@@ -22,20 +22,61 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+import org.slf4j.Logger;
+import org.red5.logging.Red5LoggerFactory;
+
+
 public class CallManager {
+	private static Logger log = Red5LoggerFactory.getLogger(CallManager.class, "sip");
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
+	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
+		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
+		
+		identifiers.put(ca.getUserId(), ca.getCallId());
 		return calls.put(ca.getCallId(), ca);
 	}
 	
 	public CallAgent remove(String id) {
+		CallAgent ca = calls.get(id);
+		String userId = ca.getUserId();
+
+		identifiers.remove(userId);
 		return calls.remove(id);
+	}
+
+	public CallAgent removeByUserId(String userId) {
+		String uid = userId;
+		String id;
+
+		if( (id = identifiers.get(uid)) == null )
+			return null;
+		else {
+			identifiers.remove(uid);
+			return calls.remove(id);
+		}
 	}
 	
 	public CallAgent get(String id) {
 		return calls.get(id);
+	}
+
+	public CallAgent getByUserId(String userId) {
+
+		//first we retrieve the 'clientId' using the 'userId' as key, then - with the 'clientId' - we retrieve the CallAgent
+		//this is necessary to get the CallAgent in order to start the sip video publish.
+
+		String uid = userId;
+		String id;
+
+		if( (id = identifiers.get(uid)) == null )
+			return null;
+		else {
+			return calls.get(id);
+		}
 	}
 	
 	public Collection<CallAgent> getAll() {

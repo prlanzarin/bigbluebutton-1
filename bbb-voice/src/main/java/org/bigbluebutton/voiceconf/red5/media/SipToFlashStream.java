@@ -16,19 +16,14 @@
 * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 *
 */
-package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
-import org.bigbluebutton.voiceconf.red5.media.RtpStreamSender;
+package org.bigbluebutton.voiceconf.red5.media;
 
-public interface Transcoder {
-	byte[] transcodeAudio(byte[] srcAudio, int startOffset, int length);
-	void transcode(byte[] asaoBuffer, int offset, int num, byte[] transcodedData, int dataOffset, RtpStreamSender rtpSender);
-	void transcode(byte[] codedBuffer);
-	void addTranscodedMediaDataListener(TranscodedMediaDataListener listener);
-	int getOutgoingEncodedFrameSize();
+import org.bigbluebutton.voiceconf.red5.media.transcoder.TranscodedMediaDataListener;
 
-    int getCodecId();
-    
-    int getOutgoingPacketization();
-    int getIncomingEncodedFrameSize();
+public interface SipToFlashStream {		
+	String getStreamName();
+	void addListenStreamObserver(StreamObserver o);
+	void stop();
+	void start();
 }
