@@ -19,13 +19,17 @@
 package org.bigbluebutton.webconference.voice.freeswitch;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 import org.bigbluebutton.webconference.voice.ConferenceServiceProvider;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.BroadcastConferenceCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.CancelDialCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.DialCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectParticipantCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.FreeswitchCommand;
@@ -107,6 +111,20 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
     }
   }
     
+  @Override
+  public void dial(String room, String participant, Map<String, String> options, Map<String, String> params) {
+    log.debug("Queueing DialCommand");
+    DialCommand command = new DialCommand(room, participant, options, params, USER);
+    queueMessage(command);
+  }
+
+  @Override
+  public void cancelDial(String room, String uuid) {
+    log.debug("Queueing CancelDialCommand {}", uuid);
+    CancelDialCommand command = new CancelDialCommand(room, uuid, USER);
+    queueMessage(command);
+  }
+
   private void broadcastToIcecast(String room, String meetingid) {
    	String shoutPath = icecastProtocol + "://" + icecastUsername + ":" + icecastPassword + "@" + icecastHost + ":" + icecastPort 
     			+ File.separatorChar + meetingid + "." + icecastStreamExtension;       
@@ -171,7 +189,12 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
 					manager.record((RecordConferenceCommand) command);
 				} else if (command instanceof BroadcastConferenceCommand) {
 					manager.broadcast((BroadcastConferenceCommand) command);
-				}						
+				} else if (command instanceof DialCommand) {
+					manager.dial((DialCommand) command);
+				} else if (command instanceof CancelDialCommand) {
+					CancelDialCommand cmd = (CancelDialCommand) command;
+					manager.cancelDial(cmd);
+				}
 			}
 		};
 		

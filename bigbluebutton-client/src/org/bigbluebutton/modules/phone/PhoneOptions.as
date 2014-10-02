@@ -49,6 +49,9 @@ package org.bigbluebutton.modules.phone
 		
 		[Bindable]
 		public var showPhoneOption:Boolean = false;
+		
+		[Bindable]
+		public var enableOutboundCalls:Boolean = false;
 
     public var forceListenOnly:Boolean = false;
     
@@ -91,6 +94,9 @@ package org.bigbluebutton.modules.phone
 				}
 				if (vxml.@showPhoneOption != undefined) {
 					showPhoneOption = (vxml.@showPhoneOption.toString().toUpperCase() == "TRUE");
+				}
+				if (vxml.@enableOutboundCalls != undefined) {
+					enableOutboundCalls = (vxml.@enableOutboundCalls.toString().toUpperCase() == "TRUE");
 				}
 			}
 		}		

@@ -23,17 +23,22 @@ package org.bigbluebutton.modules.phone.maps
 	import com.asfusion.mate.events.Dispatcher;	
 	import org.bigbluebutton.common.events.ToolbarButtonEvent;
 	import org.bigbluebutton.core.BBB;
+	import org.bigbluebutton.core.UsersUtil;
 	import org.bigbluebutton.modules.phone.PhoneOptions;
+	import org.bigbluebutton.modules.phone.views.components.DialButton;
 	import org.bigbluebutton.modules.phone.views.components.ToolbarButton;
 	
 	public class PhoneEventMapDelegate {
 		private var phoneOptions:PhoneOptions;
 		private var phoneButton:ToolbarButton;
+		private var dialButton:DialButton;
 		private var buttonOpen:Boolean = false;
+		private var dialButtonAdded:Boolean = false;
 		private var globalDispatcher:Dispatcher;
 				
 		public function PhoneEventMapDelegate() {
 			phoneButton = new ToolbarButton();
+			dialButton = new DialButton();
 			globalDispatcher = new Dispatcher();
 			phoneOptions = new PhoneOptions();
 		}
@@ -49,6 +54,13 @@ package org.bigbluebutton.modules.phone.maps
 				  globalDispatcher.dispatchEvent(event);		   	
 			   	buttonOpen = true;		   		
 		   	}
+
+			if (phoneOptions.enableOutboundCalls && UsersUtil.amIModerator()) {
+				var e:ToolbarButtonEvent = new ToolbarButtonEvent(ToolbarButtonEvent.ADD);
+				e.button = dialButton;
+				globalDispatcher.dispatchEvent(e);
+				dialButtonAdded = true;
+			}
 		}
 		
 		public function removeToolbarButton():void {
@@ -57,6 +69,13 @@ package org.bigbluebutton.modules.phone.maps
 				event.button = phoneButton;
 				globalDispatcher.dispatchEvent(event);			   	
 			  buttonOpen = false;				
+			}
+
+			if (dialButtonAdded) {
+				var e:ToolbarButtonEvent = new ToolbarButtonEvent(ToolbarButtonEvent.REMOVE);
+				e.button = dialButton;
+				globalDispatcher.dispatchEvent(e);
+				dialButtonAdded = false;
 			}
 		}
 		

@@ -4,6 +4,7 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import org.bigbluebutton.core.api._
 import org.bigbluebutton.core.util._
+import org.bigbluebutton.webconference.voice.freeswitch.DialStates;
 
 case class FsVoiceUserJoined(userId: String, webUserId: String, 
                              conference: String, callerIdNum: String, 
@@ -16,10 +17,13 @@ case class FsVoiceUserMuted(userId: String, conference: String, muted: Boolean)
 case class FsVoiceUserTalking(userId: String, conference: String, talking: Boolean)
 case class FsRecording(conference: String, recordingFile: String, 
                             timestamp: String, recording: Boolean)
+case class FsChannelCallState(conference: String, uniqueId: String, callState: String, userId: String)
+case class FsChannelHangup(conference: String, uniqueId: String, callState: String, hangupCause: String, userId: String)
 
 class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBlueButtonInGW) extends Actor with LogHelper {
  
   private var confs = new scala.collection.immutable.HashMap[String, FreeswitchConference]
+  private var dials = new scala.collection.immutable.HashMap[String, DialStates]
   
   def act() = {
 	loop {
@@ -33,13 +37,17 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
 	    case msg: EjectVoiceUser                     => handleEjectVoiceUser(msg)
 	    case msg: StartRecording                     => handleStartRecording(msg)
 	    case msg: StopRecording                      => handleStopRecording(msg)
+      case msg: VoiceOutboundDial                  => handleVoiceOutboundDial(msg)
+      case msg: VoiceCancelDial                    => handleVoiceCancelDial(msg)
 	    case msg: FsRecording                        => handleFsRecording(msg)
 	    case msg: FsVoiceUserJoined                  => handleFsVoiceUserJoined(msg)
 	    case msg: FsVoiceUserLeft                    => handleFsVoiceUserLeft(msg)
 	    case msg: FsVoiceUserLocked                  => handleFsVoiceUserLocked(msg)
 	    case msg: FsVoiceUserMuted                   => handleFsVoiceUserMuted(msg)
-	    case msg: FsVoiceUserTalking                 => handleFsVoiceUserTalking(msg)
-	    case msg: UserJoinedVoice                    => handleUserJoinedVoice(msg)
+      case msg: FsVoiceUserTalking                 => handleFsVoiceUserTalking(msg)
+      case msg: FsChannelCallState                 => handleFsChannelCallState(msg)
+      case msg: FsChannelHangup                    => handleFsChannelHangup(msg)
+      case msg: UserJoinedVoice                    => handleUserJoinedVoice(msg)
 	    case msg: UserLeftVoice                      => handleUserLeftVoice(msg)
 	    case msg: EjectAllVoiceUsers                 => handleEjectAllVoiceUsers(msg)
 	    case _ => // do nothing
@@ -146,6 +154,22 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
     })    
   }
   
+  private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
+    val fsconf = confs.values find (c => c.meetingId == msg.meetingID)
+    logger.debug("handleVoiceOutboundDial]")
+    fsconf foreach (fc => {
+      fsproxy.voiceOutboundDial(fc.conferenceNum, msg.requesterID, msg.options, msg.params)
+    })
+  }
+  
+  private def handleVoiceCancelDial(msg: VoiceCancelDial) {
+    val fsconf = confs.values find (c => c.meetingId == msg.meetingID)
+    logger.debug("handleVoiceCancelDial]")
+    fsconf foreach (fc => {
+      fsproxy.voiceCancelDial(fc.conferenceNum, msg.uuid)
+    })
+  }
+  
   private def handleEjectVoiceUser(msg: EjectVoiceUser) {
     val fsconf = confs.values find (c => c.meetingId == msg.meetingID)
     
@@ -245,5 +269,36 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
 //      println("Rx voice user talking for vid[" + msg.userId + "] mute=[" + msg.talking + "]") 
       user foreach (u => bbbInGW.voiceUserTalking(fc.meetingId, u.userID, msg.talking))
     })      
+  }
+  
+  private def handleFsChannelCallState(msg: FsChannelCallState) {
+    val fsconf = confs.values find (c => c.conferenceNum == msg.conference)
+
+    fsconf foreach (fc => {
+      if (! dials.contains(msg.uniqueId)) {
+        dials += msg.uniqueId -> new DialStates(msg.uniqueId, msg.callState)
+      }
+      
+      dials.get(msg.uniqueId) foreach (dialStates => {
+        dialStates.updateState(msg.callState)
+        bbbInGW.dialing(fc.meetingId, msg.userId, msg.uniqueId, msg.callState)
+      })
+    })
+  }
+  
+  private def handleFsChannelHangup(msg: FsChannelHangup) {
+    val fsconf = confs.values find (c => c.conferenceNum == msg.conference)
+
+    fsconf foreach (fc => {
+      if (! dials.contains(msg.uniqueId)) {
+        dials += msg.uniqueId -> new DialStates(msg.uniqueId, msg.callState)
+      }
+      
+      dials.get(msg.uniqueId) foreach (dialStates => {
+        dialStates.updateState(msg.callState)
+        dialStates.setHangupCause(msg.hangupCause)
+        bbbInGW.hangingUp(fc.meetingId, msg.userId, msg.uniqueId, msg.callState, msg.hangupCause)
+      })
+    })
   }
 }
