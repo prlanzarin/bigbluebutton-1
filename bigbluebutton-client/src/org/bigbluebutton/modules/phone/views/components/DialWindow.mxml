@@ -149,7 +149,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 if (map.hasOwnProperty(value)) {
                     return map[value];
                 } else {
-                    return ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.generic_failure') + "\nError code: " + value;
+                    return ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.generic_failure', [value]);
                 }
             }
 
