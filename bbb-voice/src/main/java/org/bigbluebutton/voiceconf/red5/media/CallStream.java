@@ -164,4 +164,11 @@ public class CallStream implements StreamObserver {
         log.debug("STREAM HAS RESTARTED " + connInfo.getSocket().getLocalPort());
         if (callStreamObserver != null) callStreamObserver.onCallStreamRestarted();
     }
+
+    @Override
+    public void onFirRequest() {
+        log.debug("$$ FIR Request arrived on CallStream! Going to CallAgent...");
+        if (callStreamObserver != null) callStreamObserver.onFirRequest();
+
+    }
 }

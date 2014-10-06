@@ -36,10 +36,11 @@ import org.slf4j.Logger;
 
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter.RTMPPacketInfo;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.ConverterObserver;
 import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
 
 
-public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceiverListener {
+public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceiverListener, ConverterObserver {
 	private static final Logger log = Red5LoggerFactory.getLogger(SipToFlashAudioStream.class, "sip");
 
 	private BroadcastStream videoBroadcastStream;
@@ -80,6 +81,7 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		videoData = new VideoData();
 
 		this.converter = converter;
+		converter.setConverterObserver(this);
 	}
 
 
@@ -237,4 +239,10 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 		videoData.release();
     }	
 
+	@Override
+	public void onFirRequest() {
+		log.debug("$$ FIR Request arrived on SipToFlashVideoStream! Going to CallStream...");
+		if(observer != null)
+			observer.onFirRequest();
+	}
 }

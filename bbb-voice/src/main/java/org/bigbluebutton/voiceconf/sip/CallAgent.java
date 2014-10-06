@@ -624,4 +624,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public String getUserId() {
         return userProfile.userID;
     }
+
+    @Override
+    public void onFirRequest() {
+        log.debug("$$ FIR Request arrived on CallAgent! Missing make the msg and send it through the SipProvider..."); 
+    }   
 }
