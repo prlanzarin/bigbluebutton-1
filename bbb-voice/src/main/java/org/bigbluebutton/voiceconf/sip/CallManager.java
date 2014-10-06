@@ -36,7 +36,9 @@ public class CallManager {
 	public CallAgent add(CallAgent ca) {
 		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
 		
-		identifiers.put(ca.getUserId(), ca.getCallId());
+		if(ca.getUserId() != null) {
+			identifiers.put(ca.getUserId(), ca.getCallId());
+		}
 		return calls.put(ca.getCallId(), ca);
 	}
 	
@@ -44,7 +46,9 @@ public class CallManager {
 		CallAgent ca = calls.get(id);
 		String userId = ca.getUserId();
 
-		identifiers.remove(userId);
+		if(userId != null) {
+			identifiers.remove(userId);
+		}
 		return calls.remove(id);
 	}
 

@@ -149,14 +149,14 @@ package org.bigbluebutton.modules.phone.managers {
 		//			CallBack Methods from Red5 
 		//
 		//********************************************************************************************		
-		public function failedToJoinVoiceConferenceCallback(msg:String):* {
+		public function failedToJoinConferenceCallback(msg:String):* {
 			trace(LOG + "failedToJoinConferenceCallback " + msg);
       JSLog.debug(LOG + "failedToJoinConferenceCallback " + msg);
 			var event:FlashCallDisconnectedEvent = new FlashCallDisconnectedEvent();
 			dispatcher.dispatchEvent(event);	
 		}
 		
-		public function disconnectedFromJoinVoiceConferenceCallback(msg:String):* {
+		public function disconnectedFromJoinConferenceCallback(msg:String):* {
 			trace(LOG + "disconnectedFromJoinConferenceCallback " + msg);
       JSLog.debug(LOG + "disconnectedFromJoinConferenceCallback " + msg);
 			var event:FlashCallDisconnectedEvent = new FlashCallDisconnectedEvent();

@@ -117,12 +117,14 @@ public class SipPeer implements SipRegisterAgentListener {
     	CallAgent ca = createCallAgent(clientId);
 
     	ca.call(callerName, destination);
+    	callManager.add(ca);
     }
 
 	public void connectToGlobalStream(String clientId, String callerIdName, String destination) {
     	CallAgent ca = createCallAgent(clientId);
 	    
     	ca.connectToGlobalStream(clientId, callerIdName, destination); 	
+     	callManager.add(ca);
 	}
 
     private CallAgent createCallAgent(String clientId) {
@@ -130,7 +132,6 @@ public class SipPeer implements SipRegisterAgentListener {
     	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, messagingService);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
-    	callManager.add(ca);
 
     	return ca;
     }

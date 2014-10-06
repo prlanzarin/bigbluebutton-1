@@ -160,7 +160,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             userProfile.contactUrl += ":" + sipProvider.getPort();
         }
 
-        userProfile.userID = callerName.substring( 0, callerName.indexOf("-") );
+        if(callerName.startsWith("GLOBAL_AUDIO")) {
+            userProfile.userID = callerName;
+        }
+        else {
+            userProfile.userID = callerName.substring( 0, callerName.indexOf("-") );
+        }
         log.debug("userID: " + userProfile.userID);
     }
     
@@ -436,7 +441,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOnCallConnected("", globalAudioStreamName, "", "");
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
         messagingService.userConnectedToGlobalAudio(voiceConf, callerIdName);
-        
+        userProfile.userID = callerIdName;
     }
 
 
@@ -565,9 +570,17 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private void notifyListenersOnCallConnected(String userSenderAudioStream, String userReceiverAudioStream,
                                                 String userSenderVideoStream, String userReceiverVideoStream) {
         log.debug("notifyListenersOnCallConnected for {}", clientId);
+        String audioCodec = "";
+        String videoCodec = "";
+
+        if(sipAudioCodec != null)
+            audioCodec = sipAudioCodec.getCodecName();
+        if(sipVideoCodec != null)
+            videoCodec = sipVideoCodec.getCodecName();
+
         clientConnManager.joinConferenceSuccess(clientId, 
-                                                userSenderAudioStream, userReceiverAudioStream, sipAudioCodec.getCodecName(),
-                                                userSenderVideoStream, userReceiverVideoStream, sipVideoCodec.getCodecName());
+                                                userSenderAudioStream, userReceiverAudioStream, audioCodec,
+                                                userSenderVideoStream, userReceiverVideoStream, videoCodec);
     }    
 
 

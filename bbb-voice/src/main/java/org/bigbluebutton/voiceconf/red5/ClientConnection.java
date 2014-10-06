@@ -45,7 +45,7 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     								    String userSenderVideoStream, String userReceiverVideoStream, String videoCodec ) {
     	log.debug("Notify client that {} [{}] has joined the conference.", username, userid);
         if (connection.isConnected()) {
-            connection.invoke("successfullyJoinedVoiceConferenceCallback", 
+            connection.invoke("successfullyJoinedConferenceCallback",
             				   new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec,
             				   				 userSenderVideoStream, userReceiverVideoStream, videoCodec});
         }
@@ -54,14 +54,14 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     public void onJoinConferenceFail() {
     	log.debug("Notify client that {} [{}] failed to join the conference.", username, userid);
         if (connection.isConnected()) {
-            connection.invoke("failedToJoinVoiceConferenceCallback", new Object[] {"onUaCallFailed"});
+            connection.invoke("failedToJoinConferenceCallback", new Object[] {"onUaCallFailed"});
         }
     }
 
     public void onLeaveConference() {
     	log.debug("Notify client that {} [{}] left the conference.", username, userid);
         if (connection.isConnected()) {
-            connection.invoke("disconnectedFromJoinVoiceConferenceCallback", new Object[] {"onUaCallClosed"});
+            connection.invoke("disconnectedFromJoinConferenceCallback", new Object[] {"onUaCallClosed"});
         }
     }
 

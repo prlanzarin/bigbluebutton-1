@@ -248,6 +248,7 @@ public class SipPeerProfile {
            	
         String fromURL = "\"" + source.username + "\" <sip:" + source.username + "@" + source.realm + ">";
     	userProfile.username = source.username;
+    	userProfile.userID = source.userID;
         userProfile.passwd = source.passwd;
         userProfile.realm = source.realm;
         userProfile.fromUrl = fromURL;
