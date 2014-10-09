@@ -243,7 +243,7 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
 
 
     protected void requestFIR() {
-        log.debug("$$ requesting FIR...");
+        log.debug("Requesting FIR...");
         if(this.observer != null)
             this.observer.onFirRequest(); 
     }

@@ -54,10 +54,6 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	private VideoData videoData;
 
-	//for debugging...
-	private int eventCounter = 0;
-	private long lastTimeMillis = 0;
-
 	private VideoProtocolConverter converter;
 	private final int EXPECTED_MAXIMUM_PAYLOAD_LENGTH = 2048;
 
@@ -173,35 +169,8 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 
 	}	
 
-	private void sendFakeMetadata(long timestamp) {
-		if (!sentMetadata) {
-
-			//O COMENTÁRIO ABAIXO VALE PRA VIDEO TAMBÉM???!!!
-			/*
-			* Flash Player 10.1 requires us to send metadata for it to play audio.
-			* We create a fake one here to get it going. Red5 should do this automatically
-			* but for Red5 0.91, doesn't yet. (ralam Sept 24, 2010).
-			*/
-			videoBuffer.clear();	
-			videoBuffer.put(fakeMetadata);
-			videoBuffer.flip();
-
-			Notify notifyData = new Notify(videoBuffer);
-			notifyData.setTimestamp((int)timestamp);
-			notifyData.setSourceType(Constants.SOURCE_TYPE_LIVE);
-			videoBroadcastStream.dispatchEvent(notifyData);
-			notifyData.release();
-			sentMetadata = true;
-
-			log.debug("FakeMetadata sent... ");
-		}	
-	}
-
 	private void pushVideo(byte[] video, long timestamp) {	
 
-		//red5phone sip-video implementation does not send the information below...but maybe we will need this...
-		//sendFakeMetadata(timestamp); 
-			
 		videoBuffer.clear();
 		videoBuffer.put(video);
 		videoBuffer.flip();
@@ -211,37 +180,12 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
         videoData.setData(videoBuffer);
 
 		videoBroadcastStream.dispatchEvent(videoData);
-		
-		//for debugging only: print the first 20 packets and then print a packet every 10 seconds
-		/*
-		if( (System.currentTimeMillis() - lastTimeMillis) > 10000  || eventCounter < 21) {
-
-			String type = "";
-			switch(videoData.getFrameType())
-			{
-				case UNKNOWN: type = "UNKNOWN";
-				break;
-				case KEYFRAME: type = "KEYFRAME";
-				break;
-				case INTERFRAME: type = "INTERFRAME";
-				break;
-				case DISPOSABLE_INTERFRAME: type = "DISPOSABLE_INTERFRAME";
-				break;
-			}
-			log.debug("$$ video.length = " + video.length + " timestamp = " + videoData.getTimestamp() + " type = " + type);
-
-			lastTimeMillis = System.currentTimeMillis();
-			eventCounter++;
-		}
-		*/
-
 
 		videoData.release();
     }	
 
 	@Override
 	public void onFirRequest() {
-		log.debug("$$ FIR Request arrived on SipToFlashVideoStream! Going to CallStream...");
 		if(observer != null)
 			observer.onFirRequest();
 	}
