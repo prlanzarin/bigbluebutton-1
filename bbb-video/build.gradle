@@ -76,6 +76,7 @@ dependencies {
 	
 	// Red5
 	providedCompile 'org/red5:red5-server:1.0.3-RELEASE@jar'
+	providedCompile 'org/red5:red5-client:1.0.3-RELEASE@jar'
 	providedCompile 'org.red5:red5-io:1.0.4-SNAPSHOT@jar'
 	
 	// Logging
