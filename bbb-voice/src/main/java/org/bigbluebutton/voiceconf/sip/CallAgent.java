@@ -301,7 +301,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
                         if (isGlobalAudioStream())
                         {
-                        	GlobalCall.addGlobalAudioStream(_destination, streamName, sipAudioCodec, connInfo);
+                        	GlobalCall.addGlobalAudioStream(_destination, audioCallStream.getFreeswitchToBbbStreamName(), sipAudioCodec, connInfo);
                         }
 
                         return true;
