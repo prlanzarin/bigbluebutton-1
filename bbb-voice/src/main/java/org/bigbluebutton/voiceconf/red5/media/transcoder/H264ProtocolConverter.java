@@ -34,10 +34,13 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
     private int lenSize;
     private boolean spsSent = false;
     private boolean ppsSent = false;
+
+    private ConverterObserver observer;
         
     public H264ProtocolConverter() {
         resetConverter();
         startRelativeTime = System.currentTimeMillis();
+        observer = null;
     }
 
     public void resetConverter() {
@@ -49,6 +52,7 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
         startTs = -1;
         startTm = -1;
     } 
+
 
     @Override
 	public List<RTMPPacketInfo> rtpToRTMP(RtpPacket packet) {
@@ -232,8 +236,16 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
     	return result;
 	}
 
+    @Override
+    public void setConverterObserver(ConverterObserver observer) {
+        this.observer = observer;
+    }
+
+
     protected void requestFIR() {
-        log.debug("requesting FIR...");
+        log.debug("Requesting FIR...");
+        if(this.observer != null)
+            this.observer.onFirRequest(); 
     }
 
 
@@ -355,6 +367,7 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
         } else {
             log.debug("Missing rtmp data");
         }
+
         return result;
 
     }

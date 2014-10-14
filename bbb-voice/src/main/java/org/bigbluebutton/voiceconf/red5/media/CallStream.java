@@ -168,4 +168,10 @@ public class CallStream implements StreamObserver {
         log.debug("STREAM HAS RESTARTED " + connInfo.getSocket().getLocalPort());
         if (callStreamObserver != null) callStreamObserver.onCallStreamRestarted();
     }
+
+    @Override
+    public void onFirRequest() {
+        if (callStreamObserver != null) callStreamObserver.onFirRequest();
+
+    }
 }

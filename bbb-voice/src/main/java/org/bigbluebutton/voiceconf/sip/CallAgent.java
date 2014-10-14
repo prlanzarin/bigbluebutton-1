@@ -68,6 +68,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private IMessagingService messagingService;
 
     private HashMap<String, String> streamTypeManager = null;
+
+    private String destinationPrefix;
     
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
@@ -152,6 +154,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     private void setupCallerDisplayName(String callerName, String destination) {
+        destinationPrefix = destination;
     	String fromURL = "\"" + callerName + "\" <sip:" + destination + "@" + portProvider.getHost() + ">";
     	userProfile.username = callerName;
     	userProfile.fromUrl = fromURL;
@@ -694,4 +697,31 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public String getUserId() {
         return userProfile.userID;
     }
+
+    @Override
+    public void onFirRequest() {
+        log.debug("Sending FIR request to FreeSwitch..."); 
+        
+        Message msg = MessageFactory.createRequest(
+                sipProvider
+                , SipMethods.INFO
+                , sipProvider.completeNameAddress(destinationPrefix)
+                , sipProvider.completeNameAddress(userProfile.fromUrl)
+                , ""); // no way to pass content-type, will set empty message for now
+
+        msg.setBody("application/media_control+xml"
+                ,       "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
+                        " <media_control>\n" +
+                        "  <vc_primitive>\n" +
+                        "   <to_encoder>\n" +
+                        "    <picture_fast_update>\n" +
+                        "    </picture_fast_update>\n" +
+                        "   </to_encoder>\n" +
+                        "  </vc_primitive>\n" +
+                        " </media_control>\n");
+
+
+        sipProvider.sendMessage(msg);
+               
+    }   
 }

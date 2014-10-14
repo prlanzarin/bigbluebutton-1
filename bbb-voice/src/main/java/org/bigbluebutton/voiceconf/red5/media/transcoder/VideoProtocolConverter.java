@@ -8,15 +8,10 @@ import java.util.List;
 import org.red5.app.sip.codecs.Codec;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.red5.logging.Red5LoggerFactory;
-
 import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
 
 public class VideoProtocolConverter {
 
-    private static final Logger log = Red5LoggerFactory.getLogger(H264ProtocolConverter.class, "sip");
 
 	public List<RTMPPacketInfo> rtpToRTMP(RtpPacket packet) {
         return null;
@@ -27,6 +22,9 @@ public class VideoProtocolConverter {
         return null;
 
     }
+
+    public void setConverterObserver(ConverterObserver observer) {
+    }    
 
 //------------------------------------------------- INNER CLASSES --------------------------------------------
     //1.
