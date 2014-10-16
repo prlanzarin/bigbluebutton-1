@@ -170,16 +170,6 @@ package org.bigbluebutton.modules.phone.managers {
 
 			var audioEvent:FlashCallConnectedEvent = new FlashCallConnectedEvent(publishAudioName, playAudioName, audioCodec);
 			dispatcher.dispatchEvent(audioEvent);
-
-			if(playVideoName) {
-				LogUtil.debug("successfullyJoinedConferenceCallback | VIDEO Parameters: " + 
-						   	   publishVideoName + " : " + playVideoName + " : " + videoCodec);
-
-				var openStream:BBBEvent = new BBBEvent(BBBEvent.OPEN_FREESWITCH_VIDEO_STREAM_EVENT);
-				openStream.payload.streamName = playVideoName;
-				openStream.payload.connection = netConnection;
-				dispatcher.dispatchEvent(openStream);	
-			}
 		}
 
 		public function videoIsPaused():void {
