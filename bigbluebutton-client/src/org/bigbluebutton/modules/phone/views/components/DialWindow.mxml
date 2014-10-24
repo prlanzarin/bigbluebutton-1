@@ -48,11 +48,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             import org.bigbluebutton.core.UsersUtil;
             import org.bigbluebutton.core.events.VoiceConfEvent;
             import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
+            import org.bigbluebutton.modules.phone.PhoneOptions;
             import org.bigbluebutton.util.i18n.ResourceUtil;
 
             private var options:Array;
             private var params:Array;
             private var uuid:String = null;
+            private var phoneOptions:PhoneOptions = new PhoneOptions();
 
             private static const IDLE:String = "idle";
             private static const DIALING:String = "dialing";
@@ -212,6 +214,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
                     options["origination_caller_id_name"] = meetingTitle;
                     params["destination"] = destination.text;
+                    params["profile"] = phoneOptions.outboundCallsProfile;
 
                     callState = DIALING;
 
