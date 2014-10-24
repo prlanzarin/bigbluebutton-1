@@ -51,6 +51,7 @@ public class DialCommand extends FreeswitchCommand {
 			this.params.put("profile", DEFAULT_PROFILE);
 		}
 		this.params.put("caller_number", room);
+		this.options.put("origination_callee_id_name", params.get("destination"));
 	}
 
 	public String getParticipant() {

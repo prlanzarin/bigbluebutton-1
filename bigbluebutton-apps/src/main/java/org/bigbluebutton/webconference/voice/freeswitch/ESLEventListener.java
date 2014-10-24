@@ -105,6 +105,7 @@ public class ESLEventListener implements IEslEventListener {
         String voiceUserId = callerIdName;
         
         log.info("User joined voice conference, user=[" + callerIdName + "], conf=[" + confName + "]");
+        log.debug("Details of the user connection: {}", event.getEventHeaders().toString());
         
         Matcher gapMatcher = GLOBAL_AUDION_PATTERN.matcher(callerIdName);
         if (gapMatcher.matches()) {
