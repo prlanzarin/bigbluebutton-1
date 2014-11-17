@@ -20,7 +20,7 @@ public class CodecFactory {
 
 
     // Available video codecs
-    private static final int videoCodecH264 = 35;
+    private static final int videoCodecH264 = H264Codec.codecId;
     private int[] availableVideoCodecsId = {videoCodecH264};  
 
 

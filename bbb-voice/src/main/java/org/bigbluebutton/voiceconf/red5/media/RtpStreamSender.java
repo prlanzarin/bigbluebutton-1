@@ -24,6 +24,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Random;
 
+import org.red5.app.sip.codecs.H264Codec;
+
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.red5.media.net.RtpPacket;
 import org.bigbluebutton.voiceconf.red5.media.net.RtpSocket;
@@ -110,7 +112,7 @@ public class RtpStreamSender {
     {
         try {
             rtpVideoPacket.setVersion(2);
-            rtpVideoPacket.setPayloadType(35);
+            rtpVideoPacket.setPayloadType(H264Codec.codecId);
             rtpVideoPacket.setSeqNum(sequenceNum++);
             rtpVideoPacket.setSsrc(1622737496);
             rtpSocketSend(rtpVideoPacket);
