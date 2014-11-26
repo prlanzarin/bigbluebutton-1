@@ -22,8 +22,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
 import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.BroadcastConferenceCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.CancelDialCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.DialCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectParticipantCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.MuteParticipantCommand;
@@ -32,6 +35,8 @@ import org.bigbluebutton.webconference.voice.freeswitch.actions.RecordConference
 import org.freeswitch.esl.client.inbound.Client;
 import org.freeswitch.esl.client.inbound.InboundConnectionFailure;
 import org.freeswitch.esl.client.manager.ManagerConnection;
+import org.freeswitch.esl.client.transport.message.EslHeaders.Name;
+import org.freeswitch.esl.client.transport.message.EslHeaders.Value;
 import org.freeswitch.esl.client.transport.message.EslMessage;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
@@ -66,6 +71,8 @@ public class ConnectionManager  {
 	                c.addEventFilter( EVENT_NAME, "heartbeat" );
 	                c.addEventFilter( EVENT_NAME, "custom" );
 	                c.addEventFilter( EVENT_NAME, "background_job" );
+	                c.addEventFilter( EVENT_NAME, "channel_callstate" );
+	                c.addEventFilter( EVENT_NAME, "channel_hangup_complete" );
 	                subscribed = true;
 	    		} 
 	    	}    		
@@ -120,6 +127,52 @@ public class ConnectionManager  {
 		}
 	}
 	
+	private String createUuid() {
+		System.out.println("Creating UUID");
+		Client c = manager.getESLClient();
+		if (c.canSend()) {
+			EslMessage res = c.sendSyncApiCommand("create_uuid", null);
+			
+			if (res.getHeaderValue(Name.CONTENT_TYPE).equals(Value.API_RESPONSE)
+					&& !res.getBodyLines().isEmpty()) {
+				return res.getBodyLines().get(0);
+			}
+		}
+		return null;
+	}
+	
+	public void dial(DialCommand dc) {
+		String uuid = createUuid();
+		if (uuid == null) {
+			log.error("UUID is null, aborting dial");
+			return;
+		}
+		
+		log.debug("Sending async dial command with uuid {}", uuid);
+
+		dc.setOriginationUuid(uuid);
+		
+		DialReferenceValuePair value = new DialReferenceValuePair(dc.getRoom(),
+				dc.getParticipant());
+
+		eslEventListener.addDialReference(uuid, value);
+
+		Client c = manager.getESLClient();
+		if (c.canSend()) {
+			String job = c.sendAsyncApiCommand(dc.getCommand(), dc.getCommandArgs());
+			log.debug("DialCommand job uuid: {}", job);
+		}
+	}
+
+	public void cancelDial(CancelDialCommand cdc) {
+		log.debug("Sending async cancel dial command");
+
+		Client c = manager.getESLClient();
+		if (c.canSend()) {
+			c.sendAsyncApiCommand(cdc.getCommand(), cdc.getCommandArgs());
+		}
+	}
+
 	public void eject(EjectParticipantCommand mpc) {
 		Client c = manager.getESLClient();
 		if (c.canSend()) {

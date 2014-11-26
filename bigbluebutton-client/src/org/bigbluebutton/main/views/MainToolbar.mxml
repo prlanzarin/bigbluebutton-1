@@ -222,6 +222,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 			
 			private function handleAddToolbarButtonEvent(event:ToolbarButtonEvent):void {
+				if (event.button.getAlignment() == "Special outbound calls button alignment") {
+					addedBtnsRight.addChild(event.button as UIComponent);
+					return;
+				}
+
 				// Find out how to import accessibility into custom components; even though the ToolbarButtons are buttons, they don't seem to have a tabIndex
 				if (event.location == ToolbarButtonEvent.TOP_TOOLBAR) {
 					var index:int;
@@ -358,6 +363,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mx:Spacer width="50%"/>
   <mx:Label id="meetingNameLbl" styleName="meetingNameLabelStyle" />
   <mx:Spacer width="50%"/>
+  <mx:HBox id="addedBtnsRight" />
 
 <!--
   <mx:Button label="DISCONNECT!" click="BBB.initConnectionManager().forceClose()" height="22" toolTip="Click to simulate disconnection" />

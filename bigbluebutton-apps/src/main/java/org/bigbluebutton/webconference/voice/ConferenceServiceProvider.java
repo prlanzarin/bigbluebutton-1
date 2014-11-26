@@ -17,6 +17,7 @@
 *
 */
 package org.bigbluebutton.webconference.voice;
+import java.util.Map;
 
 public interface ConferenceServiceProvider {
 	public void populateRoom(String room);
@@ -25,4 +26,6 @@ public interface ConferenceServiceProvider {
 	public void ejectAll(String room);
 	public void record(String room, String meetingid);
 	public void broadcast(String room, String meetingid);
+	public void dial(String room, String participant, Map<String, String> options, Map<String, String> params);
+	public void cancelDial(String room, String uuid);
 }

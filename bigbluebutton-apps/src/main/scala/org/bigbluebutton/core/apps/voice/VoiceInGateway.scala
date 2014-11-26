@@ -62,4 +62,20 @@ class VoiceInGateway(bbbGW: BigBlueButtonGateway) {
 	  bbbGW.accept(new VoiceRecording(meetingId, recordingFile, 
 			            timestamp, recording))
 	}
+  
+  def dial(meetingId: String, userId: String, options: Map[String, String], params: Map[String, String]) {
+    bbbGW.accept(new VoiceOutboundDialRequest(meetingId, userId, options, params))
+  }
+  
+  def cancelDial(meetingId: String, userId: String, uuid: String) {
+    bbbGW.accept(new VoiceCancelDialRequest(meetingId, userId, uuid))
+  }
+  
+  def dialing(meetingId: String, userId: String, uuid: String, callState: String) {
+    bbbGW.accept(new VoiceDialing(meetingId, userId, uuid, callState));
+  }
+  
+  def hangingUp(meetingId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
+    bbbGW.accept(new VoiceHangingUp(meetingId, userId, uuid, callState, hangupCause));
+  }
 }

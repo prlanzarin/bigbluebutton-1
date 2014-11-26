@@ -17,10 +17,15 @@
 *
 */
 package org.bigbluebutton.conference.service.voice;
-import org.slf4j.Logger;import org.red5.server.api.Red5;import org.bigbluebutton.conference.BigBlueButtonSession;import org.bigbluebutton.conference.Constants;import org.bigbluebutton.core.api.IBigBlueButtonInGW;
-import org.red5.logging.Red5LoggerFactory;
-import java.util.List;
+
 import java.util.Map;
+
+import org.bigbluebutton.conference.BigBlueButtonSession;
+import org.bigbluebutton.conference.Constants;
+import org.bigbluebutton.core.api.IBigBlueButtonInGW;
+import org.red5.logging.Red5LoggerFactory;
+import org.red5.server.api.Red5;
+import org.slf4j.Logger;
 
 public class VoiceService {
 	
@@ -95,6 +100,26 @@ public class VoiceService {
 		String ejectedBy = getBbbSession().getInternalUserID();		
 		bbbInGW.ejectUserFromVoice(meetingID, userId, ejectedBy); 	
 		
+	}
+	
+	public void dial(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		Map<String, String> options = (Map<String, String>) msg.get("options");
+		Map<String, String> params = (Map<String, String>) msg.get("params");
+		log.debug("Dial from [" + meetingID + "] to destination [" + params.get("destination") + "]");
+		log.debug("options: {}, params: {}", options.toString(), params.toString());
+
+		bbbInGW.dial(meetingID, requesterID, options, params);
+	}
+	
+	public void cancelDial(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		String uuid = (String) msg.get("uuid");
+		log.debug("Cancel dial from [" + meetingID + "].");
+
+		bbbInGW.cancelDial(meetingID, requesterID, uuid);
 	}
 		
 	private BigBlueButtonSession getBbbSession() {
