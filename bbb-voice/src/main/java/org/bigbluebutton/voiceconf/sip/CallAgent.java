@@ -44,6 +44,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Iterator;
 import java.util.Vector;
 
 import java.util.HashMap;
@@ -351,6 +352,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                             log.debug("[CallAgent] streamTypeManager adding video stream {} for {}", streamName, clientId);
                         }
                         
+                        if (isGlobalAudioStream())
+                        {
+                        	GlobalCall.addGlobalVideoStream(_destination, videoCallStream.getFreeswitchToBbbStreamName(), sipVideoCodec, connInfo);
+                        }
+                        
                         return true;        
                             
                     } catch (Exception e) {
@@ -464,18 +470,22 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         _destination = voiceConf;
 
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
-        while (globalAudioStreamName.equals("reserved")) {
+        String globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
+        while (globalAudioStreamName.equals("reserved") || globalVideoStreamName.equals("reserved")) {
             try {
                 Thread.sleep(100);
             } catch (Exception e) {
             }
             globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
+            globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
         }
 		    
         GlobalCall.addUser(clientId, callerIdName, _destination);
-        sipAudioCodec = GlobalCall.getRoomCodec(voiceConf);
+        sipAudioCodec = GlobalCall.getRoomAudioCodec(voiceConf);
+        sipVideoCodec = GlobalCall.getRoomVideoCodec(voiceConf);
         callState = CallState.UA_ONCALL;
-        notifyListenersOnCallConnected("", globalAudioStreamName, "", "");
+        notifyListenersOnCallConnected("", globalAudioStreamName, "", globalVideoStreamName);
+        log.info("Global audio: [{}] Global video: [{}]", globalAudioStreamName, globalVideoStreamName);
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
         messagingService.userConnectedToGlobalAudio(voiceConf, callerIdName);
         userProfile.userID = callerIdName;
@@ -635,19 +645,43 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private void notifyListenersOfOnCallClosed() {
     	if (callState == CallState.UA_IDLE) return;
 
+    	if(isGlobalAudioStream()) {
+    		for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
+    			log.debug("notifyListenersOfOnCallRestarted for {}", i.next());
+    	        clientConnManager.leaveConference(i.next());
+    		}
+    	}
+    	else {
     	log.debug("notifyListenersOfOnCallClosed for {}", clientId);
     	clientConnManager.leaveConference(clientId);
+    	}
     	cleanup();
     }
 
     private void notifyListenersOfOnCallPaused() {
+    	if(isGlobalAudioStream()) {
+    		for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
+    			log.debug("notifyListenersOfOnCallRestarted for {}", i.next());
+    	        clientConnManager.pausedVideo(i.next());
+    		}
+    	}
+    	else {
         log.debug("notifyListenersOfOnCallPaused for {}", clientId);
         clientConnManager.pausedVideo(clientId);
+    	}
     }
 
     private void notifyListenersOfOnCallRestarted(String videoStream) {
-        log.debug("notifyListenersOfOnCallRestarted for {}", clientId);
-        clientConnManager.restartedVideo(clientId, videoStream);
+    	if(isGlobalAudioStream()) {
+    		for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
+    			log.debug("notifyListenersOfOnCallRestarted for {}", i.next());
+    	        clientConnManager.restartedVideo(i.next(), videoStream);
+    		}
+    	}
+    	else {
+    		log.debug("notifyListenersOfOnCallRestarted for {}", clientId);
+    		clientConnManager.restartedVideo(clientId, videoStream);
+    	}
     }
 
     private void cleanup() {
