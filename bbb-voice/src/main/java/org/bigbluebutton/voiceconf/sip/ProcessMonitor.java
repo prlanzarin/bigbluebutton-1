@@ -26,11 +26,25 @@ public class ProcessMonitor implements Runnable {
         this.inputStreamMonitor = null;
         this.errorStreamMonitor = null;
     }
+    
+    public String toString() {
+        if (this.command == null || this.command.length == 0) { 
+            return "";
+        }
+        
+        StringBuffer result = new StringBuffer();
+        String delim = "";
+        for (String i : this.command) {
+        	result.append(delim).append(i);
+            delim = " ";
+        }
+        return result.toString();
+    }
 
     public void run() {
         try {
             log.debug("Creating thread to execute FFmpeg");
-            log.debug("Executing: " + this.command);
+            log.debug("Executing: " + this.toString());
             this.process = Runtime.getRuntime().exec(this.command);
 
             if(this.process == null) {
