@@ -22,6 +22,6 @@ public interface RtpStreamReceiverListener {
 
 	void onStoppedReceiving();
 	void onPausedReceiving();
-	void onRestartedReceiving();
+	void onStartedReceiving();
 	void onMediaDataReceived(byte[] mediaData, int offset, int len);
 }

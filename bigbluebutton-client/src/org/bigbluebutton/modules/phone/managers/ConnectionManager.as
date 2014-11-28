@@ -165,8 +165,7 @@ package org.bigbluebutton.modules.phone.managers {
 			dispatcher.dispatchEvent(event);	
 		}	
 				
-		public function successfullyJoinedConferenceCallback(publishAudioName:String, playAudioName:String, audioCodec:String,
-															 publishVideoName:String, playVideoName:String, videoCodec:String):* {
+		public function successfullyJoinedVoiceConferenceCallback(publishAudioName:String, playAudioName:String, audioCodec:String):* {
 			trace(LOG + "successfullyJoinedConferenceCallback [" + publishAudioName + "] : [" + playAudioName + "] : [" + audioCodec + "]");
 			JSLog.debug(LOG + "successfullyJoinedConferenceCallback [" + publishAudioName + "] : [" + playAudioName + "] : [" + audioCodec + "]");
 
@@ -174,18 +173,18 @@ package org.bigbluebutton.modules.phone.managers {
 			dispatcher.dispatchEvent(audioEvent);
 		}
 
-		public function videoIsPaused():void {
+		public function videoPaused():void {
 			LogUtil.debug("video is paused. Closing video window");
-			var videoPaused:BBBEvent = new BBBEvent(BBBEvent.VIDEO_PAUSED);
+			var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
 			dispatcher.dispatchEvent(videoPaused);
 		}
 
-		public function videoRestarted(videoStream:String):void {
-			LogUtil.debug("video is restarted. Reopening video window");
-			var videoRestarted:BBBEvent = new BBBEvent(BBBEvent.VIDEO_RESTARTED);
-			videoRestarted.payload.streamName = videoStream;
-			videoRestarted.payload.connection = netConnection;
-			dispatcher.dispatchEvent(videoRestarted);
+		public function videoStarted(videoStream:String):void {
+			LogUtil.debug("video is starting. Opening video window");
+			var videoStarted:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_STARTED);
+			videoStarted.payload.streamName = videoStream;
+			videoStarted.payload.connection = netConnection;
+			dispatcher.dispatchEvent(videoStarted);
 		}
 
 								

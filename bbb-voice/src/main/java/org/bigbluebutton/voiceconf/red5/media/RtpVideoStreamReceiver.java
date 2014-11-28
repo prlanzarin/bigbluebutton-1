@@ -159,7 +159,7 @@ public class RtpVideoStreamReceiver {
                 {
                     log.debug("[RtpVideoStreamReceiver] reopen video window");
                     if(listener != null) {
-                        listener.onRestartedReceiving();
+                        listener.onStartedReceiving();
                     }
                 }
                 isVideoPaused = false;

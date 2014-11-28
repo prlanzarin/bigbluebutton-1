@@ -156,8 +156,8 @@ public class SipToFlashVideoStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onRestartedReceiving() {
-		if(observer != null) observer.onStreamRestarted();
+	public void onStartedReceiving() {
+		if(observer != null) observer.onStreamStarted();
 	}
 
 	@Override

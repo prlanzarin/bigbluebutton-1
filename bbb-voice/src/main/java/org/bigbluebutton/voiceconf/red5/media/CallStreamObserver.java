@@ -22,6 +22,6 @@ public interface CallStreamObserver {
 
 	void onCallStreamStopped();
 	void onCallStreamPaused();
-	void onCallStreamRestarted();
+	void onCallStreamStarted();
 	void onFirRequest();
 }

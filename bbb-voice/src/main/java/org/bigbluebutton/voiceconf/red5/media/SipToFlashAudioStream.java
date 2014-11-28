@@ -160,7 +160,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	}
 
 	@Override
-	public void onRestartedReceiving() {
+	public void onStartedReceiving() {
 		
 	}
 

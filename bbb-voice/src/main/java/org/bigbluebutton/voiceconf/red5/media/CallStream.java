@@ -164,9 +164,9 @@ public class CallStream implements StreamObserver {
     }
 
     @Override
-    public void onStreamRestarted() {
+    public void onStreamStarted() {
         log.debug("STREAM HAS RESTARTED " + connInfo.getSocket().getLocalPort());
-        if (callStreamObserver != null) callStreamObserver.onCallStreamRestarted();
+        if (callStreamObserver != null) callStreamObserver.onCallStreamStarted();
     }
 
     @Override

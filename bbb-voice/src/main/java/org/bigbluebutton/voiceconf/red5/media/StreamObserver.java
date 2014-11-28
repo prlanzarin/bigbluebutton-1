@@ -22,6 +22,6 @@ public interface StreamObserver {
 
 	void onStreamStopped();
 	void onStreamPaused();
-	void onStreamRestarted();
+	void onStreamStarted();
 	void onFirRequest();
 }

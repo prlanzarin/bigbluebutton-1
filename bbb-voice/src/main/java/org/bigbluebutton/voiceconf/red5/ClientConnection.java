@@ -41,13 +41,11 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
 		return connId;
 	}
 	
-    public void onJoinConferenceSuccess(String userSenderAudioStream, String userReceiverAudioStream, String audioCodec,
-    								    String userSenderVideoStream, String userReceiverVideoStream, String videoCodec ) {
-        log.debug("Notify client that {} [{}] has joined the conference. userReceiverAudioStream = [{}]", username, userid,userReceiverAudioStream);
+    public void onJoinConferenceSuccess(String userSenderAudioStream, String userReceiverAudioStream, String audioCodec) {
+    	log.debug("Notify client that {} [{}] has joined the conference.", username, userid);
         if (connection.isConnected()) {
-            connection.invoke("successfullyJoinedConferenceCallback",
-            				   new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec,
-            				   				 userSenderVideoStream, userReceiverVideoStream, videoCodec});
+            connection.invoke("successfullyJoinedVoiceConferenceCallback",
+            				   new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec});
         }
     }
 
@@ -67,11 +65,11 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
 
     public void onPausedVideo() {
     	log.debug("Notify client that video has been paused.");
-    	connection.invoke("videoIsPaused");
+    	connection.invoke("videoPaused");
     }
 
-    public void onRestartedVideo(String videoStream) {
+    public void onStartedVideo(String videoStream) {
     	log.debug("Notify client that video has been restarted.");
-    	connection.invoke("videoRestarted", new Object[] {videoStream});
+    	connection.invoke("videoStarted", new Object[] {videoStream});
     }
 }
