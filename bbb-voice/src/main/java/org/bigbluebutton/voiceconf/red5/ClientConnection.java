@@ -43,7 +43,7 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
 	
     public void onJoinConferenceSuccess(String userSenderAudioStream, String userReceiverAudioStream, String audioCodec,
     								    String userSenderVideoStream, String userReceiverVideoStream, String videoCodec ) {
-    	log.debug("Notify client that {} [{}] has joined the conference.", username, userid);
+        log.debug("Notify client that {} [{}] has joined the conference. userReceiverAudioStream = [{}]", username, userid,userReceiverAudioStream);
         if (connection.isConnected()) {
             connection.invoke("successfullyJoinedConferenceCallback",
             				   new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec,

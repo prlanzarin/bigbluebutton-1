@@ -32,6 +32,8 @@ import org.red5.server.api.scope.IScope;
 import org.red5.server.api.service.IServiceCapableConnection;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.stream.ClientBroadcastStream;
+import org.bigbluebutton.voiceconf.sip.GlobalCall;
+import java.text.MessageFormat;
 
 public class Application extends MultiThreadedApplicationAdapter {
     private static Logger log = Red5LoggerFactory.getLogger(Application.class, "sip");
@@ -51,6 +53,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private String password = "secret";
 	private String username;
 	private CallStreamFactory callStreamFactory;
+    private MessageFormat callExtensionPattern = new MessageFormat("{0}");
 	
     @Override
     public boolean appStart(IScope scope) {
@@ -80,25 +83,32 @@ public class Application extends MultiThreadedApplicationAdapter {
     @Override
     public boolean appConnect(IConnection conn, Object[] params) {
         if (params.length == 0) {
-            params = new Object[2];
-            params[0] = "unknown-userid";
+            params = new Object[4];
+            params[0] = "unknown-userId";
             params[1] = "UNKNOWN-CALLER";
+            params[2] = "UNKNOWN-VOICEBRIDGE";
         }
-    	String userid = ((String) params[0]).toString();
+        String userId = ((String) params[0]).toString();
         String username = ((String) params[1]).toString();
+        String voiceBridge = ((String) params[2]).toString();
         String clientId = Red5.getConnectionLocal().getClient().getId();
         String remoteHost = Red5.getConnectionLocal().getRemoteAddress();
         int remotePort = Red5.getConnectionLocal().getRemotePort();
         
-        if ((userid == null) || ("".equals(userid))) userid = "unknown-userid";
+        if ((userId == null) || ("".equals(userId))) userId = "unknown-userId";
         if ((username == null) || ("".equals(username))) username = "UNKNOWN-CALLER";
-        Red5.getConnectionLocal().setAttribute("USERID", userid);
+        if ((voiceBridge == null) || ("".equals(voiceBridge))) voiceBridge = "UNKNOWN-VOICEBRIDGE";
+        Red5.getConnectionLocal().setAttribute("USERID", userId);
         Red5.getConnectionLocal().setAttribute("USERNAME", username);
+        Red5.getConnectionLocal().setAttribute("VOICEBRIDGE", voiceBridge);
         
-        log.info("{} [clientid={}] has connected to the voice conf app.", username + "[uid=" + userid + "]", clientId);
+        log.info("{} [clientid={}] has connected to the voice conf app.", username + "[uid=" + userId + "] [voiceBridge="+voiceBridge+"]", clientId);
         log.info("[clientid={}] connected from {}.", clientId, remoteHost + ":" + remotePort);
         
-        clientConnManager.createClient(clientId, userid, username, (IServiceCapableConnection) Red5.getConnectionLocal());
+        clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
+
+        String peerId = "default";
+        createGlobalAudio(clientId,peerId,username,voiceBridge);
         return super.appConnect(conn, params);
     }
 
@@ -128,7 +138,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         super.appDisconnect(conn);
     }
     
-     @Override
+    @Override
     public void streamPublishStart(IBroadcastStream stream) {
         String clientId = Red5.getConnectionLocal().getClient().getId();
         String userId = getUserId();
@@ -149,7 +159,26 @@ public class Application extends MultiThreadedApplicationAdapter {
             sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
         }        
     }
-    
+
+    private boolean createGlobalAudio(String clientId,String peerId, String callerName, String destination){
+        log.debug("peerId = "+peerId+" callerName = "+ callerName + " destination = "+ destination);
+
+        if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
+                String extension = callExtensionPattern.format(new String[] { destination });
+                try {
+                    sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination, extension);
+                    Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
+                } catch (PeerNotFoundException e) {
+                    log.error("PeerNotFound {}", peerId);
+                    return false;
+                }
+        }
+        sipPeerManager.connectToGlobalStream(peerId, clientId, callerName, destination);
+        Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
+        GlobalCall.addUser(clientId, callerName, destination);
+        return true;
+    }
+
     /**
      * A hook to record a sample stream. A file is written in webapps/sip/streams/
      * @param stream

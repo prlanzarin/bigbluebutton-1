@@ -50,6 +50,7 @@ package org.bigbluebutton.modules.phone.managers {
     private var externUserId:String;
 		private var uid:String;
 		private var room:String;
+		private var voiceBridge:String;
 		
 		private var registered:Boolean = false;
     private var closedByUser:Boolean = false;
@@ -71,13 +72,14 @@ package org.bigbluebutton.modules.phone.managers {
 			return netConnection;
 		}
 		
-    public function setup(uid:String, externUserId:String, username:String, room:String, uri:String):void {	
+    public function setup(uid:String, externUserId:String, username:String, room:String, uri:String, voiceBridge: String):void {	
       trace(LOG + "Setup uid=[" + uid + "] extuid=[" + externUserId + "] name=[" + username + "] uri=[" + uri + "]");
       this.uid = uid;	
       this.username  = username;
       this.room = room;
       this.uri   = uri;
       this.externUserId = externUserId;
+      this.voiceBridge = voiceBridge;
     }
     
 		public function connect():void {				
@@ -93,7 +95,7 @@ package org.bigbluebutton.modules.phone.managers {
 			netConnection.client = this;
 			netConnection.addEventListener( NetStatusEvent.NET_STATUS , netStatus );
 			netConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
-			netConnection.connect(uri, externUserId, username);
+			netConnection.connect(uri, externUserId, username,voiceBridge);
 		}
 
 		public function disconnect(requestByUser:Boolean):void {
