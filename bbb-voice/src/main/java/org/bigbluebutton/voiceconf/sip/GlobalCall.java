@@ -17,7 +17,6 @@ public class GlobalCall {
     private static Map<String,KeepGlobalAudioAlive> globalAudioKeepAliverMap = new ConcurrentHashMap<String, KeepGlobalAudioAlive>();
     private static Map<String,String> roomToVideoStreamMap = new ConcurrentHashMap<String, String>();
     private static Map<String,Codec> roomToVideoCodecMap = new ConcurrentHashMap<String, Codec>();
-//    private static Map<String,KeepGlobalAudioAlive> globalAudioKeepAliverMap = new ConcurrentHashMap<String, KeepGlobalAudioAlive>();
 
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     
@@ -51,15 +50,12 @@ public class GlobalCall {
         log.debug("Adding a global video stream to room {} stream {}", voiceConf, globalVideoStreamName);
         roomToVideoStreamMap.put(voiceConf, globalVideoStreamName);
         roomToVideoCodecMap.put(voiceConf, sipCodec);
-//        KeepGlobalAudioAlive globalAudioKeepAlive = new KeepGlobalAudioAlive(connInfo.getSocket(), connInfo, sipCodec.getCodecId());
-//        globalAudioKeepAliverMap.put(voiceConf, globalAudioKeepAlive);
-//        globalAudioKeepAlive.start();
     }
 
     public static synchronized String getGlobalVideoStream(String voiceConf) {
         return roomToVideoStreamMap.get(voiceConf);
     }
-    
+
     public static synchronized boolean removeRoomIfUnused(String voiceConf) {
         if (voiceConfToListenOnlyUsersMap.containsKey(voiceConf) && voiceConfToListenOnlyUsersMap.get(voiceConf).numUsers() <= 0) {
             removeRoom(voiceConf);
@@ -70,13 +66,15 @@ public class GlobalCall {
     }
  
     private static void removeRoom(String voiceConf) {
-        log.debug("Removing global audio stream of room {}", voiceConf);
-        roomToAudioStreamMap.remove(voiceConf);
+        log.debug("Removing global audio and video stream of room {}", voiceConf);
         voiceConfToListenOnlyUsersMap.remove(voiceConf);
+        roomToAudioStreamMap.remove(voiceConf);
         roomToAudioCodecMap.remove(voiceConf);
         KeepGlobalAudioAlive globalAudioKeepAlive = globalAudioKeepAliverMap.get(voiceConf);
         globalAudioKeepAlive.halt();
         globalAudioKeepAliverMap.remove(voiceConf);
+        roomToVideoStreamMap.remove(voiceConf);
+        roomToVideoCodecMap.remove(voiceConf);
     }
 
     public static synchronized void addUser(String clientId, String callerIdName, String voiceConf) {      	
@@ -97,21 +95,21 @@ public class GlobalCall {
     }
 
     public static synchronized List<String> getListeners(String voiceConf){
-    	List<String> listeners;
-    	if(voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
-    		VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
-    		listeners = map.getUsers(voiceConf);
-    	}
-    	else {
-    		listeners = new ArrayList<String>();
-    	}
-    	return listeners;
+        List<String> listeners;
+        if(voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
+            VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
+            listeners = map.getUsers(voiceConf);
+        }
+        else {
+            listeners = new ArrayList<String>();
+        }
+        return listeners;
     }
-    
+
     public static Codec getRoomAudioCodec(String roomName) {
         return roomToAudioCodecMap.get(roomName);
     }
-    
+
     public static Codec getRoomVideoCodec(String roomName) {
         return roomToVideoCodecMap.get(roomName);
     }

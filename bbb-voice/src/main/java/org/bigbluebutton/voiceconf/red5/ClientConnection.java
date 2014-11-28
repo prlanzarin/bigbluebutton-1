@@ -45,7 +45,7 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     	log.debug("Notify client that {} [{}] has joined the conference.", username, userid);
         if (connection.isConnected()) {
             connection.invoke("successfullyJoinedVoiceConferenceCallback",
-            				   new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec});
+                    new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec});
         }
     }
 
@@ -64,12 +64,12 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     }
 
     public void onPausedVideo() {
-    	log.debug("Notify client that video has been paused.");
-    	connection.invoke("videoPaused");
+        log.debug("Notify client that video has been paused.");
+        connection.invoke("videoPaused");
     }
 
     public void onStartedVideo(String videoStream) {
-    	log.debug("Notify client that video has been restarted.");
-    	connection.invoke("videoStarted", new Object[] {videoStream});
+        log.debug("Notify client that video has been restarted.");
+        connection.invoke("videoStarted", new Object[] {videoStream});
     }
 }

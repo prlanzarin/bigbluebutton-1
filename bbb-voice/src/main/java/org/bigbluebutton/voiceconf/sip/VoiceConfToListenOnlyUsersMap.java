@@ -26,7 +26,7 @@ public class VoiceConfToListenOnlyUsersMap {
 	public int numUsers() {
 		return listenOnlyUsers.size();
 	}
-	
+
 	public List<String> getUsers(String voiceConf){
 		List<String> users = new ArrayList<String>();
 		for(Iterator<String> i = listenOnlyUsers.keySet().iterator(); i.hasNext(); ) {

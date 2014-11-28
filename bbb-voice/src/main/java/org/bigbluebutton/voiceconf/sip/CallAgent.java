@@ -249,7 +249,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     
     private void createStreams() {
         boolean audioStreamCreatedSuccesfully = false;
-        boolean videoStreamCreatedSuccesfully = false;
 
         SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());        
         SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
@@ -264,9 +263,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         
         if (videoCallStream == null) {        
             int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
-            int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
-//            videoStreamCreatedSuccesfully = createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
-            log.debug("VIDEO stream created");
+            int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+            if(isGlobalStream()) {
+                // Only global stream create the video stream here to receive video from FreeSWITCH
+//               createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+                log.debug("VIDEO stream created");
+            }
+
         }else log.debug("VIDEO application is already running.");
 
         if(audioStreamCreatedSuccesfully && !isGlobalStream()) {
@@ -274,15 +277,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             String userSenderAudioStream = audioCallStream.getBbbToFreeswitchStreamName();
             String userReceiverAudioStream = audioCallStream.getFreeswitchToBbbStreamName();
 
-            String userSenderVideoStream = "BbbToFreeswitchAudioStream_" + System.currentTimeMillis();
-            String userReceiverVideoStream = "";//"freeswitchToBbbAudioStream_" + System.currentTimeMillis(); 
-
-            if(videoStreamCreatedSuccesfully && videoCallStream != null) {
-                userSenderVideoStream = videoCallStream.getBbbToFreeswitchStreamName();
-                userReceiverVideoStream = videoCallStream.getFreeswitchToBbbStreamName();
-            }
-
-            notifyListenersOnCallConnected(userSenderAudioStream, userReceiverAudioStream); 
+            notifyListenersOnCallConnected(userSenderAudioStream, userReceiverAudioStream);
         }
     }
 
@@ -350,12 +345,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                             streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_VIDEO);
                             log.debug("[CallAgent] streamTypeManager adding video stream {} for {}", streamName, clientId);
                         }
-                        
+
                         if (isGlobalStream())
                         {
-                        	GlobalCall.addGlobalVideoStream(_destination, videoCallStream.getFreeswitchToBbbStreamName(), sipVideoCodec, connInfo);
+                            GlobalCall.addGlobalVideoStream(_destination, videoCallStream.getFreeswitchToBbbStreamName(), sipVideoCodec, connInfo);
                         }
-                        
+
                         return true;        
                             
                     } catch (Exception e) {
@@ -484,7 +479,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         sipVideoCodec = GlobalCall.getRoomVideoCodec(voiceConf);
         callState = CallState.UA_ONCALL;
         notifyListenersOnCallConnected("", globalAudioStreamName);
-        log.info("Global audio: [{}] Global video: [{}]", globalAudioStreamName, globalVideoStreamName);
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
         messagingService.userConnectedToGlobalAudio(voiceConf, callerIdName);
         userProfile.userID = callerIdName;
