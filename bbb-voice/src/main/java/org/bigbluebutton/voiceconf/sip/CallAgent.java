@@ -32,10 +32,14 @@ import org.bigbluebutton.voiceconf.red5.media.StreamException;
 import org.bigbluebutton.voiceconf.util.StackTraceUtil;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.CodecUtils;
+import org.red5.app.sip.codecs.H264Codec;
 import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
+import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
+
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -70,6 +74,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private HashMap<String, String> streamTypeManager = null;
 
     private String destinationPrefix;
+
+    private ProcessMonitor processMonitor;
     
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
@@ -258,7 +264,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (videoCallStream == null) {        
             int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);        
-            videoStreamCreatedSuccesfully = createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+//            videoStreamCreatedSuccesfully = createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
             log.debug("VIDEO stream created");
         }else log.debug("VIDEO application is already running.");
 
@@ -267,10 +273,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             String userSenderAudioStream = audioCallStream.getBbbToFreeswitchStreamName();
             String userReceiverAudioStream = audioCallStream.getFreeswitchToBbbStreamName();
 
-            String userSenderVideoStream = "";
-            String userReceiverVideoStream = "";  
+            String userSenderVideoStream = "BbbToFreeswitchAudioStream_" + System.currentTimeMillis();
+            String userReceiverVideoStream = "";//"freeswitchToBbbAudioStream_" + System.currentTimeMillis(); 
 
-            if(videoStreamCreatedSuccesfully) {
+            if(videoStreamCreatedSuccesfully && videoCallStream != null) {
                 userSenderVideoStream = videoCallStream.getBbbToFreeswitchStreamName();
                 userReceiverVideoStream = videoCallStream.getFreeswitchToBbbStreamName();
             }
@@ -386,23 +392,51 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     
      public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
         try {
-            videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
-        } catch (StreamException e) {
+            SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
+        	SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
+            
+            int remotePort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+            int localPort = SessionDescriptorUtil.getRemoteMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+            
+        	Codec codec = new H264Codec();
+        	String ip = Red5.getConnectionLocal().getHost();
+
+            String inputLive = "rtmp://" + ip + "/video/" + scope.getName() + "/"
+                                + broadcastStream.getPublishedName() + " live=1";
+            String output = "rtp://" + ip + ":" + remotePort + "?localport=" + localPort;
+
+            FFmpegCommand ffmpeg = new FFmpegCommand();
+            ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+            ffmpeg.setInput(inputLive);
+            ffmpeg.setCodec("h264");
+            ffmpeg.setPreset("ultrafast");
+            ffmpeg.setProfile("baseline");
+            ffmpeg.setLevel("1.3");
+            ffmpeg.setFormat("rtp");
+            ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
+            ffmpeg.setLoglevel("quiet");
+            ffmpeg.setSliceMaxSize("1024");
+            ffmpeg.setOutput(output);
+
+            String[] command = ffmpeg.getFFmpegCommand(true);
+
+        	// Free local port before starting ffmpeg
+        	localVideoSocket.close();
+
+            log.debug("Preparing FFmpeg process monitor");
+
+            processMonitor = new ProcessMonitor(command);
+            processMonitor.start();
+
+            // videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
     
     public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        if (videoCallStream != null) {
-            videoCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);     
-        }
-        String streamName = videoCallStream.getBbbToFreeswitchStreamName();
-        if(streamTypeManager.containsKey(streamName))
-        {
-            streamTypeManager.remove(streamName);
-            log.debug("[CallAgent] removing video stream: " + streamName);
-        }
+        processMonitor.destroy();
     }
 
     private void closeStreams() {        
