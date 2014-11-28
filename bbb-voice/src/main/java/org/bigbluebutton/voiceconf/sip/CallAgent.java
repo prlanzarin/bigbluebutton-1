@@ -218,7 +218,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	return socket;
     }
 
-    private boolean isGlobalAudioStream() {
+    private boolean isGlobalStream() {
         return (_callerName != null && _callerName.startsWith("GLOBAL_AUDIO_"));
     }
 
@@ -269,7 +269,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             log.debug("VIDEO stream created");
         }else log.debug("VIDEO application is already running.");
 
-        if(audioStreamCreatedSuccesfully && !isGlobalAudioStream()) {
+        if(audioStreamCreatedSuccesfully && !isGlobalStream()) {
 
             String userSenderAudioStream = audioCallStream.getBbbToFreeswitchStreamName();
             String userReceiverAudioStream = audioCallStream.getFreeswitchToBbbStreamName();
@@ -308,7 +308,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                             log.debug("[CallAgent] streamTypeManager adding audio stream {} for {}", streamName, clientId);
                         }
 
-                        if (isGlobalAudioStream())
+                        if (isGlobalStream())
                         {
                         	GlobalCall.addGlobalAudioStream(_destination, audioCallStream.getFreeswitchToBbbStreamName(), sipAudioCodec, connInfo);
                         }
@@ -351,7 +351,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                             log.debug("[CallAgent] streamTypeManager adding video stream {} for {}", streamName, clientId);
                         }
                         
-                        if (isGlobalAudioStream())
+                        if (isGlobalStream())
                         {
                         	GlobalCall.addGlobalVideoStream(_destination, videoCallStream.getFreeswitchToBbbStreamName(), sipVideoCodec, connInfo);
                         }
@@ -636,45 +636,48 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     private void notifyListenersOfOnCallClosed() {
-    	if (callState == CallState.UA_IDLE) return;
+        if (callState == CallState.UA_IDLE) return;
 
-    	if(isGlobalAudioStream()) {
-    		for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
-    			log.debug("notifyListenersOfOnCallRestarted for {}", i.next());
-    	        clientConnManager.leaveConference(i.next());
-    		}
-    	}
-    	else {
-    	log.debug("notifyListenersOfOnCallClosed for {}", clientId);
-    	clientConnManager.leaveConference(clientId);
-    	}
-    	cleanup();
+        if(isGlobalStream()) {
+            for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext();) {
+                String userId = i.next();
+                log.debug("notifyListenersOfOnCallClosed for {}", userId);
+                clientConnManager.leaveConference(userId);
+            }
+        }
+        else {
+            log.debug("notifyListenersOfOnCallClosed for {}", clientId);
+            clientConnManager.leaveConference(clientId);
+        }
+        cleanup();
     }
 
     private void notifyListenersOfOnCallPaused() {
-    	if(isGlobalAudioStream()) {
-    		for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
-    			log.debug("notifyListenersOfOnCallRestarted for {}", i.next());
-    	        clientConnManager.pausedVideo(i.next());
-    		}
-    	}
-    	else {
-        log.debug("notifyListenersOfOnCallPaused for {}", clientId);
-        clientConnManager.pausedVideo(clientId);
-    	}
+        if(isGlobalStream()) {
+           for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
+                String userId = i.next();
+                log.debug("notifyListenersOfOnCallPaused for {}", userId);
+                clientConnManager.pausedVideo(userId);
+           }
+        }
+        else {
+            log.debug("notifyListenersOfOnCallPaused for {}", clientId);
+            clientConnManager.pausedVideo(clientId);
+        }
     }
 
     private void notifyListenersOfOnCallStarted(String videoStream) {
-    	if(isGlobalAudioStream()) {
-    		for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
-    			log.debug("notifyListenersOfOnCallRestarted for {}", i.next());
-    	        clientConnManager.startedVideo(i.next(), videoStream);
-    		}
-    	}
-    	else {
-    		log.debug("notifyListenersOfOnCallRestarted for {}", clientId);
-    		clientConnManager.startedVideo(clientId, videoStream);
-    	}
+        if(isGlobalStream()) {
+            for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
+                String userId = i.next();
+                log.debug("notifyListenersOfOnCallRestarted for {}", userId);
+                clientConnManager.startedVideo(userId, videoStream);
+            }
+        }
+        else {
+            log.debug("notifyListenersOfOnCallRestarted for {}", clientId);
+            clientConnManager.startedVideo(clientId, videoStream);
+        }
     }
 
     private void cleanup() {
@@ -738,7 +741,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public void onCallStreamStarted() {
-        log.info("Call stream has been restarted");
+        log.info("Call stream has been started");
         String videoStream = videoCallStream.getFreeswitchToBbbStreamName();
         notifyListenersOfOnCallStarted(videoStream);
     }
