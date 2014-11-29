@@ -266,7 +266,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             if(isGlobalStream()) {
                 // Only global stream create the video stream here to receive video from FreeSWITCH
-//               createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+                createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
                 log.debug("VIDEO stream created");
             }
 
