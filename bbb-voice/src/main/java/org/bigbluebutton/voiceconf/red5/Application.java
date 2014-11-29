@@ -83,7 +83,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     @Override
     public boolean appConnect(IConnection conn, Object[] params) {
         if (params.length == 0) {
-            params = new Object[4];
+            params = new Object[3];
             params[0] = "unknown-userId";
             params[1] = "UNKNOWN-CALLER";
             params[2] = "UNKNOWN-VOICEBRIDGE";
@@ -109,6 +109,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         String peerId = "default";
         createGlobalAudio(clientId,peerId,username,voiceBridge);
+        GlobalCall.addUser(clientId, username, voiceBridge);
         return super.appConnect(conn, params);
     }
 
@@ -117,6 +118,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     	String clientId = Red5.getConnectionLocal().getClient().getId();
     	String userid = getUserId();
     	String username = getUsername();
+    	String voiceBridge = (String) Red5.getConnectionLocal().getAttribute("VOICEBRIDGE");
     	
         String remoteHost = Red5.getConnectionLocal().getRemoteAddress();
         int remotePort = Red5.getConnectionLocal().getRemotePort();    	
@@ -135,6 +137,20 @@ public class Application extends MultiThreadedApplicationAdapter {
 				e.printStackTrace();
 			}
         }
+
+        GlobalCall.removeUser(clientId, voiceBridge);
+
+        boolean roomRemoved = GlobalCall.removeRoomIfUnused(voiceBridge);
+        log.debug("Should the global connection be removed? {}", roomRemoved? "yes": "no");
+        if (roomRemoved) {
+            try {
+                log.debug("Hanging up the global audio call {}", voiceBridge);
+                sipPeerManager.hangup(peerId, "GLOBAL_AUDIO_" + voiceBridge);
+            } catch (PeerNotFoundException e) {
+                log.warn("Peer {} not found. Unable to hangup the global call.", "GLOBAL_AUDIO_" + voiceBridge);
+            }
+        }
+
         super.appDisconnect(conn);
     }
     
@@ -173,9 +189,6 @@ public class Application extends MultiThreadedApplicationAdapter {
                     return false;
                 }
         }
-        sipPeerManager.connectToGlobalStream(peerId, clientId, callerName, destination);
-        Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
-        GlobalCall.addUser(clientId, callerName, destination);
         return true;
     }
 

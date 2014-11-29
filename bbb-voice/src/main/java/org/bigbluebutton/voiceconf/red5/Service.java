@@ -37,6 +37,7 @@ public class Service {
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
 		if (listenOnly) {
 			if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
+			    log.warn("Global call for {} not found, creating one", destination);
 				String extension = callExtensionPattern.format(new String[] { destination });
 				try {
 					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination, extension);
