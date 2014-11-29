@@ -104,11 +104,16 @@ public class Application extends MultiThreadedApplicationAdapter {
         log.info("{} [clientid={}] has connected to the voice conf app.", username + "[uid=" + userId + "] [voiceBridge="+voiceBridge+"]", clientId);
         log.info("[clientid={}] connected from {}.", clientId, remoteHost + ":" + remotePort);
         
-        clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
+        if(voiceBridge != "UNKNOWN-VOICEBRIDGE") {
+            clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
 
-        String peerId = "default";
-        createGlobalAudio(clientId,peerId,username,voiceBridge);
-        GlobalCall.addUser(clientId, username, voiceBridge);
+            String peerId = "default";
+            createGlobalAudio(clientId,peerId,username,voiceBridge);
+            GlobalCall.addUser(clientId, username, voiceBridge);
+        }
+        else {
+            log.warn("Voice bridge not informed during appConnect. Global will not be created.");
+        }
         return super.appConnect(conn, params);
     }
 
@@ -137,16 +142,18 @@ public class Application extends MultiThreadedApplicationAdapter {
 			}
         }
 
-        GlobalCall.removeUser(clientId, voiceBridge);
+        if(voiceBridge != "UNKNOWN-VOICEBRIDGE") {
+            GlobalCall.removeUser(clientId, voiceBridge);
 
-        boolean roomRemoved = GlobalCall.removeRoomIfUnused(voiceBridge);
-        log.debug("Should the global connection be removed? {}", roomRemoved? "yes": "no");
-        if (roomRemoved) {
-            try {
-                log.debug("Hanging up the global audio call {}", voiceBridge);
-                sipPeerManager.hangup(peerId, "GLOBAL_AUDIO_" + voiceBridge);
-            } catch (PeerNotFoundException e) {
-                log.warn("Peer {} not found. Unable to hangup the global call.", "GLOBAL_AUDIO_" + voiceBridge);
+            boolean roomRemoved = GlobalCall.removeRoomIfUnused(voiceBridge);
+            log.debug("Should the global connection be removed? {}", roomRemoved? "yes": "no");
+            if (roomRemoved) {
+                try {
+                    log.debug("Hanging up the global audio call {}", voiceBridge);
+                    sipPeerManager.hangup(peerId, "GLOBAL_AUDIO_" + voiceBridge);
+                } catch (PeerNotFoundException e) {
+                    log.warn("Peer {} not found. Unable to hangup the global call.", "GLOBAL_AUDIO_" + voiceBridge);
+                }
             }
         }
 
