@@ -416,6 +416,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
             ffmpeg.setLoglevel("quiet");
             ffmpeg.setSliceMaxSize("1024");
+            ffmpeg.setMaxKeyFrameInterval("10");
             ffmpeg.setOutput(output);
 
             String[] command = ffmpeg.getFFmpegCommand(true);

@@ -53,12 +53,18 @@ public class FFmpegCommand {
 
         if(!x264Params.isEmpty()) {
             comm.add("-x264-params");
+            String params = "";
             Iterator x264Iter = this.x264Params.entrySet().iterator();
             while (x264Iter.hasNext()) {
                 Map.Entry pairs = (Map.Entry)x264Iter.next();
                 String argValue = pairs.getKey() + "=" + pairs.getValue();
-                comm.add(argValue);
+                params += argValue;
+                // x264-params are separated by ':'
+                params += ":";
             }
+            // Remove trailing ':'
+            params.replaceAll(":+$", "");
+            comm.add(params);
         }
 
         comm.add(this.output);
@@ -109,5 +115,9 @@ public class FFmpegCommand {
 
     public void setSliceMaxSize(String arg) {
         this.x264Params.put("slice-max-size", arg);
+    }
+
+    public void setMaxKeyFrameInterval(String arg) {
+        this.x264Params.put("keyint", arg);
     }
 }
