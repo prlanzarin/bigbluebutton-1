@@ -76,7 +76,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private String destinationPrefix;
 
-    private ProcessMonitor processMonitor;
+    private ProcessMonitor processMonitor = null;
     
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
@@ -382,12 +382,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void stopBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
     	if (audioCallStream != null) {
     		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
+    		String streamName = audioCallStream.getBbbToFreeswitchStreamName();
+    		if(streamTypeManager.containsKey(streamName))
+    		    streamTypeManager.remove(streamName);
     	} else {
     		log.info("Can't stop talk stream as stream may have already stopped.");
     	}
-        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
-        if(streamTypeManager.containsKey(streamName))
-            streamTypeManager.remove(streamName);
     }
     
      public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
@@ -436,7 +436,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        processMonitor.destroy();
+        if(processMonitor != null) {
+            processMonitor.destroy();
+        }
     }
 
     private void closeStreams() {        
@@ -456,6 +458,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             log.debug("Can't shutdown VIDEO stream: already NULL");
         }
 
+        if(processMonitor != null) {
+            processMonitor.destroy();
+            processMonitor = null;
+        }
     }
 
     
