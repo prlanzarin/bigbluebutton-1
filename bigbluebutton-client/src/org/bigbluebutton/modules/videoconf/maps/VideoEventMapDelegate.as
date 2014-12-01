@@ -324,6 +324,10 @@ package org.bigbluebutton.modules.videoconf.maps
 
     public function openFreeswitchVideo(streamName:String, connection:NetConnection):void {
 
+      if(!connection.connected) {
+        LogUtil.warn("Not opening freeswitch window because the connection is not ready yet.");
+        return;
+      }
 
       if(fsWindow != null) {
         closeFreeswitchVideo();

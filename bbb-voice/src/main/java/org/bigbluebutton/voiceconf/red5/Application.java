@@ -110,6 +110,12 @@ public class Application extends MultiThreadedApplicationAdapter {
             String peerId = "default";
             createGlobalAudio(clientId,peerId,username,voiceBridge);
             GlobalCall.addUser(clientId, username, voiceBridge);
+            if(!GlobalCall.isVideoPaused(voiceBridge)) {
+                // There is already a video stream running, must inform new client
+                String videoStreamName = GlobalCall.getGlobalVideoStream(voiceBridge);
+                log.debug("Informing new user [{}] about current global video stream [{}]", clientId, videoStreamName);
+                clientConnManager.startedVideo(clientId, videoStreamName);
+            }
         }
         else {
             log.warn("Voice bridge not informed during appConnect. Global will not be created.");

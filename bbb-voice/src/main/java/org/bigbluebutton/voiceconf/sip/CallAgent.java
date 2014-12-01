@@ -348,7 +348,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
                         if (isGlobalStream())
                         {
-                            GlobalCall.addGlobalVideoStream(_destination, videoCallStream.getFreeswitchToBbbStreamName(), sipVideoCodec, connInfo);
+                            GlobalCall.addGlobalVideoStream(_destination, videoCallStream, connInfo);
                         }
 
                         return true;        
@@ -471,7 +471,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         String globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
-        while (globalAudioStreamName.equals("reserved") || globalVideoStreamName.equals("reserved")) {
+        while (globalAudioStreamName.equals(null) || globalVideoStreamName.equals(null)) {
             try {
                 Thread.sleep(100);
             } catch (Exception e) {

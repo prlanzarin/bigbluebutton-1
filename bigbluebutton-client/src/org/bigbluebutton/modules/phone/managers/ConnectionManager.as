@@ -31,6 +31,7 @@ package org.bigbluebutton.modules.phone.managers {
 	
 	import org.bigbluebutton.common.LogUtil;
 	import org.bigbluebutton.core.BBB;
+	import org.bigbluebutton.core.model.MeetingModel;
 	import org.bigbluebutton.main.api.JSLog;
 	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallConnectedEvent;
@@ -119,6 +120,9 @@ package org.bigbluebutton.modules.phone.managers {
           trace(LOG + "Connection success");
           JSLog.debug(LOG + "Connection success");
           dispatcher.dispatchEvent(new FlashVoiceConnectionStatusEvent(FlashVoiceConnectionStatusEvent.CONNECTED));           
+          // Force freeswitch video start
+          if(MeetingModel.getInstance().freeswitchVideoName != "")
+            videoStarted(MeetingModel.getInstance().freeswitchVideoName);
           break;
         case "NetConnection.Connect.Failed":
           trace(LOG + "Connection failed");
@@ -175,12 +179,14 @@ package org.bigbluebutton.modules.phone.managers {
 
 		public function videoPaused():void {
 			LogUtil.debug("video is paused. Closing video window");
+			MeetingModel.getInstance().freeswitchVideoName = "";
 			var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
 			dispatcher.dispatchEvent(videoPaused);
 		}
 
 		public function videoStarted(videoStream:String):void {
 			LogUtil.debug("video is starting. Opening video window");
+			MeetingModel.getInstance().freeswitchVideoName = videoStream;
 			var videoStarted:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_STARTED);
 			videoStarted.payload.streamName = videoStream;
 			videoStarted.payload.connection = netConnection;

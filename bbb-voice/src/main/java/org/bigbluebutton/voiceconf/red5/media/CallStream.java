@@ -57,11 +57,14 @@ public class CallStream implements StreamObserver {
     private final IScope scope;
     private CallStreamObserver callStreamObserver;
     
+    private boolean isVideoPaused;
+    
     public CallStream(Codec sipCodec, SipConnectInfo connInfo, IScope scope, String mediaType) {        
     	this.sipCodec = sipCodec;
     	this.connInfo = connInfo;
     	this.scope = scope;
         this.mediaType = mediaType;
+        this.isVideoPaused = true;
     }
     
     public void addCallStreamObserver(CallStreamObserver observer) {
@@ -155,23 +158,30 @@ public class CallStream implements StreamObserver {
 	public void onStreamStopped() {
 		log.debug("STREAM HAS STOPPED " + connInfo.getSocket().getLocalPort());
 		if (callStreamObserver != null) callStreamObserver.onCallStreamStopped();
+		isVideoPaused = true;
 	}
 
     @Override
     public void onStreamPaused() {
         log.debug("STREAM HAS PAUSED " + connInfo.getSocket().getLocalPort());
         if (callStreamObserver != null) callStreamObserver.onCallStreamPaused();
+        isVideoPaused = true;
     }
 
     @Override
     public void onStreamStarted() {
         log.debug("STREAM HAS RESTARTED " + connInfo.getSocket().getLocalPort());
         if (callStreamObserver != null) callStreamObserver.onCallStreamStarted();
+        isVideoPaused = false;
     }
 
     @Override
     public void onFirRequest() {
         if (callStreamObserver != null) callStreamObserver.onFirRequest();
 
+    }
+    
+    public boolean isVideoPaused() {
+        return isVideoPaused;
     }
 }
