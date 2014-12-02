@@ -33,6 +33,8 @@ public class RtpVideoStreamReceiver {
     
     // Maximum blocking time, spent waiting for reading new bytes [milliseconds]     
 //    private static final int SO_TIMEOUT = 200;
+    // Maximum delay for accepting packets, after this they are dropped [milliseconds]
+  private static final int MAX_PACKET_DELAY = 400;
     private static int RTP_HEADER_SIZE = 12;
     private RtpSocket rtpSocket = null;
     private final Executor exec = Executors.newSingleThreadExecutor();
@@ -220,7 +222,7 @@ public class RtpVideoStreamReceiver {
     
     private boolean shouldDropDelayedPacket(RtpPacket rtpPacket) {
     	long now = System.currentTimeMillis();
-    	if (now - lastPacketReceived > 200) {
+    	if (now - lastPacketReceived > MAX_PACKET_DELAY) {
     		if (log.isDebugEnabled())
     			log.debug("Delayed packet [" + rtpPacket.getRtcpPayloadType() + "," + rtpPacket.getPayloadType() + ", length=" + rtpPacket.getPayloadLength() + "] seqNum[rtpSeqNum=" + rtpPacket.getSeqNum() + ",lastSeqNum=" + lastSequenceNumber 
 					+ "][rtpTS=" + rtpPacket.getTimestamp() + ",lastTS=" + lastPacketTimestamp + "][port=" + rtpSocket.getDatagramSocket().getLocalPort() + "]");          			       			
