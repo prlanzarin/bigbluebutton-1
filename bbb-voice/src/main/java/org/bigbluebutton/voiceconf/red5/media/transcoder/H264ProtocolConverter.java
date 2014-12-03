@@ -53,6 +53,63 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
         startTm = -1;
     } 
 
+    /* Check whether there are key frames in the queue */
+    private boolean queueHasKeyFrames(){
+        if(packetsQueue.size() < 1) return false;
+        // Since the queue will contain a single type of frames it is enough to check the first one
+        if(packetsQueue.get(0).nalType == 5)
+            return true;
+        return false;
+    }
+
+    /* Drop the packets in the queue, leaving the last one */
+    private void dropQueue() {
+        if(packetsQueue.size() < 1) return;
+        RtpPacketWrapper last = packetsQueue.get(packetsQueue.size() - 1);
+        packetsQueue.clear();
+        packetsQueue.add(last);
+    }
+
+    /* Drop the last packet in the queue */
+    private void dropLast() {
+        if(packetsQueue.size() < 1) return;
+        packetsQueue.remove(packetsQueue.size() -1);
+    }
+
+    /* Check whether all packets in the queue have the same timestamp.
+     * If they have different timestamps, they do not belong to the same frame.
+     * this means that some packages are coming out of order, and will be dropped.
+     * We should be careful not to drop key-frames, as this would freeze the video.
+     */
+    private void checkQueueTimestamps() {
+        RtpPacketWrapper last = packetsQueue.get(packetsQueue.size() - 1);
+        RtpPacketWrapper preLast = packetsQueue.get(packetsQueue.size() - 2);
+        RtpPacket lastPck = last.packet;
+        RtpPacket preLastPck = preLast.packet;
+
+        if (lastPck.getTimestamp() != preLastPck.getTimestamp()) {
+            log.warn("New packet has different ts. old ts={} new ts={}",
+                    preLastPck.getTimestamp(), lastPck.getTimestamp());
+
+            if(queueHasKeyFrames() && (last.nalType == 5)) {
+                // Queue has key frames and a different key frame arrived, keep the newest
+                if(lastPck.getTimestamp() < preLastPck.getTimestamp()){
+                    log.debug("Queue has key frames and an older key frame arrived, dropping frame");
+                    dropLast();
+                }
+                else {
+                    log.debug("Queue has key frames and a newer key frame arrived, dropping queue");
+                    dropQueue();
+                }
+            } else if (queueHasKeyFrames()) {
+                log.debug("Queue has key frames and a frame type [{}] arrived, dropping frame", last.nalType);
+                dropLast();
+            } else if(last.nalType == 5) {
+                log.debug("Queue has key frames and key frame arrived, dropping queue");
+                dropQueue();
+            }
+        }
+    }
 
     @Override
 	public List<RTMPPacketInfo> rtpToRTMP(RtpPacket packet) {
@@ -104,13 +161,7 @@ public class H264ProtocolConverter extends VideoProtocolConverter {
         }
         
         if (packetsQueue.size() > 1) {
-                RtpPacket last = packetsQueue.get(packetsQueue.size() - 1).packet;
-                RtpPacket preLast = packetsQueue.get(packetsQueue.size() - 2).packet;
-                if (last.getTimestamp() != preLast.getTimestamp()) {
-                        log.debug("$$ Clearing queue since new packet has different ts. old ts=" + preLast.getTimestamp() + 
-                                        " new ts=" + last.getTimestamp());
-                        packetsQueue.clear();
-                }
+            checkQueueTimestamps();
         }
         
         // marker means the end of the frame
