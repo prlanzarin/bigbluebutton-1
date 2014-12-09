@@ -201,16 +201,18 @@ public class SipPeer implements SipRegisterAgentListener {
         if (ca != null) 
            ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
         else
-            log.debug("$$ CA NULL");
+            log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
+                       + " userId " + userId);
         
     }
     
-    public void stopBbbToFreeswitchVideoStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
-        CallAgent ca = callManager.get(clientId);
+    public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) 
            ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
         else
-            log.debug("$$ CA NULL");
+            log.debug("Could not STOP BbbToFreeswitchVideoStream: there is no CallAgent with"
+                       + "userId " + userId);
         
     }
 

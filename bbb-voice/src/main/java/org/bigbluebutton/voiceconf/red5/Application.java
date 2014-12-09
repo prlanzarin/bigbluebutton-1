@@ -134,8 +134,14 @@ public class Application extends MultiThreadedApplicationAdapter {
         int remotePort = Red5.getConnectionLocal().getRemotePort();    	
     	log.info("[clientid={}] disconnnected from {}.", clientId, remoteHost + ":" + remotePort);
         log.debug("{} [clientid={}] is leaving the voice conf app. Removing from ConnectionManager.", username + "[uid=" + userid + "]", clientId);
-    	
-        clientConnManager.removeClient(clientId);
+        log.debug("[appDisconnect] Voice Bridge: " + voiceBridge);
+
+
+    	if(voiceBridge != "UNKNOWN-VOICEBRIDGE")
+            clientConnManager.removeClient(clientId);
+        else
+            log.debug("Received unknown voice bridge, which means that there is no client connection." 
+                        + " So not removing");
 
         String peerId = (String) Red5.getConnectionLocal().getAttribute("VOICE_CONF_PEER");
         if (peerId != null) {
@@ -224,16 +230,26 @@ public class Application extends MultiThreadedApplicationAdapter {
     @Override
     public void streamBroadcastClose(IBroadcastStream stream) {
     	String clientId = Red5.getConnectionLocal().getClient().getId();
-    	String userid = getUserId();
+    	String userId = getUserId();
     	String username = getUsername();
     	
-    	log.debug("{} has stopped publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
+    	log.debug("{} has stopped publishing stream [{}]", username + "[uid=" + userId + "][clientid=" + clientId + "]", stream.getPublishedName());
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-        if (peerId != null) {	    	
+
+        if(isVideoStream(stream)){
+            userId = getBbbVideoUserId(stream);
+            log.debug("Closing only the video stream of the UserId " + userId);
+            peerId = "default";
+            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
+            super.streamBroadcastClose(stream);
+        } 
+
+        else if (peerId != null) {  
+            log.debug("Audio disconnected: closing AUDIO and VIDEO streams");	
 	    	sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, clientId, stream, conn.getScope());
-	    	super.streamBroadcastClose(stream);
+            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
+	    	super.streamBroadcastClose(stream);    
         }
     }
     

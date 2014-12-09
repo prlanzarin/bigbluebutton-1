@@ -79,6 +79,7 @@ public class CallManager {
 		if( (id = identifiers.get(uid)) == null )
 			return null;
 		else {
+			log.debug("[Video context] clientId retrieved with the userid " + uid + " ==> " + id);
 			return calls.get(id);
 		}
 	}
