@@ -125,7 +125,7 @@ public class GlobalCall {
     }
 
     public static boolean isVideoPaused(String roomName) {
-        if(globalCalls.contains(roomName)){
+        if(roomToVideoStreamMap.containsKey(roomName)){
             return roomToVideoStreamMap.get(roomName).isVideoPaused();
         }
         return true;

@@ -103,13 +103,14 @@ public class Application extends MultiThreadedApplicationAdapter {
         
         log.info("{} [clientid={}] has connected to the voice conf app.", username + "[uid=" + userId + "] [voiceBridge="+voiceBridge+"]", clientId);
         log.info("[clientid={}] connected from {}.", clientId, remoteHost + ":" + remotePort);
-        
+
         if(voiceBridge != "UNKNOWN-VOICEBRIDGE") {
             clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
 
             String peerId = "default";
             createGlobalAudio(clientId,peerId,username,voiceBridge);
             GlobalCall.addUser(clientId, username, voiceBridge);
+            Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
             if(!GlobalCall.isVideoPaused(voiceBridge)) {
                 // There is already a video stream running, must inform new client
                 String videoStreamName = GlobalCall.getGlobalVideoStream(voiceBridge);
@@ -137,22 +138,8 @@ public class Application extends MultiThreadedApplicationAdapter {
         log.debug("[appDisconnect] Voice Bridge: " + voiceBridge);
 
 
-    	if(voiceBridge != "UNKNOWN-VOICEBRIDGE")
-            clientConnManager.removeClient(clientId);
-        else
-            log.debug("Received unknown voice bridge, which means that there is no client connection." 
-                        + " So not removing");
 
         String peerId = (String) Red5.getConnectionLocal().getAttribute("VOICE_CONF_PEER");
-        if (peerId != null) {
-			try {
-				log.debug("Forcing hang up {} [clientid={}] in case the user is still in the conference.", username + "[uid=" + userid + "]", clientId);
-				sipPeerManager.hangup(peerId, clientId);
-			} catch (PeerNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
 
         if(voiceBridge != "UNKNOWN-VOICEBRIDGE") {
             GlobalCall.removeUser(clientId, voiceBridge);
@@ -183,6 +170,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
         
         if(isVideoStream(stream)){
+            super.streamPublishStart(stream);
             userId = getBbbVideoUserId(stream);
             log.debug("Video UserId: " + userId);
             peerId = "default";
@@ -200,7 +188,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
                 String extension = callExtensionPattern.format(new String[] { destination });
                 try {
-                    sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination, extension);
+                    sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, extension);
                     Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
                 } catch (PeerNotFoundException e) {
                     log.error("PeerNotFound {}", peerId);
