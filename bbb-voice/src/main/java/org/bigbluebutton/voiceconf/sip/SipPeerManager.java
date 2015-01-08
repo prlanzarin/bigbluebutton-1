@@ -83,10 +83,11 @@ public final class SipPeerManager {
     }
 
     
-    public void startBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	SipPeer sipUser = sipPeers.get(peerId);
+        log.debug("Start Audio Stream SipPeer");
     	if (sipUser != null) {
-    		sipUser.startBbbToFreeswitchAudioStream(clientId, broadcastStream, scope);
+            sipUser.startBbbToFreeswitchAudioStream(clientId,userId, broadcastStream, scope);
     	}
     }
     

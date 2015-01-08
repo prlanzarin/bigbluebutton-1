@@ -164,6 +164,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         String clientId = Red5.getConnectionLocal().getClient().getId();
         String userId = getUserId();
         String username = getUsername();
+        String videoUserId;
         log.debug("{} has started publishing stream [{}]", username + "[uid=" + userId + "][clientid=" + clientId + "]", stream.getPublishedName());
         //System.out.println("streamPublishStart: " + stream.getPublishedName());
         IConnection conn = Red5.getConnectionLocal();
@@ -171,15 +172,18 @@ public class Application extends MultiThreadedApplicationAdapter {
         
         if(isVideoStream(stream)){
             super.streamPublishStart(stream);
-            userId = getBbbVideoUserId(stream);
-            log.debug("Video UserId: " + userId);
+            videoUserId = getBbbVideoUserId(stream);
+            log.debug("Video UserId: " + videoUserId);
             peerId = "default";
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
+            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream, conn.getScope());
 
-        }else if (peerId != null) {
+        } else if (peerId != null) {
             super.streamPublishStart(stream);
-            sipPeerManager.startBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-        }        
+            videoUserId = userId;
+            log.debug("Starting Audio Stream for the user ["+videoUserId+"]");
+            sipPeerManager.startBbbToFreeswitchAudioStream(peerId, videoUserId, clientId, stream, conn.getScope());
+//            recordStream(stream);
+        }
     }
 
     private boolean createGlobalAudio(String clientId,String peerId, String callerName, String destination){

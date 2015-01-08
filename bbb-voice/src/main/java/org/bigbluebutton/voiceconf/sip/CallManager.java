@@ -21,7 +21,8 @@ package org.bigbluebutton.voiceconf.sip;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
+import org.red5.server.api.stream.IBroadcastStream;
+import org.red5.server.api.scope.IScope;
 
 import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
@@ -32,6 +33,8 @@ public class CallManager {
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
 	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
+	private final Map<String, IBroadcastStream> videoStreams = new ConcurrentHashMap<String, IBroadcastStream>();
+	private final Map<String, IScope> videoScopes = new ConcurrentHashMap<String, IScope>();
 	
 	public CallAgent add(CallAgent ca) {
 		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
@@ -50,6 +53,26 @@ public class CallManager {
 			identifiers.remove(userId);
 		}
 		return calls.remove(id);
+	}
+
+	public IBroadcastStream addVideoStream(String userId, IBroadcastStream stream) {
+		log.debug("Creating entry (userId, videoStream) = (" + userId + ", " + stream.getPublishedName() + ")" );
+		return videoStreams.put(userId, stream);
+	}
+
+	public IBroadcastStream removeVideoStream(String userId) {
+		String uid = userId;
+		return videoStreams.remove(uid);
+	}
+
+	public IScope addVideoScope(String userId, IScope scope) {
+		log.debug("Creating entry (userId, scope) = (" + userId + ", " + scope.getName() + ")" );
+		return videoScopes.put(userId, scope);
+	}
+
+	public IScope removeVideoScope(String userId) {
+		String uid = userId;
+		return videoScopes.remove(uid);
 	}
 
 	public CallAgent removeByUserId(String userId) {
@@ -82,6 +105,18 @@ public class CallManager {
 			log.debug("[Video context] clientId retrieved with the userid " + uid + " ==> " + id);
 			return calls.get(id);
 		}
+	}
+
+	public IBroadcastStream getVideoStream(String userId) {
+		String uid = userId;
+		log.debug("[Video context] stream retrieved for the userid " + uid);
+			return videoStreams.get(uid);
+	}
+
+	public IScope getVideoScope(String userId) {
+		String uid = userId;
+		log.debug("[Video context] scope retrieved for the userid " + uid);
+			return videoScopes.get(uid);
 	}
 	
 	public Collection<CallAgent> getAll() {

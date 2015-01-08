@@ -180,15 +180,23 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String clientId, String userId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
+        IBroadcastStream videoStream = callManager.getVideoStream(userId);
+        IScope videoScope = callManager.getVideoScope(userId);
+        log.debug("Starting Audio Stream for the user ["+userId+"]");
         if (ca != null) {
-           ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
+            ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
+            if ((videoStream != null) && (videoScope != null)){
+                log.debug(" There's a VideoStream for this audio call, starting it ");
+                ca.startBbbToFreeswitchVideoStream(videoStream,videoScope);
+            }
         }
     }
     
     public void stopBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
     	CallAgent ca = callManager.get(clientId);
+
         if (ca != null) {
            ca.stopBbbToFreeswitchAudioStream(broadcastStream, scope);
         } else {
@@ -200,10 +208,12 @@ public class SipPeer implements SipRegisterAgentListener {
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) 
            ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
-        else
+        else{
             log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
-                       + " userId " + userId);
-        
+                       + " userId " + userId + ". Saving the current stream and scope to be used when the CallAgent is created by this user");
+            callManager.addVideoStream(userId,broadcastStream);
+            callManager.addVideoScope(userId,scope);
+        }
     }
     
     public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
