@@ -54,7 +54,7 @@ public class RtpVideoStreamReceiver {
     private long lastPacketReceived = 0;
     private long baseTimestamp = 0;
 
-    private boolean isVideoPaused = false;
+    private boolean isVideoPaused = true;
 
     private long timestampThreshold = 30000;    
     private long realTimestamp = 0;
