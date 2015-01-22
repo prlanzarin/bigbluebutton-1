@@ -52,6 +52,7 @@ public class CallManager {
 		if(userId != null) {
 			identifiers.remove(userId);
 		}
+		log.debug("Removing callAgent entry for user: " + userId);
 		return calls.remove(id);
 	}
 
@@ -62,6 +63,7 @@ public class CallManager {
 
 	public IBroadcastStream removeVideoStream(String userId) {
 		String uid = userId;
+		log.debug("Removing videoStream entry for user: "  + userId  );
 		return videoStreams.remove(uid);
 	}
 
@@ -72,6 +74,7 @@ public class CallManager {
 
 	public IScope removeVideoScope(String userId) {
 		String uid = userId;
+		log.debug("Removing scope entry for user: "  + userId  );
 		return videoScopes.remove(uid);
 	}
 
