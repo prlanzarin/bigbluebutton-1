@@ -6163,7 +6163,25 @@ InviteClientContext.prototype = {
           if (self.isCanceled || self.status === C.STATUS_TERMINATED) {
             return;
           }
+
           self.hasOffer = true;
+
+          var videoMediaDescription = "m=video 20007 RTP/SAVPF 109\r\n";
+
+          //Freeswitch receives AUDIO directly from WebRTC (client),
+          //but the VIDEO will flow from bbb-voice.
+          //So, the VIDEO "c" attribute is going to be different.
+          //TEM QUE COLOCAR O IP DO VOICE.
+          var videoCIN = "c=IN IP4 10.0.3.99\r\n"
+
+          var videoCodec = "a=rtpmap:109 H264/90000/1\r\n"
+          var videoAttributes = "a=fmtp:109 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
+
+          offer = offer.concat(videoMediaDescription);
+          offer = offer.concat(videoCIN);
+          offer = offer.concat(videoCodec);
+          offer = offer.concat(videoAttributes);
+
           self.request.body = offer;
           self.status = C.STATUS_INVITE_SENT;
           self.send();
@@ -6185,11 +6203,14 @@ InviteClientContext.prototype = {
   },
 
   receiveInviteResponse: function(response) {
+
     var cause, //localMedia,
       session = this,
       id = response.call_id + response.from_tag + response.to_tag,
       extraHeaders = [],
       options = {};
+
+    var videoDescription = "";  
 
     if (this.status === C.STATUS_TERMINATED || response.method !== SIP.C.INVITE) {
       return;
@@ -6254,6 +6275,19 @@ InviteClientContext.prototype = {
       }
       return;
     }
+
+    //Removing the video description...
+    var startVideoIndex = response.body.indexOf("m=video");
+    if(startVideoIndex != -1) {
+        videoDescription = response.body.substr(startVideoIndex, (response.body.length-1) ); 
+        response.body = response.body.replace(videoDescription,"");
+        
+        console.log(response.body);
+        console.log("====================================================");
+        console.log(videoDescription);
+    }
+
+    //FALTA PEGAR A VARIÁVEL videoDescription E MANDAR PRO CLIENT
 
     switch(true) {
       case /^100$/.test(response.status_code):
@@ -6543,6 +6577,7 @@ InviteClientContext.prototype = {
              * SDP Answer does not fit the Offer. Accept the call and Terminate.
              */
             function(e) {
+              //console.log("deu merda!");
               session.logger.warn(e);
               session.acceptAndTerminate(response, 488, 'Not Acceptable Here');
               session.failed(response, SIP.C.causes.BAD_MEDIA_DESCRIPTION);
