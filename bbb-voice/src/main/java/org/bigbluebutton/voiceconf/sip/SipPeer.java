@@ -199,6 +199,7 @@ public class SipPeer implements SipRegisterAgentListener {
 
         if (ca != null) {
            ca.stopBbbToFreeswitchAudioStream(broadcastStream, scope);
+       
         } else {
         	log.info("Can't stop talk stream as stream may have already been stopped.");
         }
@@ -218,8 +219,11 @@ public class SipPeer implements SipRegisterAgentListener {
     
     public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.getByUserId(userId);
-        if (ca != null) 
+        if (ca != null) {
            ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
+           callManager.removeVideoStream(userId);
+           callManager.removeVideoScope(userId);
+        }
         else
             log.debug("Could not STOP BbbToFreeswitchVideoStream: there is no CallAgent with"
                        + "userId " + userId);

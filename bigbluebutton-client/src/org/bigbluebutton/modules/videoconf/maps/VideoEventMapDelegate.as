@@ -28,7 +28,7 @@ package org.bigbluebutton.modules.videoconf.maps
   import flash.net.NetConnection;
   
   import mx.collections.ArrayCollection;
-  
+  import org.bigbluebutton.util.i18n.ResourceUtil;
   import org.bigbluebutton.common.LogUtil;
   import org.bigbluebutton.common.events.CloseWindowEvent;
   import org.bigbluebutton.common.events.OpenWindowEvent;
@@ -338,7 +338,7 @@ package org.bigbluebutton.modules.videoconf.maps
         fsWindow = null;
       }
         fsWindow = new VideoWindow();
-        fsWindow.title = "FreeSWITCH video";
+        fsWindow.title = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
         fsWindow.userID = "FreeSWITCH video";
         fsWindow.videoOptions = options;       
         fsWindow.resolutions = "640x480".split(",");
