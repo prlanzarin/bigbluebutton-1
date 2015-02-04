@@ -1,5 +1,13 @@
 
-var callerIdName, conferenceVoiceBridge, userAgent, userMicMedia, userWebcamMedia, currentSession;
+var callerIdName, conferenceVoiceBridge, userAgent, userMicMedia, userWebcamMedia, currentSession,swfReady=false;
+
+function setSWFIsReady(){
+	swfReady=true;
+}
+
+function swfIsReady(){
+	return swfReady;
+}
 
 function callIntoConference(voiceBridge, callback) {
 	if (!callerIdName) {
@@ -50,7 +58,7 @@ function joinWebRTCVoiceConference() {
 		}
 	}
 	
-	callIntoConference(conferenceVoiceBridge, callback);
+	return callIntoConference(conferenceVoiceBridge, callback);
 }
 
 function leaveWebRTCVoiceConference() {
@@ -87,7 +95,7 @@ function startWebRTCAudioTest(){
 		}
 	}
 	
-	callIntoConference("9196", callback);
+	return callIntoConference("9196", callback);
 }
 
 function stopWebRTCAudioTest(){
@@ -216,7 +224,7 @@ function webrtc_call(username, voiceBridge, callback) {
 	}
 	
 	if (userMicMedia !== undefined) {
-		make_call(username, voiceBridge, server, callback);
+		return make_call(username, voiceBridge, server, callback);
 	} else {
 		callback({'status':'mediarequest'});
 		getUserMicMedia(function(stream) {
@@ -247,7 +255,13 @@ function make_call(username, voiceBridge, server, callback) {
 	};
 	
 	console.log("Calling to " + voiceBridge + "....");
+
+	//invite returns the context , which is the InviteClientContext of sip.js
 	currentSession = userAgent.invite('sip:' + voiceBridge + '@' + server, options); 
+	//print 
+	console.log("Current Session: ");
+	console.log(currentSession.invite);
+
 	
 	console.log('call connecting');
 	callback({'status':'connecting'});
@@ -267,13 +281,44 @@ function make_call(username, voiceBridge, server, callback) {
 	currentSession.on('accepted', function(data){
 		console.log('BigBlueButton call started');
 		callback({'status':'started'});
+		getSWF("BigBlueButton").saveWebRTCVideoParameters(getVideoParametersFromCurrentSession()); 
 	});
+}
+
+function getSWF(movieName) 
+{ 
+    if (navigator.appName.indexOf("Microsoft") != -1) 
+    { 
+        return window[movieName]; 
+    } 
+    else 
+    { 
+        return document[movieName]; 
+    } 
+} 
+
+function getVideoParametersFromCurrentSession(){
+	var remoteSdp = currentSession.mediaHandler.peerConnection.remoteDescription.sdp;
+	
+	console.log("Current WebRTC Session's remote SDP:");
+	console.log(remoteSdp);
+	
+	//video params
+	var remoteVideoPort = sdp.match(/m=video\ \d+/g); //change 'audio' to 'video'
+	
+	var localVideoPort = "20007"; // save in the session and get it from there
+	
+	var resultString = ""; 
+	resultString += "remoteVideoPort="+remoteVideoPort;
+	resultString += ",localVideoPort="+localVideoPort;
+	
+	return resultString;
 }
 
 function webrtc_hangup(callback) {
 	console.log("Hanging up current session");
 	if (callback) {
-	  currentSession.on('bye', callback);
+	  console.log(currentSession.on('bye', callback));
 	}
 	currentSession.bye();
 }

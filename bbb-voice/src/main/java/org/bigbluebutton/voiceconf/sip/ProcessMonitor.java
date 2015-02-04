@@ -20,7 +20,7 @@ public class ProcessMonitor implements Runnable {
 
     private Thread thread = null;
 
-    ProcessMonitor(String[] command) {
+    public ProcessMonitor(String[] command) {
         this.command = command;
         this.process = null;
         this.inputStreamMonitor = null;

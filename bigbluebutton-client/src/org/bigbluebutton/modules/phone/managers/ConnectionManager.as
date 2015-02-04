@@ -203,6 +203,7 @@ package org.bigbluebutton.modules.phone.managers {
 			trace(LOG + "in doCall - Calling " + dialStr + (listenOnly? " *listen only*": ""));
       JSLog.debug(LOG + "in doCall - Calling " + dialStr + (listenOnly? " *listen only*": ""));
 			netConnection.call("voiceconf.call", null, "default", username, dialStr, listenOnly.toString());
+			//webRTCVideoSend("video=true");
 		}
 				
 		public function doHangUp():void {			
@@ -211,6 +212,13 @@ package org.bigbluebutton.modules.phone.managers {
         JSLog.debug(LOG + "hanging up call");
 				netConnection.call("voiceconf.hangup", null, "default");
 			}
+		}
+
+		public function webRTCVideoSend(videoParameters:String):void{
+			trace(LOG + "webRTC video parameters: " + videoParameters);
+      JSLog.debug(LOG + "webRTC video parameters: " + videoParameters);
+      		//for test only 
+			netConnection.call("voiceconf.webRTCVideoSend", null, "default", username, videoParameters);
 		}
 		
 		public function onBWCheck(... rest):Number { 

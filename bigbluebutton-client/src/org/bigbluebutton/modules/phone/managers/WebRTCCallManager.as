@@ -42,19 +42,31 @@ package org.bigbluebutton.modules.phone.managers
     private var options:PhoneOptions;
     
     private var model:WebRTCModel = PhoneModel.getInstance().webRTCModel;
+    private var connectionManager:ConnectionManager;
+    private var videoParameters:String;
     
     public function WebRTCCallManager() {
       var browserInfo:Array = JSAPI.getInstance().getBrowserInfo();
       if (browserInfo != null) {
         browserType = browserInfo[0];
         browserVersion = browserInfo[1];
-      }
+      }           
+      
+      //create connection manager for the bbb-voice app
+      connectionManager = new ConnectionManager();
     }
     
     private function isWebRTCSupported():Boolean {
       return (ExternalInterface.available && ExternalInterface.call("isWebRTCAvailable"));
     }
     
+    private function setupCallbacks():void{
+    	//prepare the callbacks to be called from javascript
+    	ExternalInterface.addCallback("saveWebRTCVideoParameters", saveWebRTCVideoParameters);
+    	ExternalInterface.call("setSWFIsReady"); //tell javascript , the callback is ready for calling
+    	trace(LOG+" Callbacks ready to be called from Javascript");
+    	
+    }
     public function userRequestedHangup():void {
       if (usingWebRTC) hangup();
     }
@@ -63,24 +75,55 @@ package org.bigbluebutton.modules.phone.managers
       options = new PhoneOptions();
       if (options.useWebRTCIfAvailable && isWebRTCSupported()) {
         usingWebRTC = true;
+        setupCallbacks();
       }
+      var uid:String = String(Math.floor(new Date().getTime()));
+      var uname:String = encodeURIComponent(UsersUtil.getMyExternalUserID() + "-bbbID-" + UsersUtil.getMyUsername()); 
+      connectionManager.setup(uid, UsersUtil.getMyUserID(), uname , UsersUtil.getInternalMeetingID(), options.uri,UsersUtil.getVoiceBridge());
+      connect();
     }
     
-    private function startWebRTCEchoTest():void {
+    private function connect():void {
+        connectionManager.connect();
+    }
+    
+    private function startWebRTCEchoTest():void {    	
+    	String 
 	    model.state = Constants.CALLING_INTO_ECHO_TEST;
-      ExternalInterface.call("startWebRTCAudioTest");
+    	ExternalInterface.call("startWebRTCAudioTest");
     }
     
-    private function endEchoTest():void {
-      ExternalInterface.call("stopWebRTCAudioTest");
+    private function endEchoTest():void {  
+    	ExternalInterface.call("stopWebRTCAudioTest"); //this function stops the audio test and calls into conference
     }
 	
-	  private function endEchoTestJoinConference():void {
-		  ExternalInterface.call("stopWebRTCAudioTestJoinConference");
+	  private function endEchoTestJoinConference():void {		  
+	  	  trace(LOG + "Ending Echo Test and Joining Conference ");
+	  	  //save video parameters
+		  ExternalInterface.call("stopWebRTCAudioTestJoinConference");		  
 	  }
     
+	  //callback called from javascript
+	  public function saveWebRTCVideoParameters(parameters:String):void{
+		  //it's beeing also called with the echo test
+		  videoParameters = parameters; 
+		  if (!videoParameters) videoParameters = "Undefined SDP video parameters";
+		  trace(LOG + "saveWebRTCVideoParameters: "+ videoParameters);
+	  }
+	  
     private function hangup():void {
       ExternalInterface.call("stopWebRTCAudioTest");
+    }
+
+    public function startWebRTCVideo(streamPath:String):void{
+   	 if(!connectionManager.isConnected()) {
+   	        trace(LOG + "No connection with bbb-voice app, aborting webRTC Video");
+   	        return;
+   	 }   	 
+   	 var videoData:String = videoParameters+","+streamPath
+   	 connectionManager.webRTCVideoSend(videoData); //send data to bbb-voice app
+   	 trace(LOG + "webRTC videoData sent to bbb-voice application");
+   	 return;
     }
     
     public function handleWebRTCEchoTestStartedEvent():void {
@@ -118,11 +161,13 @@ package org.bigbluebutton.modules.phone.managers
     }
     
     private function joinVoiceConference():void {
+    	trace(LOG + "joinVoiceConference");
       model.state = Constants.JOIN_VOICE_CONFERENCE;
       ExternalInterface.call("joinWebRTCVoiceConference");      
     }
     
     public function handleJoinVoiceConferenceCommand(event:JoinVoiceConferenceCommand):void {
+     
       trace(LOG + "handleJoinVoiceConferenceCommand - usingWebRTC: " + usingWebRTC + ", event.mic: " + event.mic);
       
       if (!usingWebRTC || !event.mic) return;

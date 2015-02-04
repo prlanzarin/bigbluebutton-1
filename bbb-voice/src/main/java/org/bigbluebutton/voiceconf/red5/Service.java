@@ -19,13 +19,17 @@
 package org.bigbluebutton.voiceconf.red5;
 
 import java.text.MessageFormat;
+
 import org.slf4j.Logger;
+import org.bigbluebutton.voiceconf.sip.FFmpegCommand;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
+import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 import org.bigbluebutton.voiceconf.sip.SipPeerManager;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
+import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
@@ -33,6 +37,7 @@ public class Service {
     private SipPeerManager sipPeerManager;
 	
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
+	private ProcessMonitor processMonitor = null;
     	
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
 		if (listenOnly) {
@@ -86,7 +91,54 @@ public class Service {
 			return false;
 		}
 	}
-
+	
+	public Boolean webRTCVideoSend(String videoParameters) {
+		String[] parameters = videoParameters.split(",");  
+		
+		log.debug("webRTC Video Parameters:" + videoParameters);
+		
+    	String clientId = Red5.getConnectionLocal().getClient().getId();
+    	String userid = getUserId();
+    	String username = getUsername();
+    	
+    	String ip = Red5.getConnectionLocal().getHost();
+    	String remotePort = parameters[2];
+    	String localPort = parameters[3];
+    	String streamPath = parameters[4];
+    	String codecId = "96";
+    	
+    	log.debug("{} is requesting to send video through webRTC.", username + "[uid=" + userid + "][clientid=" + clientId + "] - streamPath="+ streamPath);    	
+    	
+    	String inputLive = streamPath+" live=1";
+		String output = "rtp://" + ip + ":" + remotePort + "?localport=" + localPort;
+		
+		FFmpegCommand ffmpeg = new FFmpegCommand();
+		ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+		ffmpeg.setInput(inputLive);
+		ffmpeg.setCodec("h264");
+		ffmpeg.setPreset("ultrafast");
+		ffmpeg.setProfile("baseline");
+		ffmpeg.setLevel("1.3");
+		ffmpeg.setFormat("rtp");
+		ffmpeg.setPayloadType(String.valueOf(codecId));
+		ffmpeg.setLoglevel("quiet");
+		ffmpeg.setSliceMaxSize("1024");
+		ffmpeg.setMaxKeyFrameInterval("10");
+		ffmpeg.setOutput(output);
+		
+		String[] command = ffmpeg.getFFmpegCommand(true);
+		
+		// Free local port before starting ffmpeg
+		//localVideoSocket.close();
+		
+		log.debug("Preparing FFmpeg process monitor");
+		
+		processMonitor = new ProcessMonitor(command);
+		processMonitor.start();
+		    	
+	   	return true;
+	}
+	
 	private String getClientId() {
 		IConnection conn = Red5.getConnectionLocal();
 		return conn.getClient().getId();
