@@ -6166,16 +6166,16 @@ InviteClientContext.prototype = {
 
           self.hasOffer = true;
 
-          var videoMediaDescription = "m=video 20007 RTP/SAVPF 109\r\n";
+          var videoMediaDescription = "m=video 20007 RTP/SAVPF 96\r\n";
 
           //Freeswitch receives AUDIO directly from WebRTC (client),
           //but the VIDEO will flow from bbb-voice.
           //So, the VIDEO "c" attribute is going to be different.
           //TEM QUE COLOCAR O IP DO VOICE.
-          var videoCIN = "c=IN IP4 10.0.3.99\r\n"
+          var videoCIN = "c=IN IP4 143.54.10.191\r\n"
 
-          var videoCodec = "a=rtpmap:109 H264/90000/1\r\n"
-          var videoAttributes = "a=fmtp:109 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
+          var videoCodec = "a=rtpmap:96 H264/90000/1\r\n"
+          var videoAttributes = "a=fmtp:96 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
 
           offer = offer.concat(videoMediaDescription);
           offer = offer.concat(videoCIN);
@@ -6281,7 +6281,7 @@ InviteClientContext.prototype = {
     if(startVideoIndex != -1) {
         videoDescription = response.body.substr(startVideoIndex, (response.body.length-1) ); 
         response.body = response.body.replace(videoDescription,"");
-        
+        this.videoRemoteDescription = videoDescription;
         console.log(response.body);
         console.log("====================================================");
         console.log(videoDescription);

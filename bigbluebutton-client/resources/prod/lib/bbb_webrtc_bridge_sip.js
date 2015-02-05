@@ -58,7 +58,7 @@ function joinWebRTCVoiceConference() {
 		}
 	}
 	
-	return callIntoConference(conferenceVoiceBridge, callback);
+	callIntoConference(conferenceVoiceBridge, callback);
 }
 
 function leaveWebRTCVoiceConference() {
@@ -95,7 +95,7 @@ function startWebRTCAudioTest(){
 		}
 	}
 	
-	return callIntoConference("9196", callback);
+	callIntoConference("9196", callback);
 }
 
 function stopWebRTCAudioTest(){
@@ -224,7 +224,7 @@ function webrtc_call(username, voiceBridge, callback) {
 	}
 	
 	if (userMicMedia !== undefined) {
-		return make_call(username, voiceBridge, server, callback);
+		make_call(username, voiceBridge, server, callback);
 	} else {
 		callback({'status':'mediarequest'});
 		getUserMicMedia(function(stream) {
@@ -298,17 +298,15 @@ function getSWF(movieName)
 } 
 
 function getVideoParametersFromCurrentSession(){
-	var remoteSdp = currentSession.mediaHandler.peerConnection.remoteDescription.sdp;
-	
-	console.log("Current WebRTC Session's remote SDP:");
+	//var remoteSdp = currentSession.mediaHandler.peerConnection.remoteDescription.sdp;
+	var remoteSdp = currentSession.videoRemoteDescription;
+	var resultString = "";
+	console.log("Current WebRTC Session's remote video SDP:");
 	console.log(remoteSdp);
 	
-	//video params
-	var remoteVideoPort = sdp.match(/m=video\ \d+/g); //change 'audio' to 'video'
-	
-	var localVideoPort = "20007"; // save in the session and get it from there
-	
-	var resultString = ""; 
+	//video params	
+	var remoteVideoPort = remoteSdp.match(/m=video\ \d+/g)[0].split(" ")[1];
+	var localVideoPort = "20007"; // save in the session and get it from there 
 	resultString += "remoteVideoPort="+remoteVideoPort;
 	resultString += ",localVideoPort="+localVideoPort;
 	
@@ -318,7 +316,7 @@ function getVideoParametersFromCurrentSession(){
 function webrtc_hangup(callback) {
 	console.log("Hanging up current session");
 	if (callback) {
-	  console.log(currentSession.on('bye', callback));
+	  currentSession.on('bye', callback);
 	}
 	currentSession.bye();
 }

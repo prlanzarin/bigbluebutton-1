@@ -25,11 +25,15 @@ import org.bigbluebutton.voiceconf.sip.FFmpegCommand;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
 import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 import org.bigbluebutton.voiceconf.sip.SipPeerManager;
+import org.red5.app.sip.codecs.Codec;
+import org.red5.app.sip.codecs.H264Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
+import org.red5.app.sip.codecs.H264Codec;
+import org.red5.app.sip.codecs.Codec;
 
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
@@ -102,13 +106,13 @@ public class Service {
     	String username = getUsername();
     	
     	String ip = Red5.getConnectionLocal().getHost();
-    	String remotePort = parameters[2];
-    	String localPort = parameters[3];
-    	String streamPath = parameters[4];
-    	String codecId = "96";
+    	String remotePort = parameters[2].split("=")[1];
+    	String localPort = parameters[3].split("=")[1];
+    	String streamPath = parameters[4].replace("]", "");
+    	Codec codec = new H264Codec();
     	
-    	log.debug("{} is requesting to send video through webRTC.", username + "[uid=" + userid + "][clientid=" + clientId + "] - streamPath="+ streamPath);    	
-    	
+    	log.debug("{} is requesting to send video through webRTC. " + "[uid=" + userid + "][clientid=" + clientId + "]", username);    	
+    	log.debug("Video Parameters: remotePort = "+remotePort+ ", localPort = "+localPort+" rtmp-stream = "+streamPath);
     	String inputLive = streamPath+" live=1";
 		String output = "rtp://" + ip + ":" + remotePort + "?localport=" + localPort;
 		
@@ -120,7 +124,7 @@ public class Service {
 		ffmpeg.setProfile("baseline");
 		ffmpeg.setLevel("1.3");
 		ffmpeg.setFormat("rtp");
-		ffmpeg.setPayloadType(String.valueOf(codecId));
+		ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
 		ffmpeg.setLoglevel("quiet");
 		ffmpeg.setSliceMaxSize("1024");
 		ffmpeg.setMaxKeyFrameInterval("10");
@@ -135,6 +139,7 @@ public class Service {
 		
 		processMonitor = new ProcessMonitor(command);
 		processMonitor.start();
+		log.debug("ffmpeg is running with the command line: " + processMonitor.toString());
 		    	
 	   	return true;
 	}
