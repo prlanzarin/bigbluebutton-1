@@ -108,7 +108,7 @@ public class Service {
     	String ip = Red5.getConnectionLocal().getHost();
     	String remotePort = parameters[2].split("=")[1];
     	String localPort = parameters[3].split("=")[1];
-    	String streamPath = parameters[4].replace("]", "");
+    	String streamPath = parameters[4].replace("]", "").toLowerCase();
     	Codec codec = new H264Codec();
     	
     	log.debug("{} is requesting to send video through webRTC. " + "[uid=" + userid + "][clientid=" + clientId + "]", username);    	
@@ -139,8 +139,6 @@ public class Service {
 		
 		processMonitor = new ProcessMonitor(command);
 		processMonitor.start();
-		log.debug("ffmpeg is running with the command line: " + processMonitor.toString());
-		    	
 	   	return true;
 	}
 	

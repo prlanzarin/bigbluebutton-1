@@ -6171,8 +6171,7 @@ InviteClientContext.prototype = {
           //Freeswitch receives AUDIO directly from WebRTC (client),
           //but the VIDEO will flow from bbb-voice.
           //So, the VIDEO "c" attribute is going to be different.
-          //TEM QUE COLOCAR O IP DO VOICE.
-          var videoCIN = "c=IN IP4 143.54.10.191\r\n"
+          var videoCIN = "c=IN IP4 143.54.10.191\r\n" //should be taken from bbb-client
 
           var videoCodec = "a=rtpmap:96 H264/90000/1\r\n"
           var videoAttributes = "a=fmtp:96 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
@@ -6577,7 +6576,6 @@ InviteClientContext.prototype = {
              * SDP Answer does not fit the Offer. Accept the call and Terminate.
              */
             function(e) {
-              //console.log("deu merda!");
               session.logger.warn(e);
               session.acceptAndTerminate(response, 488, 'Not Acceptable Here');
               session.failed(response, SIP.C.causes.BAD_MEDIA_DESCRIPTION);
