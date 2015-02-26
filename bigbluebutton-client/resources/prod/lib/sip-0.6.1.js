@@ -6165,13 +6165,14 @@ InviteClientContext.prototype = {
           }
 
           self.hasOffer = true;
-
-          var videoMediaDescription = "m=video 20007 RTP/SAVPF 96\r\n";
+		  var localVideoPort = +Math.floor(Math.random() * 65535) + 20007;
+		  currentSession.localVideoPort = localVideoPort;
+          var videoMediaDescription = "m=video "+localVideoPort+" RTP/SAVPF 96\r\n";
 
           //Freeswitch receives AUDIO directly from WebRTC (client),
           //but the VIDEO will flow from bbb-voice.
           //So, the VIDEO "c" attribute is going to be different.
-          var videoCIN = "c=IN IP4 143.54.10.191\r\n" //should be taken from bbb-client
+          var videoCIN = "c=IN IP4 "+userAgent.configuration.hostportParams+"\r\n" //should be taken from bbb-client
 
           var videoCodec = "a=rtpmap:96 H264/90000/1\r\n"
           var videoAttributes = "a=fmtp:96 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";

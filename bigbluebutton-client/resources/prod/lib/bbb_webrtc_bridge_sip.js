@@ -281,7 +281,7 @@ function make_call(username, voiceBridge, server, callback) {
 	currentSession.on('accepted', function(data){
 		console.log('BigBlueButton call started');
 		callback({'status':'started'});
-		getSWF("BigBlueButton").saveWebRTCVideoParameters(getVideoParametersFromCurrentSession()); 
+		getSWF("BigBlueButton").onWebRTCCallAccepted(getVideoParametersFromCurrentSession()); 
 	});
 }
 
@@ -306,7 +306,7 @@ function getVideoParametersFromCurrentSession(){
 	
 	//video params	
 	var remoteVideoPort = remoteSdp.match(/m=video\ \d+/g)[0].split(" ")[1];
-	var localVideoPort = "20007"; // save in the session and get it from there 
+	var localVideoPort = currentSession.localVideoPort; // save in the session and get it from there 
 	resultString += "remoteVideoPort="+remoteVideoPort;
 	resultString += ",localVideoPort="+localVideoPort;
 	

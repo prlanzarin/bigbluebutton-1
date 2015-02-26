@@ -215,10 +215,24 @@ package org.bigbluebutton.modules.phone.managers {
 		}
 
 		public function webRTCVideoSend(videoParameters:String):void{
-			trace(LOG + "webRTC video parameters: " + videoParameters);
-      JSLog.debug(LOG + "webRTC video parameters: " + videoParameters);
       		//for test only 
 			netConnection.call("voiceconf.webRTCVideoSend", null, "default", username, videoParameters);
+			trace(LOG + "webRTC videoData sent to bbb-voice application. Video parameters: " + videoParameters);
+		    JSLog.debug(LOG + "webRTC videoData sent to bbb-voice application. Video parameters: " + videoParameters);
+		}
+
+		public function onWebRTCCallAccepted(portParameters:String):void{
+			trace(LOG + "webRTC Call Accepted: communicating with bbb-voice");
+			JSLog.debug(LOG + "webRTC Call Accepted: registering with bbb-voice");
+			netConnection.call("voiceconf.acceptWebRTCCall", null, "default", username, portParameters);
+		}
+
+		public function doHangUpWebRTCCall():void{
+			if (isConnected()) {
+		        trace(LOG + "hanging up webRTC Call on bbb-voice's context");
+		        JSLog.debug(LOG + "hanging up webRTC Call on bbb-voice's context");
+						netConnection.call("voiceconf.hangUpWebRTCCall", null, "default");
+			}
 		}
 		
 		public function onBWCheck(... rest):Number { 

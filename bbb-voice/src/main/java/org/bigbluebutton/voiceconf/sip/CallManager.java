@@ -35,6 +35,7 @@ public class CallManager {
 	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
 	private final Map<String, IBroadcastStream> videoStreams = new ConcurrentHashMap<String, IBroadcastStream>();
 	private final Map<String, IScope> videoScopes = new ConcurrentHashMap<String, IScope>();
+	private final Map<String, String> webRTCPorts = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
 		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
@@ -76,6 +77,18 @@ public class CallManager {
 		String uid = userId;
 		log.debug("Removing scope entry for user: "  + userId  );
 		return videoScopes.remove(uid);
+	}
+
+	public String addWebRTCPorts(String userId, String ports) {
+		//format: localPort=xxxx,remotePort=xxxx
+		log.debug("Creating entry (userId, ports) = (" + userId + ", " + ports + ")" );
+		return webRTCPorts.put(userId, ports);
+	}
+
+	public String removeWebRTCPorts(String userId) {
+		String uid = userId;
+		log.debug("Removing videoStream entry for user: "  + userId  );
+		return webRTCPorts.remove(uid);
 	}
 
 	public CallAgent removeByUserId(String userId) {
