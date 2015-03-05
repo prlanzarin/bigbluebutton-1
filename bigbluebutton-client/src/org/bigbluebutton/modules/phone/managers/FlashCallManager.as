@@ -28,6 +28,7 @@
   import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
   import org.bigbluebutton.modules.phone.events.JoinVoiceConferenceCommand;
   import org.bigbluebutton.modules.phone.events.LeaveVoiceConferenceCommand;
+  import org.bigbluebutton.modules.phone.events.SendWebRTCDataToFlashEvent;
 
   public class FlashCallManager
   {
@@ -370,12 +371,13 @@
           trace("Ignoring join voice as state=[" + state + "]");
       }
     }
-    
+
     public function handleLeaveVoiceConferenceCommand(event:LeaveVoiceConferenceCommand):void {
       JSLog.debug(LOG + "Handling LeaveVoiceConferenceCommand, current state: " + state + ", using flash: " + usingFlash);
       trace(LOG + "Handling LeaveVoiceConferenceCommand, current state: " + state + ", using flash: " + usingFlash);
       if (!usingFlash && state != ON_LISTEN_ONLY_STREAM) {
         // this is the case when the user was connected to webrtc and then leaves the conference
+          connectionManager.doWebRTCHangUp();
         return;
       }
       hangup();
@@ -422,6 +424,15 @@
     public function handleUseFlashModeCommand():void {
       usingFlash = true;
       startCall(true);
+    }
+
+    public function handleWebRTCCallAccepted(event:SendWebRTCDataToFlashEvent):void{
+        if(!connectionManager.isConnected()) {
+                      trace(LOG + "No connection with bbb-voice app, aborting webRTC Video");
+                  }else{
+                      connectionManager.onWebRTCCallAccepted(event.remoteVideoPort,event.localVideoPort);                      
+                      trace(LOG + "onWebRTCCallAccepted: webRTC Call registered on bbb-voice");
+                  }
     }
   }
 }

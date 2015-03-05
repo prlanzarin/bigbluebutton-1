@@ -137,9 +137,9 @@ public class Application extends MultiThreadedApplicationAdapter {
         log.debug("{} [clientid={}] is leaving the voice conf app. Removing from ConnectionManager.", username + "[uid=" + userid + "]", clientId);
         log.debug("[appDisconnect] Voice Bridge: " + voiceBridge);
 
-
-
         String peerId = (String) Red5.getConnectionLocal().getAttribute("VOICE_CONF_PEER");
+
+        hangUpWebRTC(peerId,userid);
 
         if(voiceBridge != "UNKNOWN-VOICEBRIDGE") {
             GlobalCall.removeUser(clientId, voiceBridge);
@@ -169,13 +169,19 @@ public class Application extends MultiThreadedApplicationAdapter {
         //System.out.println("streamPublishStart: " + stream.getPublishedName());
         IConnection conn = Red5.getConnectionLocal();
         String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-        
+
         if(isVideoStream(stream)){
             super.streamPublishStart(stream);
             videoUserId = getBbbVideoUserId(stream);
             log.debug("Video UserId: " + videoUserId);
             peerId = "default";
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream, conn.getScope());
+
+            try {
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream, conn.getScope());
+                sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, videoUserId);
+            } catch (PeerNotFoundException e) {
+log.error("PeerNotFound {}", peerId);
+            }
 
         } else if (peerId != null) {
             super.streamPublishStart(stream);
@@ -200,6 +206,15 @@ public class Application extends MultiThreadedApplicationAdapter {
                 }
         }
         return true;
+    }
+
+	private void hangUpWebRTC(String peerId,String userid){
+		try{
+			sipPeerManager.removeWebRTCParameters(peerId, userid);
+			sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId, userid);
+        } catch (PeerNotFoundException e) {
+            log.error("PeerNotFound {}", peerId);
+        }
     }
 
     /**
@@ -230,18 +245,24 @@ public class Application extends MultiThreadedApplicationAdapter {
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
 
         if(isVideoStream(stream)){
-            userId = getBbbVideoUserId(stream);
-            log.debug("Closing only the video stream of the UserId " + userId);
-            peerId = "default";
-            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
-            super.streamBroadcastClose(stream);
-        } 
-
-        else if (peerId != null) {  
-            log.debug("Audio disconnected: closing AUDIO and VIDEO streams");	
-	    	sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
-	    	super.streamBroadcastClose(stream);    
+	        try {
+	            userId = getBbbVideoUserId(stream);
+	            log.debug("Closing only the video stream of the UserId " + userId);
+	            peerId = "default";
+	            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
+	            sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId,userId);
+	            super.streamBroadcastClose(stream);
+	        }catch (PeerNotFoundException e){ log.error("PeerNotFound {}", peerId);}
+        } else if (peerId != null) {
+        try{
+                log.debug("Audio disconnected: closing AUDIO and VIDEO streams");
+	            sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
+	            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
+	            sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId,userId);
+	            super.streamBroadcastClose(stream);
+        }catch(PeerNotFoundException e) {
+            log.error("PeerNotFound {}", peerId);
+        }
         }
     }
     

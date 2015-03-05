@@ -6166,7 +6166,7 @@ InviteClientContext.prototype = {
 
           self.hasOffer = true;
 		  var localVideoPort = +Math.floor(Math.random() * 65535) + 20007;
-		  currentSession.localVideoPort = localVideoPort;
+		  currentSession.localVideoPort = localVideoPort+"";
           var videoMediaDescription = "m=video "+localVideoPort+" RTP/SAVPF 96\r\n";
 
           //Freeswitch receives AUDIO directly from WebRTC (client),
@@ -6286,8 +6286,6 @@ InviteClientContext.prototype = {
         console.log("====================================================");
         console.log(videoDescription);
     }
-
-    //FALTA PEGAR A VARIÁVEL videoDescription E MANDAR PRO CLIENT
 
     switch(true) {
       case /^100$/.test(response.status_code):

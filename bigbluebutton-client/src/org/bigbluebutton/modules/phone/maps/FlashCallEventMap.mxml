@@ -42,6 +42,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.phone.events.StopPhoneModuleEvent;
 			import org.bigbluebutton.modules.phone.events.UseFlashModeCommand;
 			import org.bigbluebutton.modules.phone.managers.FlashCallManager;
+			import org.bigbluebutton.modules.phone.events.SendWebRTCDataToFlashEvent;
 		]]>
 	</mx:Script>
 	
@@ -109,5 +110,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   
   <EventHandlers type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}">        
     <MethodInvoker generator="{FlashCallManager}" method="handleBecomeViewer"/>
+  </EventHandlers>
+
+  <EventHandlers type="{SendWebRTCDataToFlashEvent.ON_WEBRTC_CALL_ACCEPTED}">
+    <MethodInvoker generator="{FlashCallManager}" method="handleWebRTCCallAccepted" arguments="{event}"/>
   </EventHandlers>
 </EventMap>

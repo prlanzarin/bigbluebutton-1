@@ -25,6 +25,7 @@ package org.bigbluebutton.modules.phone.managers
   import org.bigbluebutton.modules.phone.events.WebRTCEchoTestStartedEvent;
   import org.bigbluebutton.modules.phone.events.WebRTCJoinedVoiceConferenceEvent;
   import org.bigbluebutton.modules.phone.events.WebRTCMediaEvent;
+  import org.bigbluebutton.modules.phone.events.SendWebRTCDataToFlashEvent;
   import org.bigbluebutton.modules.phone.models.Constants;
   import org.bigbluebutton.modules.phone.models.WebRTCModel;
   import org.bigbluebutton.util.i18n.ResourceUtil;
@@ -40,23 +41,23 @@ package org.bigbluebutton.modules.phone.managers
     
     private var usingWebRTC:Boolean = false;
     private var options:PhoneOptions;
-    
+
     private var model:WebRTCModel = PhoneModel.getInstance().webRTCModel;
-    private var connectionManager:ConnectionManager;
     private var videoParameters:String;
-    
+    private var remoteVideoPort:String;
+    private var localVideoPort:String;
+
     public function WebRTCCallManager() {
       var browserInfo:Array = JSAPI.getInstance().getBrowserInfo();
       if (browserInfo != null) {
         browserType = browserInfo[0];
         browserVersion = browserInfo[1];
-      }           
+      }
       
-      //create connection manager for the bbb-voice app
-      connectionManager = new ConnectionManager();
-      videoParameters = "";
+      remoteVideoPort = "";
+      localVideoPort = "";
     }
-    
+
     private function isWebRTCSupported():Boolean {
       return (ExternalInterface.available && ExternalInterface.call("isWebRTCAvailable"));
     }
@@ -79,15 +80,9 @@ package org.bigbluebutton.modules.phone.managers
         setupCallbacks();
       }
       var uid:String = String(Math.floor(new Date().getTime()));
-      var uname:String = encodeURIComponent(UsersUtil.getMyExternalUserID() + "-bbbID-" + UsersUtil.getMyUsername()); 
-      connectionManager.setup(uid, UsersUtil.getMyUserID(), uname , UsersUtil.getInternalMeetingID(), options.uri,UsersUtil.getVoiceBridge());
-      connect();
+      var uname:String = encodeURIComponent(UsersUtil.getMyExternalUserID() + "-bbbID-" + UsersUtil.getMyUsername());
     }
-    
-    private function connect():void {
-        connectionManager.connect();
-    }
-    
+
     private function startWebRTCEchoTest():void {    	
     	String 
 	    model.state = Constants.CALLING_INTO_ECHO_TEST;
@@ -95,8 +90,9 @@ package org.bigbluebutton.modules.phone.managers
     }
     
     private function endEchoTest():void {  
-    	ExternalInterface.call("stopWebRTCAudioTest"); //this function stops the audio test and calls into conference
-        videoParameters="";
+        ExternalInterface.call("stopWebRTCAudioTest"); //this function stops the audio test and calls into conference        
+        remoteVideoPort="";
+        localVideoPort="";
     }
 	
 	  private function endEchoTestJoinConference():void {		  
@@ -106,52 +102,37 @@ package org.bigbluebutton.modules.phone.managers
 		  ExternalInterface.call("stopWebRTCAudioTestJoinConference");		  
 	  }
     
-	  //callback called from javascript
-	  public function onWebRTCCallAccepted(parameters:String):void{
-		  if(echoTestDone){
-			  saveWebRTCVideoParameters(parameters);
+        //callback called from javascript
+        public function onWebRTCCallAccepted(remotePort:String,localPort:String):void{
+            if(echoTestDone){
+                saveWebRTCVideoParameters(remotePort, localPort);
 
-			  if(!connectionManager.isConnected()) {
-			      trace(LOG + "No connection with bbb-voice app, aborting webRTC Video");	   	        
-			  }else{
-			      connectionManager.onWebRTCCallAccepted(parameters);
-			      trace(LOG + "onWebRTCCallAccepted: webRTC Call registered on bbb-voice");
-			  }
-		  }
-		  return;
-	  }
-	  
-	private function saveWebRTCVideoParameters(parameters:String):void{
-		videoParameters = parameters;
-		if (!videoParameters) videoParameters = "Undefined SDP video parameters";
-		  trace(LOG + "saveWebRTCVideoParameters: "+ videoParameters);
-		return;
-	}
+                var flashWebRTCEvent:SendWebRTCDataToFlashEvent = new SendWebRTCDataToFlashEvent(SendWebRTCDataToFlashEvent.ON_WEBRTC_CALL_ACCEPTED);
+                flashWebRTCEvent.remoteVideoPort = remoteVideoPort;
+                flashWebRTCEvent.localVideoPort = localVideoPort;
+                dispatcher.dispatchEvent(flashWebRTCEvent);
+                trace(LOG + "webRTC videoData sent to flash application");
+            }
+            return;
+        }
+
+        private function saveWebRTCVideoParameters(remotePort:String,localPort:String):void{			
+            remoteVideoPort=remotePort;
+            localVideoPort=localPort;
+            trace(LOG + "saveWebRTCVideoParameters: remoteVideoPort= "+remoteVideoPort+", localVideoPort= "+ localVideoPort);
+            return;
+        }
+
 
     private function hangup():void {
       ExternalInterface.call("stopWebRTCAudioTest");
-      connectionManager.doHangUpWebRTCCall();
-    }
-
-    public function startWebRTCVideo(streamPath:String):void{
-   	 if(!connectionManager.isConnected()) {
-   	        trace(LOG + "No connection with bbb-voice app, aborting webRTC Video");
-   	        return;
-     }
-
-     if(videoParameters != "") {
-         var videoData:String = videoParameters+","+streamPath;
-         trace(LOG + "webRTC videoData ready to be sent to bbb-voice application: " + videoParameters);
-         connectionManager.webRTCVideoSend(videoData);
-     }else trace(LOG + "webRTC video data not sent to bbb-voice. Waiting for a webRTC call to send it");
-   	 return;
     }
 
     public function handleWebRTCEchoTestStartedEvent():void {
       model.state = Constants.DO_ECHO_TEST;
       dispatcher.dispatchEvent(new WebRTCEchoTestStartedEvent());
     }
-    
+
     public function handleWebRTCEchoTestNoAudioEvent():void {
       trace(LOG + "handleWebRTCEchoTestNoAudioEvent");
       model.state = Constants.ECHO_TEST_FAILED;

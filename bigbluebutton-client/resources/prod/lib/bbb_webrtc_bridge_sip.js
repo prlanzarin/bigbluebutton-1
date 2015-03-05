@@ -281,7 +281,9 @@ function make_call(username, voiceBridge, server, callback) {
 	currentSession.on('accepted', function(data){
 		console.log('BigBlueButton call started');
 		callback({'status':'started'});
-		getSWF("BigBlueButton").onWebRTCCallAccepted(getVideoParametersFromCurrentSession()); 
+		//getSWF("BigBlueButton").onWebRTCCallAccepted(getVideoParametersFromCurrentSession());
+		saveRemoteVideoPortInCurrentSession();
+		getSWF("BigBlueButton").onWebRTCCallAccepted(currentSession.remoteVideoPort,currentSession.localVideoPort);	
 	});
 }
 
@@ -297,20 +299,17 @@ function getSWF(movieName)
     } 
 } 
 
-function getVideoParametersFromCurrentSession(){
+function saveRemoteVideoPortInCurrentSession(){
 	//var remoteSdp = currentSession.mediaHandler.peerConnection.remoteDescription.sdp;
 	var remoteSdp = currentSession.videoRemoteDescription;
-	var resultString = "";
-	console.log("Current WebRTC Session's remote video SDP:");
-	console.log(remoteSdp);
-	
-	//video params	
-	var remoteVideoPort = remoteSdp.match(/m=video\ \d+/g)[0].split(" ")[1];
-	var localVideoPort = currentSession.localVideoPort; // save in the session and get it from there 
-	resultString += "remoteVideoPort="+remoteVideoPort;
-	resultString += ",localVideoPort="+localVideoPort;
-	
-	return resultString;
+	if (typeof remoteSdp != 'undefined'){
+		console.log("Current WebRTC Session's remote video SDP:");
+		console.log(remoteSdp);
+
+		//video params
+		var remoteVideoPort = remoteSdp.match(/m=video\ \d+/g)[0].split(" ")[1];
+		currentSession.remoteVideoPort = remoteVideoPort;
+	}else currentSession.remoteVideoPort = "";
 }
 
 function webrtc_hangup(callback) {

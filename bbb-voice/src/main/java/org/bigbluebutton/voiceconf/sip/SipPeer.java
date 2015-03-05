@@ -30,6 +30,7 @@ import org.bigbluebutton.voiceconf.red5.ClientConnectionManager;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.H264Codec;
 import org.red5.logging.Red5LoggerFactory;
+import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 
@@ -234,15 +235,27 @@ public class SipPeer implements SipRegisterAgentListener {
         
     }
 
-    public void startBbbToFreeswitchWebRTCVideoStream(String userId, String ip, String remoteVideoPort , String localVideoPort) {
+    public void startBbbToFreeswitchWebRTCVideoStream(String userId) {
         IBroadcastStream videoStream = callManager.getVideoStream(userId);
         IScope scope = callManager.getVideoScope(userId);
         Codec codec;
         FFmpegCommand ffmpeg;
+        String ip = Red5.getConnectionLocal().getHost();
+        String ports[] = callManager.getWebRTCPorts(userId);
+        String remoteVideoPort="";
+        String localVideoPort="";
+
+        if (ports == null) {
+            log.debug("There isn't any webRTCCall going on for this user. Waiting for the user to make a call");
+            return;
+        }else {
+            remoteVideoPort=ports[0];
+            localVideoPort = ports[1];
+        }
 
         if (videoStream == null){
-            //
             log.debug("There's no videoStream for this webRTCCall. Waiting for the user to enable your webcam");
+            return;
         } else {
             //start webRTCVideoStream
             codec = new H264Codec();
@@ -283,7 +296,19 @@ public class SipPeer implements SipRegisterAgentListener {
     }
 
     public void stopBbbToFreeswitchWebRTCVideoStream(String userId) {
+        log.debug("Stopping webRTC video stream for the user: "+userId);
+        callManager.removeVideoStream(userId);
+        callManager.removeVideoScope(userId);
         if (processMonitor != null) processMonitor.destroy();
+    }
+
+    public void saveWebRTCParameters(String userId,String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+        String[] ports = {remoteVideoPort,localVideoPort};
+        callManager.addWebRTCPorts(userId, ports);
+    }
+
+    public void removeWebRTCParameters(String userId) throws PeerNotFoundException {
+            callManager.removeWebRTCPorts(userId);
     }
 
     public String getStreamType(String clientId, String streamName) {

@@ -112,10 +112,10 @@ public final class SipPeerManager {
         }
     }
 
-    public void startBbbToFreeswitchWebRTCVideoStream(String peerId, String userId, String ip, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+    public void startBbbToFreeswitchWebRTCVideoStream(String peerId, String userId) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchWebRTCVideoStream(userId, ip, remoteVideoPort,localVideoPort);
+            sipUser.startBbbToFreeswitchWebRTCVideoStream(userId);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
@@ -123,6 +123,20 @@ public final class SipPeerManager {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
             sipUser.stopBbbToFreeswitchWebRTCVideoStream(userId);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void saveWebRTCParameters(String peerId, String userId,String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.saveWebRTCParameters(userId,remoteVideoPort,localVideoPort);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void removeWebRTCParameters(String peerId, String userId) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.removeWebRTCParameters(userId);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 

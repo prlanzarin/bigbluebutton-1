@@ -35,7 +35,7 @@ public class CallManager {
 	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
 	private final Map<String, IBroadcastStream> videoStreams = new ConcurrentHashMap<String, IBroadcastStream>();
 	private final Map<String, IScope> videoScopes = new ConcurrentHashMap<String, IScope>();
-	private final Map<String, String> webRTCPorts = new ConcurrentHashMap<String, String>();
+	private final Map<String, String[]> webRTCPorts = new ConcurrentHashMap<String, String[]>();
 	
 	public CallAgent add(CallAgent ca) {
 		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
@@ -48,7 +48,14 @@ public class CallManager {
 	
 	public CallAgent remove(String id) {
 		CallAgent ca = calls.get(id);
-		String userId = ca.getUserId();
+		String userId;
+
+		if(ca != null)
+			userId=ca.getUserId();
+		else{
+			log.debug("There's no CallAgent for the user {} anymore",id);
+			return null;
+		}
 
 		if(userId != null) {
 			identifiers.remove(userId);
@@ -79,17 +86,20 @@ public class CallManager {
 		return videoScopes.remove(uid);
 	}
 
-	public String addWebRTCPorts(String userId, String ports) {
-		//format: localPort=xxxx,remotePort=xxxx
-		log.debug("Creating entry (userId, ports) = (" + userId + ", " + ports + ")" );
+	public String[] addWebRTCPorts(String userId, String[] ports) {
+		log.debug("Creating entry (userId, ports) = (" + userId + ", [" + ports[0]+","+ports[1] + "])" );
 		return webRTCPorts.put(userId, ports);
 	}
 
-	public String removeWebRTCPorts(String userId) {
-		String uid = userId;
-		log.debug("Removing videoStream entry for user: "  + userId  );
-		return webRTCPorts.remove(uid);
+	public String[] getWebRTCPorts(String userId) {
+		return webRTCPorts.get(userId);
 	}
+
+    public String[] removeWebRTCPorts(String userId) {
+        String uid = userId;
+        log.debug("Removing webRTCPorts entry for user: "  + userId  );
+        return webRTCPorts.remove(uid);
+    }
 
 	public CallAgent removeByUserId(String userId) {
 		String uid = userId;

@@ -214,27 +214,22 @@ package org.bigbluebutton.modules.phone.managers {
 			}
 		}
 
-		public function webRTCVideoSend(videoParameters:String):void{
-      		//for test only 
-			netConnection.call("voiceconf.webRTCVideoSend", null, "default", username, videoParameters);
-			trace(LOG + "webRTC videoData sent to bbb-voice application. Video parameters: " + videoParameters);
-		    JSLog.debug(LOG + "webRTC videoData sent to bbb-voice application. Video parameters: " + videoParameters);
-		}
+        public function doWebRTCHangUp():void {
+            if (isConnected()) {
+                trace(LOG + "webRTC HangUp");
+                JSLog.debug(LOG + "webRTC HangUp");
+                netConnection.call("voiceconf.hangupwebrtc", null, "default");
+            }
+        }
 
-		public function onWebRTCCallAccepted(portParameters:String):void{
-			trace(LOG + "webRTC Call Accepted: communicating with bbb-voice");
-			JSLog.debug(LOG + "webRTC Call Accepted: registering with bbb-voice");
-			netConnection.call("voiceconf.acceptWebRTCCall", null, "default", username, portParameters);
-		}
+        public function onWebRTCCallAccepted(remoteVideoPort:String, localVideoPort:String):void{
+            trace(LOG + "webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort = "+remoteVideoPort+" , "+"localVideoPort = "+localVideoPort+"]");
+            JSLog.debug(LOG + "webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort = "+remoteVideoPort+" , "+"localVideoPort = "+localVideoPort+"]");
+            netConnection.call("voiceconf.acceptWebRTCCall", null, "default",remoteVideoPort,localVideoPort);
+            trace(LOG + "webRTC Call Accepted: communicating with bbb-voice done");
+            JSLog.debug(LOG + "webRTC Call Accepted: communication with bbb-voice done");
+        }
 
-		public function doHangUpWebRTCCall():void{
-			if (isConnected()) {
-		        trace(LOG + "hanging up webRTC Call on bbb-voice's context");
-		        JSLog.debug(LOG + "hanging up webRTC Call on bbb-voice's context");
-						netConnection.call("voiceconf.hangUpWebRTCCall", null, "default");
-			}
-		}
-		
 		public function onBWCheck(... rest):Number { 
 			return 0; 
 		} 

@@ -99,70 +99,16 @@ public class Service {
 		}
 	}
 	
-	public Boolean webRTCVideoSend(String videoParameters) {
-		String[] parameters = videoParameters.split(",");
-		Codec codec;
-		FFmpegCommand ffmpeg;
-		
-		log.debug("webRTC Video Parameters:" + videoParameters);
-		
-    	String clientId = Red5.getConnectionLocal().getClient().getId();
-    	String userid = getUserId();
-    	String username = getUsername();
-    	
-    	String ip = Red5.getConnectionLocal().getHost();
-        String remoteVideoPort = parameters[2].split("=")[1];
-        String localVideoPort = parameters[3].split("=")[1];
-    	String streamPath = parameters[4].replace("]", "").toLowerCase();
-
-        codec = new H264Codec();
-    	
-    	log.debug("{} is requesting to send video through webRTC. " + "[uid=" + userid + "][clientid=" + clientId + "]", username);    	
-        log.debug("Video Parameters: remotePort = "+remoteVideoPort+ ", localPort = "+localVideoPort+" rtmp-stream = "+streamPath);
-    	String inputLive = streamPath+" live=1";
-		String output = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
-		
-		ffmpeg = new FFmpegCommand();
-		ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
-		ffmpeg.setInput(inputLive);
-		ffmpeg.setCodec("h264");
-		ffmpeg.setPreset("ultrafast");
-		ffmpeg.setProfile("baseline");
-		ffmpeg.setLevel("1.3");
-		ffmpeg.setFormat("rtp");
-		ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
-		ffmpeg.setLoglevel("quiet");
-		ffmpeg.setSliceMaxSize("1024");
-		ffmpeg.setMaxKeyFrameInterval("10");
-		ffmpeg.setOutput(output);
-		
-		String[] command = ffmpeg.getFFmpegCommand(true);
-		
-		// Free local port before starting ffmpeg
-		//localVideoSocket.close();
-		
-		log.debug("Preparing FFmpeg process monitor");
-		
-		processMonitor = new ProcessMonitor(command);
-		processMonitor.start();
-	   	return true;
-	}
-	
-	public Boolean acceptWebRTCCall(String portParameters){
+	public Boolean acceptWebRTCCall(String peerId,String remoteVideoPort, String localVideoPort){
         //called by the client
-        String[] parameters = portParameters.split(",");
-        log.debug("Accepted a webRTC Call: saving it's parameters"+portParameters);
-        String clientId = Red5.getConnectionLocal().getClient().getId();
+        log.debug("Accepted a webRTC Call: saving it's parameters: [remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");        
         String userid = getUserId();
-        String username = getUsername();
-        String ip = Red5.getConnectionLocal().getHost();
 
-        String remoteVideoPort = parameters[2].split("=")[1];
-        String localVideoPort = parameters[3].split("=")[1].replace("]",""); 	
-        String peerId = "default";
-        //String videoStream = sipPeerManager.CallManager.getVideoStream(userid).getPublishedName();
         try{
-            if (sipPeerManager != null) sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, userid, ip,remoteVideoPort, localVideoPort);
+            if (sipPeerManager != null) {
+                sipPeerManager.saveWebRTCParameters(peerId,userid,remoteVideoPort,localVideoPort);
+                sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, userid);
+            }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
         } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
@@ -171,11 +117,11 @@ public class Service {
         return true;
 	}
 
-	public Boolean hangUpWebRTCCAll(String peerId){
+	public Boolean hangupwebrtc(String peerId){
         String userid = getUserId();
         log.debug("hanging up webRTC Call on voice's context");
         try{
-            sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId, userid);
+            sipPeerManager.removeWebRTCParameters(peerId, userid);
         } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
             return false;
