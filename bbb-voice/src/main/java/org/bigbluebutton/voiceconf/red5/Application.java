@@ -194,11 +194,11 @@ log.error("PeerNotFound {}", peerId);
 
     private boolean createGlobalAudio(String clientId,String peerId, String callerName, String destination){
         log.debug("peerId = "+peerId+" callerName = "+ callerName + " destination = "+ destination);
-
+        String userId = getUserId();
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
                 String extension = callExtensionPattern.format(new String[] { destination });
                 try {
-                    sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, extension);
+                    sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, userId, extension);
                     Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
                 } catch (PeerNotFoundException e) {
                     log.error("PeerNotFound {}", peerId);

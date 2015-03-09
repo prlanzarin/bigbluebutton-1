@@ -142,6 +142,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 
 	@Override
 	public void onStoppedReceiving() {
+        log.debug("Stopped Receiving");
 		if (observer != null) observer.onStreamStopped();
 	}
 

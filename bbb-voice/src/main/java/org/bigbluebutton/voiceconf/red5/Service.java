@@ -47,12 +47,13 @@ public class Service {
 	private ProcessMonitor processMonitor = null;
     	
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
+	    String userId = getUserId();
 		if (listenOnly) {
 			if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
 			    log.warn("Global call for {} not found, creating one", destination);
 				String extension = callExtensionPattern.format(new String[] { destination });
 				try {
-					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination, extension);
+					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination,userId, extension);
 					Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 				} catch (PeerNotFoundException e) {
 					log.error("PeerNotFound {}", peerId);
@@ -72,11 +73,11 @@ public class Service {
     	String clientId = Red5.getConnectionLocal().getClient().getId();
     	String userid = getUserId();
     	String username = getUsername();		
-    log.debug("{} is requesting to join into the conference {}.", username +"[peerId="+ peerId + "][uid=" + userid + "][clientid=" + clientId + "]", destination);
+    log.debug("{} is requesting to join into the conference {}.", username +"[peerId="+ peerId + "][uid=" + userid + "][clientid=" + clientId + " callerName="+callerName+"]", destination);
 		
 		String extension = callExtensionPattern.format(new String[] { destination });
 		try {
-			sipPeerManager.call(peerId, getClientId(), callerName, extension);
+			sipPeerManager.call(peerId, getClientId(), callerName, userid, extension);
 			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 			return true;
 		} catch (PeerNotFoundException e) {

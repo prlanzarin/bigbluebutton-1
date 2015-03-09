@@ -68,6 +68,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private DatagramSocket localAudioSocket;
     private DatagramSocket localVideoSocket;
     private String _callerName;
+    private String _userId;
     private String _destination;
     private Boolean listeningToGlobal = false;
     private IMessagingService messagingService;
@@ -121,8 +122,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return listeningToGlobal;
     }
 
-    public void call(String callerName, String destination) {
+    public void call(String callerName, String userId, String destination) {
     	_callerName = callerName;
+        _userId = userId;
     	_destination = destination;
     	log.debug("{} making a call to {}", callerName, destination);  
     	try {
@@ -174,7 +176,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             userProfile.userID = callerName;
         }
         else {
-            userProfile.userID = callerName.substring( 0, callerName.indexOf("-") );
+            userProfile.userID = _userId;
         }
         log.debug("userID: " + userProfile.userID);
     }

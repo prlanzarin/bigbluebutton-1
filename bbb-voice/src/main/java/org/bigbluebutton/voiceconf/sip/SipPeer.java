@@ -106,7 +106,7 @@ public class SipPeer implements SipRegisterAgentListener {
         log.debug( "SIPUser register : {}", registeredProfile.contactUrl );
     }
 
-    public void call(String clientId, String callerName, String destination) {
+    public void call(String clientId, String callerName, String userId,String destination) {
     	if (!registered) {
     		/* 
     		 * If we failed to register with FreeSWITCH, reject all calls right away.
@@ -121,7 +121,7 @@ public class SipPeer implements SipRegisterAgentListener {
 
     	CallAgent ca = createCallAgent(clientId);
 
-    	ca.call(callerName, destination);
+        ca.call(callerName,userId, destination);
     	callManager.add(ca);
     }
 
