@@ -83,19 +83,19 @@ public final class SipPeerManager {
     }
 
     
-    public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
         log.debug("Start Audio Stream SipPeer");
     	if (sipUser != null) {
             sipUser.startBbbToFreeswitchAudioStream(clientId,userId, broadcastStream, scope);
-    	}
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
     
-    public void stopBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
     		sipUser.stopBbbToFreeswitchAudioStream(clientId, broadcastStream, scope);
-    	}
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
     public void startBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {

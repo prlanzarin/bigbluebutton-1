@@ -186,8 +186,12 @@ log.error("PeerNotFound {}", peerId);
         } else if (peerId != null) {
             super.streamPublishStart(stream);
             videoUserId = userId;
-            log.debug("Starting Audio Stream for the user ["+videoUserId+"]");
-            sipPeerManager.startBbbToFreeswitchAudioStream(peerId, videoUserId, clientId, stream, conn.getScope());
+            try{
+                log.debug("Starting Audio Stream for the user ["+videoUserId+"]");
+                sipPeerManager.startBbbToFreeswitchAudioStream(peerId, videoUserId, clientId, stream, conn.getScope());
+            } catch (PeerNotFoundException e) {
+                log.error("PeerNotFound {}", peerId);
+            }
 //            recordStream(stream);
         }
     }
@@ -257,8 +261,6 @@ log.error("PeerNotFound {}", peerId);
         try{
                 log.debug("Audio disconnected: closing AUDIO and VIDEO streams");
 	            sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
-	            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId, stream, conn.getScope());
-	            sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId,userId);
 	            super.streamBroadcastClose(stream);
         }catch(PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);

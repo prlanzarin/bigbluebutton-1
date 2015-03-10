@@ -195,7 +195,7 @@ public class SipPeer implements SipRegisterAgentListener {
             if ((videoStream != null) && (videoScope != null)){
                 log.debug(" There's a VideoStream for this audio call, starting it ");
                 ca.startBbbToFreeswitchVideoStream(videoStream,videoScope);
-            }
+            }else log.debug("There's no videostream for this flash audio call yet.");
         }
     }
     
@@ -246,7 +246,7 @@ public class SipPeer implements SipRegisterAgentListener {
         String localVideoPort="";
 
         if (ports == null) {
-            log.debug("There isn't any webRTCCall going on for this user. Waiting for the user to make a call");
+            log.debug("There isn't any webRTCCall going on for this user. WebRTC Video will be transmited when the user to make one");
             return;
         }else {
             remoteVideoPort=ports[0];

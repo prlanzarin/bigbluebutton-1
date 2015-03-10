@@ -114,10 +114,15 @@ public class CallManager {
 	}
 	
 	public CallAgent get(String id) {
-	    String userId = id.split("_")[0];
-		if (userId != null)
-		    return calls.get(userId);
-		else return null;
+	    CallAgent ca = calls.get(id);
+	    if(ca != null){
+	        log.debug("Retrieving entry for the client with userId = " + ca.getUserId() +" clientId = " + id);
+	        return ca;
+	    }
+	    else {
+	        log.debug("There's no CallAgent for the user with uid = " + identifiers.get(id) + "and clientId = "+id);
+	        return null;
+	    }
 	}
 
 	public CallAgent getByUserId(String userId) {
