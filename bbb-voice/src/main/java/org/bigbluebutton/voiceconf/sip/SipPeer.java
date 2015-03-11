@@ -214,12 +214,11 @@ public class SipPeer implements SipRegisterAgentListener {
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) 
            ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
-        else{
-            log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
-                       + " userId " + userId + " (maybe this is an webRTC call?). Saving the current stream and scope to be used when the CallAgent is created by this user");
-            callManager.addVideoStream(userId,broadcastStream);
-            callManager.addVideoScope(userId,scope);
-        }
+        else log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
+                       + " userId " + userId + " (maybe this is an webRTC call?). Saving the current stream and scope to be used when the CallAgent is created by this user");            
+
+        callManager.addVideoStream(userId,broadcastStream);
+        callManager.addVideoScope(userId,scope);
     }
     
     public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
@@ -299,7 +298,10 @@ public class SipPeer implements SipRegisterAgentListener {
         log.debug("Stopping webRTC video stream for the user: "+userId);
         callManager.removeVideoStream(userId);
         callManager.removeVideoScope(userId);
-        if (processMonitor != null) processMonitor.destroy();
+        if (processMonitor != null) {
+            processMonitor.destroy();
+            processMonitor = null;
+        }
     }
 
     public void saveWebRTCParameters(String userId,String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {

@@ -189,7 +189,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     		log.debug("Hanging up of a call connected to the global audio stream");
     		notifyListenersOfOnCallClosed();
     	} else {
-    		closeStreams();
+            closeAudioStream();
+            closeVideoStream();
     		if (call != null) call.hangup();
     	}
     	callState = CallState.UA_IDLE; 
@@ -439,12 +440,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
-        if(processMonitor != null) {
-            processMonitor.destroy();
-        }
+        closeVideoStream();
     }
 
-    private void closeStreams() {        
+    private void closeAudioStream() {
     	log.debug("Shutting down the AUDIO stream...");         
         if (audioCallStream != null) {
         	audioCallStream.stopFreeswitchToBbbStream();
@@ -453,12 +452,20 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         	log.debug("Can't shutdown AUDIO stream: already NULL");
         }
 
-        log.debug("Shutting down the VIDEO stream...");         
+    }
+
+    private void closeVideoStream(){
+      /*
+       * closes ffmpeg and some internal video data,
+        although the stream and scope are kept in the call manager
+        if the video is enabled, for a future use.
+      */
+        log.debug("Shutting down the videoCallStream...");
         if (videoCallStream != null) {
             videoCallStream.stopFreeswitchToBbbStream();
             videoCallStream = null;
         } else {
-            log.debug("Can't shutdown VIDEO stream: already NULL");
+            log.debug("Can't shutdown videoCallStream: already NULL");
         }
 
         if(processMonitor != null) {
@@ -696,8 +703,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void onCallClosing(Call call, Message bye) {
     	log.info("Received a BYE from the other end telling us to hangup.");
         
-    	if (!isCurrentCall(call)) return;               
-        closeStreams();
+        if (!isCurrentCall(call)) return;
+        closeAudioStream();
+        closeVideoStream();
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
 

@@ -259,7 +259,7 @@ log.error("PeerNotFound {}", peerId);
 	        }catch (PeerNotFoundException e){ log.error("PeerNotFound {}", peerId);}
         } else if (peerId != null) {
         try{
-                log.debug("Audio disconnected: closing AUDIO and VIDEO streams");
+                log.debug("Audio disconnected: closing flash AUDIO stream");
 	            sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
 	            super.streamBroadcastClose(stream);
         }catch(PeerNotFoundException e) {

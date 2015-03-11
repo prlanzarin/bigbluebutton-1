@@ -281,7 +281,6 @@ function make_call(username, voiceBridge, server, callback) {
 	currentSession.on('accepted', function(data){
 		console.log('BigBlueButton call started');
 		callback({'status':'started'});
-		//getSWF("BigBlueButton").onWebRTCCallAccepted(getVideoParametersFromCurrentSession());
 		saveRemoteVideoPortInCurrentSession();
 		getSWF("BigBlueButton").onWebRTCCallAccepted(currentSession.remoteVideoPort,currentSession.localVideoPort);	
 	});
