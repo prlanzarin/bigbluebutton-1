@@ -2493,7 +2493,42 @@ Hacks = {
         }
       }
       return sdp;
+    },
+
+    hackSessionAttsToAudioAtts: function (sdp) {
+
+      /*
+        'ice-ufrag', 'ice-pwd' and 'fingerprint' attributes appear like SESSION attributes.
+        In order to make FF work with video, we transfer these attributes to MEDIA (audio) attributes
+        To do so, we only put the ice attributes and the fingerprint at the end of the SDP.
+      */
+
+      if (this.isFirefox()) {
+
+          var ufragIndex = sdp.indexOf("a=ice-ufrag");
+          var audioIndex = sdp.indexOf("m=audio");
+
+          if(ufragIndex != -1 && audioIndex != -1 && (audioIndex > ufragIndex)) {
+
+            var fingerprintEndIndex = audioIndex - 1;
+
+            //getting the 'ice-ufrag', 'ice-pwd' and 'fingerprint' attributes 
+            var sessionAtts = sdp.slice(ufragIndex,fingerprintEndIndex);
+            sessionAtts = sessionAtts;
+
+            //removing them from the session attributes
+            sdp = sdp.replace("\r\n" + sessionAtts,"");
+
+            //putting them at the end of the SDP (now they are audio attributes)
+            sdp = sdp + sessionAtts;
+
+            } else
+                 console.log("hackSessionAttsToAudioAtts: ERROR GETTING THE INDEXES");
+      }
+
+      return sdp;
     }
+
   },
 
   Chrome: {
@@ -6164,15 +6199,20 @@ InviteClientContext.prototype = {
             return;
           }
 
+
+          offer = SIP.Hacks.Firefox.hackSessionAttsToAudioAtts(offer);
+
           self.hasOffer = true;
-		  var localVideoPort = +Math.floor(Math.random() * 65535) + 20007;
-		  currentSession.localVideoPort = localVideoPort+"";
-          var videoMediaDescription = "m=video "+localVideoPort+" RTP/SAVPF 96\r\n";
+
+
+		      var localVideoPort = +Math.floor(Math.random() * 65535) + 20007;
+		      currentSession.localVideoPort = localVideoPort+"";
+          var videoMediaDescription = "m=video " + localVideoPort + " RTP/SAVPF 96\r\n";
 
           //Freeswitch receives AUDIO directly from WebRTC (client),
           //but the VIDEO will flow from bbb-voice.
           //So, the VIDEO "c" attribute is going to be different.
-          var videoCIN = "c=IN IP4 "+userAgent.configuration.hostportParams+"\r\n" //should be taken from bbb-client
+          var videoCIN = "c=IN IP4 "+ userAgent.configuration.hostportParams + "\r\n"
 
           var videoCodec = "a=rtpmap:96 H264/90000/1\r\n"
           var videoAttributes = "a=fmtp:96 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
@@ -6181,6 +6221,11 @@ InviteClientContext.prototype = {
           offer = offer.concat(videoCIN);
           offer = offer.concat(videoCodec);
           offer = offer.concat(videoAttributes);
+
+      
+          console.log("Sending the INVITE below:");
+          console.log(offer);
+
 
           self.request.body = offer;
           self.status = C.STATUS_INVITE_SENT;
