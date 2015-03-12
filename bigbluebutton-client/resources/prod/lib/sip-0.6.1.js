@@ -2438,6 +2438,66 @@ var Hacks;
 
 Hacks = {
 
+  AllBrowsers: {
+    addVideoDescription: function (sdp) {
+      /*
+        Artificially adding video description, 
+        in order to send video through bbb-voice while still using webrtc audio
+      */
+
+      var localVideoPort = +Math.floor(Math.random() * 65535) + 20007;
+      currentSession.localVideoPort = localVideoPort+"";
+      var videoMediaDescription = "m=video " + localVideoPort + " RTP/SAVPF 96\r\n";
+
+      /*  Freeswitch receives AUDIO directly from WebRTC (client),
+          but the VIDEO will flow from bbb-voice.
+          So, the VIDEO "c" attribute is going to be the server IP (not the client IP) */
+      var videoCIN = "c=IN IP4 "+ userAgent.configuration.hostportParams + "\r\n"
+
+      /* 
+          Setting the H264 codec and the others attributes we use when we call ffmpeg in bbb-voice
+      */
+      var videoCodec = "a=rtpmap:96 H264/90000/1\r\n"
+      var videoAttributes = "a=fmtp:96 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
+
+
+      /* 
+          Finally, we put the video description at the sdp end
+      */     
+      sdp = sdp.concat(videoMediaDescription);
+      sdp = sdp.concat(videoCIN);
+      sdp = sdp.concat(videoCodec);
+      sdp = sdp.concat(videoAttributes);     
+
+      return sdp;
+    },
+
+    removeVideoDescriptionFromInviteResponse: function (sdp) {
+
+     /*
+        We artificially added the video description in the INVITE.
+        When Freeswitch sends the invite response, we need to remove the
+        video description from it. If not, the WebRTC will fire a error,
+        cause it thinks that it only sent AUDIO description in the original INVITE.
+      */
+
+      var startVideoIndex = sdp.indexOf("m=video");
+      if(startVideoIndex != -1) {
+          videoDescription = sdp.substr(startVideoIndex, (sdp.length-1) ); 
+          sdp = sdp.replace(videoDescription,"");
+          currentSession.videoRemoteDescription = videoDescription;
+
+          console.log("Invite response without video description:");
+          console.log(sdp);
+
+
+      } else
+          console.log("removeVideoDescriptionFromInviteResponse: There is no video description to be removed");
+
+      return sdp;
+    }
+  },
+
   Firefox: {
     /* Condition to detect if hacks are applicable */
     isFirefox: function () {
@@ -2514,13 +2574,12 @@ Hacks = {
 
             //getting the 'ice-ufrag', 'ice-pwd' and 'fingerprint' attributes 
             var sessionAtts = sdp.slice(ufragIndex,fingerprintEndIndex);
-            sessionAtts = sessionAtts;
 
             //removing them from the session attributes
             sdp = sdp.replace("\r\n" + sessionAtts,"");
 
             //putting them at the end of the SDP (now they are audio attributes)
-            sdp = sdp + sessionAtts;
+            sdp = sdp + sessionAtts + "\r\n";
 
             } else
                  console.log("hackSessionAttsToAudioAtts: ERROR GETTING THE INDEXES");
@@ -6199,34 +6258,13 @@ InviteClientContext.prototype = {
             return;
           }
 
-
           offer = SIP.Hacks.Firefox.hackSessionAttsToAudioAtts(offer);
-
-          self.hasOffer = true;
-
-
-		      var localVideoPort = +Math.floor(Math.random() * 65535) + 20007;
-		      currentSession.localVideoPort = localVideoPort+"";
-          var videoMediaDescription = "m=video " + localVideoPort + " RTP/SAVPF 96\r\n";
-
-          //Freeswitch receives AUDIO directly from WebRTC (client),
-          //but the VIDEO will flow from bbb-voice.
-          //So, the VIDEO "c" attribute is going to be different.
-          var videoCIN = "c=IN IP4 "+ userAgent.configuration.hostportParams + "\r\n"
-
-          var videoCodec = "a=rtpmap:96 H264/90000/1\r\n"
-          var videoAttributes = "a=fmtp:96 profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920; sar=13\r\n";
-
-          offer = offer.concat(videoMediaDescription);
-          offer = offer.concat(videoCIN);
-          offer = offer.concat(videoCodec);
-          offer = offer.concat(videoAttributes);
-
-      
+          offer = SIP.Hacks.AllBrowsers.addVideoDescription(offer);
+  
           console.log("Sending the INVITE below:");
           console.log(offer);
 
-
+          self.hasOffer = true;
           self.request.body = offer;
           self.status = C.STATUS_INVITE_SENT;
           self.send();
@@ -6320,17 +6358,8 @@ InviteClientContext.prototype = {
       }
       return;
     }
-
-    //Removing the video description...
-    var startVideoIndex = response.body.indexOf("m=video");
-    if(startVideoIndex != -1) {
-        videoDescription = response.body.substr(startVideoIndex, (response.body.length-1) ); 
-        response.body = response.body.replace(videoDescription,"");
-        this.videoRemoteDescription = videoDescription;
-        console.log(response.body);
-        console.log("====================================================");
-        console.log(videoDescription);
-    }
+   
+    response.body = SIP.Hacks.AllBrowsers.removeVideoDescriptionFromInviteResponse(response.body);
 
     switch(true) {
       case /^100$/.test(response.status_code):
