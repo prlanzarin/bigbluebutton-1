@@ -99,7 +99,7 @@ public class SdpUtils {
      * @return Return the initial local SDP.
      */
     public static SessionDescriptor createInitialSdp(String userName, String viaAddress, 
-    		int audioPort, int videoPort, String audioCodecsPrecedence) {
+    		int audioPort, int videoPort, String audioCodecsPrecedence, boolean isGlobal) {
         
         SessionDescriptor initialDescriptor = null;
                 
@@ -143,6 +143,10 @@ public class SdpUtils {
             if (initialDescriptor == null) {                
                 log.error("Error instantiating the initialDescriptor!");                 
                 return null;
+            }
+            
+            if (isGlobal) {
+            	 initialDescriptor.addAttribute(new AttributeField("recvonly"));
             }
             
             if (audioCodecsNumber > 0) {                

@@ -20,7 +20,7 @@ public class GlobalCall {
     private static Set<String> globalCalls = new HashSet<String>();
     private static Map<String,String> roomToAudioStreamMap = new ConcurrentHashMap<String, String>();
     private static Map<String,Codec> roomToAudioCodecMap = new ConcurrentHashMap<String, Codec>();
-    private static Map<String,KeepGlobalAudioAlive> globalAudioKeepAliverMap = new ConcurrentHashMap<String, KeepGlobalAudioAlive>();
+    //private static Map<String,KeepGlobalAudioAlive> globalAudioKeepAliverMap = new ConcurrentHashMap<String, KeepGlobalAudioAlive>();
     private static Map<String,CallStream> roomToVideoStreamMap = new ConcurrentHashMap<String, CallStream>();
 
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
@@ -41,9 +41,10 @@ public class GlobalCall {
         log.debug("Adding a global audio stream to room {}", voiceConf);
         roomToAudioStreamMap.put(voiceConf, globalAudioStreamName);
         roomToAudioCodecMap.put(voiceConf, sipCodec);
-        KeepGlobalAudioAlive globalAudioKeepAlive = new KeepGlobalAudioAlive(connInfo.getSocket(), connInfo, sipCodec.getCodecId());
-        globalAudioKeepAliverMap.put(voiceConf, globalAudioKeepAlive);
-        globalAudioKeepAlive.start();
+        log.debug("No KeepAlive for now...");
+        //KeepGlobalAudioAlive globalAudioKeepAlive = new KeepGlobalAudioAlive(connInfo.getSocket(), connInfo, sipCodec.getCodecId());
+        //globalAudioKeepAliverMap.put(voiceConf, globalAudioKeepAlive);
+        //globalAudioKeepAlive.start();
     }
 
     public static synchronized String getGlobalAudioStream(String voiceConf) {
@@ -77,9 +78,9 @@ public class GlobalCall {
         voiceConfToListenOnlyUsersMap.remove(voiceConf);
         roomToAudioStreamMap.remove(voiceConf);
         roomToAudioCodecMap.remove(voiceConf);
-        KeepGlobalAudioAlive globalAudioKeepAlive = globalAudioKeepAliverMap.get(voiceConf);
-        globalAudioKeepAlive.halt();
-        globalAudioKeepAliverMap.remove(voiceConf);
+        //KeepGlobalAudioAlive globalAudioKeepAlive = globalAudioKeepAliverMap.get(voiceConf);
+        //globalAudioKeepAlive.halt();
+        //globalAudioKeepAliverMap.remove(voiceConf);
         roomToVideoStreamMap.remove(voiceConf);
         globalCalls.remove(voiceConf);
     }

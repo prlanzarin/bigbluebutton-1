@@ -113,7 +113,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         log.debug("initSessionDescriptor => userProfile.videoPort = " + userProfile.videoPort + " userProfile.audioPort =" + userProfile.audioPort);
         SessionDescriptor newSdp = SdpUtils.createInitialSdp(userProfile.username, 
         		this.clientRtpIp, userProfile.audioPort, 
-        		userProfile.videoPort, userProfile.audioCodecsPrecedence );
+        		userProfile.videoPort, userProfile.audioCodecsPrecedence, isGlobalStream() );
         localSession = newSdp.toString();        
         log.debug("localSession Descriptor = " + localSession );
     }
@@ -649,6 +649,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (callState == CallState.UA_IDLE) return;
 
         if(isGlobalStream()) {
+        	log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL AUDIO received a bye");
             for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext();) {
                 String userId = i.next();
                 log.debug("notifyListenersOfOnCallClosed for {}", userId);
@@ -701,9 +702,15 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     /** Callback function called when arriving a BYE request */
     public void onCallClosing(Call call, Message bye) {
-    	log.info("Received a BYE from the other end telling us to hangup.");
+
+    	if (isGlobalStream())
+    		log.info("Received a BYE (***GLOBAL CALL***) from the other end telling us to hangup. User ID: "+ getUserId());
+    	else
+    		log.info("Received a BYE from the other end telling us to hangup. User ID: "+ getUserId());
+	
+        if (!isCurrentCall(call)) 
+        	return;
         
-        if (!isCurrentCall(call)) return;
         closeAudioStream();
         closeVideoStream();
         notifyListenersOfOnCallClosed();
