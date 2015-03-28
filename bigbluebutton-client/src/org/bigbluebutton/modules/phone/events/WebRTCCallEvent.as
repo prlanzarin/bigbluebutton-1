@@ -11,6 +11,8 @@ package org.bigbluebutton.modules.phone.events
 		public static const WEBRTC_CALL_WAITING_FOR_ICE:String = "WEBRTC_CALL_WAITING_FOR_ICE";
 		
 		public var errorCode:Number;
+		public var remoteVideoPort:Number;
+		public var localVideoPort:Number;
 		
 		public function WebRTCCallEvent(type:String, errorCode:Number=0, bubbles:Boolean=false, cancelable:Boolean=false)
 		{

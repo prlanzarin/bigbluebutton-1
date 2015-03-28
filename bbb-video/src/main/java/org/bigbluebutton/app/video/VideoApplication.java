@@ -20,6 +20,7 @@ package org.bigbluebutton.app.video;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
@@ -43,6 +44,8 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	private EventRecordingService recordingService;
 	private final Map<String, IStreamListener> streamListeners = new HashMap<String, IStreamListener>();
 	
+	private Map<String, CustomStreamRelay> sipRelays = new ConcurrentHashMap<String, CustomStreamRelay>();
+
     @Override
 	public boolean appStart(IScope app) {
 	    super.appStart(app);
@@ -60,6 +63,11 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 
   @Override
 	public boolean roomConnect(IConnection conn, Object[] params) {
+		if (params.length == 0) {
+			params = new Object[2];
+			params[0] = "unknown-meetingid";
+			params[1] = "unknown-userid";
+		}
 		log.info("BBB Video roomConnect"); 
   	String meetingId = ((String) params[0]).toString();
   	String userId = ((String) params[1]).toString();
@@ -159,6 +167,7 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
   
     @Override
     public void streamPublishStart(IBroadcastStream stream) {
+    	log.info("BBB Video streamPublishStart");
     	super.streamPublishStart(stream);
     }
     
@@ -175,6 +184,23 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	        stream.addStreamListener(listener); 
 	        streamListeners.put(conn.getScope().getName() + "-" + stream.getPublishedName(), listener);
         }
+        createSipRelayFor(stream.getPublishedName());
+    }
+
+    private void createSipRelayFor(String streamName) {
+        String sourceServer = Red5.getConnectionLocal().getHost();
+        String sourceStreamName = streamName;
+        String destinationServer = Red5.getConnectionLocal().getHost();
+        String destinationStreamName = streamName;
+        String sourceApp = "video/" + Red5.getConnectionLocal().getScope().getName();
+        String destinationApp = "sip/" + Red5.getConnectionLocal().getScope().getName();
+
+        // Relay stream to sip
+        CustomStreamRelay sipRelay = new CustomStreamRelay();
+        sipRelay.initRelay(new String[] { sourceServer, sourceApp, sourceStreamName,
+                destinationServer, destinationApp, destinationStreamName, "live" });
+        sipRelay.startRelay();
+        sipRelays.put(destinationStreamName, sipRelay);
     }
 
     private Long genTimestamp() {
@@ -208,6 +234,13 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
         event.put("duration", new Long(publishDuration).toString());
         event.put("eventName", "StopWebcamShareEvent");
         recordingService.record(scopeName, event);    		
+      }
+
+      // Close sip relay
+      CustomStreamRelay relay;
+      if((relay = sipRelays.remove(stream.getName())) != null) {
+          log.info("streamBroadcastClose: closing sip relay for [{}]", stream.getPublishedName());
+          relay.stopRelay();
       }
     }
     

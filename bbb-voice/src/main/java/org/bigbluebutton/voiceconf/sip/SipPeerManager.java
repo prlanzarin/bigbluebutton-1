@@ -49,8 +49,9 @@ public final class SipPeerManager {
         sipPeers = Collections.synchronizedMap(new HashMap<String, SipPeer>());
     }
 
-    public void createSipPeer(String peerId, String clientRtpIp, String host, int sipPort, int startRtpPort, int stopRtpPort) {
-    	SipPeer sipPeer = new SipPeer(peerId, clientRtpIp, host, sipPort, startRtpPort, stopRtpPort, messagingService);
+    public void createSipPeer(String peerId, String clientRtpIp, String host, int sipPort, 
+			int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort) {
+    	SipPeer sipPeer = new SipPeer(peerId, clientRtpIp, host, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort, messagingService);
     	sipPeer.setClientConnectionManager(clientConnManager);
     	sipPeer.setCallStreamFactory(callStreamFactory);
     	sipPeers.put(peerId, sipPeer);    	
@@ -62,10 +63,10 @@ public final class SipPeerManager {
   		sipPeer.register(username, password);
     }
         
-    public void call(String peerId, String clientId, String callerName, String destination) throws PeerNotFoundException {
+    public void call(String peerId, String clientId, String callerName, String userId, String destination) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    	sipPeer.call(clientId, callerName, destination);
+        sipPeer.call(clientId, callerName,userId, destination);
     }
 
     public void unregister(String userid) {
@@ -82,20 +83,92 @@ public final class SipPeerManager {
     }
 
     
-    public void startTalkStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
+        log.debug("Start Audio Stream SipPeer");
     	if (sipUser != null) {
-    		sipUser.startTalkStream(clientId, broadcastStream, scope);
-    	}
+            sipUser.startBbbToFreeswitchAudioStream(clientId,userId, broadcastStream, scope);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
     
-    public void stopTalkStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.stopTalkStream(clientId, broadcastStream, scope);
-    	}
+    		sipUser.stopBbbToFreeswitchAudioStream(clientId, broadcastStream, scope);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
- 
+
+    public void startBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.startBbbToFreeswitchVideoStream(userId, broadcastStream, scope);
+        }
+    }
+    
+    public void stopBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.stopBbbToFreeswitchVideoStream(userId, broadcastStream, scope);
+        }
+    }
+
+    public void startBbbToFreeswitchWebRTCVideoStream(String peerId, String userId) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.startBbbToFreeswitchWebRTCVideoStream(userId);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void stopBbbToFreeswitchWebRTCVideoStream(String peerId, String userId) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.stopBbbToFreeswitchWebRTCVideoStream(userId);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void saveWebRTCParameters(String peerId, String userId,String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.saveWebRTCParameters(userId,remoteVideoPort,localVideoPort);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void removeWebRTCParameters(String peerId, String userId) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.removeWebRTCParameters(userId);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public String getStreamType(String peerId, String clientId, String streamName) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            return sipUser.getStreamType(clientId, streamName);
+        }
+        else
+        {
+            log.debug("[SipPeerManager] Invalid peerId");
+            return null;
+        }
+    }
+
+    public boolean isAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            return sipUser.isAudioStream(clientId, broadcastStream);
+        }
+        else
+            return false;
+    }
+
+    public boolean isVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            return sipUser.isVideoStream(clientId, broadcastStream);
+        }
+        else
+            return false;
+    }
     
     private void remove(String userid) {
     	log.debug("Number of SipUsers in Manager before remove {}", sipPeers.size());

@@ -420,10 +420,10 @@
      *
      */
      
-    BBB.webRTCConferenceCallStarted = function() {
+    BBB.webRTCConferenceCallStarted = function(remoteVideoPort, localVideoPort) {
       var swfObj = getSwfObj();
       if (swfObj) {
-        swfObj.webRTCConferenceCallStarted();
+        swfObj.webRTCConferenceCallStarted(remoteVideoPort, localVideoPort);
       }
     }
     
@@ -712,4 +712,3 @@
 
     window.BBB = BBB;
 })(this);
-

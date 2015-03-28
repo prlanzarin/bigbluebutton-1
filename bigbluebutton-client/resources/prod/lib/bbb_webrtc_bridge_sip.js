@@ -33,7 +33,8 @@ function joinWebRTCVoiceConference() {
 				BBB.webRTCConferenceCallEnded();
 				break;
 			case 'started':
-				BBB.webRTCConferenceCallStarted();
+				saveRemoteVideoPortInCurrentSession();
+				BBB.webRTCConferenceCallStarted(currentSession.remoteVideoPort, currentSession.localVideoPort);
 				break;
 			case 'connecting':
 				BBB.webRTCConferenceCallConnecting();
@@ -403,6 +404,25 @@ function make_call(username, voiceBridge, server, callback, recall) {
 			clearTimeout(callTimeout);
 		}
 	});
+}
+
+function saveRemoteVideoPortInCurrentSession() {
+	//var remoteSdp = currentSession.mediaHandler.peerConnection.remoteDescription.sdp;
+	var remoteSdp = currentSession.videoRemoteDescription;
+	if (typeof remoteSdp != 'undefined') {
+		console.log("Current WebRTC session's remote video SDP");
+		console.log(remoteSdp);
+
+		//video params
+		var remoteVideoPort = remoteSdp.match(/m=video\ \d+/g)[0].split(" ")[1];
+		currentSession.remoteVideoPort = remoteVideoPort;
+	} else {
+		currentSession.remoteVideoPort = 0;
+	}
+
+	if (currentSession.remoteVideoPort == 0) {
+		console.log("Remote video port is zero, make sure you've enabled the video codecs in your remote endpoint");
+	}
 }
 
 function webrtc_hangup(callback) {

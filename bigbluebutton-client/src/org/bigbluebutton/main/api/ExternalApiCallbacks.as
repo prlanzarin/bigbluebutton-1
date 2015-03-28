@@ -401,9 +401,12 @@ package org.bigbluebutton.main.api
       _dispatcher.dispatchEvent(event);
     }
     
-    private function handleWebRTCConferenceCallStarted():void {
+    private function handleWebRTCConferenceCallStarted(remoteVideoPort:Number, localVideoPort:Number):void {
       trace(LOG + "handleWebRTCConferenceCallStarted: recieved");
-      _dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED));
+      var e:WebRTCCallEvent = new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED);
+      e.remoteVideoPort = remoteVideoPort;
+      e.localVideoPort = localVideoPort;
+      _dispatcher.dispatchEvent(e);
     }
 	
 	private function handleWebRTCConferenceCallConnecting():void {
