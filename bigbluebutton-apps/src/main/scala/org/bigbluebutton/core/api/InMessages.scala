@@ -466,6 +466,14 @@ case class VoiceRecording(
 	recording: Boolean
 ) extends InMessage
 
+case class SipVideoPaused (
+    meetingID: String
+) extends InMessage
+
+case class SipVideoResumed (
+    meetingID: String
+) extends InMessage
+
 // Whiteboard
 case class SendWhiteboardAnnotationRequest(
     meetingID: String, 
