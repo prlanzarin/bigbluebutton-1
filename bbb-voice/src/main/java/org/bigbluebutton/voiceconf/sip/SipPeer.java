@@ -19,7 +19,9 @@
 package org.bigbluebutton.voiceconf.sip;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.zoolu.sip.provider.*;
 import org.zoolu.net.SocketAddress;
@@ -57,6 +59,7 @@ public class SipPeer implements SipRegisterAgentListener {
     private boolean registered = false;
     private SipPeerProfile registeredProfile;
     private ProcessMonitor processMonitor = null;
+    Map<String, ProcessMonitor> processForUserId = new HashMap<String, ProcessMonitor>();
     
     public SipPeer(String id, String sipClientRtpIp, String host, int sipPort, 
 			int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort, IMessagingService messagingService) {
@@ -289,6 +292,7 @@ public class SipPeer implements SipRegisterAgentListener {
             log.debug("Preparing FFmpeg process monitor");
 
             processMonitor = new ProcessMonitor(command);
+            processForUserId.put(userId,processMonitor);
             processMonitor.start();
         }
 
@@ -298,6 +302,9 @@ public class SipPeer implements SipRegisterAgentListener {
         log.debug("Stopping webRTC video stream for the user: "+userId);
         callManager.removeVideoStream(userId);
         callManager.removeVideoScope(userId);
+
+        //destroy processMonitor-ffmpeg for this user
+        processMonitor = processForUserId.get(userId);
         if (processMonitor != null) {
             processMonitor.destroy();
             processMonitor = null;
