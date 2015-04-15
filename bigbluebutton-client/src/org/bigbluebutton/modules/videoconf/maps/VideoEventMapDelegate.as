@@ -83,7 +83,6 @@ package org.bigbluebutton.modules.videoconf.maps
     private var _isPreviewWebcamOpen:Boolean = false;
     private var _isWaitingActivation:Boolean = false; 
     private var _chromeWebcamPermissionDenied:Boolean = false;
-    private var streamPath:String;
     private var bbbEventDispatcher:Dispatcher;
     
     public function VideoEventMapDelegate(dispatcher:IEventDispatcher)
@@ -369,8 +368,7 @@ package org.bigbluebutton.modules.videoconf.maps
     }
     
     public function startPublishing(e:StartBroadcastEvent):void{
-      streamPath= proxy.connection.uri + "/" + e.stream 
-	  LogUtil.debug("VideoEventMapDelegate:: [" + me + "] startPublishing:: Publishing stream to: " + streamPath);
+	  LogUtil.debug("VideoEventMapDelegate:: [" + me + "] startPublishing:: Publishing stream to: " + proxy.connection.uri + "/" + e.stream);
       streamName = e.stream;
       proxy.startPublishing(e);
       
@@ -385,13 +383,9 @@ package org.bigbluebutton.modules.videoconf.maps
       broadcastEvent.camSettings = UsersUtil.amIPublishing();
       
       _dispatcher.dispatchEvent(broadcastEvent);
-	  if (proxy.videoOptions.showButton) {
+	  if (proxy.videoOptions.showButton) 
 		  button.publishingStatus(button.START_PUBLISHING);		  
-	  }
-	  //dispatch webRTC Event for the video	  
-	  var webRTCEvent:BBBEvent = new BBBEvent(BBBEvent.WEBRTC_VIDEO_STARTED);
-	  webRTCEvent.payload.streamPath = streamPath;	  		
-	  bbbEventDispatcher.dispatchEvent(webRTCEvent);	  
+	  
     }
        
     public function stopPublishing(e:StopBroadcastEvent):void{
