@@ -2591,25 +2591,36 @@ var Hacks = module.exports = {
       */
 
       if (this.isFirefox()) {
-        var ufragIndex = sdp.indexOf("a=ice-ufrag");
-        var audioIndex = sdp.indexOf("m=audio");
+		var startIndex = 0;
+		var endIndex = 0;
+		var iceAttributes = "";
+		var fingerprintAttributes= "";
 
-        if (ufragIndex != -1 && audioIndex != -1 && (audioIndex > ufragIndex)) {
+        //get all ice attributes
+        while ((startIndex = sdp.indexOf("a=ice-")) != -1){
+			endIndex = sdp.indexOf("\r\n",startIndex)+2;
+			var iceAttribute = sdp.slice(startIndex,endIndex);
+			if(iceAttribute != ""){
+				iceAttributes += iceAttribute; //save the attribute
+				console.log("hackSessionAttsToAudioAtts: moving session attribute:["+iceAttribute+"]");
+				sdp = sdp.replace(iceAttribute,""); //remove it from it's current position of sdp, and find the next one
+			}
+        }
+		if (iceAttributes != ""){
+			sdp+=iceAttributes; //add it back at the end of the sdp
+        }
 
-          var fingerprintEndIndex = audioIndex - 1;
+        //get the fingerprint attribute
+		if ((startIndex = sdp.indexOf("a=fingerprint")) != -1){
+			endIndex = sdp.indexOf("\r\n",startIndex)+2;
+			var fingerprintAttribute = sdp.slice(startIndex,endIndex);
+			sdp = sdp.replace(fingerprintAttribute,""); //remove it from it's current position of sdp
+			sdp+=fingerprintAttribute; //add it back at the end of the sdp
+		}
 
-          //getting the 'ice-ufrag', 'ice-pwd' and 'fingerprint' attributes 
-          var sessionAtts = sdp.slice(ufragIndex,fingerprintEndIndex);
-
-          //removing them from the session attributes
-          sdp = sdp.replace("\r\n" + sessionAtts,"");
-
-          //putting them at the end of the SDP (now they are audio attributes)
-          sdp = sdp + sessionAtts + "\r\n";
-
-          } else {
-            console.log("hackSessionAttsToAudioAtts: ERROR GETTING THE INDEXES");
-          }
+		if((iceAttributes != "") || (fingerprintAttribute != "")){
+			sdp+="\r\n"; //end of the sdp
+		}else console.log("hackSessionAttsToAudioAtts: ERROR GETTING THE INDEXES");
       }
       return sdp;
     },
