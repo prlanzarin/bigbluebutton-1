@@ -481,7 +481,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         String globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
-        while (globalAudioStreamName.equals(null) || globalVideoStreamName.equals(null)) {
+        while (globalAudioStreamName == null || globalVideoStreamName == null) {
             try {
                 Thread.sleep(100);
             } catch (Exception e) {
