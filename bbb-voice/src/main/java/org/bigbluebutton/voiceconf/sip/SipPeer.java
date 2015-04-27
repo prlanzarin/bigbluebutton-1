@@ -109,7 +109,7 @@ public class SipPeer implements SipRegisterAgentListener {
         log.debug( "SIPUser register : {}", registeredProfile.contactUrl );
     }
 
-    public void call(String clientId, String callerName, String userId,String destination) {
+    public void call(String clientId, String callerName, String userId,String destination,String meetingId) {
     	if (!registered) {
     		/* 
     		 * If we failed to register with FreeSWITCH, reject all calls right away.
@@ -123,7 +123,7 @@ public class SipPeer implements SipRegisterAgentListener {
     	}
 
     	CallAgent ca = createCallAgent(clientId);
-
+        ca.setMeetingId(meetingId);//set meetingId to use with fs->bbb video stream when call is accepted
         ca.call(callerName,userId, destination);
     	callManager.add(ca);
     }
@@ -215,8 +215,13 @@ public class SipPeer implements SipRegisterAgentListener {
 
     public void startBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.getByUserId(userId);
-        if (ca != null) 
-           ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
+        if (ca != null){
+            if(ca.isGlobalStream()){
+                log.debug("This is a global CallAgent, there's no video stream to send from bbb to freeswitch");
+            }else {
+                ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
+            }
+        }
         else log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
                        + " userId " + userId + " (maybe this is an webRTC call?). Saving the current stream and scope to be used when the CallAgent is created by this user");            
 

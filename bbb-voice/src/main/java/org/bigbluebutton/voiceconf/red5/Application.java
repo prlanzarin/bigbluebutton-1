@@ -39,18 +39,18 @@ import com.google.gson.Gson;
 public class Application extends MultiThreadedApplicationAdapter {
 	private static Logger log = Red5LoggerFactory.getLogger(Application.class, "sip");
 
-  private SipPeerManager sipPeerManager;
-  private ClientConnectionManager clientConnManager;
-    
-  private String sipServerHost = "localhost";
-  private String sipClientRtpIp = "";
-  private int sipPort = 5070;
-  private int startAudioPort = 3000;
-	private int stopAudioPort = 3029;
-	private int startVideoPort = 3030;
-	private int stopVideoPort = 3059;
-	private String password = "secret";
+	//properties defined in red5-web.xml
+	private SipPeerManager sipPeerManager;
+	private ClientConnectionManager clientConnManager;
+	private String sipServerHost;
+	private String sipClientRtpIp = "";
+	private int sipPort;
+	private String password;
 	private String username;
+	private int startAudioPort;
+	private int stopAudioPort;
+	private int startVideoPort;
+	private int stopVideoPort;
 	private CallStreamFactory callStreamFactory;
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
 	
@@ -129,7 +129,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
 
         String peerId = "default";
-        createGlobalAudio(clientId,peerId,username,voiceBridge);
+        createGlobalCall(clientId,peerId,username,voiceBridge,meetingId);
         GlobalCall.addUser(clientId, username, voiceBridge);
         Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
         if (!GlobalCall.isVideoPaused(voiceBridge)) {
@@ -244,13 +244,13 @@ public class Application extends MultiThreadedApplicationAdapter {
         }
     }
     
-    private boolean createGlobalAudio(String clientId,String peerId, String callerName, String destination) {
+    private boolean createGlobalCall(String clientId,String peerId, String callerName, String destination, String meetingId) {
         log.debug("peerId = " + peerId + " callerName = " + callerName + " destination = " + destination);
         String userId = getUserId();
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
             String extension = callExtensionPattern.format(new String[] { destination });
             try {
-                sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, userId, extension);
+                sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, userId, extension,meetingId);
                 Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
             } catch (PeerNotFoundException e) {
                 log.error("PeerNotFound {}", peerId);

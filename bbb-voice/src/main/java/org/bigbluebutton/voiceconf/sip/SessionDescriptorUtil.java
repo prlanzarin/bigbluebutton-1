@@ -70,4 +70,8 @@ public class SessionDescriptorUtil {
 	public static String getRemoteMediaAddress(SessionDescriptor remoteSdp) {
 		return (new Parser(remoteSdp.getConnection().toString())).skipString().skipString().getString();
 	}
+
+    public static String getLocalVideoSDP(SessionDescriptor localSdp){
+        return new SessionDescriptor(localSdp).removeMediaDescriptor(SDP_MEDIA_AUDIO).toString(); //clone and remove audio descriptor
+    }
 }

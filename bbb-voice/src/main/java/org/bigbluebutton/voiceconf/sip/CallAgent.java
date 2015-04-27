@@ -70,8 +70,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private String _callerName;
     private String _userId;
     private String _destination;
+    private String _meetingId;
     private Boolean listeningToGlobal = false;
     private IMessagingService messagingService;
+    private String _globalVideoStreamName;
 
     private HashMap<String, String> streamTypeManager = null;
 
@@ -132,8 +134,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 			localAudioSocket = getLocalAudioSocket();
 			userProfile.audioPort = localAudioSocket.getLocalPort();
 
-            localVideoSocket = getLocalVideoSocket();  
-            userProfile.videoPort = localVideoSocket.getLocalPort();
+            //localVideoSocket = getLocalVideoSocket();
+            //userProfile.videoPort = localVideoSocket.getLocalPort();
 
 		} catch (Exception e) {
 			log.debug("{} failed to allocate local port for call to {}. Notifying client that call failed.", callerName, destination); 
@@ -221,7 +223,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	return socket;
     }
 
-    private boolean isGlobalStream() {
+    public boolean isGlobalStream() {
         return (_callerName != null && _callerName.startsWith("GLOBAL_AUDIO_"));
     }
 
@@ -269,7 +271,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             if(isGlobalStream()) {
                 // Only global stream create the video stream here to receive video from FreeSWITCH
-                createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+                //createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
+                createVideoStream();
                 log.debug("VIDEO stream created");
             }
 
@@ -329,43 +332,54 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     }
 
-    private boolean createVideoStream(String remoteMediaAddress, int localVideoPort, int remoteVideoPort) {
+    private boolean createVideoStream() {
 
-       SipConnectInfo connInfo = new SipConnectInfo(localVideoSocket, remoteMediaAddress, remoteVideoPort);
-       try {
-            localVideoSocket.connect(InetAddress.getByName(remoteMediaAddress), remoteVideoPort);        
-            
-            if (userProfile.video && localVideoPort != 0 && remoteVideoPort != 0) {
-                if ((videoCallStream == null) && (sipVideoCodec != null)) {                  
-                    try {
-                        log.debug("Creating VIDEO stream: [localVideoPort=" + localVideoPort + ",remoteVideoPort=" + remoteVideoPort + "]");
-                        videoCallStream = callStreamFactory.createCallStream(sipVideoCodec, connInfo, CallStream.MEDIA_TYPE_VIDEO);                                                
-                        videoCallStream.addCallStreamObserver(this);
-                        videoCallStream.start();
-                        String streamName = videoCallStream.getBbbToFreeswitchStreamName();
-                        if(!streamTypeManager.containsKey(streamName))
-                        {
-                            streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_VIDEO);
-                            log.debug("[CallAgent] streamTypeManager adding video stream {} for {}", streamName, clientId);
-                        }
+        //Starting FreeswitchToBbb Video Stream - this method is called only by global stream
+        //this method can be called createGlobalVideoStream
+        try {
+            SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
+            String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
+            GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
+            log.debug("0");
+            //String ip = Red5.getConnectionLocal().getHost();
+            String ip = "192.168.122.68";
+            log.debug("ip: "+ip);
+            String inputLive = GlobalCall.getSdpVideoPath(getDestination());
+            log.debug("Global Video Source: "+inputLive);
+            log.debug("Global Call Agent: userProfile.userId = "+ getUserId());
+            setGlobalVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
+            String outputLive = "rtmp://" + ip + "/video/" + getMeetingId() + "/"
+                    + getGlobalVideoStreamName()+" live=1";
 
-                        if (isGlobalStream())
-                        {
-                            GlobalCall.addGlobalVideoStream(_destination, videoCallStream, connInfo);
-                        }
+            FFmpegCommand ffmpeg = new FFmpegCommand();
+            ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+            ffmpeg.setInput(inputLive);
+            /*ffmpeg.setCodec("h264");
+            ffmpeg.setPreset("ultrafast");
+            ffmpeg.setProfile("baseline");
+            ffmpeg.setLevel("1.3");*/
+            ffmpeg.setFormat("flv");
+            ffmpeg.setLoglevel("quiet");
+            /*
+            ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
+            ffmpeg.setSliceMaxSize("1024");
+            ffmpeg.setMaxKeyFrameInterval("10");
+            */
+            ffmpeg.setOutput(outputLive);
 
-                        return true;        
-                            
-                    } catch (Exception e) {
-                        log.error("Failed to create VIDEO Call Stream.");
-                        System.out.println(StackTraceUtil.getStackTrace(e));
-                    }                
-                }
-            }
+            String[] command = ffmpeg.getFFmpegCommand(true);
 
-        } catch (UnknownHostException e1) {
-            log.error("Failed to connect for VIDEO Stream.");
-            log.error(StackTraceUtil.getStackTrace(e1));
+            // Free local port before starting ffmpeg
+            //localVideoSocket.close();
+
+            log.debug("Preparing FFmpeg process monitor");
+
+            processMonitor = new ProcessMonitor(command);
+            processMonitor.start();
+        // videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
+        } catch (Exception e) {
+            log.debug("Failed to start FFMPEG for global video (fs->bbb) stream");
+            e.printStackTrace();
         }
 
         return false;
@@ -472,6 +486,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             processMonitor.destroy();
             processMonitor = null;
         }
+
+        if(isGlobalStream()){
+            GlobalCall.removeSDPVideoFile(getDestination());
+        }
     }
 
     
@@ -489,7 +507,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
             globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
         }
-		    
+
         GlobalCall.addUser(clientId, callerIdName, _destination);
         sipAudioCodec = GlobalCall.getRoomAudioCodec(voiceConf);
         sipVideoCodec = GlobalCall.getRoomVideoCodec(voiceConf);
@@ -691,13 +709,24 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
 
-    private void cleanup() {
+    private void cleanupAudio(){
         if (localAudioSocket == null) return;
 
         log.debug("Closing local audio port {}", localAudioSocket.getLocalPort());
         if (!listeningToGlobal) {
             localAudioSocket.close();
         }
+    }
+
+    private void cleanupVideo(){
+        if (localVideoSocket == null) return;
+
+        log.debug("Closing local video port {}", localAudioSocket.getLocalPort());
+        localVideoSocket.close();
+    }
+    private void cleanup() {
+        cleanupAudio();
+        cleanupVideo();
     }
 
     /** Callback function called when arriving a BYE request */
@@ -760,7 +789,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public void onCallStreamStarted() {
         log.info("Call stream has been started");
-        String videoStream = videoCallStream.getFreeswitchToBbbStreamName();
+        //String videoStream = videoCallStream.getFreeswitchToBbbStreamName();
+        String videoStream = getGlobalVideoStreamName();
         notifyListenersOfOnCallStarted(videoStream);
     }
     
@@ -802,8 +832,22 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         "  </vc_primitive>\n" +
                         " </media_control>\n");
 
-
         sipProvider.sendMessage(msg);
-               
-    }   
+    }
+
+    public void setMeetingId(String meetingId){
+        this._meetingId = meetingId;
+    }
+
+    public String getMeetingId(){
+        return this._meetingId;
+    }
+
+    public void setGlobalVideoStreamName(String streamName){
+        this._globalVideoStreamName = streamName;
+    }
+
+    public String getGlobalVideoStreamName(){
+        return this._globalVideoStreamName;
+    }
 }

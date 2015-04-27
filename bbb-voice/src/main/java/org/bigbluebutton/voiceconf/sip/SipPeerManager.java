@@ -63,10 +63,10 @@ public final class SipPeerManager {
   		sipPeer.register(username, password);
     }
         
-    public void call(String peerId, String clientId, String callerName, String userId, String destination) throws PeerNotFoundException {
+    public void call(String peerId, String clientId, String callerName, String userId, String destination,String meetingId) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-        sipPeer.call(clientId, callerName,userId, destination);
+        sipPeer.call(clientId, callerName,userId, destination,meetingId);
     }
 
     public void unregister(String userid) {

@@ -18,12 +18,14 @@ public class FFmpegCommand {
     private String ffmpegPath;
     private String input;
     private String output;
+    private Boolean inputLive;
 
     public FFmpegCommand() {
         this.args = new HashMap();
         this.x264Params = new HashMap();
 
         this.ffmpegPath = null;
+        this.inputLive = false;
     }
 
     public String[] getFFmpegCommand(boolean shouldBuild) {
@@ -40,7 +42,9 @@ public class FFmpegCommand {
             this.ffmpegPath = "/usr/local/bin/ffmpeg";
 
         comm.add(this.ffmpegPath);
-
+        if (this.inputLive){
+            comm.add("-re");
+        }
         comm.add("-i");
         comm.add(input);
 
@@ -79,6 +83,10 @@ public class FFmpegCommand {
 
     public void setInput(String arg) {
         this.input = arg;
+    }
+
+    public void setInputLive(Boolean live){
+        this.inputLive = live;
     }
 
     public void setOutput(String arg) {

@@ -7,6 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import org.bigbluebutton.voiceconf.red5.ClientConnectionManager;
 import org.bigbluebutton.voiceconf.red5.media.CallStream;
@@ -24,6 +32,11 @@ public class GlobalCall {
     private static Map<String,CallStream> roomToVideoStreamMap = new ConcurrentHashMap<String, CallStream>();
 
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
+    private static Path sdpVideoPath;
+    private static final String sdpVideoFullPath = "/tmp/GLOBAL_AUDIO_";
+
+    private static OpenOption[] fileOptions = new OpenOption[] {StandardOpenOption.CREATE,StandardOpenOption.WRITE};
+
     
     public static synchronized boolean reservePlaceToCreateGlobal(String roomName) {
         if (globalCalls.contains(roomName)) {
@@ -83,6 +96,7 @@ public class GlobalCall {
         //globalAudioKeepAliverMap.remove(voiceConf);
         roomToVideoStreamMap.remove(voiceConf);
         globalCalls.remove(voiceConf);
+        removeSDPVideoFile(voiceConf);
     }
 
     public static synchronized void addUser(String clientId, String callerIdName, String voiceConf) {      	
@@ -130,5 +144,32 @@ public class GlobalCall {
             return roomToVideoStreamMap.get(roomName).isVideoPaused();
         }
         return true;
+    }
+
+    public static void createSDPVideoFile(String voiceconf, String sdp){
+        sdpVideoPath = FileSystems.getDefault().getPath(sdpVideoFullPath + voiceconf+".sdp");
+
+        Charset charset = Charset.forName("US-ASCII");
+        try {
+            BufferedWriter writer = Files.newBufferedWriter(sdpVideoPath,charset,fileOptions);
+            writer.write(sdp, 0, sdp.length());
+            writer.close();
+            log.debug("SDP video file created at: "+sdpVideoPath.toString());
+        } catch (IOException x) {
+            log.debug("Failed to create SDP video file: "+sdpVideoPath.toString());
+        }
+    }
+
+    public static void removeSDPVideoFile(String voiceconf){
+        sdpVideoPath = FileSystems.getDefault().getPath(sdpVideoFullPath +voiceconf+".sdp");
+        try {
+            Files.deleteIfExists(sdpVideoPath);
+        } catch (IOException e) {
+            log.debug("Failed to remove SDP video file: "+sdpVideoPath.toString());
+        }
+    }
+
+    public static String getSdpVideoPath(String voiceconf){
+        return sdpVideoFullPath+voiceconf+".sdp";
     }
 }

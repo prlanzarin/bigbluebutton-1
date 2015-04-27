@@ -35,8 +35,6 @@ import org.red5.server.api.Red5;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
-import org.red5.app.sip.codecs.H264Codec;
-import org.red5.app.sip.codecs.Codec;
 
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
@@ -53,7 +51,7 @@ public class Service {
 			    log.warn("Global call for {} not found, creating one", destination);
 				String extension = callExtensionPattern.format(new String[] { destination });
 				try {
-					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination,userId, extension);
+					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination,userId, extension,getMeetingId());
 					Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 				} catch (PeerNotFoundException e) {
 					log.error("PeerNotFound {}", peerId);
@@ -77,7 +75,7 @@ public class Service {
 		
 		String extension = callExtensionPattern.format(new String[] { destination });
 		try {
-			sipPeerManager.call(peerId, getClientId(), callerName, userid, extension);
+			sipPeerManager.call(peerId, getClientId(), callerName, userid, extension,getMeetingId());
 			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 			return true;
 		} catch (PeerNotFoundException e) {
@@ -153,5 +151,11 @@ public class Service {
 		String username = (String) Red5.getConnectionLocal().getAttribute("USERNAME");
 		if ((username == null) || ("".equals(username))) username = "UNKNOWN-CALLER";
 		return username;
+	}
+
+	private String getMeetingId(){
+		String meetingid = (String) Red5.getConnectionLocal().getAttribute("MEETING_ID");
+		if ((meetingid == null) || ("".equals(meetingid))) meetingid = "UNKNOWN-MEETING_ID";
+		return meetingid;
 	}
 }
