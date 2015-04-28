@@ -58,6 +58,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private ExtendedCall call;
     private CallStream audioCallStream; 
     private CallStream videoCallStream;    
+    private final String serverIp;
     private String localSession = null;
     private Codec sipAudioCodec = null;
     private Codec sipVideoCodec = null;    
@@ -102,6 +103,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.portProvider = portProvider;
         this.clientId = clientId;
         this.messagingService = messagingService;
+        this.serverIp = Red5.getConnectionLocal().getHost();
 
         if(this.streamTypeManager == null)
             this.streamTypeManager = new HashMap<String, String>();
@@ -341,14 +343,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
             GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
             log.debug("0");
-            //String ip = Red5.getConnectionLocal().getHost();
-            String ip = "192.168.122.68";
-            log.debug("ip: "+ip);
+            log.debug("ip: " + serverIp);
             String inputLive = GlobalCall.getSdpVideoPath(getDestination());
             log.debug("Global Video Source: "+inputLive);
             log.debug("Global Call Agent: userProfile.userId = "+ getUserId());
             setGlobalVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
-            String outputLive = "rtmp://" + ip + "/video/" + getMeetingId() + "/"
+            String outputLive = "rtmp://" + serverIp + "/video/" + getMeetingId() + "/"
                     + getGlobalVideoStreamName()+" live=1";
 
             FFmpegCommand ffmpeg = new FFmpegCommand();
