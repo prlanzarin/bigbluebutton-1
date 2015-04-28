@@ -54,8 +54,6 @@ public class RtpVideoStreamReceiver {
     private long lastPacketReceived = 0;
     private long baseTimestamp = 0;
 
-    private boolean isVideoPaused = true;
-
     private long timestampThreshold = 30000;    
     private long realTimestamp = 0;
     private long realLastTimestamp = 0;
@@ -157,15 +155,6 @@ public class RtpVideoStreamReceiver {
         while (receivePackets) {
         	try {       			
         		rtpSocket.receive(rtpPacket);
-                if(isVideoPaused)
-                {
-                    log.debug("[RtpVideoStreamReceiver] reopen video window");
-                    if(listener != null) {
-                        listener.onStartedReceiving();
-                    }
-                }
-                isVideoPaused = false;
-
         		packetReceivedCounter++;  
         		if (shouldDropDelayedPacket(rtpPacket)) {
         			continue;
@@ -199,19 +188,6 @@ public class RtpVideoStreamReceiver {
             		}
             	}
         	}
-            catch (SocketTimeoutException te) {
-                if(!isVideoPaused) {
-                    isVideoPaused = true;
-                    log.debug("[RtpVideoStreamReceiver] video has been paused.");
-                    if(listener != null) {
-                        listener.onPausedReceiving();
-                    }
-                }
-                /*
-                else
-                    log.debug("[RtpVideoStreamReceiver] video is already paused.");
-                */
-            }
             catch (IOException e) { // We get this when the socket closes when the call hangs up.        		
         		receivePackets = false;
         	}

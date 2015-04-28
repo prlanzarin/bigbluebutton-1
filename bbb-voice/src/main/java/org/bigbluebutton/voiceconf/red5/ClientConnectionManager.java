@@ -71,16 +71,6 @@ public class ClientConnectionManager {
 		}
 	}
 
-	public void pausedVideo(String clientId) {
-		ClientConnection cc = clients.get(clientId);
-		if(cc != null) {
-			cc.onPausedVideo();
-		}
-		else {
-			log.warn("Can't find client {} to inform user that the video has been paused.", clientId);
-		}
-	}
-
 	public void startedVideo(String clientId, String videoStream) {
 		ClientConnection cc = clients.get(clientId);
 		if(cc != null) {

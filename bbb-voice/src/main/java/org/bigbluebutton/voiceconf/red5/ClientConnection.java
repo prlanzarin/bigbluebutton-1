@@ -63,11 +63,6 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
         }
     }
 
-    public void onPausedVideo() {
-        log.debug("Notify client that video has been paused.");
-        connection.invoke("videoPaused");
-    }
-
     public void onStartedVideo(String videoStream) {
         log.debug("Notify client that video has been restarted.");
         connection.invoke("videoStarted", new Object[] {videoStream});
