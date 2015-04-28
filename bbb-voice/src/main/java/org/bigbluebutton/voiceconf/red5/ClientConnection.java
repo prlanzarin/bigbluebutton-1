@@ -62,14 +62,4 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
             connection.invoke("disconnectedFromJoinConferenceCallback", new Object[] {"onUaCallClosed"});
         }
     }
-
-    public void onPausedVideo() {
-        log.debug("Notify client that video has been paused.");
-        //connection.invoke("videoPaused");
-    }
-
-    public void onStartedVideo(String videoStream) {
-        log.debug("Notify client that video has been restarted.");
-        //connection.invoke("videoStarted", new Object[] {videoStream});
-    }
 }

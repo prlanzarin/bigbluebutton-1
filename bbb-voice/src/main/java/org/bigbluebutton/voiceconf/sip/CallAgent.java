@@ -673,34 +673,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         cleanup();
     }
 
-    private void notifyListenersOfOnCallPaused() {
-        if(isGlobalStream()) {
-           for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
-                String userId = i.next();
-                log.debug("notifyListenersOfOnCallPaused for {}", userId);
-                clientConnManager.pausedVideo(userId);
-           }
-        }
-        else {
-            log.debug("notifyListenersOfOnCallPaused for {}", clientId);
-            clientConnManager.pausedVideo(clientId);
-        }
-    }
-
-    private void notifyListenersOfOnCallStarted(String videoStream) {
-        if(isGlobalStream()) {
-            for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext(); ) {
-                String userId = i.next();
-                log.debug("notifyListenersOfOnCallRestarted for {}", userId);
-                clientConnManager.startedVideo(userId, videoStream);
-            }
-        }
-        else {
-            log.debug("notifyListenersOfOnCallRestarted for {}", clientId);
-            clientConnManager.startedVideo(clientId, videoStream);
-        }
-    }
-
     private void cleanupAudio(){
         if (localAudioSocket == null) return;
 
@@ -774,18 +746,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	notifyListenersOfOnCallClosed();
     }
 
-    public void onCallStreamPaused() {
-        log.info("Call stream has been paused");
-        notifyListenersOfOnCallPaused();
-    }
-
-    public void onCallStreamStarted() {
-        log.info("Call stream has been started");
-        //String videoStream = videoCallStream.getFreeswitchToBbbStreamName();
-        String videoStream = getGlobalVideoStreamName();
-        notifyListenersOfOnCallStarted(videoStream);
-    }
-    
     private boolean isCurrentCall(Call call) {
     	return this.call == call;
     }

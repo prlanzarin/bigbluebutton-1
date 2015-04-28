@@ -135,8 +135,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         if (!GlobalCall.isVideoPaused(voiceBridge)) {
           // There is already a video stream running, must inform new client
           String videoStreamName = GlobalCall.getGlobalVideoStream(voiceBridge);
-          log.debug("Informing new user [{}] about current global video stream [{}]", clientId, videoStreamName);
-          clientConnManager.startedVideo(clientId, videoStreamName);
+          log.debug("Informing new user [{}] about current global video stream [{}]", clientId, videoStreamName);          
         }
       } else {
         // TODO review this condition, since the original implementation does clientConnManager.createClient always
