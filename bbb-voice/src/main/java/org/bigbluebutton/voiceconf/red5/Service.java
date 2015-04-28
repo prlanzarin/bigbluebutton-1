@@ -128,9 +128,18 @@ public class Service {
         return true;
 	}
 
-	public void updateVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent) {
-		log.debug("updateVideoStatus [{},{},{}]", voiceBridge, floorHolder, videoPresent);
-	}
+    public void updateVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent) {		
+        log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
+        String peerId = "default";
+        String globalUserId = "GLOBAL_AUDIO_" + voiceBridge;
+
+        if (!GlobalCall.isVideoPresent(voiceBridge)){
+            if (videoPresent){
+                sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
+                GlobalCall.setVideoPresent(voiceBridge, true);
+            }
+        }
+    }
 
 	private String getClientId() {
 		IConnection conn = Red5.getConnectionLocal();

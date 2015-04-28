@@ -74,6 +74,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private Boolean listeningToGlobal = false;
     private IMessagingService messagingService;
     private String _globalVideoStreamName;
+    private final String serverIp;
 
     private HashMap<String, String> streamTypeManager = null;
 
@@ -102,6 +103,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.portProvider = portProvider;
         this.clientId = clientId;
         this.messagingService = messagingService;
+        this.serverIp = Red5.getConnectionLocal().getHost();
 
         if(this.streamTypeManager == null)
             this.streamTypeManager = new HashMap<String, String>();
@@ -269,13 +271,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (videoCallStream == null) {        
             int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
             int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
-            if(isGlobalStream()) {
-                // Only global stream create the video stream here to receive video from FreeSWITCH
-                //createVideoStream(remoteMediaAddress,localVideoPort,remoteVideoPort);
-                createVideoStream();
-                log.debug("VIDEO stream created");
-            }
-
+            log.debug("Video stream port-setup done");
         }else log.debug("VIDEO application is already running.");
 
         if(audioStreamCreatedSuccesfully && !isGlobalStream()) {
@@ -340,32 +336,20 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
             String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
             GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
-            log.debug("0");
-            //String ip = Red5.getConnectionLocal().getHost();
-            String ip = "192.168.122.68";
-            log.debug("ip: "+ip);
             String inputLive = GlobalCall.getSdpVideoPath(getDestination());
             log.debug("Global Video Source: "+inputLive);
             log.debug("Global Call Agent: userProfile.userId = "+ getUserId());
             setGlobalVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
-            String outputLive = "rtmp://" + ip + "/video/" + getMeetingId() + "/"
+            String outputLive = "rtmp://" + serverIp + "/video/" + getMeetingId() + "/"
                     + getGlobalVideoStreamName()+" live=1";
 
             FFmpegCommand ffmpeg = new FFmpegCommand();
             ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
-            ffmpeg.setInput(inputLive);
-            /*ffmpeg.setCodec("h264");
-            ffmpeg.setPreset("ultrafast");
-            ffmpeg.setProfile("baseline");
-            ffmpeg.setLevel("1.3");*/
+            ffmpeg.setInput(inputLive);            
             ffmpeg.setFormat("flv");
-            ffmpeg.setLoglevel("quiet");
-            /*
-            ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
-            ffmpeg.setSliceMaxSize("1024");
-            ffmpeg.setMaxKeyFrameInterval("10");
-            */
+            ffmpeg.setLoglevel("quiet");            
             ffmpeg.setOutput(outputLive);
+            ffmpeg.addCustomParameter("-q:v", "1");
 
             String[] command = ffmpeg.getFFmpegCommand(true);
 
@@ -376,7 +360,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
             processMonitor = new ProcessMonitor(command);
             processMonitor.start();
-        // videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
+            //videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (Exception e) {
             log.debug("Failed to start FFMPEG for global video (fs->bbb) stream");
             e.printStackTrace();
@@ -455,6 +439,15 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     
     public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
         closeVideoStream();
+    }
+    
+    public void startFreeswitchToBbbVideoStream(){
+    	createVideoStream();
+    	onCallStreamStarted();
+    }
+    
+    public void stopFreeswitchToBbbGlobalVideoStream(){
+    	closeVideoStream();
     }
 
     private void closeAudioStream() {

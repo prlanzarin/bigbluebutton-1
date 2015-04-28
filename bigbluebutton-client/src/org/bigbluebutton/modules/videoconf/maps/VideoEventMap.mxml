@@ -122,7 +122,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   </EventHandlers>
 
   <EventHandlers type="{BBBEvent.FREESWITCH_VIDEO_STARTED}">
-    <MethodInvoker generator="{VideoEventMapDelegate}" method="openFreeswitchVideo"  arguments="{[event.payload.streamName, event.payload.connection]}"/>
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="openFreeswitchVideo"  arguments="{event.payload.streamName}"/>
   </EventHandlers>
   
 </EventMap>

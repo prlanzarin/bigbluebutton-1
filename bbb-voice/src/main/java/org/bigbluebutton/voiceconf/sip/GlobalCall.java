@@ -30,7 +30,7 @@ public class GlobalCall {
     private static Map<String,Codec> roomToAudioCodecMap = new ConcurrentHashMap<String, Codec>();
     //private static Map<String,KeepGlobalAudioAlive> globalAudioKeepAliverMap = new ConcurrentHashMap<String, KeepGlobalAudioAlive>();
     private static Map<String,CallStream> roomToVideoStreamMap = new ConcurrentHashMap<String, CallStream>();
-
+    private static Map<String,Boolean> roomToVideoPresent = new ConcurrentHashMap<String,Boolean>();
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     private static Path sdpVideoPath;
     private static final String sdpVideoFullPath = "/tmp/GLOBAL_AUDIO_";
@@ -96,6 +96,7 @@ public class GlobalCall {
         //globalAudioKeepAliverMap.remove(voiceConf);
         roomToVideoStreamMap.remove(voiceConf);
         globalCalls.remove(voiceConf);
+        roomToVideoPresent.remove(voiceConf);
         removeSDPVideoFile(voiceConf);
     }
 
@@ -171,5 +172,16 @@ public class GlobalCall {
 
     public static String getSdpVideoPath(String voiceconf){
         return sdpVideoFullPath+voiceconf+".sdp";
+    }
+
+    public static void setVideoPresent(String voiceconf, Boolean flag){
+        roomToVideoPresent.put(voiceconf, flag);
+    }
+
+    public static Boolean isVideoPresent(String voiceconf){
+        Boolean videoPresent;
+        videoPresent = roomToVideoPresent.get(voiceconf);
+        if (videoPresent == null) videoPresent = false;
+        return videoPresent;
     }
 }

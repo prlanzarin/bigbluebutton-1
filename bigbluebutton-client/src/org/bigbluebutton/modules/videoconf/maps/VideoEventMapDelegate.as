@@ -325,8 +325,8 @@ package org.bigbluebutton.modules.videoconf.maps
       dockWindow(window);  
     }
 
-    public function openFreeswitchVideo(streamName:String, connection:NetConnection):void {
-
+    public function openFreeswitchVideo(streamName:String):void {
+      var connection:NetConnection = proxy.connection; //using videoconf connection now
       if(!connection.connected) {
         LogUtil.warn("Not opening freeswitch window because the connection is not ready yet.");
         return;
@@ -347,8 +347,7 @@ package org.bigbluebutton.modules.videoconf.maps
         openWindow(fsWindow);
         dockWindow(fsWindow);
     }
-    
-    
+
     private function openWindow(window:VideoWindowItf):void {
       var windowEvent:OpenWindowEvent = new OpenWindowEvent(OpenWindowEvent.OPEN_WINDOW_EVENT);
       windowEvent.window = window;
