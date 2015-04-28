@@ -162,20 +162,6 @@ public class CallStream implements StreamObserver {
 	}
 
     @Override
-    public void onStreamPaused() {
-        log.debug("STREAM HAS PAUSED " + connInfo.getSocket().getLocalPort());
-        if (callStreamObserver != null) callStreamObserver.onCallStreamPaused();
-        isVideoPaused = true;
-    }
-
-    @Override
-    public void onStreamStarted() {
-        log.debug("STREAM HAS RESTARTED " + connInfo.getSocket().getLocalPort());
-        if (callStreamObserver != null) callStreamObserver.onCallStreamStarted();
-        isVideoPaused = false;
-    }
-
-    @Override
     public void onFirRequest() {
         if (callStreamObserver != null) callStreamObserver.onFirRequest();
 
