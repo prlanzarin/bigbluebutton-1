@@ -366,6 +366,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             ffmpeg.setMaxKeyFrameInterval("10");
             */
             ffmpeg.setOutput(outputLive);
+            ffmpeg.setAnalyzeDuration("10000"); // 10ms
 
             String[] command = ffmpeg.getFFmpegCommand(true);
 
@@ -435,6 +436,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             ffmpeg.setSliceMaxSize("1024");
             ffmpeg.setMaxKeyFrameInterval("10");
             ffmpeg.setOutput(output);
+            ffmpeg.setAnalyzeDuration("10000"); // 10ms
 
             String[] command = ffmpeg.getFFmpegCommand(true);
 
