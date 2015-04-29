@@ -2,6 +2,8 @@ package org.bigbluebutton.voiceconf.messaging;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.bigbluebutton.voiceconf.messaging.messages.GlobalVideoStreamCreated;
 import org.bigbluebutton.voiceconf.messaging.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.voiceconf.messaging.messages.UserDisconnectedFromGlobalAudio;
 import org.red5.logging.Red5LoggerFactory;
@@ -16,33 +18,39 @@ public class RedisMessagingService implements IMessagingService {
 	
 	@Override
 	public void userConnectedToGlobalAudio(String voiceConf, String callerIdName) {
-		
-  	Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
-    if (matcher.matches()) {			
-	    String userid = matcher.group(1).trim();
-	    String name = matcher.group(2).trim();
-		String json = new UserConnectedToGlobalAudio(voiceConf, userid, name).toJson();
-			sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
-    } else {
-    log.warn("Invalid calleridname [{}] in userConnectedToGlobalAudio as it does not match pattern (.*)-bbbID-(.*)",callerIdName);
-			String json = new UserConnectedToGlobalAudio(voiceConf, callerIdName, callerIdName).toJson();
-			sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);	
-    }
+	    Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
+	    if (matcher.matches()) {
+		    String userid = matcher.group(1).trim();
+		    String name = matcher.group(2).trim();
+			String json = new UserConnectedToGlobalAudio(voiceConf, userid, name).toJson();
+				sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
+	    } else {
+	    log.warn("Invalid calleridname [{}] in userConnectedToGlobalAudio as it does not match pattern (.*)-bbbID-(.*)",callerIdName);
+				String json = new UserConnectedToGlobalAudio(voiceConf, callerIdName, callerIdName).toJson();
+				sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
+	    }
 	}
 
 	@Override
 	public void userDisconnectedFromGlobalAudio(String voiceConf, String callerIdName) {
-  	Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
-    if (matcher.matches()) {			
-	    String userid = matcher.group(1).trim();
-	    String name = matcher.group(2).trim();
-			String json = new UserDisconnectedFromGlobalAudio(voiceConf, userid, name).toJson();
-			sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
-    } else {
-    	log.warn("Invalid calleridname [{}] in userDisconnectedFromGlobalAudio as it does not match pattern (.*)-bbbID-(.*)");
-			String json = new UserDisconnectedFromGlobalAudio(voiceConf, callerIdName, callerIdName).toJson();
-			sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);	
-    }
+	    Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
+	    if (matcher.matches()) {
+		    String userid = matcher.group(1).trim();
+		    String name = matcher.group(2).trim();
+				String json = new UserDisconnectedFromGlobalAudio(voiceConf, userid, name).toJson();
+				sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
+	    } else {
+	            log.warn("Invalid calleridname [{}] in userDisconnectedFromGlobalAudio as it does not match pattern (.*)-bbbID-(.*)");
+				String json = new UserDisconnectedFromGlobalAudio(voiceConf, callerIdName, callerIdName).toJson();
+				sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
+	    }
+	}
+
+    @Override
+	public void globalVideoStreamCreated(String voiceConf, String videoStreamName) {
+		String json = new GlobalVideoStreamCreated(voiceConf, videoStreamName).toJson();
+		log.debug("Sending GlobalVideoStreamCreated message to bbb-apps...");
+		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
 	}
 
 	public void setRedisMessageSender(MessageSender sender) {

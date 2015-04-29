@@ -88,4 +88,5 @@ public class Constants {
   public static final String SIP_VIDEO_UPDATE                = "sip_video_update";
   public static final String ACTIVE_TALKER                   = "active_talker";
   public static final String SIP_VIDEO_PRESENT               = "sip_video_present";
+  public static final String VIDEO_STREAM_NAME               = "video_stream_name";
 }
