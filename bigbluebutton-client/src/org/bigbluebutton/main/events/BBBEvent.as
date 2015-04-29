@@ -45,6 +45,7 @@ package org.bigbluebutton.main.events {
 	public static const FREESWITCH_VIDEO_PAUSED:String = "FREESWITCH_VIDEO_PAUSED";
 	public static const FREESWITCH_VIDEO_STARTED:String = "FREESWITCH_VIDEO_STARTED";
 	public static const FREESWITCH_VIDEO_RESUMED:String = "FREESWITCH_VIDEO_RESUMED";
+	public static const GLOBAL_VIDEO_STREAM_INFO:String = "GLOBAL_VIDEO_STREAM_INFO";
 
    
 		public var message:String;

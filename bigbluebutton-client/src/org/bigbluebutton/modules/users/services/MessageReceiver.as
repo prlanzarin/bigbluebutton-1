@@ -136,6 +136,9 @@ package org.bigbluebutton.modules.users.services
         case "sip_video_update":
           handleSipVideoUpdate(message);
           break;
+        case "global_video_stream_info":
+          handleGlobalVideoStreamInfo(message);
+          break;
       }
     }  
     
@@ -581,6 +584,22 @@ package org.bigbluebutton.modules.users.services
         dispatcher.dispatchEvent(videoPaused);
       }
     }
+
+    private function handleGlobalVideoStreamInfo(msg: Object):void {
+      trace(LOG + "*** handleGlobalVideoStreamInfo " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+
+      if(map.global_video_stream_name) {
+        trace(LOG + "handleGlobalVideoStreamInfo: The stream name is " + map.global_video_stream_name);
+        var globalVideoStreamInfo:BBBEvent = new BBBEvent(BBBEvent.GLOBAL_VIDEO_STREAM_INFO);
+        globalVideoStreamInfo.payload.globalVideoStreamName = map.global_video_stream_name;
+        dispatcher.dispatchEvent(globalVideoStreamInfo);
+      }
+      else
+        trace(LOG + "handleGlobalVideoStreamInfo: ERROR: There's not a Global Video Stream Name. Could NOT dispatch GLOBAL_VIDEO_STREAM_CREATED event");      
+    }
+
+
 
   }
 }

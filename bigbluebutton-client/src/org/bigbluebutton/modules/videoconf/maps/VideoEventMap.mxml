@@ -128,5 +128,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <EventHandlers type="{BBBEvent.FREESWITCH_VIDEO_STARTED}">
     <MethodInvoker generator="{VideoEventMapDelegate}" method="openFreeswitchVideo"  arguments="{event.payload.streamName}"/>
   </EventHandlers>
+
+  <EventHandlers type="{BBBEvent.GLOBAL_VIDEO_STREAM_INFO}">
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="setGlobalVideoStreamName"  arguments="{event.payload.globalVideoStreamName}"/>
+  </EventHandlers>
   
 </EventMap>
