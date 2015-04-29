@@ -14,6 +14,7 @@ import org.bigbluebutton.conference.service.messaging.UserConnectedToGlobalAudio
 import org.bigbluebutton.conference.service.messaging.UserDisconnectedFromGlobalAudio;
 import org.bigbluebutton.conference.service.messaging.ValidateAuthTokenMessage;
 import org.bigbluebutton.conference.service.messaging.GetAllMeetingsRequest;
+import org.bigbluebutton.conference.service.messaging.GlobalVideoStreamCreated;
 import org.bigbluebutton.conference.service.messaging.redis.MessageHandler;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 import org.red5.logging.Red5LoggerFactory;
@@ -91,6 +92,11 @@ public class MeetingMessageHandler implements MessageHandler {
 					GetAllMeetingsRequest emm = (GetAllMeetingsRequest) msg;
 					log.info("Received GetAllMeetingsRequest");
 					bbbGW.getAllMeetings("no_need_of_a_meeting_id");
+				}
+				else if (msg instanceof GlobalVideoStreamCreated) {
+					log.info("Received GlobalVideoStreamCreated");
+					GlobalVideoStreamCreated streamCreatedMessage = (GlobalVideoStreamCreated) msg;
+					log.info("Global video stream name: " + streamCreatedMessage.videoStreamName);
 				}
 			}
 		} else if (channel.equalsIgnoreCase(MessagingConstants.TO_SYSTEM_CHANNEL)) {
