@@ -160,16 +160,6 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 		}
 	}
 
-	@Override
-	public void onStartedReceiving() {
-		
-	}
-
-	@Override
-	public void onPausedReceiving() {
-		
-	}
-
 	private void sendFakeMetadata(long timestamp) {
 		if (!sentMetadata) {
 			/*

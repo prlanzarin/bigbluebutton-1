@@ -348,6 +348,11 @@ package org.bigbluebutton.modules.videoconf.maps
         dockWindow(fsWindow);
     }
 
+    //TODO
+    public function resumeFreeswitchVideo():void {
+      trace("resumeFreeswitchVideo called...");
+    }
+
     private function openWindow(window:VideoWindowItf):void {
       var windowEvent:OpenWindowEvent = new OpenWindowEvent(OpenWindowEvent.OPEN_WINDOW_EVENT);
       windowEvent.window = window;

@@ -133,6 +133,9 @@ package org.bigbluebutton.modules.users.services
         case "permissionsSettingsChanged":
           handlePermissionsSettingsChanged(message);
           break;
+        case "sip_video_update":
+          handleSipVideoUpdate(message);
+          break;
       }
     }  
     
@@ -562,5 +565,22 @@ package org.bigbluebutton.modules.users.services
         dispatcher.dispatchEvent(e);
       }		
     }
+
+    private function handleSipVideoUpdate(msg: Object):void {
+      trace(LOG + "*** handleSipVideoUpdate " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+
+      if(map.sip_video_present) {
+        trace(LOG + "handleSipVideoUpdate: Dispatching Resumed Video Event");
+        var videoResumed:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
+        dispatcher.dispatchEvent(videoResumed);
+      }
+      else {
+        trace(LOG + "handleSipVideoUpdate: Dispatching Paused Video Event");
+        var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
+        dispatcher.dispatchEvent(videoPaused);
+      }
+    }
+
   }
 }

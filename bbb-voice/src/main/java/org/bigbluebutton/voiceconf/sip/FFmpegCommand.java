@@ -20,6 +20,9 @@ public class FFmpegCommand {
     private String output;
     private Boolean inputLive;
 
+    /* Analyze duration is a special parameter that MUST come before the input */
+    private String analyzeDuration;
+
     public FFmpegCommand() {
         this.args = new HashMap();
         this.x264Params = new HashMap();
@@ -45,6 +48,13 @@ public class FFmpegCommand {
         if (this.inputLive){
             comm.add("-re");
         }
+
+        /* Analyze duration MUST come before the input */
+        if(analyzeDuration != null && !analyzeDuration.isEmpty()) {
+            comm.add("-analyzeduration");
+            comm.add(analyzeDuration);
+        }
+
         comm.add("-i");
         comm.add(input);
 
@@ -132,4 +142,15 @@ public class FFmpegCommand {
     public void addCustomParameter(String name, String value) {
         this.args.put(name, value);
     }
+
+   /**
+    * Set how much time FFmpeg should  analyze stream
+    * data to get stream information. Note that this
+    * affects directly the delay to start the stream.
+    *
+    * @param duration Analysis duration
+    */
+   public void setAnalyzeDuration(String duration) {
+       this.analyzeDuration = duration;
+   }
 }
