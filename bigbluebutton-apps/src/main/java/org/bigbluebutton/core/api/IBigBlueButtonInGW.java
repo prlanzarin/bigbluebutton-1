@@ -119,5 +119,8 @@ public interface IBigBlueButtonInGW {
 	void undoWhiteboard(String meetingID, String requesterID, String whiteboardId);
 	void enableWhiteboard(String meetingID, String requesterID, Boolean enable);
 	void isWhiteboardEnabled(String meetingID, String requesterID, String replyTo);
+
+	//Global Video
+	void globalVideoStreamInfo(String voiceConf, String globalVideoStreamName);
 	
 }

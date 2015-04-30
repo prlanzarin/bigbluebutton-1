@@ -22,4 +22,8 @@ trait VoiceApp {
     activeTalker = msg.activeTalker
     outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, activeTalker))
   }
+
+  def handleGlobalVideoStreamInfo(msg: GlobalVideoStreamInfo) {
+    outGW.send(new GlobalVideoStreamInfoMessage(msg.meetingID, msg.globalVideoStreamName))
+  }
 }

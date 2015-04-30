@@ -520,3 +520,8 @@ case class IsWhiteboardEnabledRequest(
 case class GetAllMeetingsRequest(
     meetingID: String /** Not used. Just to satisfy trait **/
     ) extends InMessage
+
+case class GlobalVideoStreamInfo(
+    meetingID: String, /** Not used. Just to satisfy trait **/
+    globalVideoStreamName: String
+) extends InMessage

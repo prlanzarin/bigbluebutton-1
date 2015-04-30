@@ -668,4 +668,8 @@ case class MeetingVO(
     recorded: Boolean
 )
 
-
+case class GlobalVideoStreamInfoMessage (
+    meetingID: String,
+    globalVideoStreamName: String,
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
