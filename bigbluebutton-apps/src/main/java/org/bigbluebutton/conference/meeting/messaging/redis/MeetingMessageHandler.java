@@ -74,14 +74,6 @@ public class MeetingMessageHandler implements MessageHandler {
 					log.info("User connected to global audio: data={}", logStr);
 					
 					bbbGW.userConnectedToGlobalAudio(emm.voiceConf, emm.userid, emm.name);
-
-					// Send global_video_stream_info event to client
-					if(globalVideoStreamName != null && !globalVideoStreamName.isEmpty()) {
-						bbbGW.globalVideoStreamInfo(emm.voiceConf, globalVideoStreamName);
-					}
-					else {
-						log.info("Global video stream not ready yet.");
-					}
 				} else if (msg instanceof UserDisconnectedFromGlobalAudio) {
 					UserDisconnectedFromGlobalAudio emm = (UserDisconnectedFromGlobalAudio) msg;
 					
@@ -106,7 +98,9 @@ public class MeetingMessageHandler implements MessageHandler {
 				else if (msg instanceof GlobalVideoStreamCreated) {
 					log.info("Received GlobalVideoStreamCreated");
 					GlobalVideoStreamCreated streamCreatedMessage = (GlobalVideoStreamCreated) msg;
-					log.info("Global video stream name: " + streamCreatedMessage.videoStreamName);
+					globalVideoStreamName = streamCreatedMessage.videoStreamName;
+					log.info("Global video stream name: " + globalVideoStreamName);
+					bbbGW.globalVideoStreamInfo(streamCreatedMessage.voiceConf, globalVideoStreamName);
 				}
 			}
 		} else if (channel.equalsIgnoreCase(MessagingConstants.TO_SYSTEM_CHANNEL)) {

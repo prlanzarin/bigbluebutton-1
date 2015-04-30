@@ -605,7 +605,7 @@ package org.bigbluebutton.modules.users.services
         dispatcher.dispatchEvent(globalVideoStreamInfo);
       }
       else
-        trace(LOG + "handleGlobalVideoStreamInfo: ERROR: There's not a Global Video Stream Name. Could NOT dispatch GLOBAL_VIDEO_STREAM_CREATED event");      
+        trace(LOG + "handleGlobalVideoStreamInfo: ERROR: There's not a Global Video Stream Name. Could NOT dispatch GLOBAL_VIDEO_STREAM_INFO event");      
     }
 
 
