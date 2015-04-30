@@ -196,6 +196,15 @@ package org.bigbluebutton.modules.users.services
       MeetingModel.getInstance().meetingMuted = map.meetingMuted;
       
       UserManager.getInstance().getConference().applyLockSettings();
+
+      if(map.global_video_stream_name) {
+        trace(LOG + "handleMeetingState: The stream name is " + map.global_video_stream_name);
+        var globalVideoStreamInfo:BBBEvent = new BBBEvent(BBBEvent.GLOBAL_VIDEO_STREAM_INFO);
+        globalVideoStreamInfo.payload.globalVideoStreamName = map.global_video_stream_name;
+        dispatcher.dispatchEvent(globalVideoStreamInfo);
+      }
+      else
+        trace(LOG + "handleMeetingState: There's not a global video stream running yet");
     }
     
     private function handleGetRecordingStatusReply(msg: Object):void {
