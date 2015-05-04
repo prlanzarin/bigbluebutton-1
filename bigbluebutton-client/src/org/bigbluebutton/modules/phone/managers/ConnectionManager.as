@@ -121,9 +121,9 @@ package org.bigbluebutton.modules.phone.managers {
           JSLog.debug(LOG + "Connection success");
           dispatcher.dispatchEvent(new FlashVoiceConnectionStatusEvent(FlashVoiceConnectionStatusEvent.CONNECTED));           
           // force freeswitch video start
-          if (MeetingModel.getInstance().freeswitchVideoName != "") {
+          /*if (MeetingModel.getInstance().freeswitchVideoName != "") {
             videoStarted(MeetingModel.getInstance().freeswitchVideoName);
-          }
+          }*/
           break;
         case "NetConnection.Connect.Failed":
           trace(LOG + "Connection failed");

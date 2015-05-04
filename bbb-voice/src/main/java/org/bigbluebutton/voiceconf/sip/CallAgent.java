@@ -444,13 +444,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     
     public void startFreeswitchToBbbVideoStream(){
        createVideoStream();
-
-       if(_destination != null && !_destination.equals(""))
-          messagingService.globalVideoStreamCreated(_destination,getGlobalVideoStreamName());
-       else
-          log.debug("_destination variable is null or empty: NOT sending the globalVideoStreamCreated event to bbb-apps ");
-
-    	onCallStreamStarted();
+       messagingService.globalVideoStreamCreated(getMeetingId(),getGlobalVideoStreamName());
+       //onCallStreamStarted();
     }
     
     public void stopFreeswitchToBbbGlobalVideoStream(){

@@ -16,17 +16,18 @@ public class GlobalVideoStreamCreated {
 	public static final String GLOBAL_VIDEO_STREAM_CREATED = "global_video_stream_created";
 	public static final String VERSION = "0.0.1";
 
+	public final String meetingId;
 	public final String videoStreamName;
-	public final String voiceConf;
 	
-	public GlobalVideoStreamCreated(String videoStreamName, String voiceConf) {
+	public GlobalVideoStreamCreated(String meetingId,String videoStreamName) {
+		this.meetingId = meetingId;
 		this.videoStreamName = videoStreamName;
-		this.voiceConf = voiceConf;
+
 	}
 	
 	public String toJson() {
 		HashMap<String, Object> payload = new HashMap<String, Object>();
-		payload.put(Constants.VOICE_CONF, voiceConf);
+		payload.put(Constants.MEETING_ID, meetingId);
 		payload.put(Constants.VIDEO_STREAM_NAME, videoStreamName);		
 				
 		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(GLOBAL_VIDEO_STREAM_CREATED, VERSION, null);

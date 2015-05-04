@@ -96,10 +96,9 @@ public class MeetingMessageHandler implements MessageHandler {
 					bbbGW.getAllMeetings("no_need_of_a_meeting_id");
 				}
 				else if (msg instanceof GlobalVideoStreamCreated) {
-					log.info("Received GlobalVideoStreamCreated");
 					GlobalVideoStreamCreated streamCreatedMessage = (GlobalVideoStreamCreated) msg;
 					globalVideoStreamName = streamCreatedMessage.videoStreamName;
-					log.info("Global video stream name: " + globalVideoStreamName);
+					log.info("Received GlobalVideoStreamCreated [ meetingId: {} globalVideoStreamName: {} ].",streamCreatedMessage.meetingId,globalVideoStreamName);
 					bbbGW.globalVideoStreamInfo(streamCreatedMessage.meetingId, globalVideoStreamName);
 				}
 			}

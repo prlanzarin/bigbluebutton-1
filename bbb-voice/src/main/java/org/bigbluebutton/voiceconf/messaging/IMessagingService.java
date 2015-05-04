@@ -3,5 +3,5 @@ package org.bigbluebutton.voiceconf.messaging;
 public interface IMessagingService {
 	void userConnectedToGlobalAudio(String voiceConf, String callerIdName);
 	void userDisconnectedFromGlobalAudio(String voiceConf, String callerIdName);
-	void globalVideoStreamCreated(String voiceConf, String streamName);
+	void globalVideoStreamCreated(String meetingId, String streamName);
 }

@@ -352,13 +352,14 @@ package org.bigbluebutton.modules.videoconf.maps
     public function setGlobalVideoStreamName(streamName:String):void {
       globalVideoStreamName = streamName;
       trace("VideoEventMapDelegate:: [" + me + "] global video stream name received => "  + globalVideoStreamName);
+      LogUtil.debug("VideoEventMapDelegate:: [" + me + "] global video stream name received => "  + globalVideoStreamName);
     }
 
     //TODO
     public function resumeFreeswitchVideo():void {
       trace("Resuming FreeSWITCH video...");
-
-      /* if(!proxy.connection.connected) {
+      LogUtil.debug("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+      if(!proxy.connection.connected) {
         trace("Not opening freeswitch window because the video connection is not ready yet.");
         return;
       }
@@ -374,7 +375,7 @@ package org.bigbluebutton.modules.videoconf.maps
       }
 
       trace("Starting Freeswitch window for stream: " + globalVideoStreamName);
-
+      LogUtil.debug("Starting Freeswitch window for stream: " + globalVideoStreamName);
       fsWindow = new VideoWindow();
       fsWindow.title = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
       fsWindow.userID = "FreeSWITCH video";
@@ -384,7 +385,7 @@ package org.bigbluebutton.modules.videoconf.maps
       fsWindow.startVideo(proxy.connection, globalVideoStreamName);
       webcamWindows.addWindow(fsWindow);
       openWindow(fsWindow);
-      dockWindow(fsWindow);*/
+      dockWindow(fsWindow);
     }
 
     private function openWindow(window:VideoWindowItf):void {

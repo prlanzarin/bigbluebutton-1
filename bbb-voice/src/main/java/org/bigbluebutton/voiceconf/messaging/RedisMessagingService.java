@@ -47,8 +47,8 @@ public class RedisMessagingService implements IMessagingService {
 	}
 
     @Override
-	public void globalVideoStreamCreated(String voiceConf, String videoStreamName) {
-		String json = new GlobalVideoStreamCreated(voiceConf, videoStreamName).toJson();
+	public void globalVideoStreamCreated(String meetingId, String videoStreamName) {
+		String json = new GlobalVideoStreamCreated(meetingId, videoStreamName).toJson();
 		log.debug("Sending GlobalVideoStreamCreated message to bbb-apps...");
 		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
 	}
