@@ -286,7 +286,7 @@ trait UsersApp {
 	    logger.info("User joined meeting:  mid=[" + meetingID + "] uid=[" + uvo.userID + "]")
 	    outGW.send(new UserJoined(meetingID, recorded, uvo))
 	
-	    outGW.send(new MeetingState(meetingID, recorded, uvo.userID, permissions, meetingMuted))
+	    outGW.send(new MeetingState(meetingID, recorded, uvo.userID, permissions, meetingMuted, globalVideoStreamName))
 	    
 	    // Become presenter if the only moderator		
 	    if (users.numModerators == 1) {

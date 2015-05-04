@@ -34,6 +34,7 @@ class MeetingActor(val meetingID: String, val externalMeetingID: String, val mee
 
   var isSipVideoPresent = false
   var activeTalker = ""
+  var globalVideoStreamName = ""
 
   def getDuration():Long = {
     duration

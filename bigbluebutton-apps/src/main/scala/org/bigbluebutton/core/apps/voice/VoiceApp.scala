@@ -24,6 +24,7 @@ trait VoiceApp {
   }
 
   def handleGlobalVideoStreamInfo(msg: GlobalVideoStreamInfo) {
+    globalVideoStreamName = msg.globalVideoStreamName
     outGW.send(new GlobalVideoStreamInfoMessage(msg.meetingID, msg.globalVideoStreamName))
   }
 }
