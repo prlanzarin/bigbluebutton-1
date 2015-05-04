@@ -82,9 +82,9 @@ public class MessageFromJsonConverter {
 	}
 
 	private static IMessage processGlobalVideoStreamCreated(JsonObject payload) {
-		String voiceConf = payload.get(Constants.VOICE_CONF).getAsString();
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
 		String videoStreamName = payload.get(Constants.VIDEO_STREAM_NAME).getAsString();
-		return new GlobalVideoStreamCreated(voiceConf, videoStreamName);
+		return new GlobalVideoStreamCreated(meetingId, videoStreamName);
 	}
 
 	//private static IMessage processGetAllMeetings(JsonObject)

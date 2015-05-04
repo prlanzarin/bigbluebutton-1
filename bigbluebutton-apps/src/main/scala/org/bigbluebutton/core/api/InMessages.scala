@@ -522,6 +522,6 @@ case class GetAllMeetingsRequest(
     ) extends InMessage
 
 case class GlobalVideoStreamInfo(
-    meetingID: String, /** Not used. Just to satisfy trait **/
+    meetingID: String,
     globalVideoStreamName: String
 ) extends InMessage
