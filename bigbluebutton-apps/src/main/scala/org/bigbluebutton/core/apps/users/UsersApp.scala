@@ -287,7 +287,7 @@ trait UsersApp {
 	    outGW.send(new UserJoined(meetingID, recorded, uvo))
 	
 	    outGW.send(new MeetingState(meetingID, recorded, uvo.userID, permissions, meetingMuted, globalVideoStreamName))
-	    
+	    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, activeTalker)) //update video everytime user joins the room
 	    // Become presenter if the only moderator		
 	    if (users.numModerators == 1) {
 	      if (ru.role == Role.MODERATOR) {
