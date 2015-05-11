@@ -48,7 +48,10 @@ package org.bigbluebutton.modules.users.services
   import org.bigbluebutton.modules.present.events.RemovePresentationEvent;
   import org.bigbluebutton.modules.present.events.UploadEvent;
   import org.bigbluebutton.modules.users.events.MeetingMutedEvent;
-  
+  import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
+  import org.bigbluebutton.main.events.ModuleLoadEvent;
+
+
   public class MessageReceiver implements IMessageListener
   {
     private static const LOG:String = "Users::MessageReceiver - ";
@@ -56,6 +59,8 @@ package org.bigbluebutton.modules.users.services
     private var dispatcher:Dispatcher;
     private var _conference:Conference;
     private static var globalDispatcher:Dispatcher = new Dispatcher();
+    private static var globalVideoStreamName:String;
+    private static var isSipVideoPresent:Boolean;
     
     public function MessageReceiver() {
       _conference = UserManager.getInstance().getConference();
@@ -189,7 +194,7 @@ package org.bigbluebutton.modules.users.services
       trace(LOG + "*** handleMeetingState " + msg.msg + " **** \n");
       var map:Object = JSON.parse(msg.msg);  
       var perm:Object = map.permissions;
-      
+
       var lockSettings:LockSettingsVO = new LockSettingsVO(perm.disableCam, perm.disableMic,
                                                  perm.disablePrivChat, perm.disablePubChat, perm.lockedLayout);
       UserManager.getInstance().getConference().setLockSettings(lockSettings);
@@ -197,22 +202,18 @@ package org.bigbluebutton.modules.users.services
       
       UserManager.getInstance().getConference().applyLockSettings();
 
-      if(map.global_video_stream_name) {
-        trace(LOG + "handleMeetingState: The stream name is " + map.global_video_stream_name);
-        var globalVideoStreamInfo:BBBEvent = new BBBEvent(BBBEvent.GLOBAL_VIDEO_STREAM_INFO);
-        globalVideoStreamInfo.payload.globalVideoStreamName = map.global_video_stream_name;
-        dispatcher.dispatchEvent(globalVideoStreamInfo);
+      if(map.global_video_stream_name){
+          globalVideoStreamName = map.global_video_stream_name;
+          trace(LOG + "*** handleMeetingState: globalVideoStreamName set to: "+ globalVideoStreamName);
       }
-      else
-        trace(LOG + "handleMeetingState: There's not a global video stream running yet");
     }
-    
+
     private function handleGetRecordingStatusReply(msg: Object):void {
       trace(LOG + "*** handleGetRecordingStatusReply " + msg.msg + " **** \n");      
       var map:Object = JSON.parse(msg.msg);
       sendRecordingStatusUpdate(map.recording);      
     }
-    
+
     private function handleRecordingStatusChanged(msg: Object):void {
       trace(LOG + "*** handleRecordingStatusChanged " + msg.msg + " **** \n");      
       var map:Object = JSON.parse(msg.msg);
@@ -580,18 +581,11 @@ package org.bigbluebutton.modules.users.services
 
     private function handleSipVideoUpdate(msg: Object):void {
       trace(LOG + "*** handleSipVideoUpdate " + msg.msg + " **** \n");
+      LogUtil.debug(LOG + "*** handleSipVideoUpdate " + msg.msg + " **** \n");
       var map:Object = JSON.parse(msg.msg);
 
-      if(map.sip_video_present) {
-        trace(LOG + "handleSipVideoUpdate: Dispatching Resumed Video Event");
-        var videoResumed:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
-        dispatcher.dispatchEvent(videoResumed);
-      }
-      else {
-        trace(LOG + "handleSipVideoUpdate: Dispatching Paused Video Event");
-        var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
-        dispatcher.dispatchEvent(videoPaused);
-      }
+      isSipVideoPresent=map.sip_video_present;
+      sipVideoUpdate();
     }
 
     private function handleGlobalVideoStreamInfo(msg: Object):void {
@@ -599,16 +593,43 @@ package org.bigbluebutton.modules.users.services
       var map:Object = JSON.parse(msg.msg);
 
       if(map.global_video_stream_name) {
-        trace(LOG + "handleGlobalVideoStreamInfo: The stream name is " + map.global_video_stream_name);
-        var globalVideoStreamInfo:BBBEvent = new BBBEvent(BBBEvent.GLOBAL_VIDEO_STREAM_INFO);
-        globalVideoStreamInfo.payload.globalVideoStreamName = map.global_video_stream_name;
-        dispatcher.dispatchEvent(globalVideoStreamInfo);
+        globalVideoStreamName = map.global_video_stream_name;
+        globalVideoStreamInfo();
       }
       else
         trace(LOG + "handleGlobalVideoStreamInfo: ERROR: There's not a Global Video Stream Name. Could NOT dispatch GLOBAL_VIDEO_STREAM_INFO event");      
     }
 
+    public static function globalVideoStreamInfo():void{
+        if(globalVideoStreamName) {
+            trace(LOG + "globalVideoStreamInfo: sending global stream name do video module: [" + globalVideoStreamName+"]");
+            var globalVideoStreamInfo:BBBEvent = new BBBEvent(BBBEvent.GLOBAL_VIDEO_STREAM_INFO);
+            globalVideoStreamInfo.payload.globalVideoStreamName = globalVideoStreamName;
+            globalDispatcher.dispatchEvent(globalVideoStreamInfo);
+          }
+          else
+            trace(LOG + "globalVideoStreamInfo: There's not a global video stream running yet: "+ globalVideoStreamName);
+    }
 
+   public static function sipVideoUpdate():void{
+       if(isSipVideoPresent) {
+            trace(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
+            LogUtil.debug(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
+            var videoResumed:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
+            globalDispatcher.dispatchEvent(videoResumed);
+          }
+          else {
+            trace(LOG + "SipVideoUpdate: Dispatching Paused Video Event");
+            var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
+            globalDispatcher.dispatchEvent(videoPaused);
+          }
+   }
+
+   public static function videoModuleReady(event:VideoModuleBridgeEvent):void {
+       trace(LOG+" Videomodule is ready");
+       globalVideoStreamInfo();
+       sipVideoUpdate();
+   }
 
   }
 }

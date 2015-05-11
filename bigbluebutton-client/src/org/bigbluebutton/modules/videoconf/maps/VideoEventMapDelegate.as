@@ -62,6 +62,7 @@ package org.bigbluebutton.modules.videoconf.maps
   import org.bigbluebutton.modules.videoconf.views.ToolbarButton;
   import org.bigbluebutton.modules.videoconf.views.VideoWindow;
   import org.flexunit.runner.manipulation.filters.IncludeAllFilter;
+  import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
 
   public class VideoEventMapDelegate
   {
@@ -536,7 +537,8 @@ package org.bigbluebutton.modules.videoconf.maps
       trace("VideoEventMapDelegate:: [" + me + "] Connected to video application.");
       _ready = true;
       addToolbarButton();
-      openWebcamWindows();        
+      openWebcamWindows();
+      videoModuleReady();
     }
     
     public function handleCameraSetting(event:BBBEvent):void {      
@@ -568,6 +570,11 @@ package org.bigbluebutton.modules.videoconf.maps
         trace("VideoEventMapDelegate::handleStoppedViewingWebcamEvent [" + me + "] Opening avatar for user [" + event.webcamUserID + "]");
         openAvatarWindowFor(event.webcamUserID);              
       }        
+    }
+
+    public function videoModuleReady():void{
+      var videoModuleReady:VideoModuleBridgeEvent = new VideoModuleBridgeEvent(VideoModuleBridgeEvent.VIDEO_MODULE_READY);
+      _dispatcher.dispatchEvent(videoModuleReady);
     }
   }
 }
