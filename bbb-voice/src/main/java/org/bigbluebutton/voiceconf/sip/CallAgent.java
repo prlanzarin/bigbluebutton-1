@@ -493,19 +493,16 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         _destination = voiceConf;
 
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
-        String globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
-        while (globalAudioStreamName == null || globalVideoStreamName == null) {
+        while (globalAudioStreamName == null) {
             try {
                 Thread.sleep(100);
             } catch (Exception e) {
             }
             globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
-            globalVideoStreamName = GlobalCall.getGlobalVideoStream(voiceConf);
         }
 
         GlobalCall.addUser(clientId, callerIdName, _destination);
         sipAudioCodec = GlobalCall.getRoomAudioCodec(voiceConf);
-        sipVideoCodec = GlobalCall.getRoomVideoCodec(voiceConf);
         callState = CallState.UA_ONCALL;
         notifyListenersOnCallConnected("", globalAudioStreamName);
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
