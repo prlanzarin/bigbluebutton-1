@@ -90,10 +90,10 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
     
-    public void stopBbbToFreeswitchAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
+    public void stopBbbToFreeswitchAudioStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.stopBbbToFreeswitchAudioStream(clientId, broadcastStream, scope);
+            sipUser.stopBbbToFreeswitchAudioStream(userId, broadcastStream, scope);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
@@ -153,10 +153,10 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public String getStreamType(String peerId, String clientId, String streamName) {
+    public String getStreamType(String peerId, String userId, String streamName) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            return sipUser.getStreamType(clientId, streamName);
+            return sipUser.getStreamType(userId, streamName);
         }
         else
         {
@@ -165,19 +165,19 @@ public final class SipPeerManager {
         }
     }
 
-    public boolean isAudioStream(String peerId, String clientId, IBroadcastStream broadcastStream) {
+    public boolean isAudioStream(String peerId, String userId, IBroadcastStream broadcastStream) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            return sipUser.isAudioStream(clientId, broadcastStream);
+            return sipUser.isAudioStream(userId, broadcastStream);
         }
         else
             return false;
     }
 
-    public boolean isVideoStream(String peerId, String clientId, IBroadcastStream broadcastStream) {
+    public boolean isVideoStream(String peerId, String userId, IBroadcastStream broadcastStream) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            return sipUser.isVideoStream(clientId, broadcastStream);
+            return sipUser.isVideoStream(userId, broadcastStream);
         }
         else
             return false;

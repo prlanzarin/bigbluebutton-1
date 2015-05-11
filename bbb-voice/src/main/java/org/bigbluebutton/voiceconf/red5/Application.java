@@ -250,7 +250,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
             String extension = callExtensionPattern.format(new String[] { destination });
             try {
-                sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, userId, extension,meetingId);
+                sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, "GLOBAL_AUDIO_" + destination, extension,meetingId);
                 Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
             } catch (PeerNotFoundException e) {
                 log.error("PeerNotFound {}", peerId);
@@ -310,7 +310,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         } else if (peerId != null) {
           try {
             log.debug("Audio disconnected: closing flash AUDIO stream");
-            sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, clientId, stream, conn.getScope());
+            sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, userid, stream, conn.getScope());
             super.streamBroadcastClose(stream);
           } catch(PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);

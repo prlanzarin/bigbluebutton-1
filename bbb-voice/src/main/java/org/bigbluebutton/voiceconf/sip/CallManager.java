@@ -32,36 +32,21 @@ public class CallManager {
 	private static Logger log = Red5LoggerFactory.getLogger(CallManager.class, "sip");
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
-	private final Map<String, String> identifiers = new ConcurrentHashMap<String, String>();
 	private final Map<String, IBroadcastStream> videoStreams = new ConcurrentHashMap<String, IBroadcastStream>();
 	private final Map<String, IScope> videoScopes = new ConcurrentHashMap<String, IScope>();
 	private final Map<String, String[]> webRTCPorts = new ConcurrentHashMap<String, String[]>();
 	
 	public CallAgent add(CallAgent ca) {
-		log.debug("Creating entry (userId, callId) = (" + ca.getUserId() + ", " + ca.getCallId() + ")" );
-		
-		if(ca.getUserId() != null) {
-			identifiers.put(ca.getUserId(), ca.getCallId());
-		}
-		return calls.put(ca.getCallId(), ca);
+		log.debug("Creating entry for the user with userId = "+ca.getUserId());
+		return calls.put(ca.getUserId(), ca);
 	}
 	
-	public CallAgent remove(String id) {
-		CallAgent ca = calls.get(id);
-		String userId;
-
-		if(ca != null)
-			userId=ca.getUserId();
-		else{
-			log.debug("There's no CallAgent for the user {} anymore",id);
-			return null;
-		}
-
+	public CallAgent remove(String userId) {
 		if(userId != null) {
-			identifiers.remove(userId);
-		}
-		log.debug("Removing callAgent entry for user: " + userId);
-		return calls.remove(id);
+		    log.debug("Removing callAgent entry for user: " + userId);
+	        return calls.remove(userId);
+		}else return null;
+
 	}
 
 	public IBroadcastStream addVideoStream(String userId, IBroadcastStream stream) {
@@ -102,45 +87,26 @@ public class CallManager {
     }
 
 	public CallAgent removeByUserId(String userId) {
-		String uid = userId;
-		String id;
-
-		if( (id = identifiers.get(uid)) == null )
-			return null;
-		else {
-			identifiers.remove(uid);
-			return calls.remove(id);
-		}
+	    //kept for compatibility
+		return calls.remove(userId);
 	}
 	
-	public CallAgent get(String id) {
-	    CallAgent ca = calls.get(id);
+	public CallAgent get(String userId) {
+	    CallAgent ca = calls.get(userId);
 	    if(ca != null){
-	        log.debug("Retrieving entry for the client with userId = " + ca.getUserId() +" clientId = " + id);
+	        log.debug("Retrieving entry for the client with userId = " + ca.getUserId());
 	        return ca;
 	    }
 	    else {
-	        log.debug("There's no CallAgent for the user with uid = " + identifiers.get(id) + "and clientId = "+id);
+	        log.debug("There's no CallAgent for the user with userId = " + userId);
 	        return null;
 	    }
 	}
 
 	public CallAgent getByUserId(String userId) {
-
-		//first we retrieve the 'clientId' using the 'userId' as key, then - with the 'clientId' - we retrieve the CallAgent
-		//this is necessary to get the CallAgent in order to start the sip video publish.
-
-		String uid = userId;
-		String id;
-
-		if (uid == null) return null;
-
-		if( (id = identifiers.get(uid)) == null )
-			return null;
-		else {
-			log.debug("[Video context] clientId retrieved with the userid " + uid + " ==> " + id);
-			return calls.get(id);
-		}
+	    //kept for compatibility
+        log.debug("Retrieving entry for the client with userId = " + userId);
+		return calls.get(userId);
 	}
 
 	public IBroadcastStream getVideoStream(String userId) {

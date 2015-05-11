@@ -136,8 +136,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 			localAudioSocket = getLocalAudioSocket();
 			userProfile.audioPort = localAudioSocket.getLocalPort();
 
-            //localVideoSocket = getLocalVideoSocket();
-            //userProfile.videoPort = localVideoSocket.getLocalPort();
+            localVideoSocket = getLocalVideoSocket();
+            userProfile.videoPort = localVideoSocket.getLocalPort();
 
 		} catch (Exception e) {
 			log.debug("{} failed to allocate local port for call to {}. Notifying client that call failed.", callerName, destination); 
@@ -354,7 +354,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             String[] command = ffmpeg.getFFmpegCommand(true);
 
             // Free local port before starting ffmpeg
-            //localVideoSocket.close();
+            localVideoSocket.close();
 
             log.debug("Preparing FFmpeg process monitor");
 
@@ -800,6 +800,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public String getUserId() {
         return userProfile.userID;
+    }
+
+    public String getCallerName() {
+        return userProfile.username;
     }
 
     @Override

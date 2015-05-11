@@ -156,15 +156,14 @@ public class SipPeer implements SipRegisterAgentListener {
        sipProvider.halt();
 	}
 
-    public void hangup(String clientId) {
+    public void hangup(String userId) {
         log.debug( "SIPUser hangup" );
 
-        CallAgent ca = callManager.remove(clientId);
+        CallAgent ca = callManager.remove(userId);
 
         if (ca != null) {
             if (ca.isListeningToGlobal()) {
                 String destination = ca.getDestination();
-                String userId = ca.getUserId();
 
                 log.info("User has disconnected from global audio, user [{}] voiceConf {}", userId, destination);
                 messagingService.userDisconnectedFromGlobalAudio(destination, userId);
@@ -189,7 +188,7 @@ public class SipPeer implements SipRegisterAgentListener {
     }
 
     public void startBbbToFreeswitchAudioStream(String clientId, String userId, IBroadcastStream broadcastStream, IScope scope) {
-    	CallAgent ca = callManager.get(clientId);
+        CallAgent ca = callManager.get(userId);
         IBroadcastStream videoStream = callManager.getVideoStream(userId);
         IScope videoScope = callManager.getVideoScope(userId);
         log.debug("Starting Audio Stream for the user ["+userId+"]");
@@ -202,8 +201,8 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
     
-    public void stopBbbToFreeswitchAudioStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
-    	CallAgent ca = callManager.get(clientId);
+    public void stopBbbToFreeswitchAudioStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(userId);
 
         if (ca != null) {
            ca.stopBbbToFreeswitchAudioStream(broadcastStream, scope);
@@ -320,12 +319,12 @@ public class SipPeer implements SipRegisterAgentListener {
     public void startFreeswitchToBbbGlobalVideoStream(String userId) {
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null){
-            if(ca.isGlobalStream()){
+            if(ca.isGlobalStream()){ //this MUST be a globalStream, because the global is the only one that sends video
                 log.debug("Starting GlobalCall's freeswitch->bbb video stream");
                 ca.startFreeswitchToBbbVideoStream();
             }
+            log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId+" callerName: "+ ca.getCallerName());
         }
-        else log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId);            
     }
 
     public void stopFreeswitchToBbbGlobalVideoStream(String userId) {
@@ -349,8 +348,8 @@ public class SipPeer implements SipRegisterAgentListener {
             callManager.removeWebRTCPorts(userId);
     }
 
-    public String getStreamType(String clientId, String streamName) {
-        CallAgent ca = callManager.get(clientId);
+    public String getStreamType(String userId, String streamName) {
+        CallAgent ca = callManager.get(userId);
         if (ca != null) {
            return ca.getStreamType(streamName);
         }
@@ -361,8 +360,8 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public boolean isAudioStream(String clientId, IBroadcastStream broadcastStream) {
-        CallAgent ca = callManager.get(clientId);
+    public boolean isAudioStream(String userId, IBroadcastStream broadcastStream) {
+        CallAgent ca = callManager.get(userId);
         if (ca != null) {
            return ca.isAudioStream(broadcastStream);
         }
@@ -370,8 +369,8 @@ public class SipPeer implements SipRegisterAgentListener {
             return false;
     }
 
-    public boolean isVideoStream(String clientId, IBroadcastStream broadcastStream) {
-        CallAgent ca = callManager.get(clientId);
+    public boolean isVideoStream(String userId, IBroadcastStream broadcastStream) {
+        CallAgent ca = callManager.get(userId);
         if (ca != null) {
            return ca.isVideoStream(broadcastStream);
         }
