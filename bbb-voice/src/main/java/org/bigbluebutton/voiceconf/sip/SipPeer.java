@@ -122,22 +122,22 @@ public class SipPeer implements SipRegisterAgentListener {
 //    		return;
     	}
 
-    	CallAgent ca = createCallAgent(clientId);
+        CallAgent ca = createCallAgent(clientId, userId);
         ca.setMeetingId(meetingId);//set meetingId to use with fs->bbb video stream when call is accepted
         ca.call(callerName,userId, destination);
     	callManager.add(ca);
     }
 
-	public void connectToGlobalStream(String clientId, String callerIdName, String destination) {
-    	CallAgent ca = createCallAgent(clientId);
-	    
-    	ca.connectToGlobalStream(clientId, callerIdName, destination); 	
+	public void connectToGlobalStream(String clientId, String userId, String callerIdName, String destination) {
+        CallAgent ca = createCallAgent(clientId,userId);
+
+        ca.connectToGlobalStream(clientId, userId, callerIdName, destination);
      	callManager.add(ca);
 	}
 
-    private CallAgent createCallAgent(String clientId) {
+    private CallAgent createCallAgent(String clientId, String userId) {
     	SipPeerProfile callerProfile = SipPeerProfile.copy(registeredProfile);
-    	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, messagingService);
+        CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, userId, messagingService);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
 

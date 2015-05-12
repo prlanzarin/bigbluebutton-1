@@ -58,7 +58,7 @@ public class Service {
 					return false;
 				}
 			}
-			sipPeerManager.connectToGlobalStream(peerId, getClientId(), callerName, destination);
+			sipPeerManager.connectToGlobalStream(peerId, getClientId(), userId, callerName, destination);
 			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 			return true;
 		} else {
@@ -90,7 +90,7 @@ public class Service {
     	String username = getUsername();		
     	log.debug("{} is requesting to hang up from the conference.", username + "[uid=" + userid + "][clientid=" + clientId + "]");
 		try {
-			sipPeerManager.hangup(peerId, getClientId());
+			sipPeerManager.hangup(peerId, userid);
 			return true;
 		} catch (PeerNotFoundException e) {
 			log.error("PeerNotFound {}", peerId);

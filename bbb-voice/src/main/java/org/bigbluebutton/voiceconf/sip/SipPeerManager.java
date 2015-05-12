@@ -76,10 +76,10 @@ public final class SipPeerManager {
     	}
     }
     
-    public void hangup(String peerId, String clientId) throws PeerNotFoundException {
+    public void hangup(String peerId, String userId) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    	sipPeer.hangup(clientId);
+        sipPeer.hangup(userId);
     }
 
     public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
@@ -188,10 +188,10 @@ public final class SipPeerManager {
         sipPeers.remove(userid);
     }
 
-    public void connectToGlobalStream(String peerId, String clientId, String callerIdName, String destination) {
+    public void connectToGlobalStream(String peerId, String clientId, String userId, String callerIdName, String destination) {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.connectToGlobalStream(clientId, callerIdName, destination);
+            sipUser.connectToGlobalStream(clientId, userId, callerIdName, destination);
     	}
     }
 

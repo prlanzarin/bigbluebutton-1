@@ -96,12 +96,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile,
-    		ConferenceProvider portProvider, String clientId, IMessagingService messagingService) {
+		ConferenceProvider portProvider, String clientId, String userId, IMessagingService messagingService) {
         this.sipProvider = sipProvider;
         this.clientRtpIp = sipClientRtpIp;
         this.userProfile = userProfile;
         this.portProvider = portProvider;
         this.clientId = clientId;
+        this._userId = userId;
         this.messagingService = messagingService;
         this.serverIp = Red5.getConnectionLocal().getHost();
 
@@ -176,12 +177,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             userProfile.contactUrl += ":" + sipProvider.getPort();
         }
 
-        if(callerName.startsWith("GLOBAL_AUDIO")) {
-            userProfile.userID = callerName;
-        }
-        else {
-            userProfile.userID = _userId;
-        }
+        userProfile.userID = _userId;
+
         log.debug("userID: " + userProfile.userID);
     }
     
@@ -488,7 +485,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     
-    public void connectToGlobalStream(String clientId, String callerIdName, String voiceConf) {
+    public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) {
         listeningToGlobal = true;
         _destination = voiceConf;
 
@@ -507,7 +504,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOnCallConnected("", globalAudioStreamName);
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
         messagingService.userConnectedToGlobalAudio(voiceConf, callerIdName);
-        userProfile.userID = callerIdName;
+        userProfile.userID = userId;
     }
 
 
