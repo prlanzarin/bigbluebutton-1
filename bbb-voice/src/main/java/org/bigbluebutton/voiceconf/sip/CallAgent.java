@@ -32,14 +32,12 @@ import org.bigbluebutton.voiceconf.red5.media.StreamException;
 import org.bigbluebutton.voiceconf.util.StackTraceUtil;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.CodecUtils;
-import org.red5.app.sip.codecs.H264Codec;
 import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 
-import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -48,6 +46,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import java.util.HashMap;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 
 public class CallAgent extends CallListenerAdapter implements CallStreamObserver  {
     private static Logger log = Red5LoggerFactory.getLogger(CallAgent.class, "sip");
@@ -81,7 +80,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private String destinationPrefix;
 
     private ProcessMonitor processMonitor = null;
-    
+    private VideoTranscoder videoTranscoder = null;
+
     private enum CallState {
     	UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);    	
     	private final int state;
@@ -334,29 +334,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
             GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
             String inputLive = GlobalCall.getSdpVideoPath(getDestination());
-            log.debug("Global Video Source: "+inputLive);
-            log.debug("Global Call Agent: userProfile.userId = "+ getUserId());
             setGlobalVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
-            String outputLive = "rtmp://" + serverIp + "/video/" + getMeetingId() + "/"
-                    + getGlobalVideoStreamName()+" live=1";
-
-            FFmpegCommand ffmpeg = new FFmpegCommand();
-            ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
-            ffmpeg.setInput(inputLive);            
-            ffmpeg.setFormat("flv");
-            ffmpeg.setLoglevel("quiet");            
-            ffmpeg.setOutput(outputLive);
-            ffmpeg.addCustomParameter("-q:v", "1");
-
-            String[] command = ffmpeg.getFFmpegCommand(true);
 
             // Free local port before starting ffmpeg
             localVideoSocket.close();
 
-            log.debug("Preparing FFmpeg process monitor");
-
-            processMonitor = new ProcessMonitor(command);
-            processMonitor.start();
+            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
+                    inputLive,getGlobalVideoStreamName(),getMeetingId(),serverIp);
+            videoTranscoder.start();
             //videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (Exception e) {
             log.debug("Failed to start FFMPEG for global video (fs->bbb) stream");
@@ -388,45 +373,21 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	}
     }
     
-     public void startBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+     public void startBbbToFreeswitchVideoStream(String videoStreamName, String meetingId) {
         try {
             SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         	SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
             
-            int remotePort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
-            int localPort = SessionDescriptorUtil.getRemoteMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
-            
-        	Codec codec = new H264Codec();
-        	String ip = Red5.getConnectionLocal().getHost();
+            String remoteVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
+            String localVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
 
-            String inputLive = "rtmp://" + ip + "/video/" + scope.getName() + "/"
-                                + broadcastStream.getPublishedName() + " live=1";
-            String output = "rtp://" + ip + ":" + remotePort + "?localport=" + localPort;
-
-            FFmpegCommand ffmpeg = new FFmpegCommand();
-            ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
-            ffmpeg.setInput(inputLive);
-            ffmpeg.setCodec("h264");
-            ffmpeg.setPreset("ultrafast");
-            ffmpeg.setProfile("baseline");
-            ffmpeg.setLevel("1.3");
-            ffmpeg.setFormat("rtp");
-            ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
-            ffmpeg.setLoglevel("quiet");
-            ffmpeg.setSliceMaxSize("1024");
-            ffmpeg.setMaxKeyFrameInterval("10");
-            ffmpeg.setOutput(output);
-            ffmpeg.setAnalyzeDuration("10000"); // 10ms
-
-            String[] command = ffmpeg.getFFmpegCommand(true);
+            String ip = Red5.getConnectionLocal().getHost();
 
         	// Free local port before starting ffmpeg
         	localVideoSocket.close();
 
-            log.debug("Preparing FFmpeg process monitor");
-
-            processMonitor = new ProcessMonitor(command);
-            processMonitor.start();
+            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,videoStreamName,meetingId,ip,localVideoPort,remoteVideoPort);
+            videoTranscoder.start();
 
             // videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (Exception e) {
@@ -435,7 +396,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
     
-    public void stopBbbToFreeswitchVideoStream(IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchVideoStream() {
         closeVideoStream();
     }
     
@@ -467,16 +428,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if the video is enabled, for a future use.
       */
         log.debug("Shutting down the videoCallStream...");
-        if (videoCallStream != null) {
-            videoCallStream.stopFreeswitchToBbbStream();
-            videoCallStream = null;
-        } else {
-            log.debug("Can't shutdown videoCallStream: already NULL");
-        }
 
-        if(processMonitor != null) {
-            processMonitor.destroy();
-            processMonitor = null;
+        if(videoTranscoder != null) {
+            videoTranscoder.stop();
+            videoTranscoder = null;
         }
 
         if(isGlobalStream()){

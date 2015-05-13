@@ -215,19 +215,17 @@ public class Application extends MultiThreadedApplicationAdapter {
     	String userid = getUserId();
     	String username = getUsername();
     	log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
-    	System.out.println("streamPublishStart: " + stream.getPublishedName());
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-
+        String meetingId = conn.getScope().getName(); //the scope name is the meeting id
         if (isVideoStream(stream)){
           super.streamPublishStart(stream);
           String videoUserId = getBbbVideoUserId(stream);
           log.debug("Video UserId: " + videoUserId);
           peerId = "default";
-
           try {
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream, conn.getScope());
-            sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, videoUserId);
+            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream.getPublishedName(), meetingId);
+            sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, videoUserId, stream.getPublishedName(), meetingId);
           } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
           }
@@ -300,7 +298,7 @@ public class Application extends MultiThreadedApplicationAdapter {
             userid = getBbbVideoUserId(stream);
             log.debug("Closing only the video stream of the UserId " + userid);
             peerId = "default";
-            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userid, stream, conn.getScope());
+            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userid);
             sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId, userid);
             super.streamBroadcastClose(stream);
           } catch (PeerNotFoundException e) {

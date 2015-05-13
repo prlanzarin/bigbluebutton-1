@@ -84,12 +84,22 @@ public class ProcessMonitor implements Runnable {
             log.debug("Interrupted Excetion");
         }
 
-        log.debug("Exiting thread that executes FFmpeg");
+        if (this.process == null)
+            log.debug("Exiting thread that executes FFmpeg");
+        else{
+            log.debug("FFmpeg VideoTranscoder died unepectedly. Restarting it");
+            //TODO
+        }
     }
 
     public void start() {
         this.thread = new Thread(this);
         this.thread.start();
+    }
+
+    public void restart(){
+        if (this.thread != null)
+            this.thread.start();
     }
 
     public void destroy() {
@@ -102,6 +112,7 @@ public class ProcessMonitor implements Runnable {
         if(this.process != null) {
             log.debug("Closing FFmpeg process");
             this.process.destroy();
+            this.process = null;
         }
     }
 }

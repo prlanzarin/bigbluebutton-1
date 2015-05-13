@@ -30,11 +30,11 @@ import org.bigbluebutton.voiceconf.messaging.IMessagingService;
 import org.bigbluebutton.voiceconf.red5.CallStreamFactory;
 import org.bigbluebutton.voiceconf.red5.ClientConnectionManager;
 import org.red5.app.sip.codecs.Codec;
-import org.red5.app.sip.codecs.H264Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 
 /**
  * Class that is a peer to the sip server. This class will maintain
@@ -58,8 +58,8 @@ public class SipPeer implements SipRegisterAgentListener {
     
     private boolean registered = false;
     private SipPeerProfile registeredProfile;
-    private ProcessMonitor processMonitor = null;
-    Map<String, ProcessMonitor> processForUserId = new HashMap<String, ProcessMonitor>();
+    private VideoTranscoder videoTranscoder = null;
+    Map<String, VideoTranscoder> videoTranscoderForUserId = new HashMap<String, VideoTranscoder>();
     
     public SipPeer(String id, String sipClientRtpIp, String host, int sipPort, 
 			int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort, IMessagingService messagingService) {
@@ -189,14 +189,14 @@ public class SipPeer implements SipRegisterAgentListener {
 
     public void startBbbToFreeswitchAudioStream(String clientId, String userId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.get(userId);
-        IBroadcastStream videoStream = callManager.getVideoStream(userId);
-        IScope videoScope = callManager.getVideoScope(userId);
+        String videoStream = callManager.getVideoStream(userId);
+        String meetingId = callManager.getMeetingId(userId);
         log.debug("Starting Audio Stream for the user ["+userId+"]");
         if (ca != null) {
             ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
-            if ((videoStream != null) && (videoScope != null)){
+            if ((videoStream != null) && (meetingId != null)){
                 log.debug(" There's a VideoStream for this audio call, starting it ");
-                ca.startBbbToFreeswitchVideoStream(videoStream,videoScope);
+                ca.startBbbToFreeswitchVideoStream(videoStream,meetingId);
             }else log.debug("There's no videostream for this flash audio call yet.");
         }
     }
@@ -212,28 +212,29 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName, String meetingId) {
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null){
             if(ca.isGlobalStream()){
                 log.debug("This is a global CallAgent, there's no video stream to send from bbb to freeswitch");
             }else {
-                ca.startBbbToFreeswitchVideoStream(broadcastStream, scope);
+                ca.startBbbToFreeswitchVideoStream(videoStreamName, meetingId);
             }
         }
-        else log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
+        else {
+            log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
                        + " userId " + userId + " (maybe this is an webRTC call?). Saving the current stream and scope to be used when the CallAgent is created by this user");            
-
-        callManager.addVideoStream(userId,broadcastStream);
-        callManager.addVideoScope(userId,scope);
+            callManager.addVideoStream(userId,videoStreamName);
+            callManager.addMeetingId(userId,meetingId);
+        }
     }
 
-    public void stopBbbToFreeswitchVideoStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchVideoStream(String userId) {
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) {
-           ca.stopBbbToFreeswitchVideoStream(broadcastStream, scope);
+           ca.stopBbbToFreeswitchVideoStream();
            callManager.removeVideoStream(userId);
-           callManager.removeVideoScope(userId);
+           callManager.removeMeetingId(userId);
         }
         else
             log.debug("Could not STOP BbbToFreeswitchVideoStream: there is no CallAgent with"
@@ -241,78 +242,46 @@ public class SipPeer implements SipRegisterAgentListener {
         
     }
 
-    public void startBbbToFreeswitchWebRTCVideoStream(String userId) {
-        IBroadcastStream videoStream = callManager.getVideoStream(userId);
-        IScope scope = callManager.getVideoScope(userId);
-        Codec codec;
-        FFmpegCommand ffmpeg;
+    public void startBbbToFreeswitchWebRTCVideoStream(String userId, String videoStreamName, String meetingId) {
+
         String ip = Red5.getConnectionLocal().getHost();
         String ports[] = callManager.getWebRTCPorts(userId);
         String remoteVideoPort="";
         String localVideoPort="";
 
         if (ports == null) {
-            log.debug("There isn't any webRTCCall going on for this user. WebRTC Video will be transmited when the user to make one");
+            log.debug("There isn't any webRTCCall going on for this user. WebRTC Video will be transmited when the user to make one. Saving video parameters");
+            callManager.addVideoStream(userId,videoStreamName);
+            callManager.addMeetingId(userId,meetingId);
             return;
-        }else {
-            remoteVideoPort=ports[0];
-            localVideoPort = ports[1];
         }
 
-        if (videoStream == null){
+        remoteVideoPort=ports[0];
+        localVideoPort = ports[1];
+
+        if (videoStreamName.equals("") || meetingId.equals("")){
             log.debug("There's no videoStream for this webRTCCall. Waiting for the user to enable your webcam");
             return;
-        } else {
-            //start webRTCVideoStream
-            codec = new H264Codec();
-
-            log.debug("{} is requesting to send video through webRTC. " + "[uid=" + userId + "]");    	
-            log.debug("Video Parameters: remotePort = "+remoteVideoPort+ ", localPort = "+localVideoPort+" rtmp-stream = rtmp://" + ip + "/video/" + scope.getName() + "/"
-                    + videoStream.getPublishedName());
-
-            String inputLive = "rtmp://" + ip + "/video/" + scope.getName() + "/"
-                    + videoStream.getPublishedName() + " live=1";
-            String output = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
-
-            ffmpeg = new FFmpegCommand();
-            ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
-            ffmpeg.setInput(inputLive);
-            ffmpeg.setCodec("h264");
-            ffmpeg.setPreset("ultrafast");
-            ffmpeg.setProfile("baseline");
-            ffmpeg.setLevel("1.3");
-            ffmpeg.setFormat("rtp");
-            ffmpeg.setPayloadType(String.valueOf(codec.getCodecId()));
-            ffmpeg.setLoglevel("quiet");
-            ffmpeg.setSliceMaxSize("1024");
-            ffmpeg.setMaxKeyFrameInterval("10");
-            ffmpeg.setOutput(output);
-            ffmpeg.setAnalyzeDuration("10000"); // 10ms
-
-            String[] command = ffmpeg.getFFmpegCommand(true);
-
-            // Free local port before starting ffmpeg
-            //localVideoSocket.close();
-
-            log.debug("Preparing FFmpeg process monitor");
-
-            processMonitor = new ProcessMonitor(command);
-            processForUserId.put(userId,processMonitor);
-            processMonitor.start();
         }
 
+        //start webRTCVideoStream
+        log.debug("{} is requesting to send video through webRTC. " + "[uid=" + userId + "]");
+        videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,videoStreamName,meetingId,ip,localVideoPort,remoteVideoPort);
+        videoTranscoderForUserId.put(userId,videoTranscoder);
+        videoTranscoder.start();
     }
 
     public void stopBbbToFreeswitchWebRTCVideoStream(String userId) {
         log.debug("Stopping webRTC video stream for the user: "+userId);
         callManager.removeVideoStream(userId);
-        callManager.removeVideoScope(userId);
+        callManager.removeMeetingId(userId);
 
         //destroy processMonitor-ffmpeg for this user
-        processMonitor = processForUserId.get(userId);
-        if (processMonitor != null) {
-            processMonitor.destroy();
-            processMonitor = null;
+        videoTranscoder = videoTranscoderForUserId.get(userId);
+        if (videoTranscoder != null) {
+            videoTranscoder.stop();
+            videoTranscoder=null;
+            videoTranscoderForUserId.remove(userId);
         }
     }
 
@@ -339,13 +308,17 @@ public class SipPeer implements SipRegisterAgentListener {
                        + "userId " + userId);
     }
 
-    public void saveWebRTCParameters(String userId,String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+    public void saveWebRTCParameters(String userId, String username, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
         String[] ports = {remoteVideoPort,localVideoPort};
         callManager.addWebRTCPorts(userId, ports);
+        callManager.addVideoStream(userId,username);
+        callManager.addMeetingId(userId,meetingId);
     }
 
     public void removeWebRTCParameters(String userId) throws PeerNotFoundException {
             callManager.removeWebRTCPorts(userId);
+            callManager.removeVideoStream(userId);
+            callManager.removeMeetingId(userId);
     }
 
     public String getStreamType(String userId, String streamName) {

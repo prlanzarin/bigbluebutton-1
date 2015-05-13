@@ -97,24 +97,24 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public void startBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName,  String meetingId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchVideoStream(userId, broadcastStream, scope);
+            sipUser.startBbbToFreeswitchVideoStream(userId, videoStreamName, meetingId);
         }
     }
     
-    public void stopBbbToFreeswitchVideoStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchVideoStream(String peerId, String userId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.stopBbbToFreeswitchVideoStream(userId, broadcastStream, scope);
+            sipUser.stopBbbToFreeswitchVideoStream(userId);
         }
     }
 
-    public void startBbbToFreeswitchWebRTCVideoStream(String peerId, String userId) throws PeerNotFoundException {
+    public void startBbbToFreeswitchWebRTCVideoStream(String peerId, String userId, String videoStreamName, String meetingId) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchWebRTCVideoStream(userId);
+            sipUser.startBbbToFreeswitchWebRTCVideoStream(userId, videoStreamName, meetingId);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
@@ -139,10 +139,10 @@ public final class SipPeerManager {
         }else log.debug("Can't find sip peer " + peerId);
     }
 
-    public void saveWebRTCParameters(String peerId, String userId,String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+    public void saveWebRTCParameters(String peerId, String userId, String username, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.saveWebRTCParameters(userId,remoteVideoPort,localVideoPort);
+            sipUser.saveWebRTCParameters(userId, username, meetingId, remoteVideoPort,localVideoPort);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 

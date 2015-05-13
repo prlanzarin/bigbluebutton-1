@@ -21,29 +21,20 @@ package org.bigbluebutton.voiceconf.red5;
 import java.text.MessageFormat;
 
 import org.slf4j.Logger;
-import org.bigbluebutton.voiceconf.sip.CallManager;
-import org.bigbluebutton.voiceconf.sip.FFmpegCommand;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
-import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 import org.bigbluebutton.voiceconf.sip.SipPeerManager;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
-import org.red5.app.sip.codecs.Codec;
-import org.red5.app.sip.codecs.H264Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
-import org.red5.server.api.stream.IBroadcastStream;
-import org.bigbluebutton.voiceconf.sip.GlobalCall;
-import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
 
     private SipPeerManager sipPeerManager;
-	
+
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
-	private ProcessMonitor processMonitor = null;
-    	
+
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
 	    String userId = getUserId();
 		if (listenOnly) {
@@ -102,11 +93,12 @@ public class Service {
         //called by the client
         log.debug("Accepted a webRTC Call: saving it's parameters: [remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");        
         String userid = getUserId();
-
+        String username = getUsername();
+        String meetingId = getMeetingId();
         try{
             if (sipPeerManager != null) {
-                sipPeerManager.saveWebRTCParameters(peerId,userid,remoteVideoPort,localVideoPort);
-                sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, userid);
+                sipPeerManager.saveWebRTCParameters(peerId, userid, username, meetingId, remoteVideoPort,localVideoPort);
+                sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, userid,"","");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
         } catch (PeerNotFoundException e) {
