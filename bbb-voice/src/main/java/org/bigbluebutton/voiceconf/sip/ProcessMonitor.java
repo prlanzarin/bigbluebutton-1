@@ -61,9 +61,8 @@ public class ProcessMonitor implements Runnable {
             inputStreamMonitor.start();
             errorStreamMonitor.start();
 
-            this.process.waitFor();
+            int ret = this.process.waitFor();
 
-            int ret = this.process.exitValue();
             log.debug("Exit value: " + ret);
 
             destroy();
