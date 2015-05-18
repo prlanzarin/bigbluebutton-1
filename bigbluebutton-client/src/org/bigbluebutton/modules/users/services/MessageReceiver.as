@@ -138,7 +138,7 @@ package org.bigbluebutton.modules.users.services
         case "permissionsSettingsChanged":
           handlePermissionsSettingsChanged(message);
           break;
-        case "sip_video_update":
+        case "SipVideoUpdate":
           handleSipVideoUpdate(message);
           break;
         case "global_video_stream_info":
@@ -584,7 +584,7 @@ package org.bigbluebutton.modules.users.services
       LogUtil.debug(LOG + "*** handleSipVideoUpdate " + msg.msg + " **** \n");
       var map:Object = JSON.parse(msg.msg);
 
-      isSipVideoPresent=map.sip_video_present;
+      isSipVideoPresent=map.isSipVideoPresent;
       sipVideoUpdate();
     }
 
