@@ -79,7 +79,7 @@ public class VideoTranscoder {
                 outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
                         + videoStreamName+" live=1";
 
-                FFmpegCommand ffmpeg = new FFmpegCommand();
+                ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setFormat("flv");
@@ -114,14 +114,18 @@ public class VideoTranscoder {
             switch(type){
                 case TRANSCODE_RTMP_TO_RTP:
                     //user's video stream : parameters are the same
+                    log.debug("Restarting the user's video stream: "+this.videoStreamName);
                     processMonitor.restart();
                     break;
                 case TRANSCODE_RTP_TO_RTMP:
                     //global's video stream : stream name got a new timestamp
                     updateGlobalStreamName(streamName);
+                    log.debug("Restarting the global's video stream: "+this.videoStreamName);
                     processMonitor.restart();
                     break;
                 default:
+                    log.debug("Video Transcoder error: Unknown TRANSCODING TYPE");
+                    break;
             }
         }
     }

@@ -83,7 +83,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private String destinationPrefix;
 
-    private ProcessMonitor processMonitor = null;
     private VideoTranscoder videoTranscoder = null;
 
     private enum CallState {
@@ -806,6 +805,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
 
                 //update global stream name with the new stream name. We need #1610 to do this
+                //bbb-apps must inform client with a sip_video_update (even if freeswitch doesn't send it) 
                 //messagingService.globalVideoStreamCreated(getMeetingId(),getGlobalVideoStreamName());
             }else videoTranscoder.restart("");
         }
