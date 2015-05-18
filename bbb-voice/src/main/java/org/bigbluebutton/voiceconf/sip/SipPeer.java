@@ -193,7 +193,8 @@ public class SipPeer implements SipRegisterAgentListener {
             ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
             if (videoStream != null){
                 log.debug(" There's a VideoStream for this audio call, starting it ");
-                ca.startBbbToFreeswitchVideoStream(videoStream);
+                ca.setVideoStreamName(videoStream);
+                ca.startBbbToFreeswitchVideoStream();
             }else log.debug("There's no videostream for this flash audio call yet.");
         }
     }
@@ -211,17 +212,28 @@ public class SipPeer implements SipRegisterAgentListener {
 
     public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName, String meetingId) {
         CallAgent ca = callManager.getByUserId(userId);
+        String savedVideoStreamName = callManager.getVideoStream(userId);
+
+        if (savedVideoStreamName == null) //ca is created before user publish his stream
+            savedVideoStreamName = videoStreamName;
+
         if (ca != null){
             if(ca.isGlobalStream()){
                 log.debug("This is a global CallAgent, there's no video stream to send from bbb to freeswitch");
-            }else {
-                ca.startBbbToFreeswitchVideoStream(videoStreamName);
+                return;
             }
-        }
-        else {
+            if (!savedVideoStreamName.equals("")){
+                log.debug("There's a CallAgent and a video Stream running for this userId="+userId+". Starting BbbToFreeswitchVideoStream.");
+                ca.setVideoStreamName(savedVideoStreamName);
+                ca.startBbbToFreeswitchVideoStream();
+                return;
+            }
+            log.debug("There's no Video Stream for this userId="+userId+" yet. Waiting until it enables your webcam ");
+        }else {
+            //ca null means that this method was called when publishing a video stream
             log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
                        + " userId " + userId + ". Saving the current stream to be used when the CallAgent is created by this user");
-            callManager.addVideoStream(userId,videoStreamName);
+            callManager.addVideoStream(userId,savedVideoStreamName);
         }
     }
 

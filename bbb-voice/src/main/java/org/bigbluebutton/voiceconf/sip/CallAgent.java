@@ -375,11 +375,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	}
     }
 
-    public void startBbbToFreeswitchVideoStream(String videoStreamName){
+    public void startBbbToFreeswitchVideoStream(){
         if (isWebRTC())
-             startBbbToFreeswitchWebRTCVideoStream(videoStreamName);
+             startBbbToFreeswitchWebRTCVideoStream();
         else
-            startBbbToFreeswitchFlashVideoStream(videoStreamName);
+            startBbbToFreeswitchFlashVideoStream();
     }
 
     public void stopBbbToFreeswitchVideoStream(){
@@ -389,7 +389,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
            stopBbbToFreeswitchFlashVideoStream();
     }
 
-    public void startBbbToFreeswitchFlashVideoStream(String videoStreamName) {
+    public void startBbbToFreeswitchFlashVideoStream() {
+        if (_videoStreamName.equals("")){
+            log.debug("There's no videoStream for this FlashCall. Waiting for the user to enable your webcam");
+            return;
+        }
+        //start flash video stream
         try {
             SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         	SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
@@ -399,7 +404,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         	// Free local port before starting ffmpeg
         	localVideoSocket.close();
-            setVideoStreamName(videoStreamName);
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
             videoTranscoder.setVideoTranscoderObserver(this);
             videoTranscoder.start();
@@ -415,14 +419,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         closeVideoStream();
     }
     
-    public void startBbbToFreeswitchWebRTCVideoStream(String videoStreamName){
-        if (videoStreamName.equals("")){
+    public void startBbbToFreeswitchWebRTCVideoStream(){
+        if (_videoStreamName.equals("")){
             log.debug("There's no videoStream for this webRTCCall. Waiting for the user to enable your webcam");
             return;
         }
         //start webRTCVideoStream
         log.debug("{} is requesting to send video through webRTC. " + "[uid=" + getUserId() + "]");
-        setVideoStreamName(videoStreamName);
         videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
         videoTranscoder.setVideoTranscoderObserver(this);
         videoTranscoder.start();
@@ -798,7 +801,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void handleTranscodingRestarted() {
         if (videoTranscoder != null){
             if(isGlobalStream()){
-                setVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
+                //setVideoStreamName(getUserId()+"_"+System.currentTimeMillis()); //keeping current stream name for testing purpouses
                 videoTranscoder.restart(getVideoStreamName());
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
 

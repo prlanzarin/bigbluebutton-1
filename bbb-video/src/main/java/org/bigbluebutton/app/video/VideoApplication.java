@@ -184,7 +184,8 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	        stream.addStreamListener(listener); 
 	        streamListeners.put(conn.getScope().getName() + "-" + stream.getPublishedName(), listener);
         }
-        createSipRelayFor(stream.getPublishedName());
+        if (!isGlobalVideoStream(stream.getPublishedName()))
+            createSipRelayFor(stream.getPublishedName());
     }
 
     private void createSipRelayFor(String streamName) {
@@ -271,4 +272,9 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 		recordingService = s;
 	}
 	
+    public boolean isGlobalVideoStream(String streamName){
+        if (streamName == null) return false;
+        return streamName.startsWith("GLOBAL_AUDIO_");
+    }
+
 }
