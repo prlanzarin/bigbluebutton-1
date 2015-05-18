@@ -1,13 +1,12 @@
 package org.bigbluebutton.voiceconf.sip;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
 
 import java.io.IOException;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
 
 public class ProcessMonitor implements Runnable {
     private static Logger log = Red5LoggerFactory.getLogger(ProcessMonitor.class, "sip");
@@ -19,6 +18,8 @@ public class ProcessMonitor implements Runnable {
     ProcessStream errorStreamMonitor;
 
     private Thread thread = null;
+    private Boolean finished = false;
+    private VideoTranscoderObserver observer;
 
     public ProcessMonitor(String[] command) {
         this.command = command;
@@ -41,6 +42,9 @@ public class ProcessMonitor implements Runnable {
         return result.toString();
     }
 
+    public void setCommand(String[] command){
+        this.command = command;
+    }
     public void run() {
         try {
             log.debug("Creating thread to execute FFmpeg");
@@ -61,11 +65,7 @@ public class ProcessMonitor implements Runnable {
             inputStreamMonitor.start();
             errorStreamMonitor.start();
 
-            int ret = this.process.waitFor();
-
-            log.debug("Exit value: " + ret);
-
-            destroy();
+            this.process.waitFor();
         }
         catch(SecurityException se) {
             log.debug("Security Exception");
@@ -83,25 +83,40 @@ public class ProcessMonitor implements Runnable {
             log.debug("Interrupted Excetion");
         }
 
-        if (this.process == null)
+        int ret = this.process.exitValue();
+        log.debug("Exit value: " + ret);
+
+        if (finished){
             log.debug("Exiting thread that executes FFmpeg");
+        }
         else{
             log.debug("FFmpeg VideoTranscoder died unepectedly. Restarting it");
-            //TODO
+            //restart();
+            notifyVideoTranscoderObserverOnRestart();
         }
     }
 
-    public void start() {
+    private void notifyVideoTranscoderObserverOnRestart() {
+        if(observer != null){
+            log.debug("Notifying VideoTranscoder to restart");
+            observer.handleTranscodingRestarted();
+        }else {
+            log.debug("Cannot notify VideoTranscoder to restart: VideoTranscoderObserver null");
+        }
+    }
+
+	public void start() {
+        finished=false;
         this.thread = new Thread(this);
         this.thread.start();
     }
 
     public void restart(){
-        if (this.thread != null)
-            this.thread.start();
+        clearData();
+        start();
     }
 
-    public void destroy() {
+    public void clearData(){
         if(this.inputStreamMonitor != null 
             && this.errorStreamMonitor != null) {
             this.inputStreamMonitor.close();
@@ -113,5 +128,17 @@ public class ProcessMonitor implements Runnable {
             this.process.destroy();
             this.process = null;
         }
+    }
+
+    public void destroy() {
+        finished = true;
+        clearData();
+        log.debug("ProcessMonitor successfully finished");
+    }
+
+    public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
+        if (observer==null){
+            log.debug("Cannot assign observer: VideoTranscoderObserver null");
+        }else this.observer = observer;
     }
 }

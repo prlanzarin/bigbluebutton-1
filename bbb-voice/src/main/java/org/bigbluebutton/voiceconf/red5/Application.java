@@ -225,7 +225,6 @@ public class Application extends MultiThreadedApplicationAdapter {
           peerId = "default";
           try {
             sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream.getPublishedName(), meetingId);
-            sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, videoUserId, stream.getPublishedName(), meetingId);
           } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
           }
@@ -259,8 +258,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 
     private void hangUpWebRTC(String peerId,String userid) {
         try{
-            sipPeerManager.removeWebRTCParameters(peerId, userid);
-            sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId, userid);
+            sipPeerManager.hangupWebRTC(peerId, userid);
+            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userid);
         } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
         }
@@ -299,7 +298,6 @@ public class Application extends MultiThreadedApplicationAdapter {
             log.debug("Closing only the video stream of the UserId " + userid);
             peerId = "default";
             sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userid);
-            sipPeerManager.stopBbbToFreeswitchWebRTCVideoStream(peerId, userid);
             super.streamBroadcastClose(stream);
           } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);

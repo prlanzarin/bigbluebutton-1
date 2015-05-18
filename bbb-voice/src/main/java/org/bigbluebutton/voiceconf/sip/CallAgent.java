@@ -47,8 +47,9 @@ import java.util.Vector;
 
 import java.util.HashMap;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
 
-public class CallAgent extends CallListenerAdapter implements CallStreamObserver  {
+public class CallAgent extends CallListenerAdapter implements CallStreamObserver, VideoTranscoderObserver{
     private static Logger log = Red5LoggerFactory.getLogger(CallAgent.class, "sip");
     
     private final SipPeerProfile userProfile;
@@ -72,8 +73,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private String _meetingId;
     private Boolean listeningToGlobal = false;
     private IMessagingService messagingService;
-    private String _globalVideoStreamName;
+    private String _videoStreamName;
     private final String serverIp;
+    private String localVideoPort;
+    private String remoteVideoPort;
+    private boolean isWebRTC = false;
 
     private HashMap<String, String> streamTypeManager = null;
 
@@ -105,7 +109,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this._userId = userId;
         this.messagingService = messagingService;
         this.serverIp = Red5.getConnectionLocal().getHost();
-
+        this.userProfile.userID = this._userId;
         if(this.streamTypeManager == null)
             this.streamTypeManager = new HashMap<String, String>();
     }
@@ -176,9 +180,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (sipProvider.getPort() != SipStack.default_port) {
             userProfile.contactUrl += ":" + sipProvider.getPort();
         }
-
-        userProfile.userID = _userId;
-
         log.debug("userID: " + userProfile.userID);
     }
     
@@ -266,8 +267,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }else log.debug("AUDIO application is already running.");
         
         if (videoCallStream == null) {        
-            int remoteVideoPort = SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
-            int localVideoPort = SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO);
+            remoteVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
+            localVideoPort = Integer.toString(SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
             log.debug("Video stream port-setup done");
         }else log.debug("VIDEO application is already running.");
 
@@ -333,14 +334,15 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
             String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
             GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
-            String inputLive = GlobalCall.getSdpVideoPath(getDestination());
-            setGlobalVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
+            String sdpPath = GlobalCall.getSdpVideoPath(getDestination());
+            setVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
 
             // Free local port before starting ffmpeg
             localVideoSocket.close();
 
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
-                    inputLive,getGlobalVideoStreamName(),getMeetingId(),serverIp);
+                    sdpPath,getVideoStreamName(),getMeetingId(),getServerIp());
+            videoTranscoder.setVideoTranscoderObserver(this);
             videoTranscoder.start();
             //videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (Exception e) {
@@ -372,21 +374,34 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     		log.info("Can't stop talk stream as stream may have already stopped.");
     	}
     }
-    
-     public void startBbbToFreeswitchVideoStream(String videoStreamName, String meetingId) {
+
+    public void startBbbToFreeswitchVideoStream(String videoStreamName){
+        if (isWebRTC())
+             startBbbToFreeswitchWebRTCVideoStream(videoStreamName);
+        else
+            startBbbToFreeswitchFlashVideoStream(videoStreamName);
+    }
+
+    public void stopBbbToFreeswitchVideoStream(){
+        if (isWebRTC())
+            stopBbbToFreeswitchWebRTCVideoStream();
+       else
+           stopBbbToFreeswitchFlashVideoStream();
+    }
+
+    public void startBbbToFreeswitchFlashVideoStream(String videoStreamName) {
         try {
             SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         	SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
             
-            String remoteVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
-            String localVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
-
-            String ip = Red5.getConnectionLocal().getHost();
+            remoteVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
+            localVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
 
         	// Free local port before starting ffmpeg
         	localVideoSocket.close();
-
-            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,videoStreamName,meetingId,ip,localVideoPort,remoteVideoPort);
+            setVideoStreamName(videoStreamName);
+            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+            videoTranscoder.setVideoTranscoderObserver(this);
             videoTranscoder.start();
 
             // videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
@@ -396,13 +411,33 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
     
-    public void stopBbbToFreeswitchVideoStream() {
+    public void stopBbbToFreeswitchFlashVideoStream() {
         closeVideoStream();
     }
     
+    public void startBbbToFreeswitchWebRTCVideoStream(String videoStreamName){
+        if (videoStreamName.equals("")){
+            log.debug("There's no videoStream for this webRTCCall. Waiting for the user to enable your webcam");
+            return;
+        }
+        //start webRTCVideoStream
+        log.debug("{} is requesting to send video through webRTC. " + "[uid=" + getUserId() + "]");
+        setVideoStreamName(videoStreamName);
+        videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+        videoTranscoder.setVideoTranscoderObserver(this);
+        videoTranscoder.start();
+    }
+
+    public void stopBbbToFreeswitchWebRTCVideoStream(){
+        if (videoTranscoder != null) {
+            videoTranscoder.stop();
+            videoTranscoder=null;
+        }
+    }
+
     public void startFreeswitchToBbbVideoStream(){
        createVideoStream();
-       messagingService.globalVideoStreamCreated(getMeetingId(),getGlobalVideoStreamName());
+       messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
        //onCallStreamStarted();
     }
     
@@ -751,11 +786,53 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return this._meetingId;
     }
 
-    public void setGlobalVideoStreamName(String streamName){
-        this._globalVideoStreamName = streamName;
+    public void setVideoStreamName(String streamName){
+        this._videoStreamName = streamName;
     }
 
-    public String getGlobalVideoStreamName(){
-        return this._globalVideoStreamName;
+    public String getVideoStreamName(){
+        return this._videoStreamName;
     }
+
+    @Override
+    public void handleTranscodingRestarted() {
+        if (videoTranscoder != null){
+            if(isGlobalStream()){
+                setVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
+                videoTranscoder.restart(getVideoStreamName());
+                log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
+
+                //update global stream name with the new stream name. We need #1610 to do this
+                //messagingService.globalVideoStreamCreated(getMeetingId(),getGlobalVideoStreamName());
+            }else videoTranscoder.restart("");
+        }
+    }
+
+	public void setLocalVideoPort(String localVideoPort){
+		this.localVideoPort = localVideoPort;
+	}
+
+	public String getLocalVideoPort(){
+		return this.localVideoPort;
+	}
+
+	public void setRemoteVideoPort(String remoteVideoPort){
+		this.remoteVideoPort = remoteVideoPort;
+	}
+
+	public String getRemoteVideoPort(){
+		return this.remoteVideoPort;
+	}
+
+	public String getServerIp(){
+		return this.serverIp;
+	}
+
+	public void setWebRTC(boolean flag){
+		this.isWebRTC = flag;
+	}
+
+	public boolean isWebRTC(){
+		return this.isWebRTC;
+	}
 }

@@ -31,8 +31,6 @@ public class CallManager {
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
 	private final Map<String, String> videoStreams = new ConcurrentHashMap<String, String>();
-	private final Map<String, String> meetingIds = new ConcurrentHashMap<String, String>();
-	private final Map<String, String[]> webRTCPorts = new ConcurrentHashMap<String, String[]>();
 	
 	public CallAgent add(CallAgent ca) {
 		log.debug("Creating entry for the user with userId = "+ca.getUserId());
@@ -57,32 +55,6 @@ public class CallManager {
 		log.debug("Removing videoStream entry for user: "  + userId  );
 		return videoStreams.remove(uid);
 	}
-
-	public String addMeetingId(String userId, String meetingId) {
-		log.debug("Creating entry (userId, meetingId) = (" + userId + ", " + meetingId + ")" );
-		return meetingIds.put(userId, meetingId);
-	}
-
-	public String removeMeetingId(String userId) {
-		String uid = userId;
-		log.debug("Removing meetingId entry for user: "  + userId  );
-		return meetingIds.remove(uid);
-	}
-
-	public String[] addWebRTCPorts(String userId, String[] ports) {
-		log.debug("Creating entry (userId, ports) = (" + userId + ", [" + ports[0]+","+ports[1] + "])" );
-		return webRTCPorts.put(userId, ports);
-	}
-
-	public String[] getWebRTCPorts(String userId) {
-		return webRTCPorts.get(userId);
-	}
-
-    public String[] removeWebRTCPorts(String userId) {
-        String uid = userId;
-        log.debug("Removing webRTCPorts entry for user: "  + userId  );
-        return webRTCPorts.remove(uid);
-    }
 
 	public CallAgent removeByUserId(String userId) {
 	    //kept for compatibility
@@ -113,12 +85,6 @@ public class CallManager {
 			return videoStreams.get(uid);
 	}
 
-	public String getMeetingId(String userId) {
-		String uid = userId;
-		log.debug("[Video context] meetingId retrieved for the userid " + uid);
-			return meetingIds.get(uid);
-	}
-	
 	public Collection<CallAgent> getAll() {
 		return calls.values();
 	}

@@ -19,6 +19,7 @@ public class VideoTranscoder {
     private String localVideoPort;
     private String remoteVideoPort;
     private String sdpPath;
+    private VideoTranscoderObserver observer;
 
     public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;
@@ -94,6 +95,7 @@ public class VideoTranscoder {
 
         if(command != null){
             this.processMonitor = new ProcessMonitor(command);
+            processMonitor.setVideoTranscoderObserver(observer);
             processMonitor.start();
         }
     }
@@ -105,5 +107,36 @@ public class VideoTranscoder {
             processMonitor = null;
             ffmpeg = null;
         }
+    }
+
+    public void restart(String streamName){
+        if ((processMonitor != null) && (ffmpeg != null)){
+            switch(type){
+                case TRANSCODE_RTMP_TO_RTP:
+                    //user's video stream : parameters are the same
+                    processMonitor.restart();
+                    break;
+                case TRANSCODE_RTP_TO_RTMP:
+                    //global's video stream : stream name got a new timestamp
+                    updateGlobalStreamName(streamName);
+                    processMonitor.restart();
+                    break;
+                default:
+            }
+        }
+    }
+
+    private void updateGlobalStreamName(String streamName){
+        String outputLive;
+        String[] newCommand;
+        outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
+                + videoStreamName+" live=1";
+        ffmpeg.setOutput(outputLive); //update ffmpeg's output
+        newCommand = ffmpeg.getFFmpegCommand(true);
+        processMonitor.setCommand(newCommand); //update ffmpeg command
+    }
+
+    public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
+        this.observer = observer;
     }
 }

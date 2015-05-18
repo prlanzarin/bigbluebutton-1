@@ -91,14 +91,15 @@ public class Service {
 	
 	public Boolean acceptWebRTCCall(String peerId,String remoteVideoPort, String localVideoPort){
         //called by the client
-        log.debug("Accepted a webRTC Call: saving it's parameters: [remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");        
         String userid = getUserId();
         String username = getUsername();
         String meetingId = getMeetingId();
+        String clientId = getClientId();
+        log.debug("Accepted a webRTC Call for the user ["+userid+"] : saving it's parameters: [remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");
         try{
             if (sipPeerManager != null) {
-                sipPeerManager.saveWebRTCParameters(peerId, userid, username, meetingId, remoteVideoPort,localVideoPort);
-                sipPeerManager.startBbbToFreeswitchWebRTCVideoStream(peerId, userid,"","");
+                sipPeerManager.webRTCCall(peerId, clientId, userid, username, meetingId, remoteVideoPort,localVideoPort);
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid,"","");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
         } catch (PeerNotFoundException e) {
@@ -112,7 +113,7 @@ public class Service {
         String userid = getUserId();
         log.debug("hanging up webRTC Call on voice's context");
         try{
-            sipPeerManager.removeWebRTCParameters(peerId, userid);
+            sipPeerManager.hangupWebRTC(peerId, userid);
         } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
             return false;
