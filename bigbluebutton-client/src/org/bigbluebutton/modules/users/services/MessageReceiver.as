@@ -132,13 +132,13 @@ package org.bigbluebutton.modules.users.services
         case "joinMeetingReply":
           handleJoinedMeeting(message);
           break;
-        case "user_listening_only":
+        case "userListeningOnly":
           handleUserListeningOnly(message);
           break;
         case "permissionsSettingsChanged":
           handlePermissionsSettingsChanged(message);
           break;
-        case "SipVideoUpdate":
+        case "sipVideoUpdate":
           handleSipVideoUpdate(message);
           break;
         case "global_video_stream_info":
