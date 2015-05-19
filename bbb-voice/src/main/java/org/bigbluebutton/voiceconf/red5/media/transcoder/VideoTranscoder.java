@@ -131,10 +131,11 @@ public class VideoTranscoder {
     }
 
     private void updateGlobalStreamName(String streamName){
+        this.videoStreamName = streamName;
         String outputLive;
         String[] newCommand;
         outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
-                + videoStreamName+" live=1";
+                + this.videoStreamName+" live=1";
         ffmpeg.setOutput(outputLive); //update ffmpeg's output
         newCommand = ffmpeg.getFFmpegCommand(true);
         processMonitor.setCommand(newCommand); //update ffmpeg command

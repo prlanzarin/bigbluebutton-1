@@ -460,11 +460,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private void closeVideoStream(){
       /*
-       * closes ffmpeg and some internal video data,
-        although the stream and scope are kept in the call manager
-        if the video is enabled, for a future use.
-      */
-        log.debug("Shutting down the videoCallStream...");
+       * closes videoTranscoder, although the stream name is kept in the call manager
+       * if the video is enabled, for a future use.
+       */
+        log.debug("Shutting down the video transcoder...");
 
         if(videoTranscoder != null) {
             videoTranscoder.stop();
@@ -800,13 +799,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void handleTranscodingRestarted() {
         if (videoTranscoder != null){
             if(isGlobalStream()){
-                //setVideoStreamName(getUserId()+"_"+System.currentTimeMillis()); //keeping current stream name for testing purpouses
+                setVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
                 videoTranscoder.restart(getVideoStreamName());
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
-
-                //update global stream name with the new stream name. We need #1610 to do this
-                //bbb-apps must inform client with a sip_video_update (even if freeswitch doesn't send it) 
-                //messagingService.globalVideoStreamCreated(getMeetingId(),getGlobalVideoStreamName());
+                messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
             }else videoTranscoder.restart("");
         }
     }
