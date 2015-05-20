@@ -133,11 +133,6 @@ public class Application extends MultiThreadedApplicationAdapter {
         log.debug("Adding user to global call , so it can receive global video...");
         GlobalCall.addUser(clientId, username, voiceBridge);
         Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
-        if (!GlobalCall.isVideoPaused(voiceBridge)) {
-          // There is already a video stream running, must inform new client
-          String videoStreamName = GlobalCall.getGlobalVideoStream(voiceBridge);
-          log.debug("Informing new user [{}] about current global video stream [{}]", clientId, videoStreamName);          
-        }
       } else {
         // TODO review this condition, since the original implementation does clientConnManager.createClient always
         log.warn("Voice bridge not informed during appConnect. Global will not be created.");

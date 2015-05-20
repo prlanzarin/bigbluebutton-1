@@ -142,13 +142,6 @@ public class GlobalCall {
             return null;
     }
 
-    public static boolean isVideoPaused(String roomName) {
-        if(roomToVideoStreamMap.containsKey(roomName)){
-            return roomToVideoStreamMap.get(roomName).isVideoPaused();
-        }
-        return true;
-    }
-
     public static void createSDPVideoFile(String voiceconf, String sdp){
         sdpVideoPath = FileSystems.getDefault().getPath(sdpVideoFullPath + voiceconf+".sdp");
 

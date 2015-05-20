@@ -79,7 +79,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private String remoteVideoPort;
     private boolean isWebRTC = false;
 
-    private HashMap<String, String> streamTypeManager = null;
 
     private String destinationPrefix;
 
@@ -109,8 +108,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.messagingService = messagingService;
         this.serverIp = Red5.getConnectionLocal().getHost();
         this.userProfile.userID = this._userId;
-        if(this.streamTypeManager == null)
-            this.streamTypeManager = new HashMap<String, String>();
     }
     
     public String getCallId() {
@@ -291,16 +288,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 if ((audioCallStream == null) && (sipAudioCodec != null)) {                  
                     try {
                         log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
-                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO, isGlobalStream());
+                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, isGlobalStream());
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
                         String streamName = audioCallStream.getBbbToFreeswitchStreamName();
-
-                        if(!streamTypeManager.containsKey(streamName))
-                        {
-                            streamTypeManager.put(streamName, CallStream.MEDIA_TYPE_AUDIO);
-                            log.debug("[CallAgent] streamTypeManager adding audio stream {} for {}", streamName, clientId);
-                        }
 
                         if (isGlobalStream())
                         {
@@ -367,8 +358,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	if (audioCallStream != null) {
     		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
     		String streamName = audioCallStream.getBbbToFreeswitchStreamName();
-    		if(streamTypeManager.containsKey(streamName))
-    		    streamTypeManager.remove(streamName);
     	} else {
     		log.info("Can't stop talk stream as stream may have already stopped.");
     	}
@@ -496,33 +485,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         log.info("User is has connected to global audio, user=[" + callerIdName + "] voiceConf = [" + voiceConf + "]");
         messagingService.userConnectedToGlobalAudio(voiceConf, callerIdName);
         userProfile.userID = userId;
-    }
-
-
-    public String getStreamType(String streamName) {
-        if(streamTypeManager.containsKey(streamName))
-            return streamTypeManager.get(streamName);
-        else
-        {
-            log.debug("[CallAgent] streamTypeManager does not contain " + streamName);
-            return null;
-        }
-    }
-
-    public boolean isAudioStream(IBroadcastStream broadcastStream) {
-        String streamName = broadcastStream.getPublishedName();
-        if(streamTypeManager.containsKey(streamName))
-            return streamTypeManager.get(streamName).equals(CallStream.MEDIA_TYPE_AUDIO);
-        else
-            return false;
-    }
-
-    public boolean isVideoStream(IBroadcastStream broadcastStream) {
-        String streamName = broadcastStream.getPublishedName();
-        if(streamTypeManager.containsKey(streamName))
-            return streamTypeManager.get(streamName).equals(CallStream.MEDIA_TYPE_VIDEO);
-        else
-            return false;
     }
 
     // ********************** Call callback functions **********************

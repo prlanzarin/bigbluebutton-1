@@ -138,36 +138,6 @@ public final class SipPeerManager {
             sipUser.hangupWebRTC(userId);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
-
-    public String getStreamType(String peerId, String userId, String streamName) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            return sipUser.getStreamType(userId, streamName);
-        }
-        else
-        {
-            log.debug("[SipPeerManager] Invalid peerId");
-            return null;
-        }
-    }
-
-    public boolean isAudioStream(String peerId, String userId, IBroadcastStream broadcastStream) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            return sipUser.isAudioStream(userId, broadcastStream);
-        }
-        else
-            return false;
-    }
-
-    public boolean isVideoStream(String peerId, String userId, IBroadcastStream broadcastStream) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            return sipUser.isVideoStream(userId, broadcastStream);
-        }
-        else
-            return false;
-    }
     
     private void remove(String userid) {
     	log.debug("Number of SipUsers in Manager before remove {}", sipPeers.size());
