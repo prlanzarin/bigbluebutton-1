@@ -223,7 +223,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public boolean isGlobalStream() {
-        return (_callerName != null && _callerName.startsWith("GLOBAL_AUDIO_"));
+        return (_callerName != null && _callerName.startsWith(GlobalCall.LISTENONLY_USERID_PREFIX));
     }
 
     private DatagramSocket getLocalVideoSocket() throws Exception {
@@ -291,7 +291,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 if ((audioCallStream == null) && (sipAudioCodec != null)) {                  
                     try {
                         log.debug("Creating AUDIO stream: [localAudioPort=" + localAudioPort + ",remoteAudioPort=" + remoteAudioPort + "]");
-                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO);
+                        audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, CallStream.MEDIA_TYPE_AUDIO, isGlobalStream());
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
                         String streamName = audioCallStream.getBbbToFreeswitchStreamName();
@@ -334,7 +334,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
             GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
             String sdpPath = GlobalCall.getSdpVideoPath(getDestination());
-            setVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
+            setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() +"_"+System.currentTimeMillis());
 
             // Free local port before starting ffmpeg
             localVideoSocket.close();
@@ -799,7 +799,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void handleTranscodingRestarted() {
         if (videoTranscoder != null){
             if(isGlobalStream()){
-                setVideoStreamName(getUserId()+"_"+System.currentTimeMillis());
+                setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
                 videoTranscoder.restart(getVideoStreamName());
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
                 messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());

@@ -49,7 +49,7 @@ public class ESLEventListener implements IEslEventListener {
 //        notifyObservers(e);
     }
 
-    private static final Pattern GLOBAL_AUDION_PATTERN = Pattern.compile("(GLOBAL_AUDIO)_(.*)$");
+    private static final Pattern LISTENONLY_NAME_PATTERN = Pattern.compile("(GLOBAL_CALL)_(.*)$");
     private static final Pattern CALLERNAME_PATTERN = Pattern.compile("(.*)-bbbID-(.*)$");
     
     @Override
@@ -66,7 +66,7 @@ public class ESLEventListener implements IEslEventListener {
         
         log.info("User joined voice conference, user=[" + callerIdName + "], conf=[" + confName + "]");
         
-        Matcher gapMatcher = GLOBAL_AUDION_PATTERN.matcher(callerIdName);
+        Matcher gapMatcher = LISTENONLY_NAME_PATTERN.matcher(callerIdName);
         if (gapMatcher.matches()) {
         	log.debug("Ignoring GLOBAL AUDIO USER [{}]", callerIdName);
         	return;

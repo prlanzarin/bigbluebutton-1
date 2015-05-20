@@ -58,13 +58,15 @@ public class CallStream implements StreamObserver {
     private CallStreamObserver callStreamObserver;
     
     private boolean isVideoPaused;
+    private boolean isGlobal;
     
-    public CallStream(Codec sipCodec, SipConnectInfo connInfo, IScope scope, String mediaType) {        
+    public CallStream(Codec sipCodec, SipConnectInfo connInfo, IScope scope, String mediaType, boolean isGlobal) {
     	this.sipCodec = sipCodec;
     	this.connInfo = connInfo;
     	this.scope = scope;
         this.mediaType = mediaType;
         this.isVideoPaused = true;
+        this.isGlobal = isGlobal;
     }
     
     public void addCallStreamObserver(CallStreamObserver observer) {
@@ -92,7 +94,7 @@ public class CallStream implements StreamObserver {
     		log.debug("Incoming Frame size [" + sipCodec.getIncomingEncodedFrameSize() + ", " + sipCodec.getIncomingDecodedFrameSize() + "]");
 
 
-            freeswitchToBbbStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket());
+            freeswitchToBbbStream = new SipToFlashAudioStream(scope, sipToFlashTranscoder, connInfo.getSocket(),isGlobal);
             freeswitchToBbbStream.addListenStreamObserver(this);   
             log.debug("Starting freeswitchToBbbStream so that users with no mic can listen.");
             freeswitchToBbbStream.start();

@@ -130,6 +130,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         String peerId = "default";
         createGlobalCall(clientId,peerId,username,voiceBridge,meetingId);
+        log.debug("Adding user to global call , so it can receive global video...");
         GlobalCall.addUser(clientId, username, voiceBridge);
         Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
         if (!GlobalCall.isVideoPaused(voiceBridge)) {
@@ -199,9 +200,9 @@ public class Application extends MultiThreadedApplicationAdapter {
           if (roomRemoved) {
             try {
               log.debug("Hanging up the global audio call {}", voiceBridge);
-              sipPeerManager.hangup(peerId, "GLOBAL_AUDIO_" + voiceBridge);
+              sipPeerManager.hangup(peerId, GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge);
             } catch (PeerNotFoundException e) {
-              log.warn("Peer {} not found. Unable to hangup the global call.", "GLOBAL_AUDIO_" + voiceBridge);
+              log.warn("Peer {} not found. Unable to hangup the global call.", GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge);
             }
           }
         }
@@ -242,11 +243,10 @@ public class Application extends MultiThreadedApplicationAdapter {
     
     private boolean createGlobalCall(String clientId,String peerId, String callerName, String destination, String meetingId) {
         log.debug("peerId = " + peerId + " callerName = " + callerName + " destination = " + destination);
-        String userId = getUserId();
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
             String extension = callExtensionPattern.format(new String[] { destination });
             try {
-                sipPeerManager.call(peerId, clientId, "GLOBAL_AUDIO_" + destination, "GLOBAL_AUDIO_" + destination, extension,meetingId);
+                sipPeerManager.call(peerId, clientId, GlobalCall.LISTENONLY_USERID_PREFIX + destination, GlobalCall.LISTENONLY_USERID_PREFIX + destination, extension,meetingId);
                 Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
             } catch (PeerNotFoundException e) {
                 log.error("PeerNotFound {}", peerId);

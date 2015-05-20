@@ -42,7 +42,7 @@ public class Service {
 			    log.warn("Global call for {} not found, creating one", destination);
 				String extension = callExtensionPattern.format(new String[] { destination });
 				try {
-					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination,userId, extension,getMeetingId());
+					sipPeerManager.call(peerId, destination, GlobalCall.LISTENONLY_USERID_PREFIX + destination,userId, extension,getMeetingId());
 					Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 				} catch (PeerNotFoundException e) {
 					log.error("PeerNotFound {}", peerId);
@@ -124,7 +124,7 @@ public class Service {
     public void updateVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent) {		
         log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
         String peerId = "default";
-        String globalUserId = "GLOBAL_AUDIO_" + voiceBridge;
+        String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
         if (!GlobalCall.isVideoPresent(voiceBridge)){
             if (videoPresent){

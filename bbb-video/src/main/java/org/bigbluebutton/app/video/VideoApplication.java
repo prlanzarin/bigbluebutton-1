@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IConnection;
@@ -43,7 +44,7 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	private boolean recordVideoStream = false;
 	private EventRecordingService recordingService;
 	private final Map<String, IStreamListener> streamListeners = new HashMap<String, IStreamListener>();
-	
+	private final static String GLOBAL_VIDEO_STREAM_NAME_PREFIX = "sip_";
 	private Map<String, CustomStreamRelay> sipRelays = new ConcurrentHashMap<String, CustomStreamRelay>();
 
     @Override
@@ -274,7 +275,7 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	
     public boolean isGlobalVideoStream(String streamName){
         if (streamName == null) return false;
-        return streamName.startsWith("GLOBAL_AUDIO_");
+        return streamName.startsWith(GLOBAL_VIDEO_STREAM_NAME_PREFIX);
     }
 
 }

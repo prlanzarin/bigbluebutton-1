@@ -32,13 +32,14 @@ import org.red5.server.scope.Scope;
 import org.red5.server.stream.IProviderService;
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.red5.media.SipToFlashStream;
+import org.bigbluebutton.voiceconf.sip.GlobalCall;
 
 public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceiverListener, TranscodedMediaDataListener {
 	private static final Logger log = Red5LoggerFactory.getLogger(SipToFlashAudioStream.class, "sip");
 
 	private BroadcastStream audioBroadcastStream;
 	private IScope scope;
-	private final String freeswitchToBbbAudioStreamName;
+	private String freeswitchToBbbAudioStreamName;
 	private RtpAudioStreamReceiver rtpStreamReceiver;
 	private StreamObserver observer;
 
@@ -47,6 +48,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 	private IoBuffer mBuffer;
 
 	private AudioData audioData;
+	private boolean isGlobal;
 
 	private final byte[] fakeMetadata = new byte[] {
 			0x02, 0x00, 0x0a, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x44, 0x61, 0x74, 0x61, 0x08, 0x00, 0x00,  
@@ -60,18 +62,23 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 			(byte)0xc8, 0x73, 0x69, 0x7a, 0x65, 0x00, 0x40, (byte)0xf3, (byte)0xf5, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  
 	};
 
-	public SipToFlashAudioStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket) {
+	public SipToFlashAudioStream(IScope scope, SipToFlashTranscoder transcoder, DatagramSocket socket, boolean isGlobal) {
 		this.transcoder = transcoder;
 		this.scope = scope;		
 		rtpStreamReceiver = new RtpAudioStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-		freeswitchToBbbAudioStreamName = "freeswitchToBbbAudioStream_" + System.currentTimeMillis();	
+        if (isGlobalStream())
+            setFreeswitchToBbbAudioStreamName("freeswitchToBbbAudioStream_" + System.currentTimeMillis());
+        else
+            setFreeswitchToBbbAudioStreamName(GlobalCall.GLOBAL_AUDIO_STREAM_NAME_PREFIX + System.currentTimeMillis());
+
 		mBuffer = IoBuffer.allocate(1024);
 		mBuffer = mBuffer.setAutoExpand(true);
 
 		audioData = new AudioData();
 		transcoder.setTranscodedMediaDataListener(this);
+		this.isGlobal = isGlobal;
 	}
 
 	@Override
@@ -197,6 +204,14 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
         audioData.setData(mBuffer);
 		audioBroadcastStream.dispatchEvent(audioData);
 		audioData.release();
+    }
 
+    private void setFreeswitchToBbbAudioStreamName(String audioStreamName){
+        log.debug("Setting Freeswitch to Bbb Audio Stream name to: "+ audioStreamName);
+        this.freeswitchToBbbAudioStreamName = audioStreamName;
+    }
+    
+    private boolean isGlobalStream(){
+        return this.isGlobal;
     }
 }

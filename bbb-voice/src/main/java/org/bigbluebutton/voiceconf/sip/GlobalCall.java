@@ -33,8 +33,10 @@ public class GlobalCall {
     private static Map<String,Boolean> roomToVideoPresent = new ConcurrentHashMap<String,Boolean>();
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     private static Path sdpVideoPath;
-    private static final String sdpVideoFullPath = "/tmp/GLOBAL_AUDIO_";
-
+    public static final String GLOBAL_AUDIO_STREAM_NAME_PREFIX = "GLOBAL_AUDIO_";
+    public static final String GLOBAL_VIDEO_STREAM_NAME_PREFIX = "sip_";
+    public static final String LISTENONLY_USERID_PREFIX = "GLOBAL_CALL_"; //when changed, must also change ESLEventListener.java in bigbluebutton-apps
+    private static final String sdpVideoFullPath = "/tmp/"+GLOBAL_VIDEO_STREAM_NAME_PREFIX; //when changed , must also change VideoApplication.java in bbb-video
     private static OpenOption[] fileOptions = new OpenOption[] {StandardOpenOption.CREATE,StandardOpenOption.WRITE};
 
     

@@ -257,8 +257,7 @@ public class SipPeer implements SipRegisterAgentListener {
                 log.debug("Starting GlobalCall's freeswitch->bbb video stream");
                 ca.startFreeswitchToBbbVideoStream();
             }
-            log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId+" callerName: "+ ca.getCallerName());
-        }
+        }else log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId);
     }
 
     public void stopFreeswitchToBbbGlobalVideoStream(String userId) {
