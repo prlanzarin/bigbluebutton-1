@@ -18,8 +18,9 @@ class VoiceClientMessageSender(service: ConnectionInvokerService) extends OutMes
   private def handleSipVideoUpdated(msg: SipVideoUpdated) {
     val args = new java.util.HashMap[String, Object]()
     args.put("voiceConf", msg.voiceBridge)
-    args.put("isSipVideoPresent", msg.sipVideoPresent:java.lang.Boolean)
-    args.put("activeTalker", msg.activeTalker)
+    args.put("isSipVideoPresent", msg.isSipVideoPresent:java.lang.Boolean)
+    args.put("sipVideoStreamName", msg.sipVideoStreamName)
+    args.put("talkerUserId", msg.talkerUserId)
 
     val message = new java.util.HashMap[String, Object]()
     val gson = new Gson()

@@ -10,22 +10,22 @@ trait VoiceApp {
 
   def handleSipVideoPaused(msg: SipVideoPaused) {
     isSipVideoPresent = false
-    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, activeTalker))
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
 
   def handleSipVideoResumed(msg: SipVideoResumed) {
     isSipVideoPresent = true
-    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, activeTalker))
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
 
   def handleActiveTalkerChanged(msg: ActiveTalkerChanged) {
-    activeTalker = msg.activeTalker
-    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, activeTalker))
+    talkerUserId = msg.talkerUserId
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
 
   def handleGlobalVideoStreamInfo(msg: GlobalVideoStreamInfo) {
     globalVideoStreamName = msg.globalVideoStreamName
     outGW.send(new GlobalVideoStreamInfoMessage(msg.meetingID, msg.globalVideoStreamName))
-    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, activeTalker)) //update video everytime it informs about globalStream
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId)) //update video everytime it informs about globalStream
   }
 }

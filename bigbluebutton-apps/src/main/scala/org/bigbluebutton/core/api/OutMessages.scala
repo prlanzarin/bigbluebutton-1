@@ -318,8 +318,9 @@ case class SipVideoUpdated (
     meetingID: String,
     recorded: Boolean,
     voiceBridge: String,
-    sipVideoPresent: Boolean,
-    activeTalker: String,
+    isSipVideoPresent: Boolean,
+    sipVideoStreamName: String,
+    talkerUserId: String,
     version:String = Versions.V_0_0_1
 ) extends IOutMessage
 

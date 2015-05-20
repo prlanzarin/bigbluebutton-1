@@ -29,8 +29,8 @@ public class MessageFromJsonConverter {
 
 	private static IMessage processUpdateVideoStatus(JsonObject payload) {
 		String voiceBridge = payload.get(Constants.VOICE_CONF).getAsString();
-		String floorHolder = payload.get(Constants.ACTIVE_TALKER).getAsString();
-		Boolean videoPresent = payload.get(Constants.SIP_VIDEO_PRESENT).getAsBoolean();
+		String floorHolder = payload.get(Constants.TALKER_USER_ID).getAsString();
+		Boolean videoPresent = payload.get(Constants.IS_SIP_VIDEO_PRESENT).getAsBoolean();
 		return new UpdateVideoStatus(voiceBridge, floorHolder, videoPresent);
 	}
 }

@@ -22,14 +22,18 @@ public class SipVideoUpdatedRecordEvent extends AbstractVoiceRecordEvent {
 
 	public SipVideoUpdatedRecordEvent() {
 		super();
-		setEvent("sip_video_update");
+		setEvent("sipVideoUpdate");
 	}
 
-	public void setSipVideoPresent(String sipVideoPresent){
-		eventMap.put("sip_video_present", sipVideoPresent);
+	public void setSipVideoPresent(String isSipVideoPresent){
+		eventMap.put("isSipVideoPresent", isSipVideoPresent);
 	}
 
-	public void setActiveTalker(String activeTalker){
-		eventMap.put("active_talker", activeTalker);
+	public void setSipVideoStreamName(String sipVideoStreamName){
+		eventMap.put("sipVideoStreamName", sipVideoStreamName);
+	}
+
+	public void setActiveTalker(String talkerUserId){
+		eventMap.put("talkerUserId", talkerUserId);
 	}
 }

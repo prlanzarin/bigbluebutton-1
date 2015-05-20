@@ -18,8 +18,9 @@ class VoiceEventRedisRecorder(recorder: RecorderApplication) extends OutMessageL
       val ev = new SipVideoUpdatedRecordEvent();
       ev.setTimestamp(TimestampGenerator.generateTimestamp);
       ev.setMeetingId(msg.meetingID);
-      ev.setSipVideoPresent(msg.sipVideoPresent.toString());
-      ev.setActiveTalker(msg.activeTalker);
+      ev.setSipVideoPresent(msg.isSipVideoPresent.toString());
+      ev.setSipVideoStreamName(msg.sipVideoStreamName.toString());
+      ev.setActiveTalker(msg.talkerUserId);
       recorder.record(msg.meetingID, ev);
     }
   }

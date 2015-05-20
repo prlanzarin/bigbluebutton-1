@@ -13,8 +13,8 @@ object VoiceMessageToJsonConverter {
     val payload = new java.util.HashMap[String, Any]()
     payload.put(Constants.MEETING_ID, msg.meetingID)
     payload.put(Constants.VOICE_CONF, msg.voiceBridge)
-    payload.put(Constants.SIP_VIDEO_PRESENT, msg.sipVideoPresent)
-    payload.put(Constants.ACTIVE_TALKER, msg.activeTalker)
+    payload.put(Constants.IS_SIP_VIDEO_PRESENT, msg.isSipVideoPresent)
+    payload.put(Constants.TALKER_USER_ID, msg.talkerUserId)
 
     val header = Util.buildHeader(MessageNames.SIP_VIDEO_UPDATE, msg.version, None)
     Util.buildJson(header, payload)
