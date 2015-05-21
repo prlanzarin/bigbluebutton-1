@@ -141,9 +141,6 @@ package org.bigbluebutton.modules.users.services
         case "sipVideoUpdate":
           handleSipVideoUpdate(message);
           break;
-        case "global_video_stream_info":
-          handleGlobalVideoStreamInfo(message);
-          break;
       }
     }  
     
@@ -585,51 +582,39 @@ package org.bigbluebutton.modules.users.services
       var map:Object = JSON.parse(msg.msg);
 
       isSipVideoPresent=map.isSipVideoPresent;
+
+      if(map.sipVideoStreamName)
+          globalVideoStreamName=map.sipVideoStreamName;
+
       sipVideoUpdate();
     }
 
-    private function handleGlobalVideoStreamInfo(msg: Object):void {
-      trace(LOG + "*** handleGlobalVideoStreamInfo " + msg.msg + " **** \n");
-      var map:Object = JSON.parse(msg.msg);
+    public static function sipVideoUpdate():void{
+        if(isSipVideoPresent) {
+            if(globalVideoStreamName) {
+                trace(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
+                LogUtil.debug(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
 
-      if(map.global_video_stream_name) {
-        globalVideoStreamName = map.global_video_stream_name;
-        globalVideoStreamInfo();
-      }
-      else
-        trace(LOG + "handleGlobalVideoStreamInfo: ERROR: There's not a Global Video Stream Name. Could NOT dispatch GLOBAL_VIDEO_STREAM_INFO event");      
-    }
-
-    public static function globalVideoStreamInfo():void{
-        if(globalVideoStreamName) {
-            trace(LOG + "globalVideoStreamInfo: sending global stream name do video module: [" + globalVideoStreamName+"]");
-            var globalVideoStreamInfo:BBBEvent = new BBBEvent(BBBEvent.GLOBAL_VIDEO_STREAM_INFO);
-            globalVideoStreamInfo.payload.globalVideoStreamName = globalVideoStreamName;
-            globalDispatcher.dispatchEvent(globalVideoStreamInfo);
-          }
-          else
-            trace(LOG + "globalVideoStreamInfo: There's not a global video stream running yet: "+ globalVideoStreamName);
-    }
-
-   public static function sipVideoUpdate():void{
-       if(isSipVideoPresent) {
-            trace(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
-            LogUtil.debug(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
-            var videoResumed:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
-            globalDispatcher.dispatchEvent(videoResumed);
-          }
-          else {
+                var videoResumed:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
+                videoResumed.payload.globalVideoStreamName = globalVideoStreamName;
+                globalDispatcher.dispatchEvent(videoResumed);
+            }
+            else {
+                trace(LOG + "SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet");
+                LogUtil.debug(LOG + "SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet");    
+            }            
+        }
+        else {
             trace(LOG + "SipVideoUpdate: Dispatching Paused Video Event");
             var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
             globalDispatcher.dispatchEvent(videoPaused);
-          }
-   }
+        }
+    }
 
-   public static function videoModuleReady(event:VideoModuleBridgeEvent):void {
-       trace(LOG+" Videomodule is ready");
-       globalVideoStreamInfo();
+    public static function videoModuleReady(event:VideoModuleBridgeEvent):void {
+       trace(LOG+" Videomodule is ready: Firing sipVideoUpdate()");
        sipVideoUpdate();
-   }
+    }
 
   }
 }

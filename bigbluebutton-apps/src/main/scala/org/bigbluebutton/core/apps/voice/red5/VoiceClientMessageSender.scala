@@ -10,7 +10,6 @@ class VoiceClientMessageSender(service: ConnectionInvokerService) extends OutMes
   def handleMessage(msg: IOutMessage) {
     msg match {
       case msg: SipVideoUpdated               => handleSipVideoUpdated(msg)
-      case msg: GlobalVideoStreamInfoMessage  => handleGlobalVideoStreamInfoMessage(msg)
       case _ => // do nothing
     }
   }
@@ -27,18 +26,6 @@ class VoiceClientMessageSender(service: ConnectionInvokerService) extends OutMes
     message.put("msg", gson.toJson(args))
 
     var m = new BroadcastClientMessage(msg.meetingID, "sipVideoUpdate", message)
-    service.sendMessage(m)
-  }
-
-  private def handleGlobalVideoStreamInfoMessage(msg: GlobalVideoStreamInfoMessage) {
-    val args = new java.util.HashMap[String, Object]()
-    args.put(Constants.GLOBAL_VIDEO_STREAM_NAME, msg.globalVideoStreamName)
-
-    val message = new java.util.HashMap[String, Object]()
-    val gson = new Gson()
-    message.put("msg", gson.toJson(args))
-
-    var m = new BroadcastClientMessage(msg.meetingID, MessageNames.GLOBAL_VIDEO_STREAM_INFO, message)
     service.sendMessage(m)
   }
 }

@@ -72,7 +72,6 @@ case class MeetingState(
     userId: String,
     permissions: Permissions,
     meetingMuted: Boolean,
-    globalVideoStreamName: String,
     version:String = Versions.V_0_0_1    
 ) extends IOutMessage
 
@@ -669,9 +668,3 @@ case class MeetingVO(
     id: String, 
     recorded: Boolean
 )
-
-case class GlobalVideoStreamInfoMessage (
-    meetingID: String,
-    globalVideoStreamName: String,
-    version:String = Versions.V_0_0_1
-) extends IOutMessage

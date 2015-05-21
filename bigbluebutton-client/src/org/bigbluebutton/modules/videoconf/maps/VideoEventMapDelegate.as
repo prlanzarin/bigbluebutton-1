@@ -285,11 +285,6 @@ package org.bigbluebutton.modules.videoconf.maps
       dockWindow(publishWindow);  
     }
     
-    public function closeFreeswitchVideo():void {
-      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
-      closeWindow("FreeSWITCH video");
-    }
-
     private function closeWindow(userID:String):void {
       if (! webcamWindows.hasWindow(userID)) {
         trace("VideoEventMapDelegate:: [" + me + "] closeWindow:: No window for [" + userID + "] [" + UsersUtil.getUserName(userID) + "]");
@@ -327,56 +322,40 @@ package org.bigbluebutton.modules.videoconf.maps
       dockWindow(window);  
     }
 
-    public function openFreeswitchVideo(streamName:String):void {
-      var connection:NetConnection = proxy.connection; //using videoconf connection now
-      if(!connection.connected) {
-        LogUtil.warn("Not opening freeswitch window because the connection is not ready yet.");
-        return;
-      }
-
-      if(fsWindow != null) {
-        closeFreeswitchVideo();
-        fsWindow = null;
-      }
-        fsWindow = new VideoWindow();
-        fsWindow.title = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
-        fsWindow.userID = "FreeSWITCH video";
-        fsWindow.videoOptions = options;       
-        fsWindow.resolutions = "640x480".split(",");
-
-        fsWindow.startVideo(connection, streamName);
-        webcamWindows.addWindow(fsWindow);
-        openWindow(fsWindow);
-        dockWindow(fsWindow);
+    public function closeFreeswitchVideo():void {
+      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
+      closeWindow("FreeSWITCH video");
+      fsWindow = null;
     }
 
-    public function setGlobalVideoStreamName(streamName:String):void {
-      globalVideoStreamName = streamName;
-      trace("VideoEventMapDelegate:: [" + me + "] global video stream name received => "  + globalVideoStreamName);
-      LogUtil.debug("VideoEventMapDelegate:: [" + me + "] global video stream name received => "  + globalVideoStreamName);
-    }
-
-    //TODO
-    public function resumeFreeswitchVideo():void {
-      trace("Resuming FreeSWITCH video...");
+    public function resumeFreeswitchVideo(streamName:String):void {
+      trace("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
       LogUtil.debug("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+
       if(!proxy.connection.connected) {
         trace("Not opening freeswitch window because the video connection is not ready yet.");
         return;
       }
 
-      if(!globalVideoStreamName) {
-        trace("Not opening freeswitch window because the we don't have the global video stream name yet.");
+      if(!streamName){
+        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Not opening the window, because there's not a stream name.");
+        return;        
+      }
+
+      if((streamName == globalVideoStreamName) && fsWindow != null) {
+        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
         return;
       }
 
-      if(fsWindow != null) {
+      if(fsWindow != null)
         closeFreeswitchVideo();
-        fsWindow = null;
-      }
 
-      trace("Starting Freeswitch window for stream: " + globalVideoStreamName);
-      LogUtil.debug("Starting Freeswitch window for stream: " + globalVideoStreamName);
+
+      globalVideoStreamName = streamName;
+      trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+      LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+
+
       fsWindow = new VideoWindow();
       fsWindow.title = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
       fsWindow.userID = "FreeSWITCH video";

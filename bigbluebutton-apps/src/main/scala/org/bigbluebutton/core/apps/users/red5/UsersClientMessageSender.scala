@@ -282,7 +282,6 @@ class UsersClientMessageSender(service: ConnectionInvokerService) extends OutMes
 	  var args = new HashMap[String, Object]();	
 	  args.put("permissions", buildPermissionsHashMap(msg.permissions));
 		args.put("meetingMuted", msg.meetingMuted:java.lang.Boolean);
-		args.put(Constants.GLOBAL_VIDEO_STREAM_NAME, msg.globalVideoStreamName);
 		
 	  val message = new java.util.HashMap[String, Object]() 
 	  val gson = new Gson();
