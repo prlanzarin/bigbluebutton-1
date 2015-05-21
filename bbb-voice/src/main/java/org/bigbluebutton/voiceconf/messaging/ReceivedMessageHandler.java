@@ -9,7 +9,7 @@ import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
 public class ReceivedMessageHandler {
-	private static Logger log = Red5LoggerFactory.getLogger(ReceivedMessageHandler.class, "bigbluebutton");
+	private static Logger log = Red5LoggerFactory.getLogger(ReceivedMessageHandler.class, "sip");
 	
 	private BlockingQueue<ReceivedMessage> receivedMessages = new LinkedBlockingQueue<ReceivedMessage>();
 	

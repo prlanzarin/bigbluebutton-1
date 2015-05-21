@@ -218,18 +218,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     	log.debug("{} has started publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-        String meetingId = conn.getScope().getName(); //the scope name is the meeting id
-        if (isVideoStream(stream)){
-          super.streamPublishStart(stream);
-          String videoUserId = getBbbVideoUserId(stream);
-          log.debug("Video UserId: " + videoUserId);
-          peerId = "default";
-          try {
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, videoUserId, stream.getPublishedName(), meetingId);
-          } catch (PeerNotFoundException e) {
-            log.error("PeerNotFound {}", peerId);
-          }
-        } else if (peerId != null) {
+        if (peerId != null) {
           super.streamPublishStart(stream);
           try{
             log.debug("Starting Audio Stream for the user [" + userid + "]");
@@ -291,18 +280,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     	log.debug("{} has stopped publishing stream [{}]", username + "[uid=" + userid + "][clientid=" + clientId + "]", stream.getPublishedName());
     	IConnection conn = Red5.getConnectionLocal();
     	String peerId = (String) conn.getAttribute("VOICE_CONF_PEER");
-
-        if (isVideoStream(stream)) {
-          try {
-            userid = getBbbVideoUserId(stream);
-            log.debug("Closing only the video stream of the UserId " + userid);
-            peerId = "default";
-            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userid);
-            super.streamBroadcastClose(stream);
-          } catch (PeerNotFoundException e) {
-            log.error("PeerNotFound {}", peerId);
-          }
-        } else if (peerId != null) {
+        if (peerId != null) {
           try {
             log.debug("Audio disconnected: closing flash AUDIO stream");
             sipPeerManager.stopBbbToFreeswitchAudioStream(peerId, userid, stream, conn.getScope());
@@ -370,18 +348,6 @@ public class Application extends MultiThreadedApplicationAdapter {
 		String userid = (String) Red5.getConnectionLocal().getAttribute("USERID");
 		if ((userid == null) || ("".equals(userid))) userid = "unknown-userid";
 		return userid;
-	}
-	
-	private boolean isVideoStream(IBroadcastStream stream){
-		return stream.getPublishedName().matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
-	}
-	
-	private String getBbbVideoUserId(IBroadcastStream videoStream) {
-		String publishedName = videoStream.getPublishedName();
-		String userId = "";        
-		userId = publishedName.split("-")[1];
-
-		return userId;
 	}
 	
 	private String getMeetingId() {

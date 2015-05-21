@@ -210,7 +210,7 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName, String meetingId) {
+    public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName) {
         CallAgent ca = callManager.getByUserId(userId);
         String savedVideoStreamName = callManager.getVideoStream(userId);
 

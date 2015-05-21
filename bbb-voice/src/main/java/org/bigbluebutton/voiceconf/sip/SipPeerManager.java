@@ -97,10 +97,10 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public void startBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName,  String meetingId) throws PeerNotFoundException {
+    public void startBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchVideoStream(userId, videoStreamName, meetingId);
+            sipUser.startBbbToFreeswitchVideoStream(userId, videoStreamName);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
     

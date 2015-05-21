@@ -27,12 +27,13 @@ import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
+import org.red5.server.api.stream.IBroadcastStream;
 
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
 
     private SipPeerManager sipPeerManager;
-
+    private final String peerId = "default";
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
 
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
@@ -99,7 +100,7 @@ public class Service {
         try{
             if (sipPeerManager != null) {
                 sipPeerManager.webRTCCall(peerId, clientId, userid, username, meetingId, remoteVideoPort,localVideoPort);
-                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid,"","");
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid,"");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
         } catch (PeerNotFoundException e) {
@@ -123,7 +124,6 @@ public class Service {
 
     public void updateVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent) {		
         log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
-        String peerId = "default";
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
         if (!GlobalCall.isVideoPresent(voiceBridge)){
@@ -131,6 +131,34 @@ public class Service {
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
                 GlobalCall.setVideoPresent(voiceBridge, true);
             }
+        }
+    }
+
+    public void userSharedWebcam(String userId, String streamName){
+        log.debug("userSharedWebcam [userId={}, streamName={}]",userId, streamName);
+
+        if(isVideoStream(streamName) && (!userId.equals(""))){
+            try {
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userId, streamName);
+            } catch (PeerNotFoundException e) {
+                log.error("PeerNotFound {}", peerId);
+            }
+        }
+        else{
+            log.debug("Error when getting user's info");
+        }
+    }
+
+    public void userUnsharedWebcam(String userId){
+        log.debug("userUnsharedWebcam [userId={}]",userId);
+        if (!userId.equals("")) {
+            try {
+                sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId);
+            } catch (PeerNotFoundException e) {
+              log.error("PeerNotFound {}", peerId);
+            }
+        }else {
+            log.debug("Error when getting user's info");
         }
     }
 
@@ -164,4 +192,8 @@ public class Service {
 		if ((meetingid == null) || ("".equals(meetingid))) meetingid = "UNKNOWN-MEETING_ID";
 		return meetingid;
 	}
+
+    private boolean isVideoStream(String streamName){
+        return streamName.matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+    }
 }
