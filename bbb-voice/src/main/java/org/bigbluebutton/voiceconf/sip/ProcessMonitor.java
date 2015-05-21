@@ -18,7 +18,6 @@ public class ProcessMonitor implements Runnable {
     ProcessStream errorStreamMonitor;
 
     private Thread thread = null;
-    private Boolean finished = false;
     private VideoTranscoderObserver observer;
 
     public ProcessMonitor(String[] command) {
@@ -86,12 +85,11 @@ public class ProcessMonitor implements Runnable {
         int ret = this.process.exitValue();
         log.debug("Exit value: " + ret);
 
-        if (finished){
+        if ((ret>= 0) && (ret <=1 )){
             log.debug("Exiting thread that executes FFmpeg");
         }
         else{
             log.debug("FFmpeg VideoTranscoder died unepectedly. Restarting it");
-            //restart();
             notifyVideoTranscoderObserverOnRestart();
         }
     }
@@ -106,7 +104,6 @@ public class ProcessMonitor implements Runnable {
     }
 
 	public void start() {
-        finished=false;
         this.thread = new Thread(this);
         this.thread.start();
     }
@@ -131,7 +128,6 @@ public class ProcessMonitor implements Runnable {
     }
 
     public void destroy() {
-        finished = true;
         clearData();
         log.debug("ProcessMonitor successfully finished");
     }
