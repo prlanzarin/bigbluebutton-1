@@ -24,8 +24,6 @@ import org.bigbluebutton.voiceconf.red5.media.transcoder.NellySipToFlashTranscod
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SipToFlashTranscoder;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexFlashToSipTranscoderImp;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.SpeexSipToFlashTranscoderImp;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoProtocolConverter;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.H264ProtocolConverter;
 import org.bigbluebutton.voiceconf.sip.SipConnectInfo;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.app.sip.codecs.SpeexCodec;
@@ -43,9 +41,6 @@ public class CallStream implements StreamObserver {
 
     private SipToFlashTranscoder sipToFlashTranscoder;
     private FlashToSipTranscoder flashToSipTranscoder;
-
-    private VideoProtocolConverter freeswitchToBbbVideoConverter;
-    private VideoProtocolConverter bbbToFreeswitchVideoConverter;
 
     private final Codec sipCodec;
     private final SipConnectInfo connInfo;
