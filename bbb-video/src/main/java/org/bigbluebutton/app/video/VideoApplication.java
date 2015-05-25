@@ -43,7 +43,6 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	private boolean recordVideoStream = false;
 	private EventRecordingService recordingService;
 	private final Map<String, IStreamListener> streamListeners = new HashMap<String, IStreamListener>();
-	private final static String GLOBAL_VIDEO_STREAM_NAME_PREFIX = "sip_";
 
     @Override
 	public boolean appStart(IScope app) {
@@ -245,10 +244,4 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 	public void setEventRecordingService(EventRecordingService s) {
 		recordingService = s;
 	}
-	
-    public boolean isGlobalVideoStream(String streamName){
-        if (streamName == null) return false;
-        return streamName.startsWith(GLOBAL_VIDEO_STREAM_NAME_PREFIX);
-    }
-
 }
