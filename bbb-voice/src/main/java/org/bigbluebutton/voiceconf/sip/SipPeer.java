@@ -214,8 +214,13 @@ public class SipPeer implements SipRegisterAgentListener {
         CallAgent ca = callManager.getByUserId(userId);
         String savedVideoStreamName = callManager.getVideoStream(userId);
 
-        if (savedVideoStreamName == null) //ca is created before user publish his stream
-            savedVideoStreamName = videoStreamName;
+        if (savedVideoStreamName == null) {//ca is created before user publish his stream
+            log.debug("There's no savedVideoStreamName for the user: " + userId);
+            if(!videoStreamName.equals("")){
+                savedVideoStreamName = videoStreamName;
+                callManager.addVideoStream(userId,savedVideoStreamName);
+            }
+        }
 
         if (ca != null){
             if(ca.isGlobalStream()){
@@ -232,8 +237,7 @@ public class SipPeer implements SipRegisterAgentListener {
         }else {
             //ca null means that this method was called when publishing a video stream
             log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
-                       + " userId " + userId + ". Saving the current stream to be used when the CallAgent is created by this user");
-            callManager.addVideoStream(userId,savedVideoStreamName);
+                       + " userId " + userId + ". Saving the current stream to be used when the CallAgent is created by this user");            
         }
     }
 
@@ -287,7 +291,6 @@ public class SipPeer implements SipRegisterAgentListener {
 
     public void hangupWebRTC(String userId) throws PeerNotFoundException {
         CallAgent ca = callManager.remove(userId);
-        callManager.removeVideoStream(userId);
     }
 
 	@Override
