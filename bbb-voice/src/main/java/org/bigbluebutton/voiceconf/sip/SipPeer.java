@@ -291,6 +291,7 @@ public class SipPeer implements SipRegisterAgentListener {
 
     public void hangupWebRTC(String userId) throws PeerNotFoundException {
         CallAgent ca = callManager.remove(userId);
+        ca.stopBbbToFreeswitchVideoStream();
     }
 
 	@Override
