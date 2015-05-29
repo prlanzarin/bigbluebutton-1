@@ -83,13 +83,13 @@ public class ProcessMonitor implements Runnable {
         }
 
         int ret = this.process.exitValue();
-        log.debug("Exit value: " + ret);
 
         if ((ret>= 0) && (ret <=1 )){
-            log.debug("Exiting thread that executes FFmpeg");
+            log.debug("Exiting thread that executes FFmpeg. Exit value: "+ ret);
+            notifyVideoTranscoderObserverOnFinished();
         }
         else{
-            log.debug("FFmpeg VideoTranscoder died unepectedly. Restarting it");
+            log.debug("FFmpeg VideoTranscoder died unepectedly [Exit value = {}]. Restarting it...",ret);
             notifyVideoTranscoderObserverOnRestart();
         }
     }
@@ -100,6 +100,15 @@ public class ProcessMonitor implements Runnable {
             observer.handleTranscodingRestarted();
         }else {
             log.debug("Cannot notify VideoTranscoder to restart: VideoTranscoderObserver null");
+        }
+    }
+
+    private void notifyVideoTranscoderObserverOnFinished() {
+        if(observer != null){
+            log.debug("Notifying VideoTranscoder that FFmpeg successfully finished");
+            observer.handleTranscodingFinishedWithSuccess();
+        }else {
+            log.debug("Cannot notify VideoTranscoder that FFmpeg finished: VideoTranscoderObserver null");
         }
     }
 

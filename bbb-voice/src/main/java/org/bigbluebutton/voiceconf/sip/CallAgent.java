@@ -78,7 +78,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private String localVideoPort;
     private String remoteVideoPort;
     private boolean isWebRTC = false;
-
+    private boolean isGlobal = false;
+    private CallAgentObserver callAgentObserver;
 
     private String destinationPrefix;
 
@@ -108,6 +109,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.messagingService = messagingService;
         this.serverIp = Red5.getConnectionLocal().getHost();
         this.userProfile.userID = this._userId;
+        this.isGlobal = isGlobalUserId();
     }
     
     public String getCallId() {
@@ -437,34 +439,36 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     private void closeAudioStream() {
-    	log.debug("Shutting down the AUDIO stream...");         
         if (audioCallStream != null) {
+            log.debug("Shutting down the AUDIO stream...");
         	audioCallStream.stopFreeswitchToBbbStream();
         	audioCallStream = null;
         } else {
         	log.debug("Can't shutdown AUDIO stream: already NULL");
         }
-
     }
 
     private void closeVideoStream(){
       /*
-       * closes videoTranscoder, although the stream name is kept in the call manager
-       * if the video is enabled, for a future use.
+       * closes videoTranscoder
        */
-        log.debug("Shutting down the video transcoder...");
 
         if(videoTranscoder != null) {
+            log.debug("Shutting down the video transcoder...");
             videoTranscoder.stop();
             videoTranscoder = null;
-        }
 
-        if(isGlobalStream()){
-            GlobalCall.removeSDPVideoFile(getDestination());
+            if(isGlobalStream()){
+                log.debug("Shutting down the (****GLOBAL VIDEO TRANSCODER ****) ...");
+                GlobalCall.removeSDPVideoFile(getDestination());
+                log.debug("Informing client the global stream is null");
+                messagingService.globalVideoStreamCreated(getMeetingId(),"");
+            }
+        }else{
+            log.debug("Can't shutdown VIDEO transcoder: already NULL");
         }
     }
 
-    
     public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) {
         listeningToGlobal = true;
         _destination = voiceConf;
@@ -609,7 +613,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (callState == CallState.UA_IDLE) return;
 
         if(isGlobalStream()) {
-        	log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL AUDIO received a bye");
+            log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL AUDIO received a bye");
             for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext();) {
                 String userId = i.next();
                 log.debug("notifyListenersOfOnCallClosed for {}", userId);
@@ -658,7 +662,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         closeVideoStream();
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
-
+        notifyCallAgentObserverOnCallAgentClosed(getUserId());
         // Reset local sdp for next call.
         initSessionDescriptor();
     }
@@ -674,6 +678,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     	if (!isCurrentCall(call)) return;         
         log.debug("CLOSE/OK.");
         
+        closeAudioStream();
+        closeVideoStream();
+
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
     }
@@ -707,6 +714,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
+
+    public void setCallAgentObserver(CallAgentObserver cao){
+        this.callAgentObserver = cao;
+    }
 
     public String getUserId() {
         return userProfile.userID;
@@ -769,6 +780,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
 
+    @Override
+    public void handleTranscodingFinishedWithSuccess() {
+        //called by ProcessMonitor when successfully finished
+        if(isGlobalStream()){
+             log.debug("Transcoder for user [uid={}] finished with success.",getUserId());
+        }else log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
+    }
+
 	public void setLocalVideoPort(String localVideoPort){
 		this.localVideoPort = localVideoPort;
 	}
@@ -795,5 +814,22 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
 	public boolean isWebRTC(){
 		return this.isWebRTC;
+	}
+
+	private boolean isGlobalUserId(){
+		return getUserId().startsWith(GlobalCall.LISTENONLY_USERID_PREFIX);
+	}
+
+	public boolean isGlobal(){
+		return this.isGlobal;
+	}
+
+	private void notifyCallAgentObserverOnCallAgentClosed(String userId){
+		if(callAgentObserver != null){
+			log.debug("Notifying CallAgentObserver that CallAgent with userid={} has been closed",userId);
+			callAgentObserver.handleCallAgentClosed(userId);
+		}else{
+			log.debug("Can't notify CallAgentObserver that CallAgent with userid={} has been closed. CallAgentObserver = null",userId);
+		}
 	}
 }

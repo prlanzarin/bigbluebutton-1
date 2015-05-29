@@ -88,7 +88,7 @@ public class GlobalCall {
         }
     }
  
-    private static void removeRoom(String voiceConf) {
+    public static void removeRoom(String voiceConf) {
         log.debug("Removing global audio and video stream of room {}", voiceConf);
         voiceConfToListenOnlyUsersMap.remove(voiceConf);
         roomToAudioStreamMap.remove(voiceConf);

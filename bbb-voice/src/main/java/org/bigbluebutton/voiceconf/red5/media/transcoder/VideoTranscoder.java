@@ -101,7 +101,6 @@ public class VideoTranscoder {
     }
 
     public void stop(){
-        log.debug("Stopping Video Transcoder...");
         if (processMonitor != null) {
             processMonitor.destroy();
             processMonitor = null;

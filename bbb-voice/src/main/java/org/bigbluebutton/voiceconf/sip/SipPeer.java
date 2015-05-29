@@ -42,7 +42,7 @@ import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
  * @author Richard Alam
  *
  */
-public class SipPeer implements SipRegisterAgentListener {
+public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
     private static Logger log = Red5LoggerFactory.getLogger(SipPeer.class, "sip");
 
     private ClientConnectionManager clientConnManager;
@@ -138,6 +138,7 @@ public class SipPeer implements SipRegisterAgentListener {
         CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, userId, messagingService);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
+        ca.setCallAgentObserver(this);
 
     	return ca;
     }
@@ -160,11 +161,14 @@ public class SipPeer implements SipRegisterAgentListener {
         CallAgent ca = callManager.remove(userId);
 
         if (ca != null) {
+            String destination = ca.getDestination();
             if (ca.isListeningToGlobal()) {
-                String destination = ca.getDestination();
-
                 log.info("User has disconnected from global audio, user [{}] voiceConf {}", userId, destination);
                 messagingService.userDisconnectedFromGlobalAudio(destination, userId);
+            }
+            if(ca.isGlobal()){
+                 log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
+                 GlobalCall.removeRoom(destination);
             }
             ca.hangup();
         }
@@ -319,4 +323,33 @@ public class SipPeer implements SipRegisterAgentListener {
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
+
+	@Override
+	public void handleCallAgentClosed(String userId) {
+        /*
+         * This observer is called every time we receive a BYE from sip server.
+         * This means that if we receive a bye, but there's still a CallAgent, we
+         * are dealing with an unexpected end of call (like ended by the other end point).
+         * What we do is in this case is removing the current CallAgent from the
+         * CallManager, leaving it to be recreated when a new call() is made by the user
+         * (or by the GlobalCall)
+         *
+         */
+
+        CallAgent ca = callManager.get(userId);
+
+        if (ca == null)
+            log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] has been closed  already ",userId);
+        else{
+            log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] still exists. Possible closed by the other endpoint. Removing it... ",userId);
+            String destination = ca.getDestination();
+
+            if(ca.isGlobal()){
+                 log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
+                 GlobalCall.removeRoom(destination);
+            }
+
+            callManager.remove(userId);
+        }
+    }
 }
