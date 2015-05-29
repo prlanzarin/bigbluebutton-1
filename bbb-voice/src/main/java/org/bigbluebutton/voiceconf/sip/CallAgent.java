@@ -784,8 +784,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void handleTranscodingFinishedWithSuccess() {
         //called by ProcessMonitor when successfully finished
         if(isGlobalStream()){
-             log.debug("Transcoder for user [uid={}] finished with success.",getUserId());
-        }else log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
+            log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
+        }else log.debug("Transcoder for user [uid={}] finished with success.",getUserId());
     }
 
 	public void setLocalVideoPort(String localVideoPort){

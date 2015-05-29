@@ -13,7 +13,7 @@ public class ProcessMonitor implements Runnable {
 
     private String[] command;
     private Process process;
-
+    private static final int EXIT_WITH_SUCCESS = 0;
     ProcessStream inputStreamMonitor;
     ProcessStream errorStreamMonitor;
 
@@ -84,7 +84,7 @@ public class ProcessMonitor implements Runnable {
 
         int ret = this.process.exitValue();
 
-        if ((ret>= 0) && (ret <=1 )){
+        if (ret == EXIT_WITH_SUCCESS ){
             log.debug("Exiting thread that executes FFmpeg. Exit value: "+ ret);
             notifyVideoTranscoderObserverOnFinished();
         }
@@ -139,6 +139,7 @@ public class ProcessMonitor implements Runnable {
     public void destroy() {
         clearData();
         log.debug("ProcessMonitor successfully finished");
+        notifyVideoTranscoderObserverOnFinished();
     }
 
     public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
