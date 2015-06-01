@@ -582,31 +582,33 @@ package org.bigbluebutton.modules.users.services
       var map:Object = JSON.parse(msg.msg);
 
       isSipVideoPresent=map.isSipVideoPresent;
-
-      if(map.sipVideoStreamName)
-          globalVideoStreamName=map.sipVideoStreamName;
-
+      globalVideoStreamName=map.sipVideoStreamName;
       sipVideoUpdate();
     }
 
     public static function sipVideoUpdate():void{
+        var videoPaused:BBBEvent;
+        var videoResumed:BBBEvent;
+
         if(isSipVideoPresent) {
             if(globalVideoStreamName) {
                 trace(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
                 LogUtil.debug(LOG + "SipVideoUpdate: Dispatching Resumed Video Event");
 
-                var videoResumed:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
+                videoResumed = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
                 videoResumed.payload.globalVideoStreamName = globalVideoStreamName;
                 globalDispatcher.dispatchEvent(videoResumed);
             }
             else {
-                trace(LOG + "SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet");
-                LogUtil.debug(LOG + "SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet");    
+                trace(LOG + "SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet. Dispatching Paused Video Event");
+                LogUtil.debug(LOG + "SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet. Dispatching Paused Video Event");  
+                videoPaused= new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
+                globalDispatcher.dispatchEvent(videoPaused);
             }            
         }
         else {
             trace(LOG + "SipVideoUpdate: Dispatching Paused Video Event");
-            var videoPaused:BBBEvent = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
+            videoPaused= new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
             globalDispatcher.dispatchEvent(videoPaused);
         }
     }
