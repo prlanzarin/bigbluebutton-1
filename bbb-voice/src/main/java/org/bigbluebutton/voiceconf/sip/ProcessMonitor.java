@@ -6,7 +6,10 @@ import org.slf4j.Logger;
 import org.red5.logging.Red5LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
+
 
 public class ProcessMonitor implements Runnable {
     private static Logger log = Red5LoggerFactory.getLogger(ProcessMonitor.class, "sip");
@@ -26,7 +29,7 @@ public class ProcessMonitor implements Runnable {
         this.inputStreamMonitor = null;
         this.errorStreamMonitor = null;
     }
-    
+
     public String toString() {
         if (this.command == null || this.command.length == 0) { 
             return "";
@@ -105,10 +108,10 @@ public class ProcessMonitor implements Runnable {
 
     private void notifyVideoTranscoderObserverOnFinished() {
         if(observer != null){
-            log.debug("Notifying VideoTranscoder that FFmpeg successfully finished");
+            log.debug("Notifying VideoTranscoderObserver that FFmpeg successfully finished");
             observer.handleTranscodingFinishedWithSuccess();
         }else {
-            log.debug("Cannot notify VideoTranscoder that FFmpeg finished: VideoTranscoderObserver null");
+            log.debug("Cannot notify VideoTranscoderObserver that FFmpeg finished: VideoTranscoderObserver null");
         }
     }
 
@@ -146,5 +149,31 @@ public class ProcessMonitor implements Runnable {
         if (observer==null){
             log.debug("Cannot assign observer: VideoTranscoderObserver null");
         }else this.observer = observer;
+    }
+
+    public int getPid(){
+        Field f;
+        int pid;
+        try {
+            f = this.process.getClass().getDeclaredField("pid");
+            f.setAccessible(true);
+            pid = (int)f.get(this.process);
+            return pid;
+        } catch (IllegalArgumentException | IllegalAccessException
+                | NoSuchFieldException | SecurityException e) {
+            // TODO Auto-generated catch block
+            log.debug("Error when obtaining ffmpeg PID");
+            return -1;
+        }
+    }
+
+    public void forceDestroy(){
+        try {
+            Runtime.getRuntime().exec("kill -9 "+ getPid());
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            log.debug("Failed to force-kill ffmpeg process");
+            e.printStackTrace();
+        }
     }
 }

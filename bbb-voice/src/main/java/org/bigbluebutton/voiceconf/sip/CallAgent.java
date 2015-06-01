@@ -613,7 +613,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (callState == CallState.UA_IDLE) return;
 
         if(isGlobalStream()) {
-            log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL AUDIO received a bye");
+            log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL CALL received a bye");
             for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext();) {
                 String userId = i.next();
                 log.debug("notifyListenersOfOnCallClosed for {}", userId);
