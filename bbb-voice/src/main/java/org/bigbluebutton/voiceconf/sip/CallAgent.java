@@ -469,10 +469,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
 
-    public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) {
-        listeningToGlobal = true;
+    public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
         _destination = voiceConf;
-
+        GlobalCall.addUser(clientId, callerIdName, _destination);
+        listeningToGlobal = true;
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         while (globalAudioStreamName == null) {
             try {
@@ -482,7 +482,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         }
 
-        GlobalCall.addUser(clientId, callerIdName, _destination);
         sipAudioCodec = GlobalCall.getRoomAudioCodec(voiceConf);
         callState = CallState.UA_ONCALL;
         notifyListenersOnCallConnected("", globalAudioStreamName);
@@ -614,10 +613,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         if(isGlobalStream()) {
             log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL CALL received a bye");
+            log.debug("Current users connected on the Global Call: "+ GlobalCall.getListeners(_destination).size());
             for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext();) {
-                String userId = i.next();
-                log.debug("notifyListenersOfOnCallClosed for {}", userId);
-                clientConnManager.leaveConference(userId);
+                String clientId = i.next();
+                log.debug("notifyListenersOfOnCallClosed for {}", clientId);
+                clientConnManager.leaveConference(clientId);
             }
         }
         else {
@@ -657,12 +657,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	
         if (!isCurrentCall(call)) 
         	return;
-        
-        closeAudioStream();
-        closeVideoStream();
+
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
         notifyCallAgentObserverOnCallAgentClosed(getUserId());
+        closeAudioStream();
+        closeVideoStream();
         // Reset local sdp for next call.
         initSessionDescriptor();
     }
@@ -677,12 +677,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         
     	if (!isCurrentCall(call)) return;         
         log.debug("CLOSE/OK.");
-        
-        closeAudioStream();
-        closeVideoStream();
 
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
+        closeAudioStream();
+        closeVideoStream();
     }
 
 
@@ -777,6 +776,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
                 messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
             }else videoTranscoder.restart("");
+        }else{
+            if(isGlobalStream()){
+                log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
+            }else{
+                log.debug("Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
+            }
         }
     }
 

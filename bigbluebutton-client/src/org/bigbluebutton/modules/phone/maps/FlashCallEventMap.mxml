@@ -43,6 +43,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.phone.events.UseFlashModeCommand;
 			import org.bigbluebutton.modules.phone.events.WebRTCCallEvent;
 			import org.bigbluebutton.modules.phone.managers.FlashCallManager;
+            import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 		]]>
 	</mx:Script>
 	
@@ -94,6 +95,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   
   <EventHandlers type="{FlashCallDisconnectedEvent.CALL_DISCONNECTED_EVENT}">        
     <MethodInvoker generator="{FlashCallManager}" method="handleFlashCallDisconnectedEvent" arguments="{event}"/>
+  </EventHandlers>
+
+  <EventHandlers type="{FlashGlobalCallDestroyedEvent.GLOBAL_CALL_DESTROYED_EVENT}">
+    <MethodInvoker generator="{FlashCallManager}" method="handleFlashGlobalCallDestroyedEvent" arguments="{event}"/>
   </EventHandlers>
 
   <EventHandlers type="{FlashVoiceConnectionStatusEvent.CONN_STATUS}">        

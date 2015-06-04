@@ -126,9 +126,8 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
     	callManager.add(ca);
     }
 
-	public void connectToGlobalStream(String clientId, String userId, String callerIdName, String destination) {
+	public void connectToGlobalStream(String clientId, String userId, String callerIdName, String destination) throws GlobalCallNotFoundException {
         CallAgent ca = createCallAgent(clientId,userId);
-
         ca.connectToGlobalStream(clientId, userId, callerIdName, destination);
      	callManager.add(ca);
 	}
@@ -343,13 +342,11 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         else{
             log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] still exists. Possible closed by the other endpoint. Removing it... ",userId);
             String destination = ca.getDestination();
-
+            callManager.remove(userId);
             if(ca.isGlobal()){
                  log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
                  GlobalCall.removeRoom(destination);
             }
-
-            callManager.remove(userId);
         }
     }
 }

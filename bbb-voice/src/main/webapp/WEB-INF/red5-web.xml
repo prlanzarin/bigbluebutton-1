@@ -67,6 +67,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	</bean>
 
     <bean id="voiceconf.service" class="org.bigbluebutton.voiceconf.red5.Service">
+        <property name="clientConnectionManager" ref="clientConnectionManager"/>
         <property name="sipPeerManager" ref="sipPeerManager"/>
     </bean>
     	

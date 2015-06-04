@@ -70,4 +70,13 @@ public class ClientConnectionManager {
 			log.warn("Can't find client {} to inform user that she has left the conference.", clientId);
 		}
 	}
+
+    public void destroyedGlobalCall(String clientId) {
+        ClientConnection cc = clients.get(clientId);
+        if (cc != null) {
+            cc.destroyedGlobalCall();
+        } else {
+            log.warn("Can't find client {} to inform user that the Global Call has been destroyed.", clientId);
+        }
+    }
 }

@@ -39,6 +39,7 @@ package org.bigbluebutton.modules.phone.managers {
 	import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
 	import org.bigbluebutton.modules.phone.events.RegistrationFailedEvent;
 	import org.bigbluebutton.modules.phone.events.RegistrationSuccessEvent;
+	import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 	
 	public class ConnectionManager {
     private static const LOG:String = "Phone::ConnectionManager - ";
@@ -174,6 +175,12 @@ package org.bigbluebutton.modules.phone.managers {
 			dispatcher.dispatchEvent(event);
 		}
 						
+    public function destroyedGlobalCallCallback(msg:String):* {
+        trace(LOG + "destroyedGlobalCallCallback " + msg);
+        JSLog.debug(LOG + "destroyedGlobalCallCallback " + msg);
+        var event:FlashGlobalCallDestroyedEvent = new FlashGlobalCallDestroyedEvent();
+        dispatcher.dispatchEvent(event);
+    }
 		//********************************************************************************************
 		//			
 		//			SIP Actions

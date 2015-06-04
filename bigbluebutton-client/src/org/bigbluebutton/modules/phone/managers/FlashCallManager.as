@@ -29,6 +29,7 @@
   import org.bigbluebutton.modules.phone.events.JoinVoiceConferenceCommand;
   import org.bigbluebutton.modules.phone.events.LeaveVoiceConferenceCommand;
   import org.bigbluebutton.modules.phone.events.WebRTCCallEvent;
+  import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 
   public class FlashCallManager
   {
@@ -323,6 +324,7 @@
       switch (state) {
         case IN_CONFERENCE:
           state = INITED;
+          streamManager.stopStreams(); //stopping streams if they are still running (this happens when voice receives an unexpected bye from fs)
           dispatcher.dispatchEvent(new FlashLeftVoiceConferenceEvent());
           break;
         case ON_LISTEN_ONLY_STREAM:
@@ -355,6 +357,29 @@
       }
     }
     
+    public function handleFlashGlobalCallDestroyedEvent(event:FlashGlobalCallDestroyedEvent):void {
+        JSLog.debug(LOG + "Flash global call destroyed, current state: " + state);
+        trace(LOG + "Flash global call destroyed, current state: " + state);
+        switch (state) {
+          case ON_LISTEN_ONLY_STREAM:
+            state = INITED;
+            JSLog.debug(LOG + "Flash user left the listen only stream. Reason: Global Call destroyed");
+            trace(LOG + "Flash user left the listen only stream. Reason: Global Call destroyed");
+            dispatcher.dispatchEvent(new FlashLeftVoiceConferenceEvent());
+            break;
+          case CONNECTING_TO_LISTEN_ONLY_STREAM: //failed to connect to global in bbb-voice
+              state = INITED;
+              JSLog.debug(LOG + "Flash user couldn't join the listen only stream. There's no Global Call for this room");
+              trace(LOG + "Flash user couldn't join the listen only stream. There's no Global Call for this room");
+              dispatcher.dispatchEvent(new FlashLeftVoiceConferenceEvent());
+              break;
+          default:
+            JSLog.debug(LOG + "There's no Global Call for this room anymore. Current State: " + state + ". Conference still running");
+            trace(LOG + "There's no Global Call for this room anymore. Current State: " + state + ". Conference still running");
+            break;
+        }
+      }
+
     public function handleJoinVoiceConferenceCommand(event:JoinVoiceConferenceCommand):void {
       JSLog.debug(LOG + "Handling JoinVoiceConferenceCommand.");
       trace(LOG + "Handling JoinVoiceConferenceCommand.");

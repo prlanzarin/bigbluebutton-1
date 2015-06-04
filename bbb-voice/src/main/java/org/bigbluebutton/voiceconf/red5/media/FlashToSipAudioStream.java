@@ -50,6 +50,7 @@ public class FlashToSipAudioStream implements FlashToSipStream, TranscodedMediaD
 		this.srcSocket = srcSocket;
 		this.connInfo = connInfo;		
 		talkStreamName = "BbbToFreeswitchAudioStream_" + System.currentTimeMillis();
+        log.debug("Setting Freeswitch to Bbb Audio Stream name to: " + talkStreamName);
 		rtpSender = new RtpStreamSender(srcSocket, connInfo);			    
 	    transcoder.setTranscodedMediaDataListener(this);
 		

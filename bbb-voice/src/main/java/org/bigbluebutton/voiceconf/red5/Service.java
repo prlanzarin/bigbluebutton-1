@@ -21,38 +21,37 @@ package org.bigbluebutton.voiceconf.red5;
 import java.text.MessageFormat;
 
 import org.slf4j.Logger;
+import org.bigbluebutton.voiceconf.sip.GlobalCallNotFoundException;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
 import org.bigbluebutton.voiceconf.sip.SipPeerManager;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
-import org.red5.server.api.stream.IBroadcastStream;
-
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
 
     private SipPeerManager sipPeerManager;
+    private ClientConnectionManager clientConnectionManager;
     private final String peerId = "default";
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
 
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
+        String clientId = Red5.getConnectionLocal().getClient().getId();
 	    String userId = getUserId();
+	    String username = getUsername();
 		if (listenOnly) {
-			if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
-			    log.warn("Global call for {} not found, creating one", destination);
-				String extension = callExtensionPattern.format(new String[] { destination });
-				try {
-					sipPeerManager.call(peerId, destination, GlobalCall.LISTENONLY_USERID_PREFIX + destination,userId, extension,getMeetingId());
-					Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
-				} catch (PeerNotFoundException e) {
-					log.error("PeerNotFound {}", peerId);
-					return false;
-				}
-			}
-			sipPeerManager.connectToGlobalStream(peerId, getClientId(), userId, callerName, destination);
-			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
-			return true;
+            try{
+                log.debug("{} is requesting to join into the conference {} as a listenonly.", username +"[peerId="+ peerId + "][uid=" + userId + "][clientid=" + clientId + " callerName="+callerName+"]", destination);
+                sipPeerManager.connectToGlobalStream(peerId, clientId, userId, callerName, destination);
+                Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
+                return true;
+            } catch (GlobalCallNotFoundException e){
+                log.debug("{} can't join into the conferece {} as listenonly , because there's no global call agent for this room",userId,destination);
+                log.debug("Sending destroyedGlobalCall() to this user. ClientId={} ",clientId);
+                clientConnectionManager.destroyedGlobalCall(clientId);;
+                return false;
+            }
 		} else {
 			Boolean result = call(peerId, callerName, destination);
 			return result;
@@ -195,5 +194,9 @@ public class Service {
 
     private boolean isVideoStream(String streamName){
         return streamName.matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+    }
+
+    public void setClientConnectionManager(ClientConnectionManager ccm) {
+        clientConnectionManager = ccm;
     }
 }

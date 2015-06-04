@@ -68,7 +68,7 @@ public class SipToFlashAudioStream implements SipToFlashStream, RtpStreamReceive
 		rtpStreamReceiver = new RtpAudioStreamReceiver(socket, transcoder.getIncomingEncodedFrameSize());
 		rtpStreamReceiver.setRtpStreamReceiverListener(this);
 
-        if (isGlobalStream())
+        if (!isGlobalStream())
             setFreeswitchToBbbAudioStreamName("freeswitchToBbbAudioStream_" + System.currentTimeMillis());
         else
             setFreeswitchToBbbAudioStreamName(GlobalCall.GLOBAL_AUDIO_STREAM_NAME_PREFIX + System.currentTimeMillis());

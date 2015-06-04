@@ -92,7 +92,6 @@ public class ProcessMonitor implements Runnable {
             notifyVideoTranscoderObserverOnFinished();
         }
         else{
-            log.debug("FFmpeg VideoTranscoder died unepectedly [Exit value = {}]. Restarting it...",ret);
             notifyVideoTranscoderObserverOnRestart();
         }
     }

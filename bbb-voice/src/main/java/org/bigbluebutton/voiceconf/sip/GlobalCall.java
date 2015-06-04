@@ -16,7 +16,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import org.bigbluebutton.voiceconf.red5.ClientConnectionManager;
 import org.bigbluebutton.voiceconf.red5.media.CallStream;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
@@ -99,15 +98,17 @@ public class GlobalCall {
         roomToVideoStreamMap.remove(voiceConf);
         globalCalls.remove(voiceConf);
         roomToVideoPresent.remove(voiceConf);
-        removeSDPVideoFile(voiceConf);
     }
 
-    public static synchronized void addUser(String clientId, String callerIdName, String voiceConf) {      	
+    public static synchronized void addUser(String clientId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
     	if (voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
     		VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
     		map.addUser(clientId, callerIdName);
     		int numUsers = map.numUsers();
     		log.debug("Adding new user to voiceConf [{}], current number of users on global stream is {}", voiceConf, numUsers);
+        }else{
+            log.debug("There's no global call agent for the room [{}]. User [{}] can't connect.", voiceConf, callerIdName);
+            throw new GlobalCallNotFoundException("No Global Call Agent for the room "+voiceConf);
     	}
       
     }

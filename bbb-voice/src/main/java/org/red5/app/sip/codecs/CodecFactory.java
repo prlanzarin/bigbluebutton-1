@@ -2,7 +2,7 @@ package org.red5.app.sip.codecs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.bigbluebutton.voiceconf.sip.SdpUtils.LogLevel;
 import org.red5.logging.Red5LoggerFactory;
 
 public class CodecFactory {    
@@ -17,7 +17,8 @@ public class CodecFactory {
     private static final int audioCodecSpeex = 100;
     private static final int audioCodeciLBC = 111;
     private int[] availableAudioCodecsId = {audioCodecPCMU, audioCodecPCMA, audioCodecG729, audioCodecSpeex, audioCodeciLBC};
-
+    public static enum LogLevel{INFO,ERROR,DEBUG,WARNING,SILENCE};
+    public static LogLevel logLevel = LogLevel.SILENCE;
 
     // Available video codecs
     private static final int videoCodecH264 = H264Codec.codecId;
@@ -195,7 +196,9 @@ public class CodecFactory {
 
 
     private static void printLog( String method, String message ) {        
-        log.debug( "SCodecFactory - " + method + " -> " + message );
-        System.out.println("CodecFactory - " + method + " -> " + message );
+        if (logLevel == LogLevel.DEBUG){
+            log.debug( "SCodecFactory - " + method + " -> " + message );
+            System.out.println("CodecFactory - " + method + " -> " + message );
+        }
     }
 }

@@ -21,7 +21,6 @@ public class ProcessStream implements Runnable {
 
     public void run() {
         try {
-            //log.debug("Creating thread to execute the process stream");
             String line;
             InputStreamReader isr = new InputStreamReader(this.stream);
             BufferedReader ibr = new BufferedReader(isr);
@@ -36,7 +35,6 @@ public class ProcessStream implements Runnable {
             close();
         }
 
-        //log.debug("Exiting thread that handles process stream");
     }
 
     public void start() {

@@ -144,7 +144,7 @@ public final class SipPeerManager {
         sipPeers.remove(userid);
     }
 
-    public void connectToGlobalStream(String peerId, String clientId, String userId, String callerIdName, String destination) {
+    public void connectToGlobalStream(String peerId, String clientId, String userId, String callerIdName, String destination) throws GlobalCallNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
             sipUser.connectToGlobalStream(clientId, userId, callerIdName, destination);

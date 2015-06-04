@@ -42,7 +42,7 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
 	}
 	
     public void onJoinConferenceSuccess(String userSenderAudioStream, String userReceiverAudioStream, String audioCodec) {
-    	log.debug("Notify client that {} [{}] has joined the conference.", username, userid);
+        log.debug("Notify client that {} [{}] has joined the conference. Audio Streams: {}, {} ", username, userid,userSenderAudioStream,userReceiverAudioStream);
         if (connection.isConnected()) {
             connection.invoke("successfullyJoinedVoiceConferenceCallback",
                     new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec});
@@ -60,6 +60,13 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     	log.debug("Notify client that {} [{}] left the conference.", username, userid);
         if (connection.isConnected()) {
             connection.invoke("disconnectedFromJoinConferenceCallback", new Object[] {"onUaCallClosed"});
+        }
+    }
+
+    public void destroyedGlobalCall() {
+        log.debug("Notify client {} that the Global Call has been destroyed.", username);
+        if (connection.isConnected()) {
+            connection.invoke("destroyedGlobalCallCallback", new Object[] {"onUaCallClosed"});
         }
     }
 }

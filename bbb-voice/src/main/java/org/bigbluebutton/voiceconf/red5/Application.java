@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
+import org.bigbluebutton.voiceconf.sip.GlobalCallNotFoundException;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
 import org.bigbluebutton.voiceconf.sip.SipPeerManager;
 import org.red5.logging.Red5LoggerFactory;
@@ -130,8 +131,8 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         String peerId = "default";
         createGlobalCall(clientId,peerId,username,voiceBridge,meetingId);
-        log.debug("Adding user to global call , so it can receive global video...");
-        GlobalCall.addUser(clientId, username, voiceBridge);
+        addUserToGlobalCall(clientId, username, voiceBridge);
+
         Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
       } else {
         // TODO review this condition, since the original implementation does clientConnManager.createClient always
@@ -238,6 +239,15 @@ public class Application extends MultiThreadedApplicationAdapter {
             }
         }
         return true;
+    }
+
+    private void addUserToGlobalCall(String clientId, String username, String voiceBridge){
+        try{
+            log.debug("Adding user to global call , so it can receive global video...");
+            GlobalCall.addUser(clientId, username, voiceBridge);
+        } catch (GlobalCallNotFoundException e ){
+            log.debug("User {} can't connect to the global call for the room{}, because there isn't any",username);
+        }
     }
 
     private void hangUpWebRTC(String peerId,String userid) {
