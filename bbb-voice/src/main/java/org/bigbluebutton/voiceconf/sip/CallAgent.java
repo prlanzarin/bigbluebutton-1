@@ -471,7 +471,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
         _destination = voiceConf;
-        GlobalCall.addUser(clientId, callerIdName, _destination);
+        GlobalCall.addUser(clientId, callerIdName, _destination,true);
         listeningToGlobal = true;
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         while (globalAudioStreamName == null) {
@@ -663,6 +663,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyCallAgentObserverOnCallAgentClosed(getUserId());
         closeAudioStream();
         closeVideoStream();
+
         // Reset local sdp for next call.
         initSessionDescriptor();
     }

@@ -346,7 +346,15 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
             if(ca.isGlobal()){
                  log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
                  GlobalCall.removeRoom(destination);
+                 //restartGlobalCall(ca.getCallId(),ca.getCallerName(),ca.getUserId(),ca.getDestination(),ca.getMeetingId());
             }
         }
+    }
+
+    public void restartGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId){
+        log.debug("Restarting Global Call [clientId={}] [callerName{}=] [userId={}] [destination={}] [meetindId={}]");
+        GlobalCall.reservePlaceToCreateGlobal(destination);
+        this.call(clientId, callerName, userId, destination, meetingId);
+        //add all users connected in the room back to global video
     }
 }

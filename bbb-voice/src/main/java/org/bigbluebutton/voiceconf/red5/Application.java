@@ -244,7 +244,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     private void addUserToGlobalCall(String clientId, String username, String voiceBridge){
         try{
             log.debug("Adding user to global call , so it can receive global video...");
-            GlobalCall.addUser(clientId, username, voiceBridge);
+            GlobalCall.addUser(clientId, username, voiceBridge,false);
         } catch (GlobalCallNotFoundException e ){
             log.debug("User {} can't connect to the global call for the room{}, because there isn't any",username);
         }
