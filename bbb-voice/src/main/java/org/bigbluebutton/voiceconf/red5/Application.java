@@ -131,7 +131,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
         String peerId = "default";
         createGlobalCall(clientId,peerId,username,voiceBridge,meetingId);
-        addUserToGlobalCall(clientId, username, voiceBridge);
+        addUserToGlobalCall(clientId, username, userId,voiceBridge);
 
         Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
       } else {
@@ -241,10 +241,10 @@ public class Application extends MultiThreadedApplicationAdapter {
         return true;
     }
 
-    private void addUserToGlobalCall(String clientId, String username, String voiceBridge){
+    private void addUserToGlobalCall(String clientId, String username, String userId, String voiceBridge){
         try{
             log.debug("Adding user to global call , so it can receive global video...");
-            GlobalCall.addUser(clientId, username, voiceBridge,false);
+            GlobalCall.addUser(clientId, username, userId, voiceBridge,false);
         } catch (GlobalCallNotFoundException e ){
             log.debug("User {} can't connect to the global call for the room{}, because there isn't any",username);
         }

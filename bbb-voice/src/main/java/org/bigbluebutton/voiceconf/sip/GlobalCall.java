@@ -100,10 +100,10 @@ public class GlobalCall {
         roomToVideoPresent.remove(voiceConf);
     }
 
-    public static synchronized void addUser(String clientId, String callerIdName, String voiceConf, boolean listeningToAudio) throws GlobalCallNotFoundException {
+    public static synchronized void addUser(String clientId, String callerIdName,String userId, String voiceConf, boolean listeningToAudio) throws GlobalCallNotFoundException {
     	if (voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
     		VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
-            map.addUser(clientId, callerIdName,listeningToAudio);
+            map.addUser(clientId, callerIdName, userId,listeningToAudio);
     		int numUsers = map.numUsers();
     		log.debug("Adding new user to voiceConf [{}], current number of users on global stream is {}", voiceConf, numUsers);
         }else{
@@ -125,6 +125,18 @@ public class GlobalCall {
         if(voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
             VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
             listeners = map.getAudioUsers(voiceConf);
+        }
+        else {
+            listeners = new ArrayList<String>();
+        }
+        return listeners;
+    }
+
+    public static synchronized List<String> getListenerUserIds(String voiceConf){
+        List<String> listeners;
+        if(voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
+            VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
+            listeners = map.getAudioUserIds(voiceConf);
         }
         else {
             listeners = new ArrayList<String>();

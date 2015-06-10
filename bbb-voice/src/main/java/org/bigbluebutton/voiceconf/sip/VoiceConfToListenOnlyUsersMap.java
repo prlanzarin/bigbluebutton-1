@@ -15,8 +15,8 @@ public class VoiceConfToListenOnlyUsersMap {
 	  this.voiceConf = voiceConf;	
 	}
 	
-	public void addUser(String clientId, String callerIdName, boolean listeningToAudio) {
-		listenOnlyUsers.put(clientId, new ListenOnlyUser(clientId, callerIdName, voiceConf,listeningToAudio));
+	public void addUser(String clientId, String callerIdName, String userId, boolean listeningToAudio) {
+		listenOnlyUsers.put(clientId, new ListenOnlyUser(clientId, callerIdName, userId ,voiceConf,listeningToAudio));
 	}
 	
 	public ListenOnlyUser removeUser(String clientId) {
@@ -40,6 +40,15 @@ public class VoiceConfToListenOnlyUsersMap {
         for(ListenOnlyUser i : listenOnlyUsers.values()) {
             if(i.listeningToAudio)
                 users.add(i.clientId);
+        }
+        return users;
+    }
+
+    public List<String> getAudioUserIds(String voiceConf){
+        List<String> users = new ArrayList<String>();
+        for(ListenOnlyUser i : listenOnlyUsers.values()) {
+            if(i.listeningToAudio)
+                users.add(i.userId);
         }
         return users;
     }

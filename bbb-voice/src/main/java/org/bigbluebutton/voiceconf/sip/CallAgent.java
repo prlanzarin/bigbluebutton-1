@@ -471,7 +471,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
         _destination = voiceConf;
-        GlobalCall.addUser(clientId, callerIdName, _destination,true);
+        GlobalCall.addUser(clientId, callerIdName,userId, _destination,true);
         listeningToGlobal = true;
         String globalAudioStreamName = GlobalCall.getGlobalAudioStream(voiceConf);
         while (globalAudioStreamName == null) {
@@ -618,6 +618,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 String clientId = i.next();
                 log.debug("notifyListenersOfOnCallClosed for {}", clientId);
                 clientConnManager.leaveConference(clientId);
+                messagingService.userDisconnectedFromGlobalAudio(_destination,_userId);
+            }
+            //notify bbb-apps
+            for(Iterator<String> i = GlobalCall.getListenerUserIds(_destination).iterator(); i.hasNext();) {
+                String userId = i.next();
+                log.debug("notifyListenersOfOnCallClosed for {}", userId);
+                messagingService.userDisconnectedFromGlobalAudio(_destination,userId);
             }
         }
         else {
