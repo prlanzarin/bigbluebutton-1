@@ -171,13 +171,19 @@ public class GlobalCall {
     }
 
     public static void setVideoPresent(String voiceconf, Boolean flag){
+        /*
+         * set current transcoder status
+         */
+        log.debug("setVideoPresent: "+flag);
         roomToVideoPresent.put(voiceconf, flag);
     }
 
-    public static Boolean isVideoPresent(String voiceconf){
+    public static boolean isVideoPresent(String voiceconf){
         Boolean videoPresent;
         videoPresent = roomToVideoPresent.get(voiceconf);
         if (videoPresent == null) videoPresent = false;
+        log.debug("Retrieving Video Present: "+ videoPresent);
         return videoPresent;
     }
+
 }

@@ -128,9 +128,8 @@ public class Service {
         if (!GlobalCall.isVideoPresent(voiceBridge)){
             if (videoPresent){
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
-                GlobalCall.setVideoPresent(voiceBridge, true);
             }
-        }
+        }else log.debug("There's a global video transcoder already running for this room");
     }
 
     public void userSharedWebcam(String userId, String streamName){
