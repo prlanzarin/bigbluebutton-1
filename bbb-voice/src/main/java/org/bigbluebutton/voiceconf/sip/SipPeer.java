@@ -295,7 +295,9 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
     public void hangupWebRTC(String userId) throws PeerNotFoundException {
         CallAgent ca = callManager.remove(userId);
-        ca.stopBbbToFreeswitchVideoStream();
+        if (ca != null) {
+            ca.stopBbbToFreeswitchVideoStream();
+        } else log.debug ("This user has no webRTC call agent associated");
     }
 
 	@Override
