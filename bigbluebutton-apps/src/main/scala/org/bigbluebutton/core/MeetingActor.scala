@@ -78,7 +78,7 @@ class MeetingActor(val meetingID: String, val externalMeetingID: String, val mee
 	    case msg: VoiceUserTalking                       => handleVoiceUserTalking(msg)
 	    case msg: SipVideoPaused                         => handleSipVideoPaused(msg)
 	    case msg: SipVideoResumed                        => handleSipVideoResumed(msg)
-	    case msg: GlobalVideoStreamInfo                  => handleGlobalVideoStreamInfo(msg)
+	    case msg: NewGlobalVideoStreamName               => handleNewGlobalVideoStreamName(msg)
 	    case msg: ActiveTalkerChanged                    => handleActiveTalkerChanged(msg)
     	case msg: UserJoining                            => handleUserJoin(msg)
 	    case msg: UserLeaving                            => handleUserLeft(msg)

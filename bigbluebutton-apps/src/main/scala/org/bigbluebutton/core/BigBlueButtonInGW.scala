@@ -465,7 +465,7 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
     voiceGW.activeTalkerChanged(meetingId, userId)
   }
 
-  def globalVideoStreamInfo(meetingId: String, videoStreamName: String) {
-    bbbGW.accept(new GlobalVideoStreamInfo(meetingId, videoStreamName))
+  def setNewGlobalVideoStreamName(meetingId: String, videoStreamName: String) {
+    bbbGW.accept(new NewGlobalVideoStreamName(meetingId, videoStreamName))
   }
 }

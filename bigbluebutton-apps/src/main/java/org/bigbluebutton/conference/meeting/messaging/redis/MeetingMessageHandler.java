@@ -99,7 +99,7 @@ public class MeetingMessageHandler implements MessageHandler {
 					GlobalVideoStreamCreated streamCreatedMessage = (GlobalVideoStreamCreated) msg;
 					globalVideoStreamName = streamCreatedMessage.videoStreamName;
 					log.info("Received GlobalVideoStreamCreated [ meetingId: {} globalVideoStreamName: {} ].",streamCreatedMessage.meetingId,globalVideoStreamName);
-					bbbGW.globalVideoStreamInfo(streamCreatedMessage.meetingId, globalVideoStreamName);
+					bbbGW.setNewGlobalVideoStreamName(streamCreatedMessage.meetingId, globalVideoStreamName);
 				}
 			}
 		} else if (channel.equalsIgnoreCase(MessagingConstants.TO_SYSTEM_CHANNEL)) {

@@ -121,6 +121,6 @@ public interface IBigBlueButtonInGW {
 	void isWhiteboardEnabled(String meetingID, String requesterID, String replyTo);
 
 	//Global Video
-	void globalVideoStreamInfo(String meetingId, String globalVideoStreamName);
+	void setNewGlobalVideoStreamName(String meetingId, String globalVideoStreamName);
 	
 }
