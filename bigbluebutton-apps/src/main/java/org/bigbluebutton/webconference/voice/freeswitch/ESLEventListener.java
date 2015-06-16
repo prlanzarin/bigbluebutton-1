@@ -20,6 +20,9 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class ESLEventListener implements IEslEventListener {
 	private static Logger log = Red5LoggerFactory.getLogger(ESLEventListener.class, "bigbluebutton");
 	
@@ -32,7 +35,9 @@ public class ESLEventListener implements IEslEventListener {
     private static final String VIDEO_FLOOR_CHANGE_EVENT = "video-floor-change";
     
     private ConferenceEventListener conferenceEventListener;
-    
+
+    private static List<String> confsThatVideoIsActive = new ArrayList<String>();
+
     @Override
     public void conferenceEventPlayFile(String uniqueId, String confName, int confSize, EslEvent event) {
         //Ignored, Noop
@@ -49,7 +54,7 @@ public class ESLEventListener implements IEslEventListener {
 //        notifyObservers(e);
     }
 
-    private static final Pattern LISTENONLY_NAME_PATTERN = Pattern.compile("(GLOBAL_CALL)_(.*)$");
+    private static final Pattern GLOBALCALL_NAME_PATTERN = Pattern.compile("(GLOBAL_CALL)_(.*)$");
     private static final Pattern CALLERNAME_PATTERN = Pattern.compile("(.*)-bbbID-(.*)$");
     
     @Override
@@ -66,18 +71,27 @@ public class ESLEventListener implements IEslEventListener {
         
         log.info("User joined voice conference, user=[" + callerIdName + "], conf=[" + confName + "]");
         
-        Matcher gapMatcher = LISTENONLY_NAME_PATTERN.matcher(callerIdName);
-        if (gapMatcher.matches()) {
-        	log.debug("Ignoring GLOBAL AUDIO USER [{}]", callerIdName);
+        Matcher gcpMatcher = GLOBALCALL_NAME_PATTERN.matcher(callerIdName);
+        if (gcpMatcher.matches()) {
+            log.debug("GLOBAL CALL CONNECTED [{}]", callerIdName);
+
+            printConfsThatHaveActiveVideo();
+            //if the conference has a active video before the global is connected, it means that a sip phone is already sending video
+            if(isThereVideoActive(confName)) {
+                log.debug("Sending VideoResumedEvent because there is(are) sip phone(s) sending video (confName = " + confName + ")");
+                VideoResumedEvent vResumed = new VideoResumedEvent(confName);
+                conferenceEventListener.handleConferenceEvent(vResumed);
+            }
+
         	return;
         }
         		
-		    Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
-		    if (matcher.matches()) {			
-			    voiceUserId = matcher.group(1).trim();
-			    callerIdName = matcher.group(2).trim();
-		    } 
-        
+		Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
+		if (matcher.matches()) {
+			voiceUserId = matcher.group(1).trim();
+			callerIdName = matcher.group(2).trim();
+		}
+
         VoiceUserJoinedEvent pj = new VoiceUserJoinedEvent(voiceUserId, memberId.toString(), confName, callerId, callerIdName, muted, speaking);
         conferenceEventListener.handleConferenceEvent(pj);
     }
@@ -88,7 +102,10 @@ public class ESLEventListener implements IEslEventListener {
         if (memberId== null){
             return;
         }
-        log.info("User left voice conference, user=[" + memberId.toString() + "], conf=[" + confName + "]");
+
+        String callerIdName = this.getCallerIdNameFromEvent(event);
+        log.info("User left voice conference, user=[" + callerIdName + "], conf=[" + confName + "], memberId=[" + memberId.toString() + "]");
+
         VoiceUserLeftEvent pl = new VoiceUserLeftEvent(memberId.toString(), confName);
         conferenceEventListener.handleConferenceEvent(pl);
     }
@@ -189,15 +206,30 @@ public class ESLEventListener implements IEslEventListener {
         if (action != null && confName != null) {
             switch (action) {
                 case VIDEO_PAUSED_EVENT:
+                    log.debug("Received " + action + " from Freeswitch");
                     VideoPausedEvent vPaused = new VideoPausedEvent(confName);
                     conferenceEventListener.handleConferenceEvent(vPaused);
                     break;
+
                 case VIDEO_RESUMED_EVENT:
+                    log.debug("Received " + action + " from Freeswitch");
                     VideoResumedEvent vResumed = new VideoResumedEvent(confName);
                     conferenceEventListener.handleConferenceEvent(vResumed);
                     break;
+
                 case VIDEO_FLOOR_CHANGE_EVENT:
+                    log.debug("Received " + action + " from Freeswitch");
                     String holderMemberId = getNewFloorHolderMemberIdFromEvent(event);
+
+                    if(!holderMemberId.isEmpty()) {
+                        log.debug(confName + " video floor passed to the holderMemberId = " + holderMemberId);
+                        if(!isThereVideoActive(confName))
+                            confsThatVideoIsActive.add(confName);
+                    } else {
+                        log.debug(confName + " doesn't have active video anymore.");
+                        confsThatVideoIsActive.remove(confName);
+                    }
+
                     VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
                     conferenceEventListener.handleConferenceEvent(vFloor);
                     break;
@@ -242,5 +274,18 @@ public class ESLEventListener implements IEslEventListener {
             newHolder = "";
         }
         return newHolder;
+    }
+
+
+    private boolean isThereVideoActive(String confName) {
+        return confsThatVideoIsActive.contains(confName);
+    }
+
+    private void printConfsThatHaveActiveVideo() {
+        String message = "Rooms that have active video at this precise moment: ";
+        for (int i=0 ; i < confsThatVideoIsActive.size() ; i++)
+            message = message + confsThatVideoIsActive.get(i) + " ";
+
+        log.debug(message);
     }
 }
