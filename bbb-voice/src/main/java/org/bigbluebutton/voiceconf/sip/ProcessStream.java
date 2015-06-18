@@ -13,10 +13,12 @@ public class ProcessStream implements Runnable {
     private static Logger log = Red5LoggerFactory.getLogger(ProcessStream.class, "sip");
     private InputStream stream;
     private Thread thread;
+    private String type;
 
-    ProcessStream(InputStream stream) {
+    ProcessStream(InputStream stream, String type) {
         if(stream != null)
             this.stream = stream;
+            this.type = type;
     }
 
     public void run() {
@@ -25,16 +27,15 @@ public class ProcessStream implements Runnable {
             InputStreamReader isr = new InputStreamReader(this.stream);
             BufferedReader ibr = new BufferedReader(isr);
             while ((line = ibr.readLine()) != null) {
-                log.debug(line);
+                log.debug("[{}]"+line,type);
             }
 
             close();
         }
         catch(IOException ioe) {
-            log.debug("IOException");
+            log.debug("Finishing process stream because there's no more data to be read");
             close();
         }
-
     }
 
     public void start() {

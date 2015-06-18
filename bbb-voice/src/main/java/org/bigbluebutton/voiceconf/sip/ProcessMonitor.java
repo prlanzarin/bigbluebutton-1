@@ -16,7 +16,10 @@ public class ProcessMonitor implements Runnable {
 
     private String[] command;
     private Process process;
-    private static final int EXIT_WITH_SUCCESS = 0;
+    private static final int EXIT_WITH_SUCCESS_CODE = 0;
+    private static final int FATAL_ERROR_CODE = 128;
+    private static final int EXIT_WITH_SIGKILL_CODE = FATAL_ERROR_CODE + 9;
+    private static final int ACCEPTABLE_EXIT_CODES[] = {EXIT_WITH_SUCCESS_CODE,EXIT_WITH_SIGKILL_CODE};
     ProcessStream inputStreamMonitor;
     ProcessStream errorStreamMonitor;
 
@@ -61,8 +64,8 @@ public class ProcessMonitor implements Runnable {
             InputStream is = this.process.getInputStream();
             InputStream es = this.process.getErrorStream();
 
-            inputStreamMonitor = new ProcessStream(is);
-            errorStreamMonitor = new ProcessStream(es);
+            inputStreamMonitor = new ProcessStream(is,"STDOUT");
+            errorStreamMonitor = new ProcessStream(es,"STDERR");
 
             inputStreamMonitor.start();
             errorStreamMonitor.start();
@@ -82,16 +85,17 @@ public class ProcessMonitor implements Runnable {
             log.debug("IllegalArgument Exception");
         }
         catch(InterruptedException ie) {
-            log.debug("Interrupted Excetion");
+            log.debug("Interrupted Exception");
         }
 
         int ret = this.process.exitValue();
 
-        if (ret == EXIT_WITH_SUCCESS ){
+        if (acceptableExitCode(ret)){
             log.debug("Exiting thread that executes FFmpeg. Exit value: "+ ret);
             notifyVideoTranscoderObserverOnFinished();
         }
         else{
+            log.debug("Exiting thread that executes FFmpeg. Exit value: "+ ret);
             notifyVideoTranscoderObserverOnRestart();
         }
     }
@@ -141,7 +145,6 @@ public class ProcessMonitor implements Runnable {
     public void destroy() {
         clearData();
         log.debug("ProcessMonitor successfully finished");
-        notifyVideoTranscoderObserverOnFinished();
     }
 
     public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
@@ -174,5 +177,14 @@ public class ProcessMonitor implements Runnable {
             log.debug("Failed to force-kill ffmpeg process");
             e.printStackTrace();
         }
+    }
+
+    public boolean acceptableExitCode(int code){
+        int i;
+        if ((ACCEPTABLE_EXIT_CODES == null) || (code < 0)) return false;
+        for(i=0;i<ACCEPTABLE_EXIT_CODES.length;i++)
+            if (ACCEPTABLE_EXIT_CODES[i] == code)
+                return true;
+        return false;
     }
 }
