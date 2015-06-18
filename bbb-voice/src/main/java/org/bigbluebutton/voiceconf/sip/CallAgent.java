@@ -461,6 +461,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             if(isGlobalStream()){
                 log.debug("Shutting down the (****GLOBAL VIDEO TRANSCODER ****) ...");
                 GlobalCall.removeSDPVideoFile(getDestination());
+                GlobalCall.setVideoPresent(getDestination(), false);
                 log.debug("Informing client the global stream is null");
                 messagingService.globalVideoStreamCreated(getMeetingId(),"");
             }
@@ -796,6 +797,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     @Override
     public void handleTranscodingFinishedWithSuccess() {
         //called by ProcessMonitor when successfully finished
+        closeVideoStream();
         if(isGlobalStream()){
             log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
         }else log.debug("Transcoder for user [uid={}] finished with success.",getUserId());

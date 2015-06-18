@@ -102,9 +102,7 @@ public class VideoTranscoder {
 
     public void stop(){
         if (processMonitor != null) {
-            if(type == Type.TRANSCODE_RTP_TO_RTMP)
-                processMonitor.forceDestroy(); //global is killed using the force
-            else processMonitor.destroy();
+            processMonitor.destroy();
             processMonitor = null;
             ffmpeg = null;
         }

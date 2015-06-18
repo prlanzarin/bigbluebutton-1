@@ -182,7 +182,7 @@ public class GlobalCall {
         return sdpVideoFullPath+voiceconf+".sdp";
     }
 
-    public static void setVideoPresent(String voiceconf, Boolean flag){
+    public static synchronized void setVideoPresent(String voiceconf, Boolean flag){
         /*
          * set current transcoder status
          */
@@ -190,7 +190,7 @@ public class GlobalCall {
         roomToVideoPresent.put(voiceconf, flag);
     }
 
-    public static boolean isVideoPresent(String voiceconf){
+    public static synchronized boolean isVideoPresent(String voiceconf){
         Boolean videoPresent;
         videoPresent = roomToVideoPresent.get(voiceconf);
         if (videoPresent == null) videoPresent = false;
