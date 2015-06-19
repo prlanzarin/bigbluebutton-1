@@ -249,6 +249,14 @@ package org.bigbluebutton.main.model.users
       sender.ejectUser(command.userid);			
     }	
     
+    public function dial(command:VoiceConfEvent):void {
+      sender.dial(command.dialOptions, command.dialParams);
+    }
+
+    public function cancelDial(command:VoiceConfEvent):void {
+      sender.cancelDial(command.uuid);
+    }
+
     //Lock events
     public function lockAllUsers(command:LockControlEvent):void {
       sender.setAllUsersLock(true);			

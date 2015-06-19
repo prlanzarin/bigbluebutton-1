@@ -112,6 +112,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     <MethodInvoker generator="{UserService}" method="muteAllUsersExceptPresenter" arguments="{event}" />
   </EventHandlers>
   
+  <EventHandlers type="{VoiceConfEvent.DIAL}" >
+    <MethodInvoker generator="{UserService}" method="dial" arguments="{event}" />
+  </EventHandlers>
+  
+  <EventHandlers type="{VoiceConfEvent.CANCEL_DIAL}" >
+    <MethodInvoker generator="{UserService}" method="cancelDial" arguments="{event}" />
+  </EventHandlers>
+  
   <!-- Lock Events -->
   <EventHandlers type="{LockControlEvent.LOCK_ALL}" >
     <MethodInvoker generator="{UserService}" method="lockAllUsers" arguments="{event}" />

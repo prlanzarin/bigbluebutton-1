@@ -457,6 +457,34 @@ case class VoiceUserMuted(
     muted: Boolean
 ) extends InMessage
 
+case class VoiceOutboundDialRequest(
+    meetingID: String, 
+    requesterID: String, 
+    options: Map[String, String], 
+    params: Map[String, String] 
+) extends InMessage
+
+case class VoiceCancelDialRequest(
+    meetingID: String, 
+    requesterID: String,
+    uuid: String
+) extends InMessage
+
+case class VoiceDialing(
+    meetingID: String, 
+    requesterID: String, 
+    uuid: String, 
+    callState: String 
+) extends InMessage
+
+case class VoiceHangingUp(
+    meetingID: String, 
+    requesterID: String, 
+    uuid: String, 
+    callState: String,  
+    hangupCause: String 
+) extends InMessage
+
 case class VoiceUserTalking(
     meetingID: String, 
     userId: String, 

@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
+
+Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+
+This program is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free Software
+Foundation; either version 3.0 of the License, or (at your option) any later
+version.
+
+BigBlueButton is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
+
+-->
+<mx:TitleWindow xmlns="flexlib.mdi.containers.*" 
+        xmlns:mx="http://www.adobe.com/2006/mxml"
+        xmlns:mate="http://mate.asfusion.com/"
+        minWidth="250" 
+        showCloseButton="false"
+        styleName="dialWindowStyle"
+        creationComplete="onCreationComplete()">
+
+    <mate:Listener type="{LocaleChangeEvent.LOCALE_CHANGED}" method="localeChanged"/>
+    <mate:Listener type="{VoiceConfEvent.DIALING}" method="statusChanged"/>
+    <mate:Listener type="{VoiceConfEvent.HANGINGUP}" method="statusChanged"/>
+    <mate:Listener type="{ConnectionFailedEvent.CONNECTION_CLOSED}" method="onConnectionFailed" />
+
+    <mx:Script>
+        <![CDATA[
+            import mx.events.ItemClickEvent;
+            import mx.managers.PopUpManager;
+            import mx.core.UIComponent;
+            import flash.events.Event;
+            import com.asfusion.mate.events.Dispatcher;
+            import flexlib.mdi.events.MDIWindowEvent;
+            import flexlib.controls.textClasses.StringBoundaries;
+            import mx.collections.ArrayCollection;
+            import mx.collections.ArrayList;
+            import org.bigbluebutton.common.LogUtil;
+            import org.bigbluebutton.common.events.LocaleChangeEvent;
+            import org.bigbluebutton.core.BBB;
+            import org.bigbluebutton.core.UsersUtil;
+            import org.bigbluebutton.core.events.VoiceConfEvent;
+            import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
+            import org.bigbluebutton.modules.phone.PhoneOptions;
+            import org.bigbluebutton.util.i18n.ResourceUtil;
+
+            private var options:Array;
+            private var params:Array;
+            private var uuid:String = null;
+            private var phoneOptions:PhoneOptions = new PhoneOptions();
+
+            private static const IDLE:String = "idle";
+            private static const DIALING:String = "dialing";
+            private static const RINGING:String = "ringing";
+            private static const CANCELING:String = "canceling";
+            private static const ACCEPTED:String = "accepted";
+            private static const HANGING_UP:String = "hanging up";
+            private var _callState:String = IDLE;
+
+            [Bindable]
+            private var statusString:String;
+
+
+            private function onCreationComplete():void {
+                this.x = (this.parent.width - this.width) / 2;
+                this.y = (this.parent.height - this.height) / 2;
+
+                options = new Array();
+                params = new Array();
+
+                destination.setFocus();
+            }
+
+            private function localeChanged(e:Event):void {
+                callState = _callState;
+            }
+
+            private function get callState():String {
+                return _callState;
+            }
+
+            private function set callState(state:String):void {
+                _callState = state;
+
+                switch(state) {
+                    case IDLE:
+                        closeBtn.enabled = true;
+                        destination.enabled = true;
+                        dialCancelBtn.enabled = true;
+                        dialCancelBtn.label = ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn');
+                        break;
+                    case RINGING:
+                        closeBtn.enabled = false;
+                        destination.enabled = false;
+                        dialCancelBtn.enabled = true;
+                        dialCancelBtn.label = ResourceUtil.getInstance().getString('bbb.dialWindow.cancelBtn');
+                        break;
+                    case ACCEPTED:
+                        closeBtn.enabled = true;
+                        destination.enabled = false;
+                        dialCancelBtn.enabled = true;
+                        dialCancelBtn.label = ResourceUtil.getInstance().getString('bbb.dialWindow.hangupBtn');
+                        break;
+                    case DIALING:
+                        closeBtn.enabled = false;
+                        destination.enabled = false;
+                        dialCancelBtn.enabled = false;
+                        break;
+                    case HANGING_UP:
+                        closeBtn.enabled = false;
+                        destination.enabled = false;
+                        dialCancelBtn.enabled = false;
+                        statusString = "";
+                        break;
+                }
+            }
+
+            private function getDialStateString(value:String):String {
+                var map:Object = {
+                    "RINGING": ResourceUtil.getInstance().getString('bbb.dialWindow.state.ringing'),
+                    "EARLY": ResourceUtil.getInstance().getString('bbb.dialWindow.state.early'),
+                    "ACTIVE": ResourceUtil.getInstance().getString('bbb.dialWindow.state.active'),
+                    "DOWN": ""
+                }
+
+                if (map.hasOwnProperty(value)) {
+                    return map[value];
+                } else {
+                    return ResourceUtil.getInstance().getString('bbb.dialWindow.state.unknown');
+                }
+            }
+
+            private function getDialHangupCauseString(value:String):String {
+                var map:Object = {
+                    "USER_BUSY": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.user_busy'),
+                    "NO_USER_RESPONSE": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.no_user_response'),
+                    "NO_ANSWER": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.no_answer'),
+                    "CALL_REJECTED": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.call_rejected'),
+                    "USER_NOT_REGISTERED": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.user_not_registered'),
+                    "DESTINATION_OUT_OF_ORDER": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.destination_out_of_order'),
+                    "NORMAL_CLEARING": ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.normal_clearing')
+                }
+
+                if (map.hasOwnProperty(value)) {
+                    return map[value];
+                } else {
+                    return ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.generic_failure', [value]);
+                }
+            }
+
+            private function statusChanged(event:VoiceConfEvent):void {
+                if (! UsersUtil.isMe(event.userid))
+                    return;
+
+                trace("Status changed: ["+ callState + "] -> [" + event.dialState + "]");
+
+                switch (event.dialState) {
+                    case "RINGING":
+                        trace("Remembering UUID " + event.uuid);
+                        uuid = event.uuid;
+                        callState = RINGING;
+                        statusString = getDialStateString(event.dialState);
+                        break;
+                    case "ACTIVE":
+                        trace("Remembering UUID " + event.uuid);
+                        uuid = event.uuid;
+                        callState = ACCEPTED;
+                        statusString = getDialStateString(event.dialState);
+                        break;
+                    case "DOWN":
+                        trace("Forgetting UUID " + uuid);
+                        uuid = null;
+                        callState = IDLE;
+                        statusString = getDialStateString(event.dialState);
+                        break;
+                    case "HANGUP":
+                        trace("Forgetting UUID " + uuid);
+                        uuid = null;
+                        callState = IDLE;
+                        statusString = getDialHangupCauseString(event.dialHangupCause);
+                        break;
+                    default:
+                        statusString = getDialStateString(event.dialState);
+                        break;
+                }
+            }
+
+            private function dialOrCancel():void {
+                if (callState == IDLE) {
+                    dial();
+                }
+                else {
+                    hangup();
+                }
+            }
+
+            private function get meetingTitle():String {
+                return BBB.initUserConfigManager().getMeetingTitle();
+            }
+
+            private function dial():void {
+                if(destination.text == "") {
+                    statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.empty_destination');
+                }
+                else {
+                    statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.dialing');
+
+                    options["origination_caller_id_name"] = meetingTitle;
+                    params["destination"] = destination.text;
+                    params["profile"] = phoneOptions.outboundCallsProfile;
+
+                    callState = DIALING;
+
+                    sendDial(options, params);
+                }
+            }
+
+            private function sendDial(options:Array, params:Array):void {
+                var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.DIAL);
+                e.dialOptions = options;
+                e.dialParams = params;
+                e.userid = UsersUtil.getMyUserID();
+                dispatchEvent(e);
+            }
+
+            private function hangup():void {
+                callState = HANGING_UP;
+
+                sendCancel();
+            }
+
+            private function sendCancel():void {
+                var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.CANCEL_DIAL);
+                e.uuid = uuid;
+                dispatchEvent(e);
+            }
+
+            private function close():void {
+                PopUpManager.removePopUp(this);
+            }
+
+            private function onConnectionFailed(e:Event):void {
+                close();
+            }
+
+            private function btn_keyDown(event:KeyboardEvent):void {
+                if (event.keyCode == Keyboard.ENTER && destination.enabled) {
+                    dialCancelBtn.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
+                }
+            }
+        ]]>
+    </mx:Script>
+
+    <mx:VBox id="dialDisplay" width="100%" height="100%" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+        <mx:HBox width="100%" horizontalAlign="left" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
+            <mx:Label text="{ResourceUtil.getInstance().getString('bbb.dialWindow.windowTitle')}" styleName="webcamSettingsWindowTitleStyle"/>
+        </mx:HBox>
+
+        <mx:HRule width="100%"/>
+
+        <mx:HBox paddingTop="20" paddingBottom="10" paddingLeft="5" paddingRight="5" verticalAlign="middle">
+            <mx:Label id="sipLabel" styleName="dialSipLabelStyle" text="{ResourceUtil.getInstance().getString('bbb.dialWindow.sip.label')}"/>
+            <mx:TextInput id="destination" width="210" text="" keyDown="btn_keyDown(event)" />
+            <mx:HBox paddingLeft="5">
+                <mx:Button id="dialCancelBtn" width="80" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
+            </mx:HBox>
+        </mx:HBox>
+
+        <mx:Text id="statusTxt" text="{statusString}" paddingLeft="{destination.x}"/>
+
+        <mx:HRule width="100%"/>
+
+        <mx:HBox width="100%" height="10%" horizontalAlign="right" horizontalGap="13" paddingRight="5" paddingBottom="5" paddingTop="5">
+            <mx:Button id="closeBtn" width="80" click="close()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.closeBtn')}"/>
+        </mx:HBox>
+    </mx:VBox>
+</mx:TitleWindow>

@@ -429,8 +429,24 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
 	def ejectUserFromVoice(meetingId: String, userId: String, ejectedBy: String) {
 	  voiceGW.ejectUserFromVoice(meetingId, userId, ejectedBy)
   }
-	  
-	def voiceUserJoined(meetingId: String, userId: String, webUserId: String, 
+  
+  def dial(meetingId: String, userId: String, options: java.util.Map[String, String], params: java.util.Map[String, String]) {
+    voiceGW.dial(meetingId, userId, mapAsScalaMap(options).toMap, mapAsScalaMap(params).toMap);
+  }
+  
+  def cancelDial(meetingId: String, userId: String, uuid: String) {
+    voiceGW.cancelDial(meetingId, userId, uuid);
+  }
+  
+  def dialing(meetingId: String, userId: String, uuid: String, callState: String) {
+    voiceGW.dialing(meetingId, userId, uuid, callState);
+  }
+  
+  def hangingUp(meetingId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
+    voiceGW.hangingUp(meetingId, userId, uuid, callState, hangupCause);
+  }
+  
+  def voiceUserJoined(meetingId: String, userId: String, webUserId: String, 
 	                            conference: String, callerIdNum: String, 
 	                            callerIdName: String,
 								muted: java.lang.Boolean, speaking: java.lang.Boolean) {

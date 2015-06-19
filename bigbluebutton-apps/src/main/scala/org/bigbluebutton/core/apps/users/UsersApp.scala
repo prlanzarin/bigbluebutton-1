@@ -420,6 +420,22 @@ trait UsersApp {
     }     
   }
   
+  def handleVoiceOutboundDialRequest(msg: VoiceOutboundDialRequest) {
+    outGW.send(new VoiceOutboundDial(msg.meetingID, recorded, msg.requesterID, msg.options, msg.params));
+  }
+  
+  def handleVoiceCancelDialRequest(msg: VoiceCancelDialRequest) {
+    outGW.send(new VoiceCancelDial(msg.meetingID, recorded, msg.uuid));
+  }
+  
+  def handleVoiceDialing(msg: VoiceDialing) {
+    outGW.send(new VoiceDialing2(msg.meetingID, recorded, msg.requesterID, msg.uuid, msg.callState));
+  }
+  
+  def handleVoiceHangingUp(msg: VoiceHangingUp) {
+    outGW.send(new VoiceHangingUp2(msg.meetingID, recorded, msg.requesterID, msg.uuid, msg.callState, msg.hangupCause));
+  }
+  
   def handleAssignPresenter(msg: AssignPresenter):Unit = {
 	assignNewPresenter(msg.newPresenterID, msg.newPresenterName, msg.assignedBy)
   } 

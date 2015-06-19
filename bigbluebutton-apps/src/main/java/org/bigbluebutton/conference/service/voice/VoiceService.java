@@ -101,6 +101,26 @@ public class VoiceService {
 		bbbInGW.ejectUserFromVoice(meetingID, userId, ejectedBy); 	
 		
 	}
+	
+	public void dial(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		Map<String, String> options = (Map<String, String>) msg.get("options");
+		Map<String, String> params = (Map<String, String>) msg.get("params");
+		log.debug("Dial from [" + meetingID + "] to destination [" + params.get("destination") + "]");
+		log.debug("options: {}, params: {}", options.toString(), params.toString());
+
+		bbbInGW.dial(meetingID, requesterID, options, params);
+	}
+	
+	public void cancelDial(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		String uuid = (String) msg.get("uuid");
+		log.debug("Cancel dial from [" + meetingID + "].");
+
+		bbbInGW.cancelDial(meetingID, requesterID, uuid);
+	}
 		
 	private BigBlueButtonSession getBbbSession() {
 		return (BigBlueButtonSession) Red5.getConnectionLocal().getAttribute(Constants.SESSION);

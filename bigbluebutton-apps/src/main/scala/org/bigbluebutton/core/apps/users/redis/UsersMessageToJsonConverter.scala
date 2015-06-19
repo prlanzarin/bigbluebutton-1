@@ -358,4 +358,24 @@ object UsersMessageToJsonConverter {
     val header = Util.buildHeader(MessageNames.USER_LISTEN_ONLY, msg.version, None)
     Util.buildJson(header, payload)	  
 	}
+  
+  def voiceOutboundDialToJson(msg: VoiceOutboundDial):String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID) 
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.OPTIONS, msg.options) 
+    payload.put(Constants.PARAMS, msg.params) 
+    
+    val header = Util.buildHeader(MessageNames.VOICE_OUTBOUND_DIAL, msg.version, None)
+    Util.buildJson(header, payload)   
+  }
+  
+  def voiceCancelDialToJson(msg: VoiceCancelDial):String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID) 
+    payload.put(Constants.UUID, msg.uuid) 
+    
+    val header = Util.buildHeader(MessageNames.VOICE_CANCEL_DIAL, msg.version, None)
+    Util.buildJson(header, payload)   
+  }
 }

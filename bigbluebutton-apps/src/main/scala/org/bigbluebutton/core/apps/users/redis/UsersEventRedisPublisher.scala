@@ -31,6 +31,8 @@ class UsersEventRedisPublisher(service: MessageSender) extends OutMessageListene
         case msg: UserVoiceMuted                => handleUserVoiceMuted(msg)
         case msg: UserVoiceTalking              => handleUserVoiceTalking(msg)
         case msg: MuteVoiceUser                 => handleMuteVoiceUser(msg)
+        case msg: VoiceOutboundDial             => handleVoiceOutboundDial(msg)
+        case msg: VoiceCancelDial               => handleVoiceCancelDial(msg)
 	      case msg: EjectVoiceUser                => handleEjectVoiceUser(msg)
         case msg: UserJoinedVoice               => handleUserJoinedVoice(msg)
         case msg: UserLeftVoice                 => handleUserLeftVoice(msg)
@@ -185,4 +187,14 @@ class UsersEventRedisPublisher(service: MessageSender) extends OutMessageListene
     val json = UsersMessageToJsonConverter.userListeningOnlyToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)		  
 	}
+  
+  private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
+    val json = UsersMessageToJsonConverter.voiceOutboundDialToJson(msg)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, json)     
+  }
+  
+  private def handleVoiceCancelDial(msg: VoiceCancelDial) {
+    val json = UsersMessageToJsonConverter.voiceCancelDialToJson(msg)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, json)     
+  }
 }
