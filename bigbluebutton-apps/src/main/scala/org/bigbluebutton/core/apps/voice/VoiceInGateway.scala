@@ -62,4 +62,16 @@ class VoiceInGateway(bbbGW: BigBlueButtonGateway) {
 	  bbbGW.accept(new VoiceRecording(meetingId, recordingFile, 
 			            timestamp, recording))
 	}
+
+	def sipVideoPaused(meetingId: String) {
+	  bbbGW.accept(new SipVideoPaused(meetingId))
+	}
+
+	def sipVideoResumed(meetingId: String) {
+	  bbbGW.accept(new SipVideoResumed(meetingId))
+	}
+
+	def activeTalkerChanged(meetingId: String, userId: String) {
+	  bbbGW.accept(new ActiveTalkerChanged(meetingId, userId))
+	}
 }

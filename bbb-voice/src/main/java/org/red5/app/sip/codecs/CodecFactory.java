@@ -2,9 +2,13 @@ package org.red5.app.sip.codecs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.bigbluebutton.voiceconf.sip.SdpUtils.LogLevel;
+import org.red5.logging.Red5LoggerFactory;
 
 public class CodecFactory {    
-    protected static Logger log = LoggerFactory.getLogger(CodecFactory.class);
+    //protected static Logger log = LoggerFactory.getLogger(CodecFactory.class);
+    protected static Logger log = Red5LoggerFactory.getLogger(CodecFactory.class, "sip");
+
     
     // Available audio codecs
     private static final int audioCodecPCMU = 0;     
@@ -12,10 +16,16 @@ public class CodecFactory {
     private static final int audioCodecG729 = 18;
     private static final int audioCodecSpeex = 100;
     private static final int audioCodeciLBC = 111;
-    
     private int[] availableAudioCodecsId = {audioCodecPCMU, audioCodecPCMA, audioCodecG729, audioCodecSpeex, audioCodeciLBC};
-    private int[] availableVideoCodecsId = {};        
-    private static CodecFactory singletonSIPCodecFactory = new CodecFactory();
+    public static enum LogLevel{INFO,ERROR,DEBUG,WARNING,SILENCE};
+    public static LogLevel logLevel = LogLevel.SILENCE;
+
+    // Available video codecs
+    private static final int videoCodecH264 = H264Codec.codecId;
+    private int[] availableVideoCodecsId = {videoCodecH264};  
+
+
+    private static CodecFactory singletonSIPCodecFactory = new CodecFactory(); 
     
     private static String[] codecCommonAudioMediaAttributes = {"ptime:20"};
             
@@ -24,12 +34,12 @@ public class CodecFactory {
     }
     
     /**
-     * Create a new instance of SIPCodec by codec id.
+     * Create a new instance of SIPAudioCodec by codec id.
      * @return The codec associated with "codecId".
      * */
-    public Codec getSIPAudioCodec(int codecId) {        
+    public Codec getSIPMediaCodec(int codecId) {        
         Codec sipCodec;       
-        printLog("getSIPAudioCodec", "codecId = [" + codecId + "].");
+        printLog("getSIPMediaCodec", "codecId = [" + codecId + "].");
         
         switch (codecId) {
             case audioCodecPCMU:
@@ -47,18 +57,24 @@ public class CodecFactory {
             case audioCodeciLBC:
                 sipCodec = new ILBCCodec();
                 break;
+
+            case videoCodecH264:
+                sipCodec = new H264Codec();
+                break;
+
             default:
                 sipCodec = null;
         }
         
         if (sipCodec != null) {            
-            printLog( "getSIPAudioCodec", 
+            printLog( "getSIPCodec", 
                     "codecId = [" + sipCodec.getCodecId() + 
                     "], codecName =  [" + sipCodec.getCodecName() + "]." );
         }
         
         return sipCodec;
     }
+
     
     /**
      * Get all available audio codecs
@@ -71,7 +87,7 @@ public class CodecFactory {
         
         for (int i = 0; i < availableAudioCodecsId.length; i++) {
             int codecId = availableAudioCodecsId[ i ];
-            Codec codec = getSIPAudioCodec( codecId );
+            Codec codec = getSIPMediaCodec( codecId );
             availableCodecs[i] = codec;            
         }
         
@@ -90,7 +106,7 @@ public class CodecFactory {
         
         for (int i = 0; i < availableVideoCodecsId.length; i++) {
             int codecId = availableVideoCodecsId[i];
-            Codec codec = getSIPAudioCodec(codecId);
+            Codec codec = getSIPMediaCodec(codecId);
             availableCodecs[i] = codec;            
         }
         
@@ -120,7 +136,7 @@ public class CodecFactory {
             
             printLog( "getAvailableAudioCodecsWithPrecedence", "codecId = [" + codecId + "]." );
             
-            Codec sipCodec = getSIPAudioCodec(Integer.valueOf( codecId ).intValue());
+            Codec sipCodec = getSIPMediaCodec(Integer.valueOf( codecId ).intValue());
             
             if (sipCodec != null) {                
                 printLog( "getAvailableAudioCodecsWithPrecedence", 
@@ -180,7 +196,9 @@ public class CodecFactory {
 
 
     private static void printLog( String method, String message ) {        
-        log.debug( "SCodecFactory - " + method + " -> " + message );
-        System.out.println("CodecFactory - " + method + " -> " + message );
+        if (logLevel == LogLevel.DEBUG){
+            log.debug( "SCodecFactory - " + method + " -> " + message );
+            System.out.println("CodecFactory - " + method + " -> " + message );
+        }
     }
 }

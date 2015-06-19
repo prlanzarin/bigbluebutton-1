@@ -18,15 +18,17 @@
  */
 package org.bigbluebutton.modules.videoconf.maps
 {
+  import com.asfusion.mate.events.Dispatcher;
   import com.asfusion.mate.utils.debug.Debugger;
   import com.asfusion.mate.utils.debug.DebuggerUtil;
   
   import flash.events.IEventDispatcher;
   import flash.external.ExternalInterface;
   import flash.media.Camera;
+  import flash.net.NetConnection;
   
   import mx.collections.ArrayCollection;
-  
+  import org.bigbluebutton.util.i18n.ResourceUtil;
   import org.bigbluebutton.common.LogUtil;
   import org.bigbluebutton.common.events.CloseWindowEvent;
   import org.bigbluebutton.common.events.OpenWindowEvent;
@@ -60,6 +62,7 @@ package org.bigbluebutton.modules.videoconf.maps
   import org.bigbluebutton.modules.videoconf.views.ToolbarButton;
   import org.bigbluebutton.modules.videoconf.views.VideoWindow;
   import org.flexunit.runner.manipulation.filters.IncludeAllFilter;
+  import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
 
   public class VideoEventMapDelegate
   {
@@ -67,12 +70,14 @@ package org.bigbluebutton.modules.videoconf.maps
 
     private var options:VideoConfOptions = new VideoConfOptions();
     private var uri:String;
+    private var fsWindow:VideoWindow = null;
     
     private var webcamWindows:WindowManager = new WindowManager();
     
     private var button:ToolbarButton = new ToolbarButton();	
     private var proxy:VideoProxy;
     private var streamName:String;
+    private var globalVideoStreamName:String;
     
     private var _dispatcher:IEventDispatcher;
     private var _ready:Boolean = false;
@@ -80,10 +85,12 @@ package org.bigbluebutton.modules.videoconf.maps
     private var _isPreviewWebcamOpen:Boolean = false;
     private var _isWaitingActivation:Boolean = false; 
     private var _chromeWebcamPermissionDenied:Boolean = false;
+    private var bbbEventDispatcher:Dispatcher;
     
     public function VideoEventMapDelegate(dispatcher:IEventDispatcher)
     {
       _dispatcher = dispatcher;
+      bbbEventDispatcher = new Dispatcher();
     }
     
     private function get me():String {
@@ -314,7 +321,53 @@ package org.bigbluebutton.modules.videoconf.maps
       openWindow(window);
       dockWindow(window);  
     }
-    
+
+    public function closeFreeswitchVideo():void {
+      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
+      closeWindow("FreeSWITCH video");
+      fsWindow = null;
+    }
+
+    public function resumeFreeswitchVideo(streamName:String):void {
+      trace("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+      LogUtil.debug("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+
+      if(!proxy.connection.connected) {
+        trace("Not opening freeswitch window because the video connection is not ready yet.");
+        return;
+      }
+
+      if(!streamName){
+        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Not opening the window, because there's not a stream name.");
+        return;        
+      }
+
+      if((streamName == globalVideoStreamName) && fsWindow != null) {
+        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
+        return;
+      }
+
+      if(fsWindow != null)
+        closeFreeswitchVideo();
+
+
+      globalVideoStreamName = streamName;
+      trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+      LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+
+
+      fsWindow = new VideoWindow();
+      fsWindow.title = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
+      fsWindow.userID = "FreeSWITCH video";
+      fsWindow.videoOptions = options;
+      fsWindow.resolutions = "640x480".split(",");
+
+      fsWindow.startVideo(proxy.connection, globalVideoStreamName);
+      webcamWindows.addWindow(fsWindow);
+      openWindow(fsWindow);
+      dockWindow(fsWindow);
+    }
+
     private function openWindow(window:VideoWindowItf):void {
       var windowEvent:OpenWindowEvent = new OpenWindowEvent(OpenWindowEvent.OPEN_WINDOW_EVENT);
       windowEvent.window = window;
@@ -349,9 +402,9 @@ package org.bigbluebutton.modules.videoconf.maps
       broadcastEvent.camSettings = UsersUtil.amIPublishing();
       
       _dispatcher.dispatchEvent(broadcastEvent);
-	  if (proxy.videoOptions.showButton) {
-		  button.publishingStatus(button.START_PUBLISHING);
-	  }
+	  if (proxy.videoOptions.showButton) 
+		  button.publishingStatus(button.START_PUBLISHING);		  
+	  
     }
        
     public function stopPublishing(e:StopBroadcastEvent):void{
@@ -463,7 +516,8 @@ package org.bigbluebutton.modules.videoconf.maps
       trace("VideoEventMapDelegate:: [" + me + "] Connected to video application.");
       _ready = true;
       addToolbarButton();
-      openWebcamWindows();        
+      openWebcamWindows();
+      videoModuleReady();
     }
     
     public function handleCameraSetting(event:BBBEvent):void {      
@@ -495,6 +549,11 @@ package org.bigbluebutton.modules.videoconf.maps
         trace("VideoEventMapDelegate::handleStoppedViewingWebcamEvent [" + me + "] Opening avatar for user [" + event.webcamUserID + "]");
         openAvatarWindowFor(event.webcamUserID);              
       }        
+    }
+
+    public function videoModuleReady():void{
+      var videoModuleReady:VideoModuleBridgeEvent = new VideoModuleBridgeEvent(VideoModuleBridgeEvent.VIDEO_MODULE_READY);
+      _dispatcher.dispatchEvent(videoModuleReady);
     }
   }
 }

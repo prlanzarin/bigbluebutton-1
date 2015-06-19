@@ -49,8 +49,9 @@ public final class SipPeerManager {
         sipPeers = Collections.synchronizedMap(new HashMap<String, SipPeer>());
     }
 
-    public void createSipPeer(String peerId, String clientRtpIp, String host, int sipPort, int startRtpPort, int stopRtpPort) {
-    	SipPeer sipPeer = new SipPeer(peerId, clientRtpIp, host, sipPort, startRtpPort, stopRtpPort, messagingService);
+    public void createSipPeer(String peerId, String clientRtpIp, String host, int sipPort, 
+			int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort) {
+    	SipPeer sipPeer = new SipPeer(peerId, clientRtpIp, host, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort, messagingService);
     	sipPeer.setClientConnectionManager(clientConnManager);
     	sipPeer.setCallStreamFactory(callStreamFactory);
     	sipPeers.put(peerId, sipPeer);    	
@@ -62,10 +63,10 @@ public final class SipPeerManager {
   		sipPeer.register(username, password);
     }
         
-    public void call(String peerId, String clientId, String callerName, String destination) throws PeerNotFoundException {
+    public void call(String peerId, String clientId, String callerName, String userId, String destination,String meetingId) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    	sipPeer.call(clientId, callerName, destination);
+        sipPeer.call(clientId, callerName,userId, destination,meetingId);
     }
 
     public void unregister(String userid) {
@@ -75,37 +76,78 @@ public final class SipPeerManager {
     	}
     }
     
-    public void hangup(String peerId, String clientId) throws PeerNotFoundException {
+    public void hangup(String peerId, String userId) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    	sipPeer.hangup(clientId);
+        sipPeer.hangup(userId);
     }
 
-    
-    public void startTalkStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
+        log.debug("Start Audio Stream SipPeer");
     	if (sipUser != null) {
-    		sipUser.startTalkStream(clientId, broadcastStream, scope);
-    	}
+            sipUser.startBbbToFreeswitchAudioStream(clientId,userId, broadcastStream, scope);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
     
-    public void stopTalkStream(String peerId, String clientId, IBroadcastStream broadcastStream, IScope scope) {
+    public void stopBbbToFreeswitchAudioStream(String peerId, String userId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.stopTalkStream(clientId, broadcastStream, scope);
-    	}
+            sipUser.stopBbbToFreeswitchAudioStream(userId, broadcastStream, scope);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
- 
+
+    public void startBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.startBbbToFreeswitchVideoStream(userId, videoStreamName);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+    
+    public void stopBbbToFreeswitchVideoStream(String peerId, String userId)throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.stopBbbToFreeswitchVideoStream(userId);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void startFreeswitchToBbbGlobalVideoStream(String peerId, String userId) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.startFreeswitchToBbbGlobalVideoStream(userId);
+        }else log.debug("Can't find sip peer " + peerId);
+    }
+
+    public void stopFreeswitchToBbbGlobalVideoStream(String peerId,String userId) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.stopFreeswitchToBbbGlobalVideoStream(userId);
+        }else log.debug("Can't find sip peer " + peerId);
+    }
+
+    public void webRTCCall(String peerId, String clientId, String userId, String username, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.webRTCCall(clientId, userId, username, meetingId, remoteVideoPort,localVideoPort);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
+
+    public void hangupWebRTC(String peerId, String userId) throws PeerNotFoundException {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.hangupWebRTC(userId);
+        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
+    }
     
     private void remove(String userid) {
     	log.debug("Number of SipUsers in Manager before remove {}", sipPeers.size());
         sipPeers.remove(userid);
     }
 
-    public void connectToGlobalStream(String peerId, String clientId, String callerIdName, String destination) {
+    public void connectToGlobalStream(String peerId, String clientId, String userId, String callerIdName, String destination) throws GlobalCallNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-    		sipUser.connectToGlobalStream(clientId, callerIdName, destination);
+            sipUser.connectToGlobalStream(clientId, userId, callerIdName, destination);
     	}
     }
 

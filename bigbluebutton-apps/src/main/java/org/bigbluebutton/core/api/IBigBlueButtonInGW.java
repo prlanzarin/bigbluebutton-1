@@ -61,6 +61,9 @@ public interface IBigBlueButtonInGW {
 	void voiceUserTalking(String meetingId, String userId, Boolean talking);
 	void voiceRecording(String meetingId, String recordingFile, 
 			            String timestamp, Boolean recording);
+	void sipVideoPaused(String meetingId);
+	void sipVideoResumed(String meetingId);
+	void activeTalkerChanged(String meetingId, String userId);
 	
 	// Presentation
 	void clear(String meetingID);
@@ -115,5 +118,8 @@ public interface IBigBlueButtonInGW {
 	void undoWhiteboard(String meetingID, String requesterID, String whiteboardId);
 	void enableWhiteboard(String meetingID, String requesterID, Boolean enable);
 	void isWhiteboardEnabled(String meetingID, String requesterID, String replyTo);
+
+	//Global Video
+	void setNewGlobalVideoStreamName(String meetingId, String globalVideoStreamName);
 	
 }

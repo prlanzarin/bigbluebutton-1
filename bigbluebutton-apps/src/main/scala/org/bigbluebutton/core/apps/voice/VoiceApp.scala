@@ -8,27 +8,35 @@ trait VoiceApp {
   
   val outGW: MessageOutGateway
 
-  def handleMuteAllExceptPresenterRequest(msg: MuteAllExceptPresenterRequest) {
-      
+  def handleSipVideoPaused(msg: SipVideoPaused) {
+    isSipVideoPresent = false
+    logger.debug("Sip video PAUSED: Sending SipVideoUpdated event " +
+                 "(isSipVideoPresent=" + isSipVideoPresent + ") " +
+                 "(globalVideoStreamName=" + globalVideoStreamName + ")")
+
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
-  
-  def handleMuteMeetingRequest(msg: MuteMeetingRequest) {
-      
+
+  def handleSipVideoResumed(msg: SipVideoResumed) {
+    isSipVideoPresent = true
+    logger.debug("Sip video RESUMED: Sending SipVideoUpdated event " +
+                 "(isSipVideoPresent=" + isSipVideoPresent + ") " +
+                 "(globalVideoStreamName=" + globalVideoStreamName + ")")
+
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
-    
-  def handleIsMeetingMutedRequest(msg: IsMeetingMutedRequest) {
-      
+
+  def handleActiveTalkerChanged(msg: ActiveTalkerChanged) {
+    talkerUserId = msg.talkerUserId
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
-    
-  def handleMuteUserRequest(msg: MuteUserRequest) {
-      
-  }
-    
-  def handleLockUserRequest(msg: LockUserRequest) {
-      
-  }
-    
-  def handleEjectUserRequest(msg: EjectUserFromVoiceRequest) {
-      
+
+  def handleNewGlobalVideoStreamName(msg: NewGlobalVideoStreamName) {
+    globalVideoStreamName = msg.globalVideoStreamName
+    logger.debug("New video stream name is set: Sending SipVideoUpdated event " +
+                 "(isSipVideoPresent=" + isSipVideoPresent + ") " +
+                 "(globalVideoStreamName=" + globalVideoStreamName + ")")
+
+    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId))
   }
 }

@@ -1,5 +1,8 @@
 package org.bigbluebutton.voiceconf.sip;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,8 +15,8 @@ public class VoiceConfToListenOnlyUsersMap {
 	  this.voiceConf = voiceConf;	
 	}
 	
-	public void addUser(String clientId, String callerIdName) {
-		listenOnlyUsers.put(clientId, new ListenOnlyUser(clientId, callerIdName, voiceConf));
+	public void addUser(String clientId, String callerIdName, String userId, boolean listeningToAudio) {
+		listenOnlyUsers.put(clientId, new ListenOnlyUser(clientId, callerIdName, userId ,voiceConf,listeningToAudio));
 	}
 	
 	public ListenOnlyUser removeUser(String clientId) {
@@ -23,4 +26,30 @@ public class VoiceConfToListenOnlyUsersMap {
 	public int numUsers() {
 		return listenOnlyUsers.size();
 	}
+
+	public List<String> getUsers(String voiceConf){
+		List<String> users = new ArrayList<String>();
+		for(Iterator<String> i = listenOnlyUsers.keySet().iterator(); i.hasNext(); ) {
+			users.add(i.next());
+		}
+		return users;
+	}
+
+    public List<String> getAudioUsers(String voiceConf){
+        List<String> users = new ArrayList<String>();
+        for(ListenOnlyUser i : listenOnlyUsers.values()) {
+            if(i.listeningToAudio)
+                users.add(i.clientId);
+        }
+        return users;
+    }
+
+    public List<String> getAudioUserIds(String voiceConf){
+        List<String> users = new ArrayList<String>();
+        for(ListenOnlyUser i : listenOnlyUsers.values()) {
+            if(i.listeningToAudio)
+                users.add(i.userId);
+        }
+        return users;
+    }
 }

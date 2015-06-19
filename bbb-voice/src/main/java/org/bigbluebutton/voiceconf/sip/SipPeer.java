@@ -19,16 +19,22 @@
 package org.bigbluebutton.voiceconf.sip;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
 import org.zoolu.sip.provider.*;
 import org.zoolu.net.SocketAddress;
 import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.messaging.IMessagingService;
 import org.bigbluebutton.voiceconf.red5.CallStreamFactory;
 import org.bigbluebutton.voiceconf.red5.ClientConnectionManager;
+import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
+import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 
 /**
  * Class that is a peer to the sip server. This class will maintain
@@ -36,7 +42,7 @@ import org.red5.server.api.stream.IBroadcastStream;
  * @author Richard Alam
  *
  */
-public class SipPeer implements SipRegisterAgentListener {
+public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
     private static Logger log = Red5LoggerFactory.getLogger(SipPeer.class, "sip");
 
     private ClientConnectionManager clientConnManager;
@@ -48,18 +54,17 @@ public class SipPeer implements SipRegisterAgentListener {
     private String clientRtpIp;
     private SipRegisterAgent registerAgent;
     private final String id;
-    private final AudioConferenceProvider audioconfProvider;
+    private final ConferenceProvider confProvider;
     
     private boolean registered = false;
     private SipPeerProfile registeredProfile;
-    
+
     public SipPeer(String id, String sipClientRtpIp, String host, int sipPort, 
-    		int startAudioPort, int stopAudioPort, IMessagingService messagingService) {
-    	
+			int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort, IMessagingService messagingService) {
         this.id = id;
         this.clientRtpIp = sipClientRtpIp;
         this.messagingService = messagingService;
-        audioconfProvider = new AudioConferenceProvider(host, sipPort, startAudioPort, stopAudioPort);
+        confProvider = new ConferenceProvider(host, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
         initSipProvider(host, sipPort);
     }
     
@@ -83,12 +88,12 @@ public class SipPeer implements SipRegisterAgentListener {
     
     private void createRegisterUserProfile(String username, String password) {    	    	
     	registeredProfile = new SipPeerProfile();
-    	registeredProfile.audioPort = audioconfProvider.getStartAudioPort();
+    	registeredProfile.audioPort = confProvider.getStartAudioPort();
             	
-        String fromURL = "\"" + username + "\" <sip:" + username + "@" + audioconfProvider.getHost() + ">";
+        String fromURL = "\"" + username + "\" <sip:" + username + "@" + confProvider.getHost() + ">";
         registeredProfile.username = username;
         registeredProfile.passwd = password;
-        registeredProfile.realm = audioconfProvider.getHost();
+        registeredProfile.realm = confProvider.getHost();
         registeredProfile.fromUrl = fromURL;
         registeredProfile.contactUrl = "sip:" + username + "@" + sipProvider.getViaAddress();
         if (sipProvider.getPort() != SipStack.default_port) {
@@ -102,7 +107,7 @@ public class SipPeer implements SipRegisterAgentListener {
         log.debug( "SIPUser register : {}", registeredProfile.contactUrl );
     }
 
-    public void call(String clientId, String callerName, String destination) {
+    public void call(String clientId, String callerName, String userId,String destination,String meetingId) {
     	if (!registered) {
     		/* 
     		 * If we failed to register with FreeSWITCH, reject all calls right away.
@@ -115,23 +120,24 @@ public class SipPeer implements SipRegisterAgentListener {
 //    		return;
     	}
 
-    	CallAgent ca = createCallAgent(clientId);
-
-    	ca.call(callerName, destination);
+        CallAgent ca = createCallAgent(clientId, userId);
+        ca.setMeetingId(meetingId);//set meetingId to use with fs->bbb video stream when call is accepted
+        ca.call(callerName,userId, destination);
+    	callManager.add(ca);
     }
 
-	public void connectToGlobalStream(String clientId, String callerIdName, String destination) {
-    	CallAgent ca = createCallAgent(clientId);
-	    
-    	ca.connectToGlobalStream(clientId, callerIdName, destination); 	
+	public void connectToGlobalStream(String clientId, String userId, String callerIdName, String destination) throws GlobalCallNotFoundException {
+        CallAgent ca = createCallAgent(clientId,userId);
+        ca.connectToGlobalStream(clientId, userId, callerIdName, destination);
+     	callManager.add(ca);
 	}
 
-    private CallAgent createCallAgent(String clientId) {
+    private CallAgent createCallAgent(String clientId, String userId) {
     	SipPeerProfile callerProfile = SipPeerProfile.copy(registeredProfile);
-    	CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, audioconfProvider, clientId, messagingService);
+        CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, userId, messagingService);
     	ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
-    	callManager.add(ca);
+        ca.setCallAgentObserver(this);
 
     	return ca;
     }
@@ -148,31 +154,22 @@ public class SipPeer implements SipRegisterAgentListener {
        sipProvider.halt();
 	}
 
-    public void hangup(String clientId) {
+    public void hangup(String userId) {
         log.debug( "SIPUser hangup" );
 
-        CallAgent ca = callManager.remove(clientId);
+        CallAgent ca = callManager.remove(userId);
 
         if (ca != null) {
+            String destination = ca.getDestination();
             if (ca.isListeningToGlobal()) {
-                String destination = ca.getDestination();
-                ListenOnlyUser lou = GlobalCall.removeUser(clientId, destination);
-                if (lou != null) {
-                	log.info("User has disconnected from global audio, user [{}] voiceConf {}", lou.callerIdName, lou.voiceConf);
-                	messagingService.userDisconnectedFromGlobalAudio(lou.voiceConf, lou.callerIdName);
-                }
-                ca.hangup();
-
-                boolean roomRemoved = GlobalCall.removeRoomIfUnused(destination);
-                log.debug("Should the global connection be removed? {}", roomRemoved? "yes": "no");
-                if (roomRemoved) {
-                    log.debug("Hanging up the global audio call {}", destination);
-                    CallAgent caGlobal = callManager.remove(destination);
-                    caGlobal.hangup();
-                }
-            } else {
-                ca.hangup();
+                log.info("User has disconnected from global audio, user [{}] voiceConf {}", userId, destination);
+                messagingService.userDisconnectedFromGlobalAudio(destination, userId);
             }
+            if(ca.isGlobal()){
+                 log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
+                 GlobalCall.removeRoom(destination);
+            }
+            ca.hangup();
         }
     }
 
@@ -191,20 +188,116 @@ public class SipPeer implements SipRegisterAgentListener {
         }
     }
 
-    public void startTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
-    	CallAgent ca = callManager.get(clientId);
+    public void startBbbToFreeswitchAudioStream(String clientId, String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(userId);
+        String videoStream = callManager.getVideoStream(userId);
+        log.debug("Starting Audio Stream for the user ["+userId+"]");
         if (ca != null) {
-           ca.startTalkStream(broadcastStream, scope);
-        } 
+            ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
+            if (videoStream != null){
+                log.debug(" There's a VideoStream for this audio call, starting it ");
+                ca.setVideoStreamName(videoStream);
+                ca.startBbbToFreeswitchVideoStream();
+            }else log.debug("There's no videostream for this flash audio call yet.");
+        }
     }
     
-    public void stopTalkStream(String clientId, IBroadcastStream broadcastStream, IScope scope) {
-    	CallAgent ca = callManager.get(clientId);
+    public void stopBbbToFreeswitchAudioStream(String userId, IBroadcastStream broadcastStream, IScope scope) {
+        CallAgent ca = callManager.get(userId);
+
         if (ca != null) {
-           ca.stopTalkStream(broadcastStream, scope);
+           ca.stopBbbToFreeswitchAudioStream(broadcastStream, scope);
+       
         } else {
         	log.info("Can't stop talk stream as stream may have already been stopped.");
         }
+    }
+
+    public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName) {
+        CallAgent ca = callManager.getByUserId(userId);
+        String savedVideoStreamName = callManager.getVideoStream(userId);
+
+        if (savedVideoStreamName == null) {//ca is created before user publish his stream
+            log.debug("There's no savedVideoStreamName for the user: " + userId);
+            if(!videoStreamName.equals("")){
+                savedVideoStreamName = videoStreamName;
+                callManager.addVideoStream(userId,savedVideoStreamName);
+            }
+        }
+
+        if (ca != null){
+            if(ca.isGlobalStream()){
+                log.debug("This is a global CallAgent, there's no video stream to send from bbb to freeswitch");
+                return;
+            }
+            if (!savedVideoStreamName.equals("")){
+                log.debug("There's a CallAgent and a video Stream running for this userId="+userId+". Starting BbbToFreeswitchVideoStream.");
+                ca.setVideoStreamName(savedVideoStreamName);
+                ca.startBbbToFreeswitchVideoStream();
+                return;
+            }
+            log.debug("There's no Video Stream for this userId="+userId+" yet. Waiting until it enables your webcam ");
+        }else {
+            //ca null means that this method was called when publishing a video stream
+            log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
+                       + " userId " + userId + ". Saving the current stream to be used when the CallAgent is created by this user");            
+        }
+    }
+
+    public void stopBbbToFreeswitchVideoStream(String userId) {
+        CallAgent ca = callManager.getByUserId(userId);
+        if (ca != null) {
+           ca.stopBbbToFreeswitchVideoStream();
+        }
+        else{
+            log.debug("There's no webRTC call running yet: removing video stream only"
+                    + "userId " + userId);
+        }
+        callManager.removeVideoStream(userId);
+
+    }
+
+    public void startFreeswitchToBbbGlobalVideoStream(String userId) {
+        CallAgent ca = callManager.getByUserId(userId);
+        if (ca != null){
+            if(ca.isGlobalStream()){ //this MUST be a globalStream, because the global is the only one that sends video
+                log.debug("Starting GlobalCall's freeswitch->bbb video stream");
+                ca.startFreeswitchToBbbVideoStream();
+                GlobalCall.setVideoPresent(ca.getDestination(), true);
+            }
+        }else log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId);
+    }
+
+    public void stopFreeswitchToBbbGlobalVideoStream(String userId) {
+        CallAgent ca = callManager.getByUserId(userId);
+        if (ca != null) {
+            if(ca.isGlobalStream()) {
+                ca.stopFreeswitchToBbbGlobalVideoStream();
+            }
+        }
+        else
+            log.debug("Could not STOP FreeswitchToBbbGlobalVideoStream: there is no Global CallAgent with"
+                       + "userId " + userId);
+    }
+
+    public void webRTCCall(String clientId, String userId, String username, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+
+        CallAgent ca = createCallAgent(clientId,userId);
+        //ports and meetingId now saved in the CallAgent
+        String ip = Red5.getConnectionLocal().getHost();
+        ca.setLocalVideoPort(localVideoPort);
+        ca.setRemoteVideoPort(remoteVideoPort);
+        ca.setMeetingId(meetingId);
+        ca.setWebRTC(true);
+        callManager.add(ca); //webRTC's CallAgent
+        log.debug("WebRTC's CallAgent created");
+    }
+
+    public void hangupWebRTC(String userId) throws PeerNotFoundException {
+        CallAgent ca = callManager.remove(userId);
+        if (ca != null) {
+            ca.stopBbbToFreeswitchVideoStream();
+        } else log.debug ("This user has no webRTC call agent associated");
     }
 
 	@Override
@@ -232,4 +325,39 @@ public class SipPeer implements SipRegisterAgentListener {
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
+
+	@Override
+	public void handleCallAgentClosed(String userId) {
+        /*
+         * This observer is called every time we receive a BYE from sip server.
+         * This means that if we receive a bye, but there's still a CallAgent, we
+         * are dealing with an unexpected end of call (like ended by the other end point).
+         * What we do is in this case is removing the current CallAgent from the
+         * CallManager, leaving it to be recreated when a new call() is made by the user
+         * (or by the GlobalCall)
+         *
+         */
+
+        CallAgent ca = callManager.get(userId);
+
+        if (ca == null)
+            log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] has been closed  already ",userId);
+        else{
+            log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] still exists. Possible closed by the other endpoint. Removing it... ",userId);
+            String destination = ca.getDestination();
+            callManager.remove(userId);
+            if(ca.isGlobal()){
+                 log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
+                 restartGlobalCall(ca.getCallId(),ca.getCallerName(),ca.getUserId(),ca.getDestination(),ca.getMeetingId());
+            }
+        }
+    }
+
+    public void restartGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId){
+        log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetindId={}]",clientId, callerName, userId, destination, meetingId);
+        if (GlobalCall.reservePlaceToCreateGlobal(destination))
+            log.debug("Global Call Recreated. Remaking a call...");
+        else log.debug("Remaking globalCall's call");
+        this.call(clientId, callerName, userId, destination, meetingId);
+    }
 }

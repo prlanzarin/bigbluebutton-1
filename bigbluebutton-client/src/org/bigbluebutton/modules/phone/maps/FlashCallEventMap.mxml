@@ -41,7 +41,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.phone.events.StartPhoneModuleEvent;
 			import org.bigbluebutton.modules.phone.events.StopPhoneModuleEvent;
 			import org.bigbluebutton.modules.phone.events.UseFlashModeCommand;
+			import org.bigbluebutton.modules.phone.events.WebRTCCallEvent;
 			import org.bigbluebutton.modules.phone.managers.FlashCallManager;
+            import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 		]]>
 	</mx:Script>
 	
@@ -95,6 +97,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     <MethodInvoker generator="{FlashCallManager}" method="handleFlashCallDisconnectedEvent" arguments="{event}"/>
   </EventHandlers>
 
+  <EventHandlers type="{FlashGlobalCallDestroyedEvent.GLOBAL_CALL_DESTROYED_EVENT}">
+    <MethodInvoker generator="{FlashCallManager}" method="handleFlashGlobalCallDestroyedEvent" arguments="{event}"/>
+  </EventHandlers>
+
   <EventHandlers type="{FlashVoiceConnectionStatusEvent.CONN_STATUS}">        
     <MethodInvoker generator="{FlashCallManager}" method="handleFlashVoiceConnectionStatusEvent" arguments="{event}"/>
   </EventHandlers>
@@ -113,5 +119,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   
   <EventHandlers type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}">        
     <MethodInvoker generator="{FlashCallManager}" method="handleBecomeViewer"/>
+  </EventHandlers>
+
+  <EventHandlers type="{WebRTCCallEvent.WEBRTC_CALL_STARTED}">
+    <MethodInvoker generator="{FlashCallManager}" method="handleWebRTCCallStartedEvent" arguments="{event}"/>
   </EventHandlers>
 </EventMap>

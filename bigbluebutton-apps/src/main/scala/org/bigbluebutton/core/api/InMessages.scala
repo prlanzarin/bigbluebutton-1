@@ -470,6 +470,19 @@ case class VoiceRecording(
 	recording: Boolean
 ) extends InMessage
 
+case class SipVideoPaused (
+    meetingID: String
+) extends InMessage
+
+case class SipVideoResumed (
+    meetingID: String
+) extends InMessage
+
+case class ActiveTalkerChanged (
+    meetingID: String,
+    talkerUserId: String
+) extends InMessage
+
 // Whiteboard
 case class SendWhiteboardAnnotationRequest(
     meetingID: String, 
@@ -511,3 +524,8 @@ case class IsWhiteboardEnabledRequest(
 case class GetAllMeetingsRequest(
     meetingID: String /** Not used. Just to satisfy trait **/
     ) extends InMessage
+
+case class NewGlobalVideoStreamName(
+    meetingID: String,
+    globalVideoStreamName: String
+) extends InMessage
