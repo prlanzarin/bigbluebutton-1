@@ -668,9 +668,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
-        notifyCallAgentObserverOnCallAgentClosed(getUserId());
         closeAudioStream();
         closeVideoStream();
+        notifyCallAgentObserverOnCallAgentClosed(getUserId());
 
         // Reset local sdp for next call.
         initSessionDescriptor();
