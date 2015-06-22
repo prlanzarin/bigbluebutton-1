@@ -212,32 +212,33 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         	log.info("Can't stop talk stream as stream may have already been stopped.");
         }
     }
-
+    
     public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName) {
-        CallAgent ca = callManager.getByUserId(userId);
-        String savedVideoStreamName = callManager.getVideoStream(userId);
-
-        if (savedVideoStreamName == null) {//ca is created before user publish his stream
-            log.debug("There's no savedVideoStreamName for the user: " + userId);
-            if(!videoStreamName.equals("")){
-                savedVideoStreamName = videoStreamName;
-                callManager.addVideoStream(userId,savedVideoStreamName);
+        if (videoStreamName.equals("")) {
+            log.debug("startBbbToFreeswitchVideoStream without video stream name, trying to retrieve it from a previously saved state");
+            videoStreamName = callManager.getVideoStream(userId);
+            if (videoStreamName != null && !videoStreamName.equals("")) {
+                log.debug("Retrieved successfully video stream name for {}, we're ready to go", userId);
+            } else {
+                log.debug("There's no saved video stream name for {}, no stream to begin", userId);
+                return;
             }
+        } else {
+            log.debug("Saving video stream name for {}", userId);
+            callManager.addVideoStream(userId, videoStreamName);
         }
-
-        if (ca != null){
-            if(ca.isGlobalStream()){
+        
+        CallAgent ca = callManager.getByUserId(userId);
+        if (ca != null) {
+            if (ca.isGlobalStream()) {
                 log.debug("This is a global CallAgent, there's no video stream to send from bbb to freeswitch");
                 return;
             }
-            if (!savedVideoStreamName.equals("")){
-                log.debug("There's a CallAgent and a video Stream running for this userId="+userId+". Starting BbbToFreeswitchVideoStream.");
-                ca.setVideoStreamName(savedVideoStreamName);
-                ca.startBbbToFreeswitchVideoStream();
-                return;
-            }
-            log.debug("There's no Video Stream for this userId="+userId+" yet. Waiting until it enables your webcam ");
-        }else {
+
+            log.debug("There's a CallAgent and a video Stream running for this userId={}. Starting BbbToFreeswitchVideoStream.", userId);
+            ca.setVideoStreamName(videoStreamName);
+            ca.startBbbToFreeswitchVideoStream();
+        } else {
             //ca null means that this method was called when publishing a video stream
             log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
                        + " userId " + userId + ". Saving the current stream to be used when the CallAgent is created by this user");            
