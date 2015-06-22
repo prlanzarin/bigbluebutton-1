@@ -19,36 +19,39 @@
 package org.bigbluebutton.voiceconf.red5;
 
 import java.text.MessageFormat;
+
 import org.slf4j.Logger;
+import org.bigbluebutton.voiceconf.sip.GlobalCallNotFoundException;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
 import org.bigbluebutton.voiceconf.sip.SipPeerManager;
+import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
-import org.bigbluebutton.voiceconf.sip.GlobalCall;
-
 public class Service {
     private static Logger log = Red5LoggerFactory.getLogger(Service.class, "sip");
 
     private SipPeerManager sipPeerManager;
-	
+    private ClientConnectionManager clientConnectionManager;
+    private final String peerId = "default";
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
-    	
+
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
+        String clientId = Red5.getConnectionLocal().getClient().getId();
+	    String userId = getUserId();
+	    String username = getUsername();
 		if (listenOnly) {
-			if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
-				String extension = callExtensionPattern.format(new String[] { destination });
-				try {
-					sipPeerManager.call(peerId, destination, "GLOBAL_AUDIO_" + destination, extension);
-					Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
-				} catch (PeerNotFoundException e) {
-					log.error("PeerNotFound {}", peerId);
-					return false;
-				}
-			}
-			sipPeerManager.connectToGlobalStream(peerId, getClientId(), callerName, destination);
-			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
-			return true;
+            try{
+                log.debug("{} is requesting to join into the conference {} as a listenonly.", username +"[peerId="+ peerId + "][uid=" + userId + "][clientid=" + clientId + " callerName="+callerName+"]", destination);
+                sipPeerManager.connectToGlobalStream(peerId, clientId, userId, callerName, destination);
+                Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
+                return true;
+            } catch (GlobalCallNotFoundException e){
+                log.debug("{} can't join into the conferece {} as listenonly , because there's no global call agent for this room",userId,destination);
+                log.debug("Sending destroyedGlobalCall() to this user. ClientId={} ",clientId);
+                clientConnectionManager.destroyedGlobalCall(clientId);;
+                return false;
+            }
 		} else {
 			Boolean result = call(peerId, callerName, destination);
 			return result;
@@ -59,11 +62,11 @@ public class Service {
     	String clientId = Red5.getConnectionLocal().getClient().getId();
     	String userid = getUserId();
     	String username = getUsername();		
-    	log.debug("{} is requesting to join into the conference {}", username + "[uid=" + userid + "][clientid=" + clientId + "]", destination);
+    log.debug("{} is requesting to join into the conference {}.", username +"[peerId="+ peerId + "][uid=" + userid + "][clientid=" + clientId + " callerName="+callerName+"]", destination);
 		
 		String extension = callExtensionPattern.format(new String[] { destination });
 		try {
-			sipPeerManager.call(peerId, getClientId(), callerName, extension);
+			sipPeerManager.call(peerId, getClientId(), callerName, userid, extension,getMeetingId());
 			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 			return true;
 		} catch (PeerNotFoundException e) {
@@ -78,13 +81,84 @@ public class Service {
     	String username = getUsername();		
     	log.debug("{} is requesting to hang up from the conference.", username + "[uid=" + userid + "][clientid=" + clientId + "]");
 		try {
-			sipPeerManager.hangup(peerId, getClientId());
+			sipPeerManager.hangup(peerId, userid);
 			return true;
 		} catch (PeerNotFoundException e) {
 			log.error("PeerNotFound {}", peerId);
 			return false;
 		}
 	}
+	
+	public Boolean acceptWebRTCCall(String peerId,String remoteVideoPort, String localVideoPort){
+        //called by the client
+        String userid = getUserId();
+        String username = getUsername();
+        String meetingId = getMeetingId();
+        String clientId = getClientId();
+        log.debug("Accepted a webRTC Call for the user ["+userid+"] : saving it's parameters: [remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");
+        try{
+            if (sipPeerManager != null) {
+                sipPeerManager.webRTCCall(peerId, clientId, userid, username, meetingId, remoteVideoPort,localVideoPort);
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid, "");
+            }
+            else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
+        } catch (PeerNotFoundException e) {
+            log.error("PeerNotFound {}", peerId);
+            return false;
+        }
+        return true;
+	}
+
+	public Boolean hangupwebrtc(String peerId){
+        String userid = getUserId();
+        log.debug("hanging up webRTC Call on voice's context");
+        try{
+            sipPeerManager.hangupWebRTC(peerId, userid);
+        } catch (PeerNotFoundException e) {
+            log.error("PeerNotFound {}", peerId);
+            return false;
+        }
+        return true;
+	}
+
+    public void updateVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent) {		
+        log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
+        String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
+
+        if (!GlobalCall.isVideoPresent(voiceBridge)){
+            if (videoPresent){
+                sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
+            }
+        }else log.debug("There's a global video transcoder already running for this room");
+    }
+
+    public void userSharedWebcam(String userId, String streamName){
+        log.debug("userSharedWebcam [userId={}, streamName={}]",userId, streamName);
+
+        if(isVideoStream(streamName) && (!userId.equals(""))){
+            try {
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userId, streamName);
+            } catch (PeerNotFoundException e) {
+                log.error("PeerNotFound {}", peerId);
+            }
+        }
+        else{
+            log.debug("Error when getting user's info");
+        }
+    }
+
+    public void userUnsharedWebcam(String userId){
+        log.debug("userUnsharedWebcam [userId={}]",userId);
+        if (!userId.equals("")) {
+            try {
+                sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId);
+            } catch (PeerNotFoundException e) {
+              log.error("PeerNotFound {}", peerId);
+            }
+        }else {
+            log.debug("Error when getting user's info");
+        }
+    }
 
 	private String getClientId() {
 		IConnection conn = Red5.getConnectionLocal();
@@ -110,4 +184,18 @@ public class Service {
 		if ((username == null) || ("".equals(username))) username = "UNKNOWN-CALLER";
 		return username;
 	}
+
+	private String getMeetingId(){
+		String meetingid = (String) Red5.getConnectionLocal().getAttribute("MEETING_ID");
+		if ((meetingid == null) || ("".equals(meetingid))) meetingid = "UNKNOWN-MEETING_ID";
+		return meetingid;
+	}
+
+    private boolean isVideoStream(String streamName){
+        return streamName.matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+    }
+
+    public void setClientConnectionManager(ClientConnectionManager ccm) {
+        clientConnectionManager = ccm;
+    }
 }

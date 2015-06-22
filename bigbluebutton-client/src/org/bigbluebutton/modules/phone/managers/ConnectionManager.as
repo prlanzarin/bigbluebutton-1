@@ -36,6 +36,7 @@ package org.bigbluebutton.modules.phone.managers {
 	import org.bigbluebutton.modules.phone.events.ConnectionStatusEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallConnectedEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallDisconnectedEvent;
+	import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 	import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
 	import org.bigbluebutton.modules.phone.events.RegistrationFailedEvent;
 	import org.bigbluebutton.modules.phone.events.RegistrationSuccessEvent;
@@ -51,6 +52,7 @@ package org.bigbluebutton.modules.phone.managers {
     private var externUserId:String;
 		private var uid:String;
 		private var meetingId:String;
+		private var voiceBridge:String;
 		
 		private var registered:Boolean = false;
     private var closedByUser:Boolean = false;
@@ -72,13 +74,14 @@ package org.bigbluebutton.modules.phone.managers {
 			return netConnection;
 		}
 		
-    public function setup(uid:String, externUserId:String, username:String, meetingId:String, uri:String):void {	
+    public function setup(uid:String, externUserId:String, username:String, meetingId:String, uri:String, voiceBridge: String):void {	
       trace(LOG + "Setup uid=[" + uid + "] extuid=[" + externUserId + "] name=[" + username + "] uri=[" + uri + "]");
       this.uid = uid;	
       this.username  = username;
       this.meetingId = meetingId;
       this.uri   = uri;
       this.externUserId = externUserId;
+      this.voiceBridge = voiceBridge;
     }
     
 		public function connect():void {				
@@ -94,7 +97,7 @@ package org.bigbluebutton.modules.phone.managers {
 			netConnection.client = this;
 			netConnection.addEventListener( NetStatusEvent.NET_STATUS , netStatus );
 			netConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
-			netConnection.connect(uri, meetingId, externUserId, username);
+			netConnection.connect(uri, meetingId, externUserId, username, voiceBridge);
 		}
 
 		public function disconnect(requestByUser:Boolean):void {
@@ -170,6 +173,15 @@ package org.bigbluebutton.modules.phone.managers {
 			dispatcher.dispatchEvent(event);
 		}
 						
+    public function destroyedGlobalCallCallback(msg:String):void {
+        var logData:Object = new Object();
+        logData.user = UsersUtil.getUserData();
+
+        trace(LOG + "destroyedGlobalCallCallback " + msg);
+        JSLog.debug(LOG + "destroyedGlobalCallCallback " + msg, logData);
+        var event:FlashGlobalCallDestroyedEvent = new FlashGlobalCallDestroyedEvent();
+        dispatcher.dispatchEvent(event);
+    }
 		//********************************************************************************************
 		//			
 		//			SIP Actions
@@ -185,6 +197,28 @@ package org.bigbluebutton.modules.phone.managers {
         trace(LOG + "hanging up call");
 				netConnection.call("voiceconf.hangup", null, "default");
 			}
+		}
+
+		public function doWebRTCHangUp():void {
+			var logData:Object = new Object();
+			logData.user = UsersUtil.getUserData();
+
+			if (isConnected()) {
+				trace(LOG + "webRTC HangUp");
+				JSLog.debug(LOG + "webRTC HangUp", logData);
+				netConnection.call("voiceconf.hangupwebrtc", null, "default");
+			}
+		}
+
+		public function onWebRTCCallAccepted(remoteVideoPort:Number, localVideoPort:Number):void{
+			var logData:Object = new Object();
+			logData.user = UsersUtil.getUserData();
+
+			trace(LOG + "webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort=" + remoteVideoPort + ", localVideoPort=" + localVideoPort + "]");
+			JSLog.debug(LOG + "webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort=" + remoteVideoPort + ", localVideoPort=" + localVideoPort + "]", logData);
+			netConnection.call("voiceconf.acceptWebRTCCall", null, "default", remoteVideoPort, localVideoPort);
+			trace(LOG + "webRTC Call Accepted: communicating with bbb-voice done");
+			JSLog.debug(LOG + "webRTC Call Accepted: communication with bbb-voice done", logData);
 		}
 		
 		public function onBWCheck(... rest):Number { 

@@ -125,6 +125,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <EventHandlers type="{BBBEvent.CAM_SETTINGS_CLOSED}">
     <MethodInvoker generator="{VideoEventMapDelegate}" method="handleCamSettingsClosedEvent"  arguments="{event}"/>
   </EventHandlers>
+
+  <EventHandlers type="{BBBEvent.FREESWITCH_VIDEO_PAUSED}">
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="closeFreeswitchVideo"/>
+  </EventHandlers>
+
+  <EventHandlers type="{BBBEvent.FREESWITCH_VIDEO_RESUMED}">
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="resumeFreeswitchVideo" arguments="{event.payload.globalVideoStreamName}"/>
+  </EventHandlers>
   
   <!-- ~~~~~~~~~~~~~~~~~~    INJECTORS     ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   

@@ -47,6 +47,7 @@ package org.bigbluebutton.modules.videoconf.maps
   import org.bigbluebutton.main.model.users.events.BroadcastStartedEvent;
   import org.bigbluebutton.main.model.users.events.BroadcastStoppedEvent;
   import org.bigbluebutton.main.model.users.events.StreamStartedEvent;
+  import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
   import org.bigbluebutton.modules.videoconf.business.VideoProxy;
   import org.bigbluebutton.modules.videoconf.events.CloseAllWindowsEvent;
   import org.bigbluebutton.modules.videoconf.events.ClosePublishWindowEvent;
@@ -77,6 +78,7 @@ package org.bigbluebutton.modules.videoconf.maps
 
     private var button:ToolbarPopupButton = new ToolbarPopupButton();
     private var proxy:VideoProxy;
+    private var globalVideoStreamName:String;
 
     private var _dispatcher:IEventDispatcher;
     private var _ready:Boolean = false;
@@ -117,7 +119,7 @@ package org.bigbluebutton.modules.videoconf.maps
       if (!_ready) return;
       trace("VideoEventMapDelegate:: [" + me + "] Viewing [" + userID + " stream [" + stream + "]");
       if (! UserManager.getInstance().getConference().amIThisUser(userID)) {
-        openViewWindowFor(userID);
+        openViewWindowFor(userID, stream);
       }
     }
 
@@ -259,6 +261,11 @@ package org.bigbluebutton.modules.videoconf.maps
 
       _graphics.addCameraFor(userID, camIndex, videoProfile);
     }
+    
+    public function closeFreeswitchVideo():void {
+      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
+      _graphics.removeGraphicsFor("FreeSWITCH video");
+    }
 
     private function hasWindow(userID:String):Boolean {
       return _graphics.hasGraphicsFor(userID);
@@ -272,14 +279,21 @@ package org.bigbluebutton.modules.videoconf.maps
       return _graphics.removeVideoByStreamName(userID, stream);
     }
 
-    private function openViewWindowFor(userID:String):void {
+    private function openViewWindowFor(userID:String, streamName:String = null):void {
       trace("VideoEventMapDelegate:: [" + me + "] openViewWindowFor:: Opening VIEW window for [" + userID + "] [" + UsersUtil.getUserName(userID) + "]");
 
       var bbbUser:BBBUser = UsersUtil.getUser(userID);
       if (bbbUser.hasStream) {
         closeAllAvatarWindows(userID);
       }
-      _graphics.addVideoFor(userID, proxy.connection);
+      
+      if (streamName) {
+        _graphics.addVideoFor(userID, proxy.connection, streamName);
+      } else {
+        for each(var stream:String in bbbUser.streamNames) {
+          _graphics.addVideoFor(userID, proxy.connection, stream);
+        }
+      }
     }
 
     public function connectToVideoApp():void {
@@ -460,6 +474,7 @@ package org.bigbluebutton.modules.videoconf.maps
       _ready = true;
       addToolbarButton();
       openWebcamWindows();
+      videoModuleReady();
     }
 
     public function handleCameraSetting(event:BBBEvent):void {
@@ -494,6 +509,35 @@ package org.bigbluebutton.modules.videoconf.maps
         trace("VideoEventMapDelegate::handleStoppedViewingWebcamEvent [" + me + "] Opening avatar for user [" + event.webcamUserID + "]");
         openAvatarWindowFor(event.webcamUserID);
       }
+    }
+    public function resumeFreeswitchVideo(streamName:String):void {
+       trace("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+       LogUtil.debug("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+
+      if(!proxy.connection.connected) {
+        trace("Not opening freeswitch window because the video connection is not ready yet.");
+        return;
+      }
+
+      if(!streamName){
+        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Not opening the window, because there's not a stream name.");
+        return;        
+      }
+
+      if((streamName == globalVideoStreamName) && hasWindow("FreeSWITCH video")) {
+        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
+        return;
+      }
+
+      globalVideoStreamName = streamName;
+      trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+      LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName); 
+      _graphics.addVideoFor("FreeSWITCH video", proxy.connection, streamName);
+    }
+
+    public function videoModuleReady():void{
+      var videoModuleReady:VideoModuleBridgeEvent = new VideoModuleBridgeEvent(VideoModuleBridgeEvent.VIDEO_MODULE_READY);
+      _dispatcher.dispatchEvent(videoModuleReady);
     }
   }
 }

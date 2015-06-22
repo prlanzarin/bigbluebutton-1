@@ -25,6 +25,7 @@
 	creationComplete="onCreationComplete()" xmlns:maps="org.bigbluebutton.modules.users.maps.*" >
 	
 	<maps:UsersEventMap id="UsersEventMap" />
+	<maps:MessageReceiverEventMap id="MessageReceiverEventMap" />
 	
 	<mx:Script>
 		<![CDATA[

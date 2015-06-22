@@ -35,6 +35,8 @@ public class MessageFromJsonConverter {
 					return UserDisconnectedFromGlobalAudio.fromJson(message);
 				  case GetAllMeetingsRequest.GET_ALL_MEETINGS_REQUEST_EVENT:
 					return new GetAllMeetingsRequest("the_string_is_not_used_anywhere");
+				  case GlobalVideoStreamCreated.GLOBAL_VIDEO_STREAM_CREATED_EVENT:
+						return processGlobalVideoStreamCreated(payload);
 				}
 			}
 		}
@@ -83,6 +85,12 @@ public class MessageFromJsonConverter {
 	private static IMessage processKeepAlive(JsonObject payload) {
 		String id = payload.get(Constants.KEEP_ALIVE_ID).getAsString();		
 		return new KeepAliveMessage(id);
+	}
+
+	private static IMessage processGlobalVideoStreamCreated(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		String videoStreamName = payload.get(Constants.VIDEO_STREAM_NAME).getAsString();
+		return new GlobalVideoStreamCreated(meetingId, videoStreamName);
 	}
 
 	//private static IMessage processGetAllMeetings(JsonObject)

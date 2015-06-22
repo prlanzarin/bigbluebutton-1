@@ -14,6 +14,7 @@ import org.bigbluebutton.conference.service.messaging.UserConnectedToGlobalAudio
 import org.bigbluebutton.conference.service.messaging.UserDisconnectedFromGlobalAudio;
 import org.bigbluebutton.conference.service.messaging.ValidateAuthTokenMessage;
 import org.bigbluebutton.conference.service.messaging.GetAllMeetingsRequest;
+import org.bigbluebutton.conference.service.messaging.GlobalVideoStreamCreated;
 import org.bigbluebutton.conference.service.messaging.redis.MessageHandler;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 import org.red5.logging.Red5LoggerFactory;
@@ -25,6 +26,8 @@ public class MeetingMessageHandler implements MessageHandler {
 	private static Logger log = Red5LoggerFactory.getLogger(MeetingMessageHandler.class, "bigbluebutton");
 	
 	private IBigBlueButtonInGW bbbGW;
+
+	private String globalVideoStreamName = "";
 	
 	@Override
 	public void handleMessage(String pattern, String channel, String message) {
@@ -94,6 +97,12 @@ public class MeetingMessageHandler implements MessageHandler {
 					GetAllMeetingsRequest emm = (GetAllMeetingsRequest) msg;
 					log.info("Received GetAllMeetingsRequest");
 					bbbGW.getAllMeetings("no_need_of_a_meeting_id");
+				}
+				else if (msg instanceof GlobalVideoStreamCreated) {
+					GlobalVideoStreamCreated streamCreatedMessage = (GlobalVideoStreamCreated) msg;
+					globalVideoStreamName = streamCreatedMessage.videoStreamName;
+					log.info("Received GlobalVideoStreamCreated [ meetingId: {} globalVideoStreamName: {} ].",streamCreatedMessage.meetingId,globalVideoStreamName);
+					bbbGW.setNewGlobalVideoStreamName(streamCreatedMessage.meetingId, globalVideoStreamName);
 				}
 			}
 		} else if (channel.equalsIgnoreCase(MessagingConstants.TO_SYSTEM_CHANNEL)) {

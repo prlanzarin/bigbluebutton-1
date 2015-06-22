@@ -286,7 +286,8 @@ trait UsersApp {
 	    outGW.send(new UserJoined(meetingID, recorded, uvo))
 	
 	    outGW.send(new MeetingState(meetingID, recorded, uvo.userID, permissions, meetingMuted))
-	    
+	    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId)) //update video everytime user joins the room 
+
 	    // Become presenter if the only moderator		
 	    if (users.numModerators == 1) {
 	      if (ru.role == Role.MODERATOR) {
@@ -417,7 +418,7 @@ trait UsersApp {
       outGW.send(new UserVoiceTalking(meetingID, recorded, voiceBridge, nu))        
     }     
   }
-  
+
   def handleAssignPresenter(msg: AssignPresenter):Unit = {
 	assignNewPresenter(msg.newPresenterID, msg.newPresenterName, msg.assignedBy)
   } 

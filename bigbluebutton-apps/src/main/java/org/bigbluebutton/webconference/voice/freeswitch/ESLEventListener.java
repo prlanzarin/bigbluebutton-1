@@ -1,12 +1,17 @@
 package org.bigbluebutton.webconference.voice.freeswitch;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
+import org.bigbluebutton.webconference.voice.events.VideoFloorChangedEvent;
+import org.bigbluebutton.webconference.voice.events.VideoPausedEvent;
+import org.bigbluebutton.webconference.voice.events.VideoResumedEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceStartRecordingEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserLeftEvent;
@@ -25,9 +30,14 @@ public class ESLEventListener implements IEslEventListener {
     private static final String STOP_TALKING_EVENT = "stop-talking";
     private static final String START_RECORDING_EVENT = "start-recording";
     private static final String STOP_RECORDING_EVENT = "stop-recording";
+    private static final String VIDEO_PAUSED_EVENT = "video-paused";
+    private static final String VIDEO_RESUMED_EVENT = "video-resumed";
+    private static final String VIDEO_FLOOR_CHANGE_EVENT = "video-floor-change";
     
     private ConferenceEventListener conferenceEventListener;
     
+    private static List<String> confsThatVideoIsActive = new ArrayList<String>();
+
     @Override
     public void conferenceEventPlayFile(String uniqueId, String confName, int confSize, EslEvent event) {
         //Ignored, Noop
@@ -44,7 +54,7 @@ public class ESLEventListener implements IEslEventListener {
 //        notifyObservers(e);
     }
 
-    private static final Pattern GLOBAL_AUDION_PATTERN = Pattern.compile("(GLOBAL_AUDIO)_(.*)$");
+    private static final Pattern GLOBALCALL_NAME_PATTERN = Pattern.compile("(GLOBAL_CALL)_(.*)$");
     private static final Pattern CALLERNAME_PATTERN = Pattern.compile("(.*)-bbbID-(.*)$");
     
     @Override
@@ -61,9 +71,18 @@ public class ESLEventListener implements IEslEventListener {
         
         log.info("User joined voice conference, user=[" + callerIdName + "], conf=[" + confName + "]");
         
-        Matcher gapMatcher = GLOBAL_AUDION_PATTERN.matcher(callerIdName);
-        if (gapMatcher.matches()) {
-        	log.debug("Ignoring GLOBAL AUDIO USER [{}]", callerIdName);
+        Matcher gcpMatcher = GLOBALCALL_NAME_PATTERN.matcher(callerIdName);
+        if (gcpMatcher.matches()) {
+            log.debug("GLOBAL CALL CONNECTED [{}]", callerIdName);
+
+            printConfsThatHaveActiveVideo();
+            //if the conference has a active video before the global is connected, it means that a sip phone is already sending video
+            if(isThereVideoActive(confName)) {
+                log.debug("Sending VideoResumedEvent because there is(are) sip phone(s) sending video (confName = " + confName + ")");
+                VideoResumedEvent vResumed = new VideoResumedEvent(confName);
+                conferenceEventListener.handleConferenceEvent(vResumed);
+            }
+
         	return;
         }
         		
@@ -80,7 +99,13 @@ public class ESLEventListener implements IEslEventListener {
     @Override
     public void conferenceEventLeave(String uniqueId, String confName, int confSize, EslEvent event) {   	
         Integer memberId = this.getMemberIdFromEvent(event);
-        log.info("User left voice conference, user=[" + memberId.toString() + "], conf=[" + confName + "]");
+        if (memberId == null) {
+            return;
+        }
+
+        String callerIdName = this.getCallerIdNameFromEvent(event);
+        log.info("User left voice conference, user=[" + callerIdName + "], conf=[" + confName + "], memberId=[" + memberId.toString() + "]");
+
         VoiceUserLeftEvent pl = new VoiceUserLeftEvent(memberId.toString(), confName);
         conferenceEventListener.handleConferenceEvent(pl);
     }
@@ -172,18 +197,55 @@ public class ESLEventListener implements IEslEventListener {
     	return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
     }
     
-	@Override
-	public void eventReceived(EslEvent event) {
-		System.out.println("ESL Event Listener received event=[" + event.getEventName() + "]");
-//        if (event.getEventName().equals(FreeswitchHeartbeatMonitor.EVENT_HEARTBEAT)) {
-////           setChanged();
-//           notifyObservers(event);
-//           return; 
-//        }
+    @Override
+    public void eventReceived(EslEvent event) {
+        log.debug("ESL Event Listener received event=[" + event.getEventName() + "]");
+
+        String action = event.getEventHeaders().get("Action");
+        String confName = event.getEventHeaders().get("Conference-Name");
+        if (action != null && confName != null) {
+            switch (action) {
+                case VIDEO_PAUSED_EVENT:
+                    log.debug("Received " + action + " from Freeswitch");
+                    VideoPausedEvent vPaused = new VideoPausedEvent(confName);
+                    conferenceEventListener.handleConferenceEvent(vPaused);
+                    break;
+
+                case VIDEO_RESUMED_EVENT:
+                    log.debug("Received " + action + " from Freeswitch");
+                    VideoResumedEvent vResumed = new VideoResumedEvent(confName);
+                    conferenceEventListener.handleConferenceEvent(vResumed);
+                    break;
+
+                case VIDEO_FLOOR_CHANGE_EVENT:
+                    log.debug("Received " + action + " from Freeswitch");
+                    String holderMemberId = getNewFloorHolderMemberIdFromEvent(event);
+
+                    if(!holderMemberId.isEmpty()) {
+                        log.debug(confName + " video floor passed to the holderMemberId = " + holderMemberId);
+                        if(!isThereVideoActive(confName))
+                            confsThatVideoIsActive.add(confName);
+                    } else {
+                        log.debug(confName + " doesn't have active video anymore.");
+                        confsThatVideoIsActive.remove(confName);
+                    }
+
+                    VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
+                    conferenceEventListener.handleConferenceEvent(vFloor);
+                    break;
+
+                default:
+                    log.debug("Unknown conference Action [{}]", action);
+            }
+        }
 	}
 
     private Integer getMemberIdFromEvent(EslEvent e) {
-        return new Integer(e.getEventHeaders().get("Member-ID"));
+        try {
+            return new Integer(e.getEventHeaders().get("Member-ID"));
+        } catch (NumberFormatException excp) {
+            return null;
+        }
     }
 
     private String getCallerIdFromEvent(EslEvent e) {
@@ -198,11 +260,28 @@ public class ESLEventListener implements IEslEventListener {
     	return e.getEventHeaders().get("Path");
     }
     
-    /*private String getRecordTimestampFromEvent(EslEvent e) {
-    	return e.getEventHeaders().get("Event-Date-Timestamp");
-    }*/
-	
     public void setConferenceEventListener(ConferenceEventListener listener) {
         this.conferenceEventListener = listener;
+    }
+
+    private String getNewFloorHolderMemberIdFromEvent(EslEvent e) {
+        String newHolder = e.getEventHeaders().get("New-ID");
+        if(newHolder == null || newHolder.equalsIgnoreCase("none")) {
+            newHolder = "";
+        }
+        return newHolder;
+    }
+
+
+    private boolean isThereVideoActive(String confName) {
+        return confsThatVideoIsActive.contains(confName);
+    }
+
+    private void printConfsThatHaveActiveVideo() {
+        String message = "Rooms that have active video at this precise moment: ";
+        for (int i=0 ; i < confsThatVideoIsActive.size() ; i++)
+            message = message + confsThatVideoIsActive.get(i) + " ";
+
+        log.debug(message);
     }
 }

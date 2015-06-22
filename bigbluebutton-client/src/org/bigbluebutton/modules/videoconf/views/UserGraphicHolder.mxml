@@ -61,6 +61,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             private var _dispatcher:Dispatcher = new Dispatcher();
             private var _images:Images = new Images();
             private var _user:BBBUser = null;
+            private var _userId:String;
+            [Bindable]
+            private var _closeBtnVisible:Boolean = true;
 
             private var _hideMuteBtnTimer:Timer;
 
@@ -74,8 +77,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
             public function set userId(value:String):void {
                 _user = UsersUtil.getUser(value);
+                _userId = value;
+                _closeBtnVisible = _user != null;
             }
 
+            public function get userId():String {
+                return _userId;
+            }
             public function loadAvatar(options:VideoConfOptions):void {
                 avatar.user = _user;
                 avatar.options = options;
@@ -95,7 +103,17 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             }
 
             public function loadVideo(options:VideoConfOptions, connection:NetConnection, streamName:String):void {
-                video.user = _user;
+                if(!video.isGlobalStream(streamName)){
+                    video.user = _user;
+                }else{
+                    //create a new user for global video stream. We don't add it to UserUtil
+                    _user = new BBBUser();
+                    _user.name = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
+                    _user.me = false;
+                    _user.userID = "FreeSWITCH video";
+                    video.user = _user;
+                    video.isGlobalVideo = true;
+                }
                 video.options = options;
                 video.view(connection, streamName);
 
@@ -296,7 +314,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                         truncateToFit="true"
                         styleName="videoToolbarLabelStyle" />
                 <mx:Box paddingRight="5">
-                    <mx:Button styleName="closeBtnFocus" buttonMode="true" click="shutdown()" />
+                    <mx:Button styleName="closeBtnFocus" buttonMode="true" click="shutdown()" visible="{_closeBtnVisible}" includeInLayout="{_closeBtnVisible}"/>
                 </mx:Box>
             </mx:HBox>
             <mx:Box

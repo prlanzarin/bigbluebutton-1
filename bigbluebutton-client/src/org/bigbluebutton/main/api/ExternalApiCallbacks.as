@@ -393,12 +393,15 @@ package org.bigbluebutton.main.api
       _dispatcher.dispatchEvent(event);
     }
     
-    private function handleWebRTCCallStarted(inEchoTest:Boolean):void {
+    private function handleWebRTCCallStarted(inEchoTest:Boolean, remoteVideoPort:Number, localVideoPort:Number):void {
       trace(LOG + "handleWebRTCCallStarted: received, inEchoTest: " + inEchoTest);
       if (inEchoTest) {
         _dispatcher.dispatchEvent(new WebRTCEchoTestEvent(WebRTCEchoTestEvent.WEBRTC_ECHO_TEST_STARTED));
       } else {
-        _dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED));
+        var e:WebRTCCallEvent = new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED);
+        e.remoteVideoPort = remoteVideoPort;
+        e.localVideoPort = localVideoPort;
+        _dispatcher.dispatchEvent(e);
       }
     }
     

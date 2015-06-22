@@ -34,6 +34,7 @@ package org.bigbluebutton.modules.videoconf.views
     protected var _video:VideoWithWarnings = null;
     protected var _videoProfile:VideoProfile;
     protected var _dispatcher:Dispatcher = new Dispatcher();
+    protected var _isGlobalVideo:Boolean = false;
 
     public function UserVideo() {
       super();
@@ -67,6 +68,11 @@ package org.bigbluebutton.modules.videoconf.views
     protected function getVideoProfile(stream:String):VideoProfile {
       trace("Parsing stream name [" + stream + "]");
       var pattern:RegExp = new RegExp("([A-Za-z0-9]+)-([A-Za-z0-9]+)-\\d+", "");
+
+      if (isGlobalVideo){
+          trace("This is a global stream. Using default video profile...");
+          return BBB.defaultVideoProfile;
+      }
       if (pattern.test(stream)) {
         trace("The stream name is well formatted");
         trace("Video profile resolution is [" + pattern.exec(stream)[1] + "]");
@@ -94,15 +100,16 @@ package org.bigbluebutton.modules.videoconf.views
     }
 
     public function shutdown():void {
+      trace("Shuting down UserVideo. IsGlobalVideo? " + isGlobalVideo);
       if (!_shuttingDown) {
         _shuttingDown = true;
-        if (_ns) {
+        if (_ns && !isGlobalVideo) {
           stopViewing();
           _ns.close();
           _ns = null;
         }
 
-        if (_video.cameraState()) {
+        if (_video.cameraState() && !isGlobalVideo) {
             stopPublishing();
         }
 
@@ -114,10 +121,10 @@ package org.bigbluebutton.modules.videoconf.views
 
     private function stopViewing():void {
       var stopEvent:StoppedViewingWebcamEvent = new StoppedViewingWebcamEvent();
+      user.removeViewingStream(_streamName);
       stopEvent.webcamUserID = user.userID;
       stopEvent.streamName = _streamName;
-      _dispatcher.dispatchEvent(stopEvent); 
-      user.removeViewingStream(_streamName);
+      _dispatcher.dispatchEvent(stopEvent);
     }
 
     private function stopPublishing():void {
@@ -162,7 +169,9 @@ package org.bigbluebutton.modules.videoconf.views
       
       _ns.play(streamName);
 
-      user.addViewingStream(streamName);
+      if (user != null) {
+        user.addViewingStream(streamName);
+      }
       invalidateDisplayList();
     }
 
@@ -207,6 +216,19 @@ package org.bigbluebutton.modules.videoconf.views
 
      public function get streamName():String {
       return _streamName;
+    }
+
+    public function get isGlobalVideo():Boolean{
+      return _isGlobalVideo;
+    }
+
+    public function isGlobalStream(streamName: String):Boolean{
+      var globalStreamPattern:RegExp = new RegExp("sip_\\d+_\\d+", "");
+      return globalStreamPattern.test(streamName);
+    }
+
+    public function set isGlobalVideo(flag:Boolean):void{
+      _isGlobalVideo = flag;
     }
   }
 }

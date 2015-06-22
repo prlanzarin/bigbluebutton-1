@@ -22,22 +22,69 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.red5.logging.Red5LoggerFactory;
+
+
 public class CallManager {
+	private static Logger log = Red5LoggerFactory.getLogger(CallManager.class, "sip");
 
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
+	private final Map<String, String> videoStreams = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
-		return calls.put(ca.getCallId(), ca);
+		log.debug("Creating entry for the user with userId = "+ca.getUserId());
+		return calls.put(ca.getUserId(), ca);
 	}
 	
-	public CallAgent remove(String id) {
-		return calls.remove(id);
+	public CallAgent remove(String userId) {
+		if(userId != null) {
+		    log.debug("Removing callAgent entry for user: " + userId);
+	        return calls.remove(userId);
+		}else return null;
+
+	}
+
+	public String addVideoStream(String userId, String stream) {
+		log.debug("Creating entry (userId, videoStream) = (" + userId + ", " + stream + ")" );
+		return videoStreams.put(userId, stream);
+	}
+
+	public String removeVideoStream(String userId) {
+		String uid = userId;
+		log.debug("Removing videoStream entry for user: "  + userId  );
+		return videoStreams.remove(uid);
+	}
+
+	public CallAgent removeByUserId(String userId) {
+	    //kept for compatibility
+		return calls.remove(userId);
 	}
 	
-	public CallAgent get(String id) {
-		return calls.get(id);
+	public CallAgent get(String userId) {
+	    CallAgent ca = calls.get(userId);
+	    if(ca != null){
+	        log.debug("Retrieving entry for the client with userId = " + ca.getUserId());
+	        return ca;
+	    }
+	    else {
+	        log.debug("There's no CallAgent for the user with userId = " + userId);
+	        return null;
+	    }
 	}
-	
+
+	public CallAgent getByUserId(String userId) {
+	    //kept for compatibility
+        log.debug("Retrieving entry for the client with userId = " + userId);
+		return calls.get(userId);
+	}
+
+	public String getVideoStream(String userId) {
+		String uid = userId;
+		log.debug("[Video context] stream retrieved for the userid " + uid);
+			return videoStreams.get(uid);
+	}
+
 	public Collection<CallAgent> getAll() {
 		return calls.values();
 	}

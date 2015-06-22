@@ -31,32 +31,63 @@ import org.red5.logging.Red5LoggerFactory;
 
 public class SdpUtils {
     protected static Logger log = Red5LoggerFactory.getLogger(SdpUtils.class, "sip");
-    
-    
+    public static enum LogLevel{INFO,ERROR,DEBUG,WARNING,SILENCE};
+    public static LogLevel logLevel = LogLevel.SILENCE;
     /**
      * @return Returns the audio codec to be used on current session.
      */
-    public static Codec getNegotiatedAudioCodec(SessionDescriptor negotiatedSDP){
-        int payloadId;
-        String rtpmap;
-        Codec sipCodec = null;
-        
+    public static Codec getNegotiatedAudioCodec(SessionDescriptor negotiatedSDP) {     
         MediaDescriptor md = negotiatedSDP.getMediaDescriptor(Codec.MEDIA_TYPE_AUDIO );
-        rtpmap = md.getAttribute(Codec.ATTRIBUTE_RTPMAP).getAttributeValue();
-        
-        if (!rtpmap.isEmpty()) {            
-            payloadId = Integer.parseInt(rtpmap.substring(0, rtpmap.indexOf(" ")));
-            
-            sipCodec = CodecFactory.getInstance().getSIPAudioCodec(payloadId);            
-            if (sipCodec == null) {
-            	log.error("Negotiated codec {} not found", payloadId);
-            }
-            else {
-                log.info("Found codec: payloadType={}, payloadName={}.", sipCodec.getCodecId(), 
-                			sipCodec.getCodecName());
-            }
-        }        
-        return sipCodec;
+        if (md == null) {
+            if(logLevel == LogLevel.INFO) log.info("No media descriptor for AUDIO.");
+            return null;
+        }
+
+        String rtpmap = md.getAttribute(Codec.ATTRIBUTE_RTPMAP).getAttributeValue();
+        if(logLevel == LogLevel.INFO) log.info("getNegotiatedAudioCodec", "rtpmap = [" + rtpmap + "].");
+        if (rtpmap == null || rtpmap.isEmpty()) {
+                return null;
+        }
+                   
+        int payloadId = Integer.parseInt(rtpmap.substring(0, rtpmap.indexOf(" ")));
+        Codec sipAudioCodec = CodecFactory.getInstance().getSIPMediaCodec(payloadId);            
+        if (sipAudioCodec == null) 
+            if(logLevel == LogLevel.ERROR) log.error("Negotiated AUDIO codec {} not found", payloadId);
+        else {
+            if(logLevel == LogLevel.INFO) log.info("Found AUDIO codec: payloadType={}, payloadName={}.", sipAudioCodec.getCodecId(),
+                			sipAudioCodec.getCodecName());
+        }
+               
+        return sipAudioCodec;
+    }
+
+
+    /**
+     * @return Returns the video codec to be used on current session.
+     */
+    public static Codec getNegotiatedVideoCodec(SessionDescriptor negotiatedSDP) {
+        MediaDescriptor md = negotiatedSDP.getMediaDescriptor(Codec.MEDIA_TYPE_VIDEO);
+        if (md == null) {
+            if(logLevel == LogLevel.INFO) log.info("No media descriptor for VIDEO.");
+            return null;
+        }
+
+        String rtpmap = md.getAttribute(Codec.ATTRIBUTE_RTPMAP).getAttributeValue();
+        if(logLevel == LogLevel.INFO) log.info("getNegotiatedVideoCodec", "rtpmap = [" + rtpmap + "].");
+        if (rtpmap == null || rtpmap.isEmpty()) {
+                return null;
+        }
+
+        int payloadId = Integer.parseInt(rtpmap.substring(0, rtpmap.indexOf(" ")));
+        Codec sipVideoCodec = CodecFactory.getInstance().getSIPMediaCodec(payloadId);
+        if (sipVideoCodec == null) {
+            if(logLevel == LogLevel.ERROR) log.error("Negotiated VIDEO codec {} not found", payloadId);
+        } else {
+            if(logLevel == LogLevel.INFO) log.info("Found VIDEO codec: payloadType={}, payloadName={}.", sipVideoCodec.getCodecId(),
+                            sipVideoCodec.getCodecName());
+        }
+
+        return sipVideoCodec;
     }
     
     
@@ -68,12 +99,12 @@ public class SdpUtils {
      * @return Return the initial local SDP.
      */
     public static SessionDescriptor createInitialSdp(String userName, String viaAddress, 
-    		int audioPort, int videoPort, String audioCodecsPrecedence) {
+    		int audioPort, int videoPort, String audioCodecsPrecedence, boolean isGlobal) {
         
         SessionDescriptor initialDescriptor = null;
                 
         try {            
-            log.debug("userName = [" + userName + "], viaAddress = [" + viaAddress + 
+            if(logLevel == LogLevel.DEBUG) log.debug("userName = [" + userName + "], viaAddress = [" + viaAddress +
                     "], audioPort = [" + audioPort + "], videoPort = [" + videoPort + 
                     "], audioCodecsPrecedence = [" + audioCodecsPrecedence + "]." );
             
@@ -81,7 +112,7 @@ public class SdpUtils {
             int videoCodecsNumber = CodecFactory.getInstance().getAvailableVideoCodecsCount();
             
             if ((audioCodecsNumber == 0) && (videoCodecsNumber == 0)) {                
-                log.debug("audioCodecsNumber = [" + audioCodecsNumber + 
+                if(logLevel == LogLevel.DEBUG) log.debug("audioCodecsNumber = [" + audioCodecsNumber +
                         "], videoCodecsNumber = [" + videoCodecsNumber + "].");                
                 return null;
             }
@@ -110,8 +141,12 @@ public class SdpUtils {
             initialDescriptor = new SessionDescriptor(owner, viaAddress);
                         
             if (initialDescriptor == null) {                
-                log.error("Error instantiating the initialDescriptor!");                 
+                if(logLevel == LogLevel.ERROR) log.error("Error instantiating the initialDescriptor!");
                 return null;
+            }
+            
+            if (isGlobal) {
+            	 initialDescriptor.addAttribute(new AttributeField("recvonly"));
             }
             
             if (audioCodecsNumber > 0) {                
@@ -130,7 +165,7 @@ public class SdpUtils {
                     rtpmapParamValue += " " + audioCodecs[audioIndex].getCodecName();
                     rtpmapParamValue += "/" + audioCodecs[audioIndex].getSampleRate() + "/1";
                     
-                    log.debug("Adding rtpmap for payload [" + payloadId + 
+                    if(logLevel == LogLevel.DEBUG) log.debug("Adding rtpmap for payload [" + payloadId +
                             "] with value = [" + rtpmapParamValue + "]." );
                     
                     audioAttributes.add(new AttributeField(Codec.ATTRIBUTE_RTPMAP, rtpmapParamValue));
@@ -138,11 +173,11 @@ public class SdpUtils {
                     String[] codecMediaAttributes = audioCodecs[audioIndex].getCodecMediaAttributes();
                     
                     if (codecMediaAttributes != null) {                        
-                        log.debug("Adding " + codecMediaAttributes.length + 
+                        if(logLevel == LogLevel.DEBUG) log.debug("Adding " + codecMediaAttributes.length +
                                 " audio codec media attributes." );
                         
                         for (int attribIndex = 0; attribIndex < codecMediaAttributes.length; attribIndex++) {                            
-                           log.debug("Adding audio media attribute [" + 
+                            if(logLevel == LogLevel.DEBUG) log.debug("Adding audio media attribute [" +
                                     codecMediaAttributes[attribIndex] + "]." );
                             
                             AttributeField newAttribute = parseAttributeField(codecMediaAttributes[attribIndex]);
@@ -152,7 +187,7 @@ public class SdpUtils {
                             }
                         }
                     } else {                        
-                        log.warn("Audio codec has no especific media attributes." );
+                        if(logLevel == LogLevel.WARNING) log.warn("Audio codec has no especific media attributes." );
                     }
                 }
                 
@@ -163,12 +198,12 @@ public class SdpUtils {
                     AttributeField audioAttribute = (AttributeField) attributesEnum.nextElement();
                     
                     if (initialDescriptor.getMediaDescriptor(Codec.MEDIA_TYPE_AUDIO) == null) {                        
-                        log.debug("Creating audio media descriptor." );
+                        if(logLevel == LogLevel.DEBUG) log.debug("Creating audio media descriptor." );
                         
                     	MediaField mf = new MediaField(Codec.MEDIA_TYPE_AUDIO, audioPort, 0, "RTP/AVP", formatList);
                         initialDescriptor.addMedia(mf, audioAttribute);
                     } else {                        
-                        log.debug("Just adding attribute.");
+                        if(logLevel == LogLevel.DEBUG)log.debug("Just adding attribute.");
                         initialDescriptor.getMediaDescriptor(Codec.MEDIA_TYPE_AUDIO).addAttribute(audioAttribute);
                     }
                 }
@@ -176,10 +211,10 @@ public class SdpUtils {
                 String[] commonAudioMediaAttributes = CodecFactory.getInstance().getCommonAudioMediaAttributes();
                 
                 if (commonAudioMediaAttributes != null) {                    
-                    log.debug("Adding " + commonAudioMediaAttributes.length + " common audio media attributes." );
+                    if(logLevel == LogLevel.DEBUG) log.debug("Adding " + commonAudioMediaAttributes.length + " common audio media attributes." );
                     
                     for (int attribIndex = 0; attribIndex < commonAudioMediaAttributes.length; attribIndex++) {                        
-                        log.debug("Adding common audio media attribute [" + commonAudioMediaAttributes[attribIndex] + "].");
+                        if(logLevel == LogLevel.DEBUG)log.debug("Adding common audio media attribute [" + commonAudioMediaAttributes[attribIndex] + "].");
                         
                         AttributeField newAttribute = parseAttributeField(commonAudioMediaAttributes[attribIndex]);
                         
@@ -188,7 +223,7 @@ public class SdpUtils {
                         }
                     }
                 } else {                    
-                    log.debug("No common audio media attributes.");
+                    if(logLevel == LogLevel.DEBUG)log.debug("No common audio media attributes.");
                 }
             }
             
@@ -196,22 +231,23 @@ public class SdpUtils {
                 Codec[] videoCodecs = CodecFactory.getInstance().getAvailableVideoCodecs();
                 Vector<AttributeField> videoAttributes = new Vector<AttributeField>();
                 
-                for (int videoIndex = 0; videoIndex < audioCodecsNumber; videoIndex++) {                    
+                for (int videoIndex = 0; videoIndex < videoCodecsNumber; videoIndex++) {                    
                     String payloadId = String.valueOf(videoCodecs[videoIndex].getCodecId());
                     String rtpmapParamValue = payloadId;
+
                     rtpmapParamValue += " " + videoCodecs[videoIndex].getCodecName();
                     rtpmapParamValue += "/" + videoCodecs[videoIndex].getSampleRate() + "/1";
                     
-                    log.debug("Adding rtpmap for payload [" + payloadId + "] with value = [" + rtpmapParamValue + "].");
+                    if(logLevel == LogLevel.DEBUG)log.debug("Adding rtpmap for payload [" + payloadId + "] with value = [" + rtpmapParamValue + "].");
                     
                     videoAttributes.add(new AttributeField(Codec.ATTRIBUTE_RTPMAP, rtpmapParamValue));                    
                     String[] codecMediaAttributes = videoCodecs[videoIndex].getCodecMediaAttributes();
                     
                     if (codecMediaAttributes != null) {                        
-                        log.debug("Adding " + codecMediaAttributes.length + " video codec media attributes.");
+                        if(logLevel == LogLevel.DEBUG)log.debug("Adding " + codecMediaAttributes.length + " video codec media attributes.");
                         
                         for (int attribIndex = 0; attribIndex < codecMediaAttributes.length; attribIndex++) {                            
-                            log.debug("Adding video media attribute [" + codecMediaAttributes[attribIndex] + "].");
+                            if(logLevel == LogLevel.DEBUG)log.debug("Adding video media attribute [" + codecMediaAttributes[attribIndex] + "].");
                             
                             AttributeField newAttribute = parseAttributeField(codecMediaAttributes[attribIndex]);
                             
@@ -220,7 +256,7 @@ public class SdpUtils {
                             }
                         }
                     } else {
-                       log.info("Video codec has no especific media attributes.");
+                        if(logLevel == LogLevel.INFO)log.info("Video codec has no especific media attributes.");
                     }
                 }
                 
@@ -231,20 +267,20 @@ public class SdpUtils {
                     AttributeField videoAttribute = (AttributeField) attributesEnum.nextElement();
                     
                     if (initialDescriptor.getMediaDescriptor(Codec.MEDIA_TYPE_VIDEO) == null) {    
-                    	MediaField mf = new MediaField(Codec.MEDIA_TYPE_VIDEO, audioPort, 0, "RTP/AVP", formatList);
+                    	MediaField mf = new MediaField(Codec.MEDIA_TYPE_VIDEO, videoPort, 0, "RTP/AVP", formatList);
                         initialDescriptor.addMedia(mf, videoAttribute);
                     } else {
                         initialDescriptor.getMediaDescriptor(Codec.MEDIA_TYPE_VIDEO).addAttribute(videoAttribute);
                     }
                 }
                 
-                String[] commonVideoMediaAttributes = CodecFactory.getInstance().getCommonAudioMediaAttributes();
+                String[] commonVideoMediaAttributes = CodecFactory.getInstance().getCommonVideoMediaAttributes();
                 
                 if (commonVideoMediaAttributes != null) {                    
-                    log.debug("Adding " + commonVideoMediaAttributes.length + " common video media attributes.");
+                    if(logLevel == LogLevel.DEBUG)log.debug("Adding " + commonVideoMediaAttributes.length + " common video media attributes.");
                     
                     for (int attribIndex = 0; attribIndex < commonVideoMediaAttributes.length; attribIndex++) {                        
-                        log.debug("Adding common video media attribute [" + commonVideoMediaAttributes[attribIndex] + "]." );
+                        if(logLevel == LogLevel.DEBUG)log.debug("Adding common video media attribute [" + commonVideoMediaAttributes[attribIndex] + "]." );
                         
                         AttributeField newAttribute = parseAttributeField(commonVideoMediaAttributes[attribIndex]);
                         
@@ -253,14 +289,14 @@ public class SdpUtils {
                         }
                     }
                 } else {                    
-                    log.info("No common video media attributes.");
+                    if(logLevel == LogLevel.INFO) log.info("No common video media attributes.");
                 }
             }
         } catch (Exception exception) {
-            log.error("Failure creating initial SDP: " + exception.toString());
+            if(logLevel == LogLevel.ERROR)log.error("Failure creating initial SDP: " + exception.toString());
         }
         
-        log.debug("Created initial SDP");
+        if(logLevel == LogLevel.DEBUG) log.debug("Created initial SDP");
         
         return initialDescriptor;
     }
@@ -320,7 +356,7 @@ public class SdpUtils {
      *         payloads negotiation.
      */
     public static SessionDescriptor makeMediaPayloadsNegotiation(SessionDescriptor localSdp, SessionDescriptor remoteSdp) {        
-    	log.debug("makeMediaPayloadsNegotiation");
+        if(logLevel == LogLevel.DEBUG) log.debug("makeMediaPayloadsNegotiation");
     	
     	SessionDescriptor newSdp = null;    
         try {            
@@ -343,7 +379,7 @@ public class SdpUtils {
                         String payloadId = getPayloadIdFromAttribute(remoteAttribute);
                         
                         if ("".equals(payloadId)) {                            
-                            log.error("Payload id not found on attribute: Name = [" + 
+                            if(logLevel == LogLevel.ERROR) log.error("Payload id not found on attribute: Name = [" +
                                     remoteAttribute.getAttributeName() + "], Value = [" + 
                                     remoteAttribute.getAttributeValue() + "]." );
                         } else if (findAttributeByPayloadId(remoteAttribute.getAttributeName(), 
@@ -358,20 +394,20 @@ public class SdpUtils {
                     for (Enumeration attributesEnum = newSdpAttributes.elements(); attributesEnum.hasMoreElements();) {                        
                         AttributeField mediaAttribute = (AttributeField) attributesEnum.nextElement();
                         
-                        if (newSdp.getMediaDescriptors().size() == 0) {  
+                        //if (newSdp.getMediaDescriptors().size() == 0) {  //maybe we're going to need this in the future...
                         	MediaField mf = new MediaField(localDescriptor.getMedia().getMedia(), 
                                     						localDescriptor.getMedia().getPort(), 
                                     						0, localDescriptor.getMedia().getTransport(), 
                                     						formatList); 
                             newSdp.addMediaDescriptor(new MediaDescriptor(mf, localDescriptor.getConnection()));
-                        }
+                        //}
                         
                         newSdp.getMediaDescriptor(localDescriptor.getMedia().getMedia()).addAttribute( mediaAttribute );
                     }
                 }
             }
         } catch (Exception exception) {            
-            log.error("Failure creating initial SDP: " + exception.toString());
+            if(logLevel == LogLevel.ERROR)log.error("Failure creating initial SDP: " + exception.toString());
         }
         
         return newSdp;
@@ -395,7 +431,7 @@ public class SdpUtils {
                 // We should have at least a "audio" media descriptor with 
                 // all audio payloads suported.
                 
-                log.error("No media descriptors after \"makeMediaPayloadsNegotiation\"." );                
+                if(logLevel == LogLevel.ERROR) log.error("No media descriptors after \"makeMediaPayloadsNegotiation\"." );
                 return;
             }
             
@@ -439,7 +475,7 @@ public class SdpUtils {
                 }
             }
         } catch (Exception exception) {            
-            log.error("Failure creating initial SDP: " + exception.toString());
+            if(logLevel == LogLevel.ERROR)log.error("Failure creating initial SDP: " + exception.toString());
         }
     }
     
@@ -458,17 +494,17 @@ public class SdpUtils {
 //                    "], AttributeValue = [" + remoteAttribute.getAttributeValue() + "].");
             
             if (remoteAttribute.getAttributeName().equals(Codec.ATTRIBUTE_RTPMAP)) {                
-                log.info("\"rtpmap\" attributes were already negotiated." );
+                if(logLevel == LogLevel.INFO) log.info("\"rtpmap\" attributes were already negotiated." );
             } else if (!isPayloadRelatedAttribute(remoteAttribute)) {                
                 // We do nothing with attributes that are not payload 
                 // related, like: "ptime", "direction", etc.
                 // For now, we consider that they don't demand negotiation.                
-                log.info("Attribute is not payload related. Do not negotiate it...");
+                if(logLevel == LogLevel.INFO) log.info("Attribute is not payload related. Do not negotiate it...");
             } else {                
                 String payloadId = getPayloadIdFromAttribute(remoteAttribute);
                 
                 if ("".equals(payloadId)) {                    
-                    log.error("Payload id not found on attribute: Name = [" + 
+                    if(logLevel == LogLevel.ERROR) log.error("Payload id not found on attribute: Name = [" +
                             remoteAttribute.getAttributeName() + "], Value = [" + 
                             remoteAttribute.getAttributeValue() + "]." );
                 } else if (findAttributeByPayloadId( Codec.ATTRIBUTE_RTPMAP, payloadId, 
@@ -479,7 +515,7 @@ public class SdpUtils {
                     
                     AttributeField localAttribute = findAttributeByPayloadId(remoteAttribute.getAttributeName(), payloadId, localMedia );
                     
-                    Codec sipCodec = CodecFactory.getInstance().getSIPAudioCodec(Integer.valueOf( payloadId));
+                    Codec sipCodec = CodecFactory.getInstance().getSIPMediaCodec(Integer.valueOf( payloadId));
                     
                     if (sipCodec != null) {                        
                         String localAttibuteValue = "";
@@ -487,7 +523,7 @@ public class SdpUtils {
                         if (localAttribute != null) {                            
                             localAttibuteValue = localAttribute.getAttributeValue();
                         } else {
-                            log.info("Attribute not found on local media.");
+                            if(logLevel == LogLevel.INFO)log.info("Attribute not found on local media.");
                         }
                         
                         String attributeValueResult = sipCodec.codecNegotiateAttribute(remoteAttribute.getAttributeName(), 
@@ -499,12 +535,12 @@ public class SdpUtils {
                             md.addAttribute(af);
                         }
                     } else {                        
-                        log.warn("Codec not found!");
+                        if(logLevel == LogLevel.WARNING) log.warn("Codec not found!");
                     }
                 }
             }
         } catch (Exception exception) {            
-            log.error("Failure creating initial SDP: " + exception.toString());
+            if(logLevel == LogLevel.ERROR)log.error("Failure creating initial SDP: " + exception.toString());
         }
     }
     

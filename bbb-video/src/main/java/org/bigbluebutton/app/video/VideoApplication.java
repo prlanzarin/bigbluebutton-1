@@ -60,6 +60,11 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 
   @Override
 	public boolean roomConnect(IConnection conn, Object[] params) {
+		if (params.length == 0) {
+			params = new Object[2];
+			params[0] = "unknown-meetingid";
+			params[1] = "unknown-userid";
+		}
 		log.info("BBB Video roomConnect"); 
   	String meetingId = ((String) params[0]).toString();
   	String userId = ((String) params[1]).toString();
@@ -159,6 +164,7 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
   
     @Override
     public void streamPublishStart(IBroadcastStream stream) {
+    	log.info("BBB Video streamPublishStart");
     	super.streamPublishStart(stream);
     }
     
