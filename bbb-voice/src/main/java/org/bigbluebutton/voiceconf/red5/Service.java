@@ -192,7 +192,7 @@ public class Service {
 	}
 
     private boolean isVideoStream(String streamName){
-        return streamName.matches("\\d+x\\d+-\\w+-\\d+"); //format: <width>x<height>-<userid>-<timestamp>
+        return streamName.matches("\\w+-\\w+_\\d+-\\d+"); //format: <video profile>-<userid>_<number of joins>-<timestamp>
     }
 
     public void setClientConnectionManager(ClientConnectionManager ccm) {
