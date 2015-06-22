@@ -52,14 +52,14 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     public void onJoinConferenceFail() {
     	log.debug("Notify client that {} [{}] failed to join the conference.", username, userid);
         if (connection.isConnected()) {
-            connection.invoke("failedToJoinConferenceCallback", new Object[] {"onUaCallFailed"});
+            connection.invoke("failedToJoinVoiceConferenceCallback", new Object[] {"onUaCallFailed"});
         }
     }
 
     public void onLeaveConference() {
     	log.debug("Notify client that {} [{}] left the conference.", username, userid);
         if (connection.isConnected()) {
-            connection.invoke("disconnectedFromJoinConferenceCallback", new Object[] {"onUaCallClosed"});
+            connection.invoke("disconnectedFromJoinVoiceConferenceCallback", new Object[] {"onUaCallClosed"});
         }
     }
 
