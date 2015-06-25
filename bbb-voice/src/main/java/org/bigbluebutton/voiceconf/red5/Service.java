@@ -81,7 +81,7 @@ public class Service {
     	String username = getUsername();		
     	log.debug("{} is requesting to hang up from the conference.", username + "[uid=" + userid + "][clientid=" + clientId + "]");
 		try {
-			sipPeerManager.hangup(peerId, userid);
+			sipPeerManager.hangup(peerId, userid, username);
 			return true;
 		} catch (PeerNotFoundException e) {
 			log.error("PeerNotFound {}", peerId);

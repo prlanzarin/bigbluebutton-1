@@ -23,33 +23,19 @@ public class VoiceConfToListenOnlyUsersMap {
 		return listenOnlyUsers.remove(clientId);
 	}
 	
+	public void setUserListeningStatus(String clientId, boolean newStatus) {
+		listenOnlyUsers.get(clientId).listeningToAudio = newStatus;
+	}
+
 	public int numUsers() {
 		return listenOnlyUsers.size();
 	}
 
-	public List<String> getUsers(String voiceConf){
-		List<String> users = new ArrayList<String>();
-		for(Iterator<String> i = listenOnlyUsers.keySet().iterator(); i.hasNext(); ) {
-			users.add(i.next());
-		}
-		return users;
+	public ListenOnlyUser getListenOnlyUser(String clientId) {
+		return listenOnlyUsers.get(clientId);
 	}
 
-    public List<String> getAudioUsers(String voiceConf){
-        List<String> users = new ArrayList<String>();
-        for(ListenOnlyUser i : listenOnlyUsers.values()) {
-            if(i.listeningToAudio)
-                users.add(i.clientId);
-        }
-        return users;
-    }
-
-    public List<String> getAudioUserIds(String voiceConf){
-        List<String> users = new ArrayList<String>();
-        for(ListenOnlyUser i : listenOnlyUsers.values()) {
-            if(i.listeningToAudio)
-                users.add(i.userId);
-        }
-        return users;
+    public List<ListenOnlyUser> getListenOnlyUsers(){
+        return new ArrayList<ListenOnlyUser>(listenOnlyUsers.values());
     }
 }

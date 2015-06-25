@@ -76,10 +76,10 @@ public final class SipPeerManager {
     	}
     }
     
-    public void hangup(String peerId, String userId) throws PeerNotFoundException {
+    public void hangup(String peerId, String userId, String callerIdName) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-        sipPeer.hangup(userId);
+        sipPeer.hangup(userId,callerIdName);
     }
 
     public void startBbbToFreeswitchAudioStream(String peerId, String userId, String clientId, IBroadcastStream broadcastStream, IScope scope) throws PeerNotFoundException {

@@ -130,7 +130,7 @@ public class Application extends MultiThreadedApplicationAdapter {
         clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
 
         String peerId = "default";
-        createGlobalCall(clientId,peerId,username,voiceBridge,meetingId);
+        createGlobalCall(clientId,peerId,voiceBridge,meetingId);
         addUserToGlobalCall(clientId, username, userId,voiceBridge);
 
         Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
@@ -196,7 +196,9 @@ public class Application extends MultiThreadedApplicationAdapter {
           if (roomRemoved) {
             try {
               log.debug("Hanging up the global audio call {}", voiceBridge);
-              sipPeerManager.hangup(peerId, GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge);
+
+              //Global Call has userId = callerIdName
+              sipPeerManager.hangup(peerId, GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge, GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge);
             } catch (PeerNotFoundException e) {
               log.warn("Peer {} not found. Unable to hangup the global call.", GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge);
             }
@@ -226,8 +228,8 @@ public class Application extends MultiThreadedApplicationAdapter {
         }
     }
     
-    private boolean createGlobalCall(String clientId,String peerId, String callerName, String destination, String meetingId) {
-        log.debug("peerId = " + peerId + " callerName = " + callerName + " destination = " + destination);
+    private boolean createGlobalCall(String clientId,String peerId, String destination, String meetingId) {
+        log.debug("peerId = " + peerId + " destination = " + destination);
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
             String extension = callExtensionPattern.format(new String[] { destination });
             try {

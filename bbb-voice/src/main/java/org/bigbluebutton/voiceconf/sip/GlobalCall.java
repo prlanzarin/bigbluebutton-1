@@ -120,26 +120,22 @@ public class GlobalCall {
     	return null;
     }
 
-    public static synchronized List<String> getListeners(String voiceConf){
-        List<String> listeners;
-        if(voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
-            VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
-            listeners = map.getAudioUsers(voiceConf);
-        }
-        else {
-            listeners = new ArrayList<String>();
-        }
-        return listeners;
+    public static synchronized void updateUserListeningStatus(String clientId, boolean newStatus, String voiceConf) {
+       if (voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
+           voiceConfToListenOnlyUsersMap.get(voiceConf).setUserListeningStatus(clientId, newStatus);
+           log.debug("ListenOnlyUser with clientId {} has listeningToAudio = {}", clientId, voiceConfToListenOnlyUsersMap.get(voiceConf).getListenOnlyUser(clientId).listeningToAudio);
+       }
+
     }
 
-    public static synchronized List<String> getListenerUserIds(String voiceConf){
-        List<String> listeners;
+    public static synchronized List<ListenOnlyUser> getListenOnlyUsers(String voiceConf){
+        List<ListenOnlyUser> listeners;
         if(voiceConfToListenOnlyUsersMap.containsKey(voiceConf)) {
             VoiceConfToListenOnlyUsersMap map = voiceConfToListenOnlyUsersMap.get(voiceConf);
-            listeners = map.getAudioUserIds(voiceConf);
+            return map.getListenOnlyUsers();
         }
         else {
-            listeners = new ArrayList<String>();
+            listeners = new ArrayList<ListenOnlyUser>(); //return an empty list
         }
         return listeners;
     }
@@ -194,7 +190,7 @@ public class GlobalCall {
         Boolean videoPresent;
         videoPresent = roomToVideoPresent.get(voiceconf);
         if (videoPresent == null) videoPresent = false;
-        log.debug("Retrieving Video Present: "+ videoPresent);
+        log.debug("Current videoPresent: "+ videoPresent);
         return videoPresent;
     }
 

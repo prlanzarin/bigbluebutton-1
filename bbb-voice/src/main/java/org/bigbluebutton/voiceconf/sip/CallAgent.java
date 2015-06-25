@@ -614,18 +614,20 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         if(isGlobalStream()) {
             log.debug("***GLOBAL CALL*** notifyListenersOfOnCallClosed: closing all streams because GLOBAL CALL received a bye");
-            log.debug("Current users connected on the Global Call: "+ GlobalCall.getListeners(_destination).size());
-            for(Iterator<String> i = GlobalCall.getListeners(_destination).iterator(); i.hasNext();) {
-                String clientId = i.next();
-                log.debug("notifyListenersOfOnCallClosed for {}", clientId);
+            log.debug("Current users connected on the Global Call: "+ GlobalCall.getListenOnlyUsers(_destination).size());
+            for(Iterator<ListenOnlyUser> i = GlobalCall.getListenOnlyUsers(_destination).iterator(); i.hasNext();) {
+                ListenOnlyUser lou = i.next();
+                String clientId = lou.clientId;
+                String callerIdName = lou.callerIdName;
+                log.debug("notifyListenersOfOnCallClosed for callerIdName = {} (clientId = {})", callerIdName, clientId);
+
+                GlobalCall.updateUserListeningStatus(clientId, false, _destination);
+
+                //notify bigbluebutton-client
                 clientConnManager.leaveConference(clientId);
-                messagingService.userDisconnectedFromGlobalAudio(_destination,_userId);
-            }
-            //notify bbb-apps
-            for(Iterator<String> i = GlobalCall.getListenerUserIds(_destination).iterator(); i.hasNext();) {
-                String userId = i.next();
-                log.debug("notifyListenersOfOnCallClosed for {}", userId);
-                messagingService.userDisconnectedFromGlobalAudio(_destination,userId);
+
+                //notify bbb-apps
+                messagingService.userDisconnectedFromGlobalAudio(_destination,callerIdName);
             }
         }
         else {
