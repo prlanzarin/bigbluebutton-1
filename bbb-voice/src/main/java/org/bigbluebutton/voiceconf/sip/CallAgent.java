@@ -45,7 +45,6 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Vector;
 
-import java.util.HashMap;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
 
@@ -60,7 +59,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private CallStream videoCallStream;    
     private String localSession = null;
     private Codec sipAudioCodec = null;
-    private Codec sipVideoCodec = null;    
     private CallStreamFactory callStreamFactory;
     private ClientConnectionManager clientConnManager; 
     private final String clientId;
@@ -293,7 +291,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                         audioCallStream = callStreamFactory.createCallStream(sipAudioCodec, connInfo, isGlobalStream());
                         audioCallStream.addCallStreamObserver(this);
                         audioCallStream.start();
-                        String streamName = audioCallStream.getBbbToFreeswitchStreamName();
 
                         if (isGlobalStream())
                         {
@@ -359,7 +356,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     public void stopBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
     	if (audioCallStream != null) {
     		audioCallStream.stopBbbToFreeswitchStream(broadcastStream, scope);   	
-    		String streamName = audioCallStream.getBbbToFreeswitchStreamName();
     	} else {
     		log.info("Can't stop talk stream as stream may have already stopped.");
     	}
@@ -497,7 +493,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     private void createVideoCodec(SessionDescriptor newSdp) {
-        sipVideoCodec = SdpUtils.getNegotiatedVideoCodec(newSdp);
     }
         
     private void setupSdpAndCodec(String sdp) {
@@ -670,7 +665,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         callState = CallState.UA_IDLE;
         closeAudioStream();
         closeVideoStream();
-        notifyCallAgentObserverOnCallAgentClosed(getUserId());
+        notifyCallAgentObserverOnCallAgentClosed();
 
         // Reset local sdp for next call.
         initSessionDescriptor();
@@ -691,6 +686,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         callState = CallState.UA_IDLE;
         closeAudioStream();
         closeVideoStream();
+
     }
 
 
@@ -778,22 +774,32 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     @Override
     public void handleTranscodingRestarted() {
-        if (videoTranscoder != null){
-            if(isGlobalStream()){
-                setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
-                videoTranscoder.restart(getVideoStreamName());
-                log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
-                messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
-            }else videoTranscoder.restart("");
-        }else{
-            if(isGlobalStream()){
-                log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
-            }else{
-                log.debug("Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
-            }
-        }
+        if(isGlobalStream()){
+            restartGlobalTranscoder(videoTranscoder);
+        }else restartUserTranscoder(videoTranscoder);
     }
 
+    public void restartGlobalTranscoder(VideoTranscoder vc){
+        if (vc == null){
+            log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
+            return;
+        }
+
+        setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
+        if(vc.restart(getVideoStreamName())){
+            log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
+            messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+        }else
+            log.debug("No need to restart Global Video Transcoder, it already restarted");
+    }
+
+    public void restartUserTranscoder(VideoTranscoder vc){
+        if (vc == null){
+            log.debug("User's Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
+            return;
+        }
+        vc.restart("");
+    }
     @Override
     public void handleTranscodingFinishedWithSuccess() {
         //called by ProcessMonitor when successfully finished
@@ -839,12 +845,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 		return this.isGlobal;
 	}
 
-	private void notifyCallAgentObserverOnCallAgentClosed(String userId){
+	private void notifyCallAgentObserverOnCallAgentClosed(){
 		if(callAgentObserver != null){
-			log.debug("Notifying CallAgentObserver that CallAgent with userid={} has been closed",userId);
-			callAgentObserver.handleCallAgentClosed(userId);
+			log.debug("Notifying CallAgentObserver that CallAgent with userid={} has been closed",getUserId());
+			callAgentObserver.handleCallAgentClosed(getCallId(), getCallerName(),getUserId(),getDestination(),getMeetingId());
 		}else{
-			log.debug("Can't notify CallAgentObserver that CallAgent with userid={} has been closed. CallAgentObserver = null",userId);
+			log.debug("Can't notify CallAgentObserver that CallAgent with userid={} has been closed. CallAgentObserver = null",getUserId());
 		}
 	}
 }

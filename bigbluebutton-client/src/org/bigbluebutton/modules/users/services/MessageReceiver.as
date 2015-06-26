@@ -130,7 +130,7 @@ package org.bigbluebutton.modules.users.services
         case "joinMeetingReply":
           handleJoinedMeeting(message);
           break;
-        case "user_listening_only":
+        case "userListeningOnly":
           handleUserListeningOnly(message);
           break;
         case "permissionsSettingsChanged":

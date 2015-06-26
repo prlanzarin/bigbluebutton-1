@@ -133,6 +133,8 @@ public class ProcessMonitor implements Runnable {
             && this.errorStreamMonitor != null) {
             this.inputStreamMonitor.close();
             this.errorStreamMonitor.close();
+            this.inputStreamMonitor = null;
+            this.errorStreamMonitor = null;
         }
 
         if(this.process != null) {

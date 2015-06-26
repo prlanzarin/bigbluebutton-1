@@ -331,7 +331,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 	}
 
 	@Override
-	public void handleCallAgentClosed(String userId) {
+	public void handleCallAgentClosed(String clientId, String callerName, String userId, String destination, String meetingId) {
         /*
          * This observer is called every time we receive a BYE from sip server.
          * This means that if we receive a bye, but there's still a CallAgent, we
@@ -342,26 +342,22 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
          *
          */
 
-        CallAgent ca = callManager.get(userId);
-
-        if (ca == null)
-            log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] has been closed  already ",userId);
-        else{
-            log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] still exists. Possible closed by the other endpoint. Removing it... ",userId);
-            String destination = ca.getDestination();
-            callManager.remove(userId);
-            if(ca.isGlobal()){
-                 log.info("Hanging up (***** GLOBAL CALL *****) , user [{}] for the room {} ",userId, destination);
-                 restartGlobalCall(ca.getCallId(),ca.getCallerName(),ca.getUserId(),ca.getDestination(),ca.getMeetingId());
-            }
-        }
+        log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] has been closed.",userId);
+        callManager.remove(userId);
+        restartGlobalCall(clientId, callerName, userId, destination, meetingId);
     }
 
-    public void restartGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId){
-        log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetindId={}]",clientId, callerName, userId, destination, meetingId);
+    public synchronized void restartGlobalCall(String clientId, String callerName, String userId, String destination, String meetingId){
+        if (callManager.get(userId)== null){ //avoids RC if another user joins the room and call createGlobalCall() in Application.java before this gets done
+            log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetindId={}]",clientId, callerName, userId, destination, meetingId);
+            createGlobalCall(clientId, callerName, userId, destination, meetingId);
+        }else log.debug("Cannot restart Global Call. There's already a global call agent for this room");
+    }
+
+    public void createGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId){
         if (GlobalCall.reservePlaceToCreateGlobal(destination))
-            log.debug("Global Call Recreated. Remaking a call...");
-        else log.debug("Remaking globalCall's call");
+            log.debug("Global Call Recreated.");
+        log.debug("GlobalCall's info exists. Remaking globalCall's call");
         this.call(clientId, callerName, userId, destination, meetingId);
     }
 }

@@ -41,7 +41,12 @@ public class VideoTranscoder {
         this.remoteVideoPort = "";
     }
 
-    public void start(){
+    public synchronized boolean start(){
+        if ((processMonitor != null) &&(ffmpeg != null)) {
+            log.debug("There's already an FFMPEG process running for this transcoder. No need to start a new one");
+            return false;
+        }
+
         String[] command;
         String inputLive;
         String outputLive;
@@ -97,35 +102,44 @@ public class VideoTranscoder {
             this.processMonitor = new ProcessMonitor(command);
             processMonitor.setVideoTranscoderObserver(observer);
             processMonitor.start();
+            return true;
         }
+        return false;
     }
 
-    public void stop(){
+    public synchronized boolean stop(){
         if (processMonitor != null) {
-            processMonitor.destroy();
+            if(type == Type.TRANSCODE_RTP_TO_RTMP)
+                processMonitor.forceDestroy();
+            else processMonitor.destroy();
             processMonitor = null;
             ffmpeg = null;
-        }
+        }else log.debug("There's no FFMPEG process running for this transcoder. No need to destroy it");
+        return true;
     }
 
-    public void restart(String streamName){
+    public synchronized boolean restart(String streamName){
         if ((processMonitor != null) && (ffmpeg != null)){
             switch(type){
                 case TRANSCODE_RTMP_TO_RTP:
                     //user's video stream : parameters are the same
                     log.debug("Restarting the user's video stream: "+this.videoStreamName);
                     processMonitor.restart();
-                    break;
+                    return true;
                 case TRANSCODE_RTP_TO_RTMP:
                     //global's video stream : stream name got a new timestamp
                     updateGlobalStreamName(streamName);
                     log.debug("Restarting the global's video stream: "+this.videoStreamName);
                     processMonitor.restart();
-                    break;
+                    return true;
                 default:
                     log.debug("Video Transcoder error: Unknown TRANSCODING TYPE");
                     break;
             }
+            return false;
+        }else {
+            log.debug(" Can't restart VideoTranscoder. There's no ProcessMonitor running");
+            return false;
         }
     }
 
