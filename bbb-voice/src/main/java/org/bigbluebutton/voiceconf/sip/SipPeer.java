@@ -164,6 +164,9 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
             if (ca.isListeningToGlobal()) {
                 log.info("User has disconnected from global audio, callerIdName [{}], user [{}] voiceConf {}", callerIdName, userId, destination);
                 messagingService.userDisconnectedFromGlobalAudio(destination, callerIdName);
+
+                log.info("Removing {} (clientId = {}) from the listen only users list", callerIdName, ca.getCallId());
+                GlobalCall.removeUser(ca.getCallId(), destination);
             }
             if(ca.isGlobal()){
                  log.info("Hanging up (***** GLOBAL CALL *****) , callerIdName [{}], user [{}] for the room {} ", callerIdName, userId, destination);

@@ -122,18 +122,16 @@ public class Application extends MultiThreadedApplicationAdapter {
   		logData.put("description", "User joining BBB Voice.");
   		
   		Gson gson = new Gson();
-      String logStr =  gson.toJson(logData);
+        String logStr =  gson.toJson(logData);
   		
   		log.info("User joining bbb-voice: data={}", logStr);
       
       if (!voiceBridge.equals("UNKNOWN-VOICEBRIDGE")) {
-        clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
+          clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
 
-        String peerId = "default";
-        createGlobalCall(clientId,peerId,voiceBridge,meetingId);
-        addUserToGlobalCall(clientId, username, userId,voiceBridge);
-
-        Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
+          String peerId = "default";
+          createGlobalCall(clientId,peerId,voiceBridge,meetingId);
+          Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
       } else {
         // TODO review this condition, since the original implementation does clientConnManager.createClient always
         log.warn("Voice bridge not informed during appConnect. Global will not be created.");
@@ -189,7 +187,6 @@ public class Application extends MultiThreadedApplicationAdapter {
         hangUpWebRTC(peerId,userId);
 
         if (!voiceBridge.equals("UNKNOWN-VOICEBRIDGE")) {
-          GlobalCall.removeUser(clientId, voiceBridge);
 
           boolean roomRemoved = GlobalCall.removeRoomIfUnused(voiceBridge);
           log.debug("Should the global connection be removed? {}", roomRemoved? "yes": "no");
@@ -241,15 +238,6 @@ public class Application extends MultiThreadedApplicationAdapter {
             }
         }
         return true;
-    }
-
-    private void addUserToGlobalCall(String clientId, String username, String userId, String voiceBridge){
-        try{
-            log.debug("Adding user to global call , so it can receive global video...");
-            GlobalCall.addUser(clientId, username, userId, voiceBridge,false);
-        } catch (GlobalCallNotFoundException e ){
-            log.debug("User {} can't connect to the global call for the room{}, because there isn't any",username);
-        }
     }
 
     private void hangUpWebRTC(String peerId,String userid) {

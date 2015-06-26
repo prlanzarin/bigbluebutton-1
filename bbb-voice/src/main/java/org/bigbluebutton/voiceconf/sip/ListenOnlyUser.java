@@ -6,13 +6,11 @@ public class ListenOnlyUser {
 	public final String callerIdName;
     public final String userId;
 	public final String voiceConf;
-	public boolean listeningToAudio;
 	
-	public ListenOnlyUser(String clientId, String callerIdName, String userId, String voiceConf, boolean listeningToAudio) {
+	public ListenOnlyUser(String clientId, String callerIdName, String userId, String voiceConf) {
 	  this.clientId = clientId;
 	  this.callerIdName = callerIdName;
       this.userId = userId;
 	  this.voiceConf = voiceConf;
-	  this.listeningToAudio = listeningToAudio;
 	}
 }

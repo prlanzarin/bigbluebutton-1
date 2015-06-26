@@ -15,16 +15,12 @@ public class VoiceConfToListenOnlyUsersMap {
 	  this.voiceConf = voiceConf;	
 	}
 	
-	public void addUser(String clientId, String callerIdName, String userId, boolean listeningToAudio) {
-		listenOnlyUsers.put(clientId, new ListenOnlyUser(clientId, callerIdName, userId ,voiceConf,listeningToAudio));
+	public void addUser(String clientId, String callerIdName, String userId) {
+		listenOnlyUsers.put(clientId, new ListenOnlyUser(clientId, callerIdName, userId ,voiceConf));
 	}
 	
 	public ListenOnlyUser removeUser(String clientId) {
 		return listenOnlyUsers.remove(clientId);
-	}
-	
-	public void setUserListeningStatus(String clientId, boolean newStatus) {
-		listenOnlyUsers.get(clientId).listeningToAudio = newStatus;
 	}
 
 	public int numUsers() {
