@@ -132,13 +132,6 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public void hangupWebRTC(String peerId, String userId) throws PeerNotFoundException {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.hangupWebRTC(userId);
-        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    }
-    
     private void remove(String userid) {
     	log.debug("Number of SipUsers in Manager before remove {}", sipPeers.size());
         sipPeers.remove(userid);

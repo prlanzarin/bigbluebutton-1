@@ -109,18 +109,6 @@ public class Service {
         return true;
 	}
 
-	public Boolean hangupwebrtc(String peerId){
-        String userid = getUserId();
-        log.debug("hanging up webRTC Call on voice's context");
-        try{
-            sipPeerManager.hangupWebRTC(peerId, userid);
-        } catch (PeerNotFoundException e) {
-            log.error("PeerNotFound {}", peerId);
-            return false;
-        }
-        return true;
-	}
-
     public void updateVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent) {		
         log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;

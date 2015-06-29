@@ -203,11 +203,7 @@ package org.bigbluebutton.modules.phone.managers {
 			var logData:Object = new Object();
 			logData.user = UsersUtil.getUserData();
 
-			if (isConnected()) {
-				trace(LOG + "webRTC HangUp");
-				JSLog.debug(LOG + "webRTC HangUp", logData);
-				netConnection.call("voiceconf.hangupwebrtc", null, "default");
-			}
+			doHangUp();
 		}
 
 		public function onWebRTCCallAccepted(remoteVideoPort:Number, localVideoPort:Number):void{

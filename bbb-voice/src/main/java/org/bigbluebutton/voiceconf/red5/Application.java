@@ -184,7 +184,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
       String peerId = (String) Red5.getConnectionLocal().getAttribute("VOICE_CONF_PEER");
       if (peerId != null) {
-        hangUpWebRTC(peerId,userId);
+        hangup(peerId,userId, username);
 
         if (!voiceBridge.equals("UNKNOWN-VOICEBRIDGE")) {
 
@@ -240,10 +240,9 @@ public class Application extends MultiThreadedApplicationAdapter {
         return true;
     }
 
-    private void hangUpWebRTC(String peerId,String userid) {
+    private void hangup(String peerId,String userId, String username){
         try{
-            sipPeerManager.hangupWebRTC(peerId, userid);
-            sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userid);
+            sipPeerManager.hangup(peerId, userId, username);
         } catch (PeerNotFoundException e) {
             log.error("PeerNotFound {}", peerId);
         }
