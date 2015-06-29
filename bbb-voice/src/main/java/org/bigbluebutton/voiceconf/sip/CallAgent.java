@@ -621,6 +621,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
                 //notify bbb-apps
                 messagingService.userDisconnectedFromGlobalAudio(_destination,callerIdName);
+
+                //now, we remove the lou from the list
+                GlobalCall.removeUser(clientId, _destination);
             }
         }
         else {
