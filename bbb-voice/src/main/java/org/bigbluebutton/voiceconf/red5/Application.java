@@ -131,6 +131,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 
           String peerId = "default";
           createGlobalCall(clientId,peerId,voiceBridge,meetingId);
+          GlobalCall.addUserToGlobalVideo(clientId,voiceBridge);
           Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
       } else {
         // TODO review this condition, since the original implementation does clientConnManager.createClient always
@@ -185,7 +186,7 @@ public class Application extends MultiThreadedApplicationAdapter {
       String peerId = (String) Red5.getConnectionLocal().getAttribute("VOICE_CONF_PEER");
       if (peerId != null) {
         hangup(peerId,userId, username);
-
+        GlobalCall.removeUserFromGlobalVideo(clientId,voiceBridge);
         if (!voiceBridge.equals("UNKNOWN-VOICEBRIDGE")) {
 
           boolean roomRemoved = GlobalCall.removeRoomIfUnused(voiceBridge);

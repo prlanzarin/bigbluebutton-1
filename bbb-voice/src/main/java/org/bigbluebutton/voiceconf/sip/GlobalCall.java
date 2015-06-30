@@ -31,6 +31,7 @@ public class GlobalCall {
     private static Map<String,CallStream> roomToVideoStreamMap = new ConcurrentHashMap<String, CallStream>();
     private static Map<String,Boolean> roomToVideoPresent = new ConcurrentHashMap<String,Boolean>();
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
+    private static Map<String, VoiceConfToGlobalVideoUsersMap> voiceConfToGlobalVideoUsersMap = new ConcurrentHashMap<String, VoiceConfToGlobalVideoUsersMap>();
     private static Path sdpVideoPath;
     public static final String GLOBAL_AUDIO_STREAM_NAME_PREFIX = "GLOBAL_AUDIO_";
     public static final String GLOBAL_VIDEO_STREAM_NAME_PREFIX = "sip_";
@@ -47,6 +48,7 @@ public class GlobalCall {
             log.debug("Reserving the place to create a global call for room {}", roomName);
             globalCalls.add(roomName);
             voiceConfToListenOnlyUsersMap.put(roomName, new VoiceConfToListenOnlyUsersMap(roomName));
+            voiceConfToGlobalVideoUsersMap.put(roomName, new VoiceConfToGlobalVideoUsersMap(roomName));
             return true;
         }
     }
@@ -79,7 +81,7 @@ public class GlobalCall {
     }
 
     public static synchronized boolean removeRoomIfUnused(String voiceConf) {
-        if (voiceConfToListenOnlyUsersMap.containsKey(voiceConf) && voiceConfToListenOnlyUsersMap.get(voiceConf).numUsers() <= 0) {
+        if (voiceConfToGlobalVideoUsersMap.containsKey(voiceConf) && voiceConfToGlobalVideoUsersMap.get(voiceConf).numUsers() <= 0) {
             removeRoom(voiceConf);
             return true;
         } else {
@@ -118,6 +120,19 @@ public class GlobalCall {
     		return voiceConfToListenOnlyUsersMap.get(voiceConf).removeUser(clientId);
     	}
     	return null;
+    }
+
+    public static synchronized void addUserToGlobalVideo(String clientId, String voiceConf){
+        if (voiceConfToGlobalVideoUsersMap.containsKey(voiceConf)) {
+            voiceConfToGlobalVideoUsersMap.get(voiceConf).addUser(clientId);
+        }
+    }
+
+    public static synchronized void removeUserFromGlobalVideo(String clientId, String voiceConf){
+        if (voiceConfToGlobalVideoUsersMap.containsKey(voiceConf)) {
+            voiceConfToGlobalVideoUsersMap.get(voiceConf).removeUser(clientId);
+            log.debug("Current Users in the Global Video: {} ",voiceConfToGlobalVideoUsersMap.get(voiceConf).numUsers());
+        }
     }
 
     public static synchronized List<ListenOnlyUser> getListenOnlyUsers(String voiceConf){
