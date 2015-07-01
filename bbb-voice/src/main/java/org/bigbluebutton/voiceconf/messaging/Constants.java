@@ -91,4 +91,6 @@ public class Constants {
   public static final String VIDEO_STREAM_NAME               = "video_stream_name";
   public static final String USER_SHARED_WEBCAM              = "user_shared_webcam_message";
   public static final String USER_UNSHARED_WEBCAM            = "user_unshared_webcam_message";
+  public static final String SIP_PHONE_UPDATE                = "sip_phone_update";
+  public static final String IS_SIP_PHONE_PRESENT            = "is_sip_video_present";
 }

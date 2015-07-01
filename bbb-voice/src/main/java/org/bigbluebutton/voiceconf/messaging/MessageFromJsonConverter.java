@@ -1,6 +1,7 @@
 package org.bigbluebutton.voiceconf.messaging;
 
 import org.bigbluebutton.voiceconf.messaging.messages.IMessage;
+import org.bigbluebutton.voiceconf.messaging.messages.UpdateSipPhoneStatus;
 import org.bigbluebutton.voiceconf.messaging.messages.UpdateVideoStatus;
 import org.bigbluebutton.voiceconf.messaging.messages.UserSharedWebcam;
 import org.bigbluebutton.voiceconf.messaging.messages.UserUnsharedWebcam;
@@ -27,6 +28,8 @@ public class MessageFromJsonConverter {
                       return processUserSharedWebcam(payload);
                   case UserUnsharedWebcam.USER_UNSHARED_WEBCAM_EVENT:
                       return processUserUnsharedWebcam(payload);
+                  case UpdateSipPhoneStatus.UPDATE_SIP_PHONE_STATUS_EVENT:
+                      return processUpdateSipPhoneStatus(payload);
 				}
 			}
 		}
@@ -49,5 +52,11 @@ public class MessageFromJsonConverter {
     private static IMessage processUserUnsharedWebcam(JsonObject payload) {
         String userId = payload.get(Constants.USER_ID).getAsString();
         return new UserUnsharedWebcam(userId);
+    }
+
+    private static IMessage processUpdateSipPhoneStatus(JsonObject payload) {
+        String voiceBridge = payload.get(Constants.VOICE_CONF).getAsString();
+        Boolean sipPhonePresent = payload.get(Constants.IS_SIP_PHONE_PRESENT).getAsBoolean();
+        return new UpdateSipPhoneStatus(voiceBridge, sipPhonePresent);
     }
 }

@@ -186,4 +186,8 @@ public class Service {
     public void setClientConnectionManager(ClientConnectionManager ccm) {
         clientConnectionManager = ccm;
     }
+
+    public void updateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent) {
+        log.debug("updateSipPhoneStatus [voiceBridge={}, isSipPhonePresent={}]", voiceBridge, sipPhonePresent);
+    }
 }
