@@ -117,6 +117,7 @@ object MessageNames {
   val USER_LEFT_VOICE                      = "user_left_voice_message"
   val IS_MEETING_MUTED_REPLY               = "is_meeting_muted_reply"
   val SIP_VIDEO_UPDATE                     = "sip_video_update"
+  val SIP_PHONE_UPDATE                     = "sip_phone_update"
   val START_RECORDING                      = "start_recording_message"
   val STOP_RECORDING                       = "stop_recording_message"
   val GET_CHAT_HISTORY_REPLY               = "get_chat_history_reply"

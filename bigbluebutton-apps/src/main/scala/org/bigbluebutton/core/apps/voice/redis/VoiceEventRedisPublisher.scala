@@ -13,6 +13,7 @@ class VoiceEventRedisPublisher(service: MessageSender) extends OutMessageListene
       case msg: SipVideoUpdated               => handleSipVideoUpdated(msg)
       case msg: UserSharedWebcam              => handleUserSharedWebcam(msg)
       case msg: UserUnsharedWebcam            => handleUserUnsharedWebcam(msg)
+      case msg: SipPhoneUpdated            => handleSipPhoneUpdated(msg)
       case _ => // Do nothing
     }
   }
@@ -31,6 +32,12 @@ class VoiceEventRedisPublisher(service: MessageSender) extends OutMessageListene
 
     private def handleUserUnsharedWebcam(msg: UserUnsharedWebcam) {
         val json = UsersMessageToJsonConverter.userUnsharedWebcamToJson(msg)
+        service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, json)
+        service.send(MessagingConstants.FROM_MEETING_CHANNEL, json)
+    }
+
+    private def handleSipPhoneUpdated(msg: SipPhoneUpdated) {
+        val json = VoiceMessageToJsonConverter.sipPhoneUpdatedToJson(msg)
         service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, json)
         service.send(MessagingConstants.FROM_MEETING_CHANNEL, json)
     }

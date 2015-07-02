@@ -127,7 +127,7 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
     val fsconf = confs.values find (c => c.meetingId == msg.meetingID)
     
     fsconf foreach (fc => {
-      logger.info("Web user id joining meeting id[" + fc.meetingId + "] wid=[" + msg.user.userID + "], extId=[" + msg.user.externUserID + "]")
+      logger.info("Web user id joining meeting id[" + fc.meetingId + "] wid=[" + msg.user.userID + "], extId=[" + msg.user.externUserID + "], phoneUser=["+msg.user.phoneUser+"]")
       fc.addUser(msg.user)
     })
   }

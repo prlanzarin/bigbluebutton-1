@@ -323,6 +323,12 @@ case class SipVideoUpdated (
     version:String = Versions.V_0_0_1
 ) extends IOutMessage
 
+case class SipPhoneUpdated (
+    voiceBridge: String,
+    isSipPhonePresent: Boolean,
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
 case class StartRecording(
     meetingID: String, 
     recorded: Boolean, 

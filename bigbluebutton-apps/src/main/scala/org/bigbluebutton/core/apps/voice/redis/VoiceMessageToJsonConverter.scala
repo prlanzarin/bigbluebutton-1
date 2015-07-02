@@ -19,4 +19,12 @@ object VoiceMessageToJsonConverter {
     val header = Util.buildHeader(MessageNames.SIP_VIDEO_UPDATE, msg.version, None)
     Util.buildJson(header, payload)
   }
+
+  def sipPhoneUpdatedToJson(msg: SipPhoneUpdated):String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.VOICE_CONF, msg.voiceBridge)
+    payload.put(Constants.IS_SIP_PHONE_PRESENT, msg.isSipPhonePresent)
+    val header = Util.buildHeader(MessageNames.SIP_PHONE_UPDATE, msg.version, None)
+    Util.buildJson(header, payload)
+  }
 }

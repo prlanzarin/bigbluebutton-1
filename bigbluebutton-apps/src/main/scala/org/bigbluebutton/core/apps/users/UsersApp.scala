@@ -356,6 +356,8 @@ trait UsersApp {
 		      outGW.send(new UserJoinedVoice(meetingID, recorded, voiceBridge, uvo))
 		      if (meetingMuted)
             outGW.send(new MuteVoiceUser(meetingID, recorded, uvo.userID, uvo.userID, meetingMuted))      
+            isSipPhonePresent = true
+            outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
         
         }
     }
@@ -386,7 +388,7 @@ trait UsersApp {
       users.addUser(nu)
             
 //      println("Received voice user left =[" + user.name + "] wid=[" + msg.userId + "]" )
-      logger.info("Received user left voice for user [" + nu.name + "] userid=[" + msg.userId + "]" )
+      logger.info("Received user left voice for user [" + nu.name + "] userid=[" + msg.userId + "] , phoneUser=["+user.phoneUser+"]" )
       outGW.send(new UserLeftVoice(meetingID, recorded, voiceBridge, nu))    
       
       if (user.phoneUser) {
@@ -394,6 +396,12 @@ trait UsersApp {
 	        val userLeaving = users.removeUser(user.userID)
 	        userLeaving foreach (u => outGW.send(new UserLeft(msg.meetingID, recorded, u)))
 	      }        
+
+	      if(users.getPhoneUsers.isEmpty){
+	          isSipPhonePresent = false
+	          outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
+	      }
+          logger.info("Is there any phoneUser in this meeting? "+isSipPhonePresent )
       }
     }    
   }
