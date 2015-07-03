@@ -362,6 +362,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public void startBbbToFreeswitchVideoStream(){
+        if (!GlobalCall.isSipVideoAbleToRun(getDestination())){
+            log.debug("User's video transcoder won't start because there's no need to (check previous log message)");
+            return;
+        }
+
         if (isWebRTC())
              startBbbToFreeswitchWebRTCVideoStream();
         else

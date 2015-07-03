@@ -113,11 +113,11 @@ public class Service {
         log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
-        if (!GlobalCall.isVideoPresent(voiceBridge)){
+        if (GlobalCall.isSipVideoAbleToRun(voiceBridge)){
             if (videoPresent){
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
             }
-        }else log.debug("There's a global video transcoder already running for this room");
+        }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
     }
 
     public void userSharedWebcam(String userId, String streamName){
@@ -189,5 +189,14 @@ public class Service {
 
     public void updateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent) {
         log.debug("updateSipPhoneStatus [voiceBridge={}, isSipPhonePresent={}]", voiceBridge, sipPhonePresent);
+        GlobalCall.setSipPhonePresent(voiceBridge, sipPhonePresent);
+        if(GlobalCall.isSipVideoAbleToRun(voiceBridge)){
+            //TODO user's video transcoder
+            //global video transcoder will be started by the next sip video update message
+            log.debug("sip-video is able to run, starting video transcoders ");
+        }else{
+            //TODO stop global video transcoder and user's video transcoder
+            log.debug("sip-video stopped (no more sip-users in the conference). Stopping video transcoders");
+        }
     }
 }

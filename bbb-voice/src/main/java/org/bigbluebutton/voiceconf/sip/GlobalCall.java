@@ -30,6 +30,7 @@ public class GlobalCall {
     //private static Map<String,KeepGlobalAudioAlive> globalAudioKeepAliverMap = new ConcurrentHashMap<String, KeepGlobalAudioAlive>();
     private static Map<String,CallStream> roomToVideoStreamMap = new ConcurrentHashMap<String, CallStream>();
     private static Map<String,Boolean> roomToVideoPresent = new ConcurrentHashMap<String,Boolean>();
+    private static Map<String,Boolean> roomToSipPhonePresent = new ConcurrentHashMap<String,Boolean>();
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     private static Map<String, VoiceConfToGlobalVideoUsersMap> voiceConfToGlobalVideoUsersMap = new ConcurrentHashMap<String, VoiceConfToGlobalVideoUsersMap>();
     private static Path sdpVideoPath;
@@ -39,7 +40,8 @@ public class GlobalCall {
     private static final String sdpVideoFullPath = "/tmp/"+GLOBAL_VIDEO_STREAM_NAME_PREFIX; //when changed , must also change VideoApplication.java in bbb-video
     private static OpenOption[] fileOptions = new OpenOption[] {StandardOpenOption.CREATE,StandardOpenOption.WRITE};
 
-    
+    private static boolean sipVideoEnabled = false;
+
     public static synchronized boolean reservePlaceToCreateGlobal(String roomName) {
         if (globalCalls.contains(roomName)) {
             log.debug("There's already a global call for room {}, no need to create a new one", roomName);
@@ -197,8 +199,37 @@ public class GlobalCall {
         Boolean videoPresent;
         videoPresent = roomToVideoPresent.get(voiceconf);
         if (videoPresent == null) videoPresent = false;
-        log.debug("Current videoPresent: "+ videoPresent);
+        log.debug("videoPresent [voiceconf={}] ? {} ",voiceconf, videoPresent?"true (Transcoder already running. No need to start a new one)":"false");
         return videoPresent;
     }
 
+    public static synchronized boolean isSipVideoAbleToRun(String voiceconf){
+        return !isVideoPresent(voiceconf) && isSipPhonePresent(voiceconf) && isSipVideoEnabled();
+    }
+
+    public static synchronized void setSipPhonePresent(String voiceconf, Boolean flag){
+        /*
+         * set current sipPhone status
+         */
+        log.debug("setSipPhonePresent: "+flag);
+        roomToSipPhonePresent.put(voiceconf, flag);
+    }
+
+    private static synchronized boolean isSipPhonePresent(String voiceconf) {
+        Boolean sipPhonePresent;
+        sipPhonePresent = roomToSipPhonePresent.get(voiceconf);
+        if (sipPhonePresent == null) sipPhonePresent = false;
+        log.debug("SipPhonePresent [voiceconf={}] ? {}",voiceconf, sipPhonePresent);
+        return sipPhonePresent;
+    }
+
+    public static boolean isSipVideoEnabled() {
+        log.debug("SipVideoEnabled? {}",sipVideoEnabled?"Enabled":"Disabled");
+        return sipVideoEnabled;
+    }
+
+    public static void setSipVideoEnabled(boolean flag){
+        log.debug("Setting sip-video status: {} ",flag?"Enabled":"Disabled");
+        sipVideoEnabled = flag;
+    }
 }

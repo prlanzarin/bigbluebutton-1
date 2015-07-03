@@ -54,6 +54,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private int stopVideoPort;
 	private CallStreamFactory callStreamFactory;
 	private MessageFormat callExtensionPattern = new MessageFormat("{0}");
+	private boolean sipVideoEnabled;
 	
     @Override
     public boolean appStart(IScope scope) {
@@ -64,6 +65,7 @@ public class Application extends MultiThreadedApplicationAdapter {
     	sipPeerManager.setCallStreamFactory(callStreamFactory);
       sipPeerManager.setClientConnectionManager(clientConnManager);
       sipPeerManager.createSipPeer("default", sipClientRtpIp, sipServerHost, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
+      GlobalCall.setSipVideoEnabled(sipVideoEnabled);
       try {
       	sipPeerManager.register("default", username, password);
       } catch (PeerNotFoundException e) {
@@ -338,7 +340,11 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
-	
+
+    public void setSipVideoEnabled(boolean flag) {
+        this.sipVideoEnabled = flag;
+    }
+
 	private String getUserId() {
 		String userid = (String) Red5.getConnectionLocal().getAttribute("USERID");
 		if ((userid == null) || ("".equals(userid))) userid = "unknown-userid";

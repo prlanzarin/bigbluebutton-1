@@ -64,6 +64,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 		<property name="sipPeerManager" ref="sipPeerManager"/>
 		<property name="clientConnectionManager" ref="clientConnectionManager"/>
+		<property name="sipVideoEnabled" value="${bbb.sip.app.enable-sip-video}" />
 	</bean>
 
     <bean id="voiceconf.service" class="org.bigbluebutton.voiceconf.red5.Service">
