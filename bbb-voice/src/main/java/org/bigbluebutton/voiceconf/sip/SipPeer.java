@@ -284,7 +284,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
                        + "userId " + userId);
     }
 
-    public void webRTCCall(String clientId, String userId, String username, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+    public void webRTCCall(String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
 
         CallAgent ca = createCallAgent(clientId,userId);
         //ports and meetingId now saved in the CallAgent
@@ -293,6 +293,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         ca.setRemoteVideoPort(remoteVideoPort);
         ca.setMeetingId(meetingId);
         ca.setWebRTC(true);
+        ca.setDestination(destination);
         callManager.add(ca); //webRTC's CallAgent
         log.debug("WebRTC's CallAgent created");
     }

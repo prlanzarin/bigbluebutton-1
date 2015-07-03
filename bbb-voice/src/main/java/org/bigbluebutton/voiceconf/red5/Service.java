@@ -89,16 +89,16 @@ public class Service {
 		}
 	}
 	
-	public Boolean acceptWebRTCCall(String peerId,String remoteVideoPort, String localVideoPort){
+	public Boolean acceptWebRTCCall(String peerId, String destination, String remoteVideoPort, String localVideoPort){
         //called by the client
         String userid = getUserId();
         String username = getUsername();
         String meetingId = getMeetingId();
         String clientId = getClientId();
-        log.debug("Accepted a webRTC Call for the user ["+userid+"] : saving it's parameters: [remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");
+        log.debug("Accepted a webRTC Call for the user ["+userid+"] : saving it's parameters: [destination = "+destination +",remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");
         try{
             if (sipPeerManager != null) {
-                sipPeerManager.webRTCCall(peerId, clientId, userid, username, meetingId, remoteVideoPort,localVideoPort);
+                sipPeerManager.webRTCCall(peerId, clientId, userid, username, destination, meetingId, remoteVideoPort,localVideoPort);
                 sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid, "");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");

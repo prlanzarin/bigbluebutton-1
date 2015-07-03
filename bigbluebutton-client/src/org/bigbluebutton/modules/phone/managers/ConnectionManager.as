@@ -212,7 +212,7 @@ package org.bigbluebutton.modules.phone.managers {
 
 			trace(LOG + "webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort=" + remoteVideoPort + ", localVideoPort=" + localVideoPort + "]");
 			JSLog.debug(LOG + "webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort=" + remoteVideoPort + ", localVideoPort=" + localVideoPort + "]", logData);
-			netConnection.call("voiceconf.acceptWebRTCCall", null, "default", remoteVideoPort, localVideoPort);
+			netConnection.call("voiceconf.acceptWebRTCCall", null, "default", voiceBridge, remoteVideoPort, localVideoPort);
 			trace(LOG + "webRTC Call Accepted: communicating with bbb-voice done");
 			JSLog.debug(LOG + "webRTC Call Accepted: communication with bbb-voice done", logData);
 		}

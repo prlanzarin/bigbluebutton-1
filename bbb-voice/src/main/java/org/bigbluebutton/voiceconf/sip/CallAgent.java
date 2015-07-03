@@ -96,6 +96,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return _destination;
     }
 
+    public void setDestination(String voiceConf) {
+        _destination = voiceConf;
+        log.debug("CallAgent destination attribute set to {} for the user {}", _destination, _callerName);
+
+    }
+
     public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile,
 		ConferenceProvider portProvider, String clientId, String userId, IMessagingService messagingService) {
         this.sipProvider = sipProvider;
