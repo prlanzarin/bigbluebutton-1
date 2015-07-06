@@ -113,7 +113,7 @@ public class Service {
         log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
-        if (GlobalCall.isSipVideoAbleToRun(voiceBridge)){
+        if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge)){
             if (videoPresent){
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
             }
@@ -190,7 +190,7 @@ public class Service {
     public void updateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent) {
         log.debug("updateSipPhoneStatus [voiceBridge={}, isSipPhonePresent={}]", voiceBridge, sipPhonePresent);
         GlobalCall.setSipPhonePresent(voiceBridge, sipPhonePresent);
-        if(GlobalCall.isSipVideoAbleToRun(voiceBridge)){
+        if(GlobalCall.isUserVideoAbleToRun(voiceBridge)){
             //TODO user's video transcoder
             //global video transcoder will be started by the next sip video update message
             log.debug("sip-video is able to run, starting video transcoders ");

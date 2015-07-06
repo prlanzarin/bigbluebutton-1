@@ -203,8 +203,12 @@ public class GlobalCall {
         return videoPresent;
     }
 
-    public static synchronized boolean isSipVideoAbleToRun(String voiceconf){
+    public static synchronized boolean isGlobalVideoAbleToRun(String voiceconf){
         return !isVideoPresent(voiceconf) && isSipPhonePresent(voiceconf) && isSipVideoEnabled();
+    }
+
+    public static synchronized boolean isUserVideoAbleToRun(String voiceconf){
+        return isSipPhonePresent(voiceconf) && isSipVideoEnabled();
     }
 
     public static synchronized void setSipPhonePresent(String voiceconf, Boolean flag){

@@ -114,6 +114,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.serverIp = Red5.getConnectionLocal().getHost();
         this.userProfile.userID = this._userId;
         this.isGlobal = isGlobalUserId();
+        this.localVideoSocket = null;
     }
     
     public String getCallId() {
@@ -368,7 +369,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public void startBbbToFreeswitchVideoStream(){
-        if (!GlobalCall.isSipVideoAbleToRun(getDestination())){
+        if (!GlobalCall.isUserVideoAbleToRun(getDestination())){
             log.debug("User's video transcoder won't start because there's no need to (check previous log message)");
             return;
         }
@@ -391,7 +392,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             log.debug("There's no videoStream for this FlashCall. Waiting for the user to enable your webcam");
             return;
         }
-        //start flash video stream
+        //start flash video transcoder
         try {
             SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
         	SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
@@ -405,9 +406,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             videoTranscoder.setVideoTranscoderObserver(this);
             videoTranscoder.start();
 
-            // videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
+            log.debug("Exception when starting video transcoder [UserID={} , Listeonly={}]",getUserId(),isListeningToGlobal());
             e.printStackTrace();
         }
     }
