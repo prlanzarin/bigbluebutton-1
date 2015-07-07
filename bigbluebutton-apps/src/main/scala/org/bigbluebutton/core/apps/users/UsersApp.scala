@@ -356,9 +356,12 @@ trait UsersApp {
 		      outGW.send(new UserJoinedVoice(meetingID, recorded, voiceBridge, uvo))
 		      if (meetingMuted)
             outGW.send(new MuteVoiceUser(meetingID, recorded, uvo.userID, uvo.userID, meetingMuted))      
-            isSipPhonePresent = true
-            outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
-        
+
+            if(!isSipVideoPresent) {
+              logger.info("Sending SipPhoneUpdate event, because now we have a sip phone in the conference")
+              isSipPhonePresent = true
+              outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
+            }
         }
     }
   }
