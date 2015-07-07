@@ -88,4 +88,8 @@ public class CallManager {
 	public Collection<CallAgent> getAll() {
 		return calls.values();
 	}
+
+	public Map<String, String> getAllSavedVideoStreams() {
+		return videoStreams;
+	}
 }

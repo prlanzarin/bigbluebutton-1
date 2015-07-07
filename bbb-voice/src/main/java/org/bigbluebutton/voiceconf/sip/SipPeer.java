@@ -358,4 +358,40 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         log.debug("GlobalCall's info exists. Remaking globalCall's call");
         this.call(clientId, callerName, userId, destination, meetingId);
     }
+
+    public void startSavedVideoStreams(String voiceBridge) {
+        Map<String, String> savedVideoStreams = callManager.getAllSavedVideoStreams();
+        log.debug("Starting the saved video streams for {}", voiceBridge);
+
+        for (String userId : savedVideoStreams.keySet()) {
+            CallAgent ca = callManager.getByUserId(userId);
+
+            if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
+                if(ca.getDestination().equals(voiceBridge)) {
+                    log.debug("startSavedVideoStreams: starting video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
+                    ca.startBbbToFreeswitchVideoStream();
+                }
+                else log.debug("Could not start sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
+            }
+            else log.debug("Could not start sip video for {}, CA is null, global or listen only", userId);
+        }
+    }
+
+    public void stopSavedVideoStreams(String voiceBridge) {
+        Map<String, String> savedVideoStreams = callManager.getAllSavedVideoStreams();
+        log.debug("Stopping the saved video streams for {}", voiceBridge);
+
+        for (String userId : savedVideoStreams.keySet()) {
+            CallAgent ca = callManager.getByUserId(userId);
+
+            if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
+                if(ca.getDestination().equals(voiceBridge)) {
+                    log.debug("stopSavedVideoStreams: stopping video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
+                    ca.stopBbbToFreeswitchVideoStream();
+                }
+                else log.debug("Could not stop sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
+            }
+            else log.debug("Could not stop sip video for {}, CA is null, global or listen only", userId);
+        }
+    }
 }

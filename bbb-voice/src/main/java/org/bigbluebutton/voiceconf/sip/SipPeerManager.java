@@ -189,4 +189,18 @@ public final class SipPeerManager {
 	public void setMessagingService(IMessagingService service) {
 		messagingService = service;
 	}
+
+	public void startSavedVideoStreams(String peerId, String voiceBridge) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.startSavedVideoStreams(voiceBridge);
+        }
+	}
+
+	public void stopSavedVideoStreams(String peerId, String voiceBridge) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.stopSavedVideoStreams(voiceBridge);
+        }
+	}
 }

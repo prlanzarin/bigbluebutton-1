@@ -190,13 +190,18 @@ public class Service {
     public void updateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent) {
         log.debug("updateSipPhoneStatus [voiceBridge={}, isSipPhonePresent={}]", voiceBridge, sipPhonePresent);
         GlobalCall.setSipPhonePresent(voiceBridge, sipPhonePresent);
-        if(GlobalCall.isUserVideoAbleToRun(voiceBridge)){
-            //TODO user's video transcoder
-            //global video transcoder will be started by the next sip video update message
-            log.debug("sip-video is able to run, starting video transcoders ");
-        }else{
-            //TODO stop global video transcoder and user's video transcoder
-            log.debug("sip-video stopped (no more sip-users in the conference). Stopping video transcoders");
+
+        if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
+            log.debug("sip-video is able to run, starting video transcoders");
+            sipPeerManager.startSavedVideoStreams(peerId, voiceBridge);
+            //we won't start the global video stream here, cause it will be initiated in the next sip video update event
+
+        } else {
+            log.debug("No more sip phones in the conference. Stopping video transcoders");
+            sipPeerManager.stopSavedVideoStreams(peerId, voiceBridge);
+            log.debug("Now stopping the global transconder");
+            String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
+            sipPeerManager.stopFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
         }
     }
 }
