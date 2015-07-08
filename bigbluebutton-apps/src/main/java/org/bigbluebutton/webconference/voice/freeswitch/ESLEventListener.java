@@ -63,7 +63,8 @@ public class ESLEventListener implements IEslEventListener {
         Integer memberId = this.getMemberIdFromEvent(event);
         Map<String, String> headers = event.getEventHeaders();
         String callerId = this.getCallerIdFromEvent(event);
-        String callerIdName = this.getCallerIdNameFromEvent(event);
+        String callerIdName = this.getValidCallerIdNameFromConferenceEvent(event);
+
         boolean muted = headers.get("Speak").equals("true") ? false : true; //Was inverted which was causing a State issue
         boolean speaking = headers.get("Talking").equals("true") ? true : false;
 
@@ -103,7 +104,7 @@ public class ESLEventListener implements IEslEventListener {
             return;
         }
 
-        String callerIdName = this.getCallerIdNameFromEvent(event);
+        String callerIdName = this.getValidCallerIdNameFromConferenceEvent(event);
         log.info("User left voice conference, user=[" + callerIdName + "], conf=[" + confName + "], memberId=[" + memberId.toString() + "]");
 
         VoiceUserLeftEvent pl = new VoiceUserLeftEvent(memberId.toString(), confName);
@@ -240,6 +241,15 @@ public class ESLEventListener implements IEslEventListener {
         }
 	}
 
+    private String getCallerIdNameFromUserAgent(EslEvent event) {
+        return getSipUserAgentFromEvent(event);
+    }
+
+    private boolean isUnknownCaller(String callerIdName) {
+        return callerIdName.equals("unknown");
+    }
+
+
     private Integer getMemberIdFromEvent(EslEvent e) {
         try {
             return new Integer(e.getEventHeaders().get("Member-ID"));
@@ -255,6 +265,23 @@ public class ESLEventListener implements IEslEventListener {
     private String getCallerIdNameFromEvent(EslEvent e) {
         return e.getEventHeaders().get("Caller-Caller-ID-Name");
     }
+
+    private String getValidCallerIdNameFromConferenceEvent(EslEvent e) {
+        /*
+         * For some equipments, if callerIdName is 'unknown', we get the caller name
+         * from the sip user agent
+         */
+        String callerIdName = this.getCallerIdNameFromEvent(e);
+        String sipUserAgent = this.getSipUserAgentFromEvent(e);
+        if (isUnknownCaller(callerIdName) && EquipmentTypes.isValidEquipment(sipUserAgent))
+            callerIdName = getCallerIdNameFromUserAgent(e); //we might truncate this string
+        return callerIdName;
+    }
+
+    private String getSipUserAgentFromEvent(EslEvent e){
+        return e.getEventHeaders().get("variable_sip_user_agent");
+    }
+
     
     private String getRecordFilenameFromEvent(EslEvent e) {
     	return e.getEventHeaders().get("Path");
