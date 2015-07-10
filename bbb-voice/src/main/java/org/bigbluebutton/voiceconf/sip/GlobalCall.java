@@ -33,6 +33,7 @@ public class GlobalCall {
     private static Map<String,Boolean> roomToSipPhonePresent = new ConcurrentHashMap<String,Boolean>();
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     private static Map<String, VoiceConfToGlobalVideoUsersMap> voiceConfToGlobalVideoUsersMap = new ConcurrentHashMap<String, VoiceConfToGlobalVideoUsersMap>();
+    private static Map<String, String> voiceConfToFloorHolder = new ConcurrentHashMap<String, String>();
     private static Path sdpVideoPath;
     public static final String GLOBAL_AUDIO_STREAM_NAME_PREFIX = "GLOBAL_AUDIO_";
     public static final String GLOBAL_VIDEO_STREAM_NAME_PREFIX = "sip_";
@@ -217,6 +218,23 @@ public class GlobalCall {
          */
         log.debug("setSipPhonePresent: "+flag);
         roomToSipPhonePresent.put(voiceconf, flag);
+    }
+
+    public static synchronized void setFlooHolder(String voiceconf, String floorHolder){
+        log.debug("setFlooHolder: " + floorHolder);
+        voiceConfToFloorHolder.put(voiceconf, floorHolder);
+    }
+
+    public static synchronized boolean floorHolderChanged(String voiceconf, String floorHolder) {
+        Boolean floorHolderChanged;
+        String oldFloorHolder;
+        oldFloorHolder = voiceConfToFloorHolder.get(voiceconf);
+        if (oldFloorHolder == null)
+          floorHolderChanged = true;
+        else
+          floorHolderChanged = oldFloorHolder != floorHolder;
+        log.debug("FloorHolderChanged [voiceconf={}] ? {}",voiceconf, floorHolderChanged);
+        return floorHolderChanged;
     }
 
     private static synchronized boolean isSipPhonePresent(String voiceconf) {

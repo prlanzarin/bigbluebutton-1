@@ -44,6 +44,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.Map;
 
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
@@ -441,6 +442,18 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
        //onCallStreamStarted();
     }
     
+    public void startFreeswitchToBbbVideoProbe(){
+      Map<String, String> probeResult = videoTranscoder.probeVideoStream();
+      //Send to apps
+      if(probeResult != null) {
+        log.debug("Sending updateSipVideoStatus [{}x{}]", probeResult.get("width"), probeResult.get("height"));
+        //messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+      }
+      else {
+        log.debug("Probe result is null");
+      }
+    }
+
     public void stopFreeswitchToBbbGlobalVideoStream(){
     	closeVideoStream();
     }

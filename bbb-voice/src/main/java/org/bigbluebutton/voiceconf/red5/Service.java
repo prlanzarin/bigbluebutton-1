@@ -116,6 +116,11 @@ public class Service {
         if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge)){
             if (videoPresent){
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
+
+                if(GlobalCall.floorHolderChanged(voiceBridge, floorHolder)) {
+                  sipPeerManager.startFreeswitchToBbbGlobalVideoProbe(peerId, globalUserId);
+                  GlobalCall.setFlooHolder(voiceBridge, floorHolder);
+                }
             }
         }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
     }

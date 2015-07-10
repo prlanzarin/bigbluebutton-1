@@ -1,5 +1,9 @@
 package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
+import java.util.Map;
+import java.io.IOException;
+
+import org.bigbluebutton.voiceconf.sip.FFProbeCommand;
 import org.bigbluebutton.voiceconf.sip.FFmpegCommand;
 import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 import org.red5.app.sip.codecs.H264Codec;
@@ -14,6 +18,7 @@ public class VideoTranscoder {
     private ProcessMonitor processMonitor;
     private FFmpegCommand ffmpeg;
     private String videoStreamName;
+    private String outputLive;
     private String meetingId;
     private String ip;
     private String localVideoPort;
@@ -29,6 +34,7 @@ public class VideoTranscoder {
         this.ip = ip;
         this.localVideoPort = localVideoPort;
         this.remoteVideoPort = remoteVideoPort;
+        this.outputLive = "";
     }
 
     public VideoTranscoder(Type type,String sdpPath, String videoStreamName, String meetingId, String ip){
@@ -39,6 +45,7 @@ public class VideoTranscoder {
         this.ip = ip;
         this.localVideoPort = "";
         this.remoteVideoPort = "";
+        this.outputLive = "";
     }
 
     public synchronized boolean start(){
@@ -49,7 +56,6 @@ public class VideoTranscoder {
 
         String[] command;
         String inputLive;
-        String outputLive;
         log.debug("Starting Video Transcoder...");
 
         switch(type){
@@ -141,6 +147,23 @@ public class VideoTranscoder {
             log.debug(" Can't restart VideoTranscoder. There's no ProcessMonitor running");
             return false;
         }
+    }
+
+    public Map<String, String> probeVideoStream(){
+        log.debug("Preparing to run probe command");
+        Map<String, String> probeResult = null;
+        if (processMonitor != null) {
+          try {
+            FFProbeCommand probeCommand = new FFProbeCommand(outputLive);
+            probeResult = probeCommand.run();
+          }
+          catch(IOException ex) {
+            log.debug("Failed to probe video stream [" + outputLive + "]");
+          }
+        } else {
+          log.debug("There's no FFMPEG process running for this transcoder. Stream can't be analyzed");
+        }
+        return probeResult;
     }
 
     private void updateGlobalStreamName(String streamName){

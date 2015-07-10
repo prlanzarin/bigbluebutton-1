@@ -118,6 +118,13 @@ public final class SipPeerManager {
         }else log.debug("Can't find sip peer " + peerId);
     }
 
+    public void startFreeswitchToBbbGlobalVideoProbe(String peerId, String userId) {
+        SipPeer sipUser = sipPeers.get(peerId);
+        if (sipUser != null) {
+            sipUser.startFreeswitchToBbbGlobalVideoProbe(userId);
+        }else log.debug("Can't find sip peer " + peerId);
+    }
+
     public void stopFreeswitchToBbbGlobalVideoStream(String peerId,String userId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
