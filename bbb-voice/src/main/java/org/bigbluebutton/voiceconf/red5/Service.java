@@ -38,12 +38,13 @@ public class Service {
 
 	public Boolean call(String peerId, String callerName, String destination, Boolean listenOnly) {
         String clientId = Red5.getConnectionLocal().getClient().getId();
+        String serverIp = Red5.getConnectionLocal().getHost();
 	    String userId = getUserId();
 	    String username = getUsername();
 		if (listenOnly) {
             try{
                 log.debug("{} is requesting to join into the conference {} as a listenonly.", username +"[peerId="+ peerId + "][uid=" + userId + "][clientid=" + clientId + " callerName="+callerName+"]", destination);
-                sipPeerManager.connectToGlobalStream(peerId, clientId, userId, callerName, destination);
+                sipPeerManager.connectToGlobalStream(peerId, clientId, userId, callerName, destination, serverIp);
                 Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
                 return true;
             } catch (GlobalCallNotFoundException e){
@@ -61,12 +62,13 @@ public class Service {
 	public Boolean call(String peerId, String callerName, String destination) {
     	String clientId = Red5.getConnectionLocal().getClient().getId();
     	String userid = getUserId();
-    	String username = getUsername();		
+        String username = getUsername();
+        String serverIp = Red5.getConnectionLocal().getHost();
     log.debug("{} is requesting to join into the conference {}.", username +"[peerId="+ peerId + "][uid=" + userid + "][clientid=" + clientId + " callerName="+callerName+"]", destination);
 		
 		String extension = callExtensionPattern.format(new String[] { destination });
 		try {
-			sipPeerManager.call(peerId, getClientId(), callerName, userid, extension,getMeetingId());
+			sipPeerManager.call(peerId, getClientId(), callerName, userid, extension,getMeetingId(), serverIp);
 			Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
 			return true;
 		} catch (PeerNotFoundException e) {
@@ -95,10 +97,11 @@ public class Service {
         String username = getUsername();
         String meetingId = getMeetingId();
         String clientId = getClientId();
+        String serverIp = Red5.getConnectionLocal().getHost();
         log.debug("Accepted a webRTC Call for the user ["+userid+"] : saving it's parameters: [destination = "+destination +",remoteVideoPort = "+remoteVideoPort+",localVideoPort = "+localVideoPort+"]");
         try{
             if (sipPeerManager != null) {
-                sipPeerManager.webRTCCall(peerId, clientId, userid, username, destination, meetingId, remoteVideoPort,localVideoPort);
+                sipPeerManager.webRTCCall(peerId, clientId, userid, username, destination, meetingId, remoteVideoPort,localVideoPort,serverIp);
                 sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid, "");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");

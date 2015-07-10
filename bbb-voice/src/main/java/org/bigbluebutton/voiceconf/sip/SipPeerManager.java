@@ -63,10 +63,10 @@ public final class SipPeerManager {
   		sipPeer.register(username, password);
     }
         
-    public void call(String peerId, String clientId, String callerName, String userId, String destination,String meetingId) throws PeerNotFoundException {
+    public void call(String peerId, String clientId, String callerName, String userId, String destination,String meetingId, String serverIp) throws PeerNotFoundException {
     	SipPeer sipPeer = sipPeers.get(peerId);
     	if (sipPeer == null) throw new PeerNotFoundException("Can't find sip peer " + peerId);
-        sipPeer.call(clientId, callerName,userId, destination,meetingId);
+        sipPeer.call(clientId, callerName,userId, destination,meetingId,serverIp);
     }
 
     public void unregister(String userid) {
@@ -132,10 +132,10 @@ public final class SipPeerManager {
         }else log.debug("Can't find sip peer " + peerId);
     }
 
-    public void webRTCCall(String peerId, String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+    public void webRTCCall(String peerId, String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort, String serverIp) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.webRTCCall(clientId, userId, username, destination, meetingId, remoteVideoPort,localVideoPort);
+            sipUser.webRTCCall(clientId, userId, username, destination, meetingId, remoteVideoPort,localVideoPort,serverIp);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
@@ -144,10 +144,10 @@ public final class SipPeerManager {
         sipPeers.remove(userid);
     }
 
-    public void connectToGlobalStream(String peerId, String clientId, String userId, String callerIdName, String destination) throws GlobalCallNotFoundException {
+    public void connectToGlobalStream(String peerId, String clientId, String userId, String callerIdName, String destination,String serverIp) throws GlobalCallNotFoundException {
     	SipPeer sipUser = sipPeers.get(peerId);
     	if (sipUser != null) {
-            sipUser.connectToGlobalStream(clientId, userId, callerIdName, destination);
+            sipUser.connectToGlobalStream(clientId, userId, callerIdName, destination, serverIp);
     	}
     }
 

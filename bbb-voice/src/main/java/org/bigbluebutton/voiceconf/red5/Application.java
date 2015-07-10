@@ -132,7 +132,7 @@ public class Application extends MultiThreadedApplicationAdapter {
           clientConnManager.createClient(clientId, userId, username, (IServiceCapableConnection) Red5.getConnectionLocal());
 
           String peerId = "default";
-          createGlobalCall(clientId,peerId,voiceBridge,meetingId);
+          createGlobalCall(clientId,peerId,voiceBridge,meetingId, Red5.getConnectionLocal().getHost());
           GlobalCall.addUserToGlobalVideo(clientId,voiceBridge);
           Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
       } else {
@@ -228,12 +228,12 @@ public class Application extends MultiThreadedApplicationAdapter {
         }
     }
     
-    private boolean createGlobalCall(String clientId,String peerId, String destination, String meetingId) {
+    private boolean createGlobalCall(String clientId,String peerId, String destination, String meetingId, String serverIp) {
         log.debug("peerId = " + peerId + " destination = " + destination);
         if (GlobalCall.reservePlaceToCreateGlobal(destination)) {
             String extension = callExtensionPattern.format(new String[] { destination });
             try {
-                sipPeerManager.call(peerId, clientId, GlobalCall.LISTENONLY_USERID_PREFIX + destination, GlobalCall.LISTENONLY_USERID_PREFIX + destination, extension,meetingId);
+                sipPeerManager.call(peerId, clientId, GlobalCall.LISTENONLY_USERID_PREFIX + destination, GlobalCall.LISTENONLY_USERID_PREFIX + destination, extension,meetingId,serverIp);
                 Red5.getConnectionLocal().setAttribute("VOICE_CONF_PEER", peerId);
             } catch (PeerNotFoundException e) {
                 log.error("PeerNotFound {}", peerId);

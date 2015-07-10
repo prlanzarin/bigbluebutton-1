@@ -107,7 +107,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         log.debug( "SIPUser register : {}", registeredProfile.contactUrl );
     }
 
-    public void call(String clientId, String callerName, String userId,String destination,String meetingId) {
+    public void call(String clientId, String callerName, String userId,String destination,String meetingId, String serverIp) {
     	if (!registered) {
     		/* 
     		 * If we failed to register with FreeSWITCH, reject all calls right away.
@@ -119,23 +119,22 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
     		log.warn("We are not registered to FreeSWITCH. However, we will allow {} to call {}.", callerName, destination);
 //    		return;
     	}
-
-        CallAgent ca = createCallAgent(clientId, userId);
+        CallAgent ca = createCallAgent(clientId, userId,serverIp);
         ca.setMeetingId(meetingId);//set meetingId to use with fs->bbb video stream when call is accepted
         ca.call(callerName,userId, destination);
     	callManager.add(ca);
     }
 
-	public void connectToGlobalStream(String clientId, String userId, String callerIdName, String destination) throws GlobalCallNotFoundException {
-        CallAgent ca = createCallAgent(clientId,userId);
+	public void connectToGlobalStream(String clientId, String userId, String callerIdName, String destination,String serverIp) throws GlobalCallNotFoundException {
+        CallAgent ca = createCallAgent(clientId,userId,serverIp);
         ca.connectToGlobalStream(clientId, userId, callerIdName, destination);
      	callManager.add(ca);
 	}
 
-    private CallAgent createCallAgent(String clientId, String userId) {
+    private CallAgent createCallAgent(String clientId, String userId, String serverIp) {
     	SipPeerProfile callerProfile = SipPeerProfile.copy(registeredProfile);
-        CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, userId, messagingService);
-    	ca.setClientConnectionManager(clientConnManager);
+        CallAgent ca = new CallAgent(this.clientRtpIp, sipProvider, callerProfile, confProvider, clientId, userId, messagingService,serverIp);
+        ca.setClientConnectionManager(clientConnManager);
     	ca.setCallStreamFactory(callStreamFactory);
         ca.setCallAgentObserver(this);
 
@@ -298,11 +297,10 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
                        + "userId " + userId);
     }
 
-    public void webRTCCall(String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort) throws PeerNotFoundException {
+    public void webRTCCall(String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort, String serverIp) throws PeerNotFoundException {
 
-        CallAgent ca = createCallAgent(clientId,userId);
+        CallAgent ca = createCallAgent(clientId,userId,serverIp);
         //ports and meetingId now saved in the CallAgent
-        String ip = Red5.getConnectionLocal().getHost();
         ca.setLocalVideoPort(localVideoPort);
         ca.setRemoteVideoPort(remoteVideoPort);
         ca.setMeetingId(meetingId);
@@ -339,7 +337,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 	}
 
 	@Override
-	public void handleCallAgentClosed(String clientId, String callerName, String userId, String destination, String meetingId) {
+	public void handleCallAgentClosed(String clientId, String callerName, String userId, String destination, String meetingId, String serverIp) {
         /*
          * This observer is called every time we receive a BYE from sip server.
          * This means that if we receive a bye, but there's still a CallAgent, we
@@ -352,21 +350,21 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
         log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] has been closed.",userId);
         callManager.remove(userId);
-        restartGlobalCall(clientId, callerName, userId, destination, meetingId);
+        restartGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
-    public synchronized void restartGlobalCall(String clientId, String callerName, String userId, String destination, String meetingId){
+    public synchronized void restartGlobalCall(String clientId, String callerName, String userId, String destination, String meetingId, String serverIp){
         if (callManager.get(userId)== null){ //avoids RC if another user joins the room and call createGlobalCall() in Application.java before this gets done
             log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetindId={}]",clientId, callerName, userId, destination, meetingId);
-            createGlobalCall(clientId, callerName, userId, destination, meetingId);
+            createGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
         }else log.debug("Cannot restart Global Call. There's already a global call agent for this room");
     }
 
-    public void createGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId){
+    public void createGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId, String serverIp){
         if (GlobalCall.reservePlaceToCreateGlobal(destination))
             log.debug("Global Call Recreated.");
         log.debug("GlobalCall's info exists. Remaking globalCall's call");
-        this.call(clientId, callerName, userId, destination, meetingId);
+        this.call(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
     public void startSavedVideoStreams(String voiceBridge) {

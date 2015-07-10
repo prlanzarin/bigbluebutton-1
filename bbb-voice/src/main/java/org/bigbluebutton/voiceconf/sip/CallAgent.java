@@ -104,7 +104,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public CallAgent(String sipClientRtpIp, SipProvider sipProvider, SipPeerProfile userProfile,
-		ConferenceProvider portProvider, String clientId, String userId, IMessagingService messagingService) {
+		ConferenceProvider portProvider, String clientId, String userId, IMessagingService messagingService, String serverIp) {
         this.sipProvider = sipProvider;
         this.clientRtpIp = sipClientRtpIp;
         this.userProfile = userProfile;
@@ -112,7 +112,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.clientId = clientId;
         this._userId = userId;
         this.messagingService = messagingService;
-        this.serverIp = Red5.getConnectionLocal().getHost();
+        this.serverIp = serverIp;
         this.userProfile.userID = this._userId;
         this.isGlobal = isGlobalUserId();
         this.localVideoSocket = null;
@@ -875,7 +875,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	private void notifyCallAgentObserverOnCallAgentClosed(){
 		if(callAgentObserver != null){
 			log.debug("Notifying CallAgentObserver that CallAgent with userid={} has been closed",getUserId());
-			callAgentObserver.handleCallAgentClosed(getCallId(), getCallerName(),getUserId(),getDestination(),getMeetingId());
+			callAgentObserver.handleCallAgentClosed(getCallId(), getCallerName(),getUserId(),getDestination(),getMeetingId(), getServerIp());
 		}else{
 			log.debug("Can't notify CallAgentObserver that CallAgent with userid={} has been closed. CallAgentObserver = null",getUserId());
 		}
