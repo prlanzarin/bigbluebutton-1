@@ -75,7 +75,7 @@ public class CallManager {
 
 	public CallAgent getByUserId(String userId) {
 	    //kept for compatibility
-        log.debug("Retrieving entry for the client with userId = " + userId);
+        log.debug("*Retrieving entry for the client with userId = " + userId);
 		return calls.get(userId);
 	}
 

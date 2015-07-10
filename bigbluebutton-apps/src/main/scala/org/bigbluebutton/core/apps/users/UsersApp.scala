@@ -237,6 +237,7 @@ trait UsersApp {
       outGW.send(new DisconnectUser(meetingID, msg.userId))
       
       outGW.send(new UserLeft(msg.meetingID, recorded, user))
+      sendSipPhoneLeft()
     }    
   }
 
@@ -357,11 +358,7 @@ trait UsersApp {
 		      if (meetingMuted)
             outGW.send(new MuteVoiceUser(meetingID, recorded, uvo.userID, uvo.userID, meetingMuted))      
 
-            if(!isSipVideoPresent) {
-              logger.info("Sending SipPhoneUpdate event, because now we have a sip phone in the conference")
-              isSipPhonePresent = true
-              outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
-            }
+            sendSipPhonePresent()
         }
     }
   }
@@ -400,15 +397,27 @@ trait UsersApp {
 	        userLeaving foreach (u => outGW.send(new UserLeft(msg.meetingID, recorded, u)))
 	      }        
 
-	      if(users.getPhoneUsers.isEmpty){
-	          isSipPhonePresent = false
-	          outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
-	      }
-          logger.info("Is there any phoneUser in this meeting? "+isSipPhonePresent )
+        sendSipPhoneLeft()
       }
     }    
   }
-  
+
+    def sendSipPhonePresent(){
+        if(!isSipVideoPresent) {
+            logger.info("Sending SipPhoneUpdate event, because now we have a sip phone in the conference")
+            isSipPhonePresent = true
+            outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
+        }
+    }
+
+    def sendSipPhoneLeft(){
+        if(users.getPhoneUsers.isEmpty){
+            isSipPhonePresent = false
+            outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
+        }
+        logger.info("Is there any phoneUser in this meeting? "+isSipPhonePresent )
+  }
+
   def handleVoiceUserMuted(msg: VoiceUserMuted) {
     users.getUser(msg.userId) foreach {user =>
       val talking:Boolean = if (msg.muted) false else user.voiceUser.talking
