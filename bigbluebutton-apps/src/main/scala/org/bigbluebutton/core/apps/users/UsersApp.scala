@@ -403,7 +403,7 @@ trait UsersApp {
   }
 
     def sendSipPhonePresent(){
-        if(!isSipVideoPresent) {
+        if(!isSipPhonePresent) {
             logger.info("Sending SipPhoneUpdate event, because now we have a sip phone in the conference")
             isSipPhonePresent = true
             outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
