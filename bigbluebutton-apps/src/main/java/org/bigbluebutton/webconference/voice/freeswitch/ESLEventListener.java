@@ -273,7 +273,7 @@ public class ESLEventListener implements IEslEventListener {
          */
         String callerIdName = this.getCallerIdNameFromEvent(e);
         String sipUserAgent = this.getSipUserAgentFromEvent(e);
-        if (isUnknownCaller(callerIdName) && EquipmentTypes.isValidEquipment(sipUserAgent) && !sipUserAgent.equals(""))
+        if (isUnknownCaller(callerIdName) && sipUserAgent != null && !sipUserAgent.equals("") && EquipmentTypes.isValidEquipment(sipUserAgent))
             callerIdName = getCallerIdNameFromUserAgent(e); //we might truncate this string
         return callerIdName;
     }
