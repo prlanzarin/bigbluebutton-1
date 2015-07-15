@@ -444,10 +444,19 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     
     public void startFreeswitchToBbbVideoProbe(){
       Map<String, String> probeResult = videoTranscoder.probeVideoStream();
+
       //Send to apps
       if(probeResult != null) {
-        log.debug("Sending updateSipVideoStatus [{}x{}]", probeResult.get("width"), probeResult.get("height"));
-        //messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+
+         String newWidth = probeResult.get("width");
+         String newHeight = probeResult.get("height");
+
+         if(newWidth != null && !newWidth.isEmpty() && newHeight != null && !newHeight.isEmpty()) {
+            log.debug("Sending updateSipVideoStatus [{}x{}]", probeResult.get("width"), probeResult.get("height"));
+            //messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+         }
+         else
+            log.debug("Could not send updateSipVideoStatus: failed to get the new resolution");
       }
       else {
         log.debug("Probe result is null");
