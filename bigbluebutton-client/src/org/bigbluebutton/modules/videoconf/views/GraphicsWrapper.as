@@ -233,6 +233,15 @@ package org.bigbluebutton.modules.videoconf.views
             }
         }
 
+        public function updateVideoDimensions(userId:String, w:Number, h:Number):void {
+          trace("[GraphicsWrapper::updateVideoDimensions] Setting [" + w + "x" + h + "] as the new resolution for " + userId);
+          for (var i:int = 0; i < numChildren; ++i) {
+              var item:UserGraphicHolder = getChildAt(i) as UserGraphicHolder;
+              if (item.userId == userId)
+                  item.updateVideoDimensions(w,h);
+          }
+        }
+
 /*
         override public function validateDisplayList():void {
             super.validateDisplayList();

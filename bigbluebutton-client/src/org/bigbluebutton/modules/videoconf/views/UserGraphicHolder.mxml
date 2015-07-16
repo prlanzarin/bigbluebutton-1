@@ -121,6 +121,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 setUserProperties();
             }
 
+            public function updateVideoDimensions(w:Number, h:Number):void {
+                trace("[UserGraphicHolder:updateVideoDimensions] Updating video resolution to " + w + "x" + h);
+                video.updateVideoDimensions(w,h);
+            }
+
+
             private function setUserProperties():void {
                 _username = user.name;
                 _me = user.me;
@@ -236,7 +242,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 }
             }
 
-            private function updateTalkingStatus() {
+            private function updateTalkingStatus():void {
                 if (user.talking) {
                     titleBox.setStyle("styleName", "videoToolbarBackgroundTalkingStyle");
                 } else {
