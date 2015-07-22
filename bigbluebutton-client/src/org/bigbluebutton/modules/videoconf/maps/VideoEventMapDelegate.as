@@ -512,6 +512,7 @@ package org.bigbluebutton.modules.videoconf.maps
         openAvatarWindowFor(event.webcamUserID);
       }
     }
+
     public function resumeFreeswitchVideo(event:BBBEvent):void {
        var streamName:String = event.payload.globalVideoStreamName;
        var width:String = event.payload.globalVideoStreamWidth;
@@ -536,8 +537,9 @@ package org.bigbluebutton.modules.videoconf.maps
           trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
         }
 
-        if (speakerVideoAspectChanged(width, height)){
-          updateSpeakerWindowAspect(width,height);
+        if (speakerVideoResolutionChanged(width, height)){
+          trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: updating speaker window resolution");
+          updateSpeakerWindowResolution(width,height);
         }
       }else{
         globalVideoStreamName = streamName;
@@ -545,7 +547,7 @@ package org.bigbluebutton.modules.videoconf.maps
       }
     }
 
-    public function speakerVideoAspectChanged(width:String , height: String): Boolean{
+    public function speakerVideoResolutionChanged(width:String , height: String): Boolean{
       return (width) && (height) && ((currentSpeakerVideoStreamWidth != width) || (currentSpeakerVideoStreamHeight != height));
     }
 
@@ -553,12 +555,11 @@ package org.bigbluebutton.modules.videoconf.maps
       return hasWindow("FreeSWITCH video");
     }
 
-    public function updateSpeakerWindowAspect(width: String, height: String):void{
-      trace("VideoEventMapDelegate:: Speaker's window aspect changed:"+currentSpeakerVideoStreamWidth+"x"+currentSpeakerVideoStreamHeight+" -> "+ width + "x"+ height);
+    public function updateSpeakerWindowResolution(width: String, height: String):void{
+      trace("VideoEventMapDelegate:: Speaker's window resolution changed:" + currentSpeakerVideoStreamWidth + "x" + currentSpeakerVideoStreamHeight+ " -> " + width + "x"+ height);
       currentSpeakerVideoStreamWidth = width;
       currentSpeakerVideoStreamHeight = height;
-      //closeFreeswitchVideo();
-      //startFreeswitchWindow();
+      _graphics.updateVideoDimensions("FreeSWITCH video", Number(currentSpeakerVideoStreamWidth), Number(currentSpeakerVideoStreamHeight));
     }
 
     public function startFreeswitchWindow():void {
@@ -567,7 +568,7 @@ package org.bigbluebutton.modules.videoconf.maps
       _graphics.addVideoFor("FreeSWITCH video", proxy.connection, globalVideoStreamName);
     }
 
-    public function videoModuleReady():void{
+    public function videoModuleReady():void {
       var videoModuleReady:VideoModuleBridgeEvent = new VideoModuleBridgeEvent(VideoModuleBridgeEvent.VIDEO_MODULE_READY);
       _dispatcher.dispatchEvent(videoModuleReady);
     }
