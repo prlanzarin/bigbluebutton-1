@@ -59,6 +59,8 @@ package org.bigbluebutton.modules.users.services
     private static var globalDispatcher:Dispatcher = new Dispatcher();
     private static var globalVideoStreamName:String;
     private static var isSipVideoPresent:Boolean;
+    private static var globalVideoStreamWidth:String;
+    private static var globalVideoStreamHeight:String;
     
     public function MessageReceiver() {
       _conference = UserManager.getInstance().getConference();
@@ -599,6 +601,8 @@ package org.bigbluebutton.modules.users.services
 
       isSipVideoPresent=map.isSipVideoPresent;
       globalVideoStreamName=map.sipVideoStreamName;
+      globalVideoStreamWidth=map.width;
+      globalVideoStreamHeight=map.height;
       sipVideoUpdate();
     }
 
@@ -613,6 +617,8 @@ package org.bigbluebutton.modules.users.services
 
                 videoResumed = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
                 videoResumed.payload.globalVideoStreamName = globalVideoStreamName;
+                videoResumed.payload.globalVideoStreamWidth = globalVideoStreamWidth;
+                videoResumed.payload.globalVideoStreamHeight = globalVideoStreamHeight;
                 globalDispatcher.dispatchEvent(videoResumed);
             }
             else {

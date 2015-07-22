@@ -121,5 +121,6 @@ public interface IBigBlueButtonInGW {
 
 	//Global Video
 	void setNewGlobalVideoStreamName(String meetingId, String globalVideoStreamName);
+	void updateSipVideoStatus(String meetingId, String width, String height);
 	
 }

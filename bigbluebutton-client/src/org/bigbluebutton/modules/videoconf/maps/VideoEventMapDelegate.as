@@ -79,6 +79,8 @@ package org.bigbluebutton.modules.videoconf.maps
     private var button:ToolbarPopupButton = new ToolbarPopupButton();
     private var proxy:VideoProxy;
     private var globalVideoStreamName:String;
+    private var currentSpeakerVideoStreamWidth:String; //get this from usergraphics
+    private var currentSpeakerVideoStreamHeight:String;
 
     private var _dispatcher:IEventDispatcher;
     private var _ready:Boolean = false;
@@ -510,7 +512,11 @@ package org.bigbluebutton.modules.videoconf.maps
         openAvatarWindowFor(event.webcamUserID);
       }
     }
-    public function resumeFreeswitchVideo(streamName:String):void {
+    public function resumeFreeswitchVideo(event:BBBEvent):void {
+       var streamName:String = event.payload.globalVideoStreamName;
+       var width:String = event.payload.globalVideoStreamWidth;
+       var height:String = event.payload.globalVideoStreamHeight;
+
        trace("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
        LogUtil.debug("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
 
@@ -524,15 +530,41 @@ package org.bigbluebutton.modules.videoconf.maps
         return;        
       }
 
-      if((streamName == globalVideoStreamName) && hasWindow("FreeSWITCH video")) {
-        trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
-        return;
-      }
 
-      globalVideoStreamName = streamName;
+      if(hasSpeakerWindow()){
+        if((streamName == globalVideoStreamName)) {
+          trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
+        }
+
+        if (speakerVideoAspectChanged(width, height)){
+          updateSpeakerWindowAspect(width,height);
+        }
+      }else{
+        globalVideoStreamName = streamName;
+        startFreeswitchWindow();
+      }
+    }
+
+    public function speakerVideoAspectChanged(width:String , height: String): Boolean{
+      return (width) && (height) && ((currentSpeakerVideoStreamWidth != width) || (currentSpeakerVideoStreamHeight != height));
+    }
+
+    public function hasSpeakerWindow():Boolean {
+      return hasWindow("FreeSWITCH video");
+    }
+
+    public function updateSpeakerWindowAspect(width: String, height: String):void{
+      trace("VideoEventMapDelegate:: Speaker's window aspect changed:"+currentSpeakerVideoStreamWidth+"x"+currentSpeakerVideoStreamHeight+" -> "+ width + "x"+ height);
+      currentSpeakerVideoStreamWidth = width;
+      currentSpeakerVideoStreamHeight = height;
+      //closeFreeswitchVideo();
+      //startFreeswitchWindow();
+    }
+
+    public function startFreeswitchWindow():void {
       trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
       LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName); 
-      _graphics.addVideoFor("FreeSWITCH video", proxy.connection, streamName);
+      _graphics.addVideoFor("FreeSWITCH video", proxy.connection, globalVideoStreamName);
     }
 
     public function videoModuleReady():void{

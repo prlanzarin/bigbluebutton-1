@@ -481,4 +481,8 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
   def setNewGlobalVideoStreamName(meetingId: String, videoStreamName: String) {
     bbbGW.accept(new NewGlobalVideoStreamName(meetingId, videoStreamName))
   }
+
+  def updateSipVideoStatus(meetingId: String, width: String, height: String) {
+    bbbGW.accept(new UpdateSipVideoStatus(meetingId, width,height))
+  }
 }

@@ -530,3 +530,9 @@ case class NewGlobalVideoStreamName(
     meetingID: String,
     globalVideoStreamName: String
 ) extends InMessage
+
+case class UpdateSipVideoStatus(
+    meetingID: String,
+    width: String,
+    height: String
+) extends InMessage

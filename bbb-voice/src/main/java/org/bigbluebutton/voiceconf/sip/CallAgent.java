@@ -93,6 +93,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private CallState callState;
 
+    private Map<String, String> currentVideoAspect;
+
     public String getDestination() {
         return _destination;
     }
@@ -116,6 +118,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.userProfile.userID = this._userId;
         this.isGlobal = isGlobalUserId();
         this.localVideoSocket = null;
+        this.currentVideoAspect = null;
     }
     
     public String getCallId() {
@@ -447,13 +450,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
       //Send to apps
       if(probeResult != null) {
-
-         String newWidth = probeResult.get("width");
-         String newHeight = probeResult.get("height");
+         currentVideoAspect = probeResult;
+         String newWidth = currentVideoAspect.get("width");
+         String newHeight = currentVideoAspect.get("height");
 
          if(newWidth != null && !newWidth.isEmpty() && newHeight != null && !newHeight.isEmpty()) {
-            log.debug("Sending updateSipVideoStatus [{}x{}]", probeResult.get("width"), probeResult.get("height"));
-            //messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+            log.debug("Sending updateSipVideoStatus [{}x{}]", currentVideoAspect.get("width"), currentVideoAspect.get("height"));
+            messagingService.updateSipVideoStatus(getMeetingId(),currentVideoAspect.get("width"), currentVideoAspect.get("height"));
          }
          else
             log.debug("Could not send updateSipVideoStatus: failed to get the new resolution");
@@ -880,6 +883,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	public boolean isGlobal(){
 		return this.isGlobal;
 	}
+
+    public Map<String,String> getCurrentVideoAspect(){
+        return this.currentVideoAspect;
+    }
 
 	private void notifyCallAgentObserverOnCallAgentClosed(){
 		if(callAgentObserver != null){

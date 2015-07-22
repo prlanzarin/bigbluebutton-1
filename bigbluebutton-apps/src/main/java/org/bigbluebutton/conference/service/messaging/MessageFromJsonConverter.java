@@ -37,6 +37,8 @@ public class MessageFromJsonConverter {
 					return new GetAllMeetingsRequest("the_string_is_not_used_anywhere");
 				  case GlobalVideoStreamCreated.GLOBAL_VIDEO_STREAM_CREATED_EVENT:
 						return processGlobalVideoStreamCreated(payload);
+                  case UpdateSipVideoStatus.UPDATE_SIP_VIDEO_STATUS_EVENT:
+                    return processUpdateSipVideoStatus(payload);
 				}
 			}
 		}
@@ -92,6 +94,13 @@ public class MessageFromJsonConverter {
 		String videoStreamName = payload.get(Constants.VIDEO_STREAM_NAME).getAsString();
 		return new GlobalVideoStreamCreated(meetingId, videoStreamName);
 	}
+
+    private static IMessage processUpdateSipVideoStatus(JsonObject payload) {
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        String width = payload.get(Constants.WIDTH_RATIO).getAsString();
+        String height = payload.get(Constants.HEIGHT_RATIO).getAsString();
+        return new UpdateSipVideoStatus(meetingId, width, height);
+    }
 
 	//private static IMessage processGetAllMeetings(JsonObject)
 }

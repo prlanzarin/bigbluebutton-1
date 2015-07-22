@@ -116,16 +116,16 @@ public class Service {
         log.debug("updateVideoStatus [voiceBridge={}, floorHolder={}, isVideoPresent={}]", voiceBridge, floorHolder, videoPresent);
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
-        if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge)){
-            if (videoPresent){
+        if (videoPresent){
+            if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge)){
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
+            }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
 
-                if(GlobalCall.floorHolderChanged(voiceBridge, floorHolder)) {
-                  sipPeerManager.startFreeswitchToBbbGlobalVideoProbe(peerId, globalUserId);
-                  GlobalCall.setFlooHolder(voiceBridge, floorHolder);
-                }
+            if(GlobalCall.shouldProbeGlobalVideo(voiceBridge, floorHolder)) {
+                GlobalCall.setFlooHolder(voiceBridge, floorHolder);
+                sipPeerManager.startFreeswitchToBbbGlobalVideoProbe(peerId, globalUserId);
             }
-        }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
+        }
     }
 
     public void userSharedWebcam(String userId, String streamName){

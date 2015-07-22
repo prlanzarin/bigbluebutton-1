@@ -131,7 +131,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   </EventHandlers>
 
   <EventHandlers type="{BBBEvent.FREESWITCH_VIDEO_RESUMED}">
-    <MethodInvoker generator="{VideoEventMapDelegate}" method="resumeFreeswitchVideo" arguments="{event.payload.globalVideoStreamName}"/>
+    <MethodInvoker generator="{VideoEventMapDelegate}" method="resumeFreeswitchVideo" arguments="{event}"/>
   </EventHandlers>
   
   <!-- ~~~~~~~~~~~~~~~~~~    INJECTORS     ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

@@ -221,20 +221,24 @@ public class GlobalCall {
     }
 
     public static synchronized void setFlooHolder(String voiceconf, String floorHolder){
-        log.debug("setFlooHolder: " + floorHolder);
+        log.debug("setFlooHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
         voiceConfToFloorHolder.put(voiceconf, floorHolder);
     }
 
-    public static synchronized boolean floorHolderChanged(String voiceconf, String floorHolder) {
+    public static boolean floorHolderChanged(String voiceconf, String floorHolder) {
         Boolean floorHolderChanged;
         String oldFloorHolder;
         oldFloorHolder = voiceConfToFloorHolder.get(voiceconf);
         if (oldFloorHolder == null)
           floorHolderChanged = true;
         else
-          floorHolderChanged = oldFloorHolder != floorHolder;
-        log.debug("FloorHolderChanged [voiceconf={}] ? {}",voiceconf, floorHolderChanged);
+          floorHolderChanged = !oldFloorHolder.equals(floorHolder);
+        log.debug("FloorHolderChanged [voiceconf={}] ? {} [floorHolder={}, oldFloorHolder={}]",voiceconf, floorHolderChanged,floorHolder,oldFloorHolder);
         return floorHolderChanged;
+    }
+
+    public static synchronized boolean shouldProbeGlobalVideo(String voiceconf,String floorHolder){
+        return floorHolderChanged(voiceconf,floorHolder) && isVideoPresent(voiceconf);
     }
 
     private static synchronized boolean isSipPhonePresent(String voiceconf) {

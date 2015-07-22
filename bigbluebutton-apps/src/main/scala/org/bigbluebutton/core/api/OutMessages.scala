@@ -320,6 +320,8 @@ case class SipVideoUpdated (
     isSipVideoPresent: Boolean,
     sipVideoStreamName: String,
     talkerUserId: String,
+    width: String,
+    height: String,
     version:String = Versions.V_0_0_1
 ) extends IOutMessage
 

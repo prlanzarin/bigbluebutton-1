@@ -20,6 +20,8 @@ class VoiceClientMessageSender(service: ConnectionInvokerService) extends OutMes
     args.put("isSipVideoPresent", msg.isSipVideoPresent:java.lang.Boolean)
     args.put("sipVideoStreamName", msg.sipVideoStreamName)
     args.put("talkerUserId", msg.talkerUserId)
+    args.put("width", msg.width)
+    args.put("height", msg.height)
 
     val message = new java.util.HashMap[String, Object]()
     val gson = new Gson()

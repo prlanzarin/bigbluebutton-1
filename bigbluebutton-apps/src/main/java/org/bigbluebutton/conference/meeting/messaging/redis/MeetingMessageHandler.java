@@ -15,6 +15,7 @@ import org.bigbluebutton.conference.service.messaging.UserDisconnectedFromGlobal
 import org.bigbluebutton.conference.service.messaging.ValidateAuthTokenMessage;
 import org.bigbluebutton.conference.service.messaging.GetAllMeetingsRequest;
 import org.bigbluebutton.conference.service.messaging.GlobalVideoStreamCreated;
+import org.bigbluebutton.conference.service.messaging.UpdateSipVideoStatus;
 import org.bigbluebutton.conference.service.messaging.redis.MessageHandler;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 import org.red5.logging.Red5LoggerFactory;
@@ -104,6 +105,11 @@ public class MeetingMessageHandler implements MessageHandler {
 					log.info("Received GlobalVideoStreamCreated [ meetingId: {} globalVideoStreamName: {} ].",streamCreatedMessage.meetingId,globalVideoStreamName);
 					bbbGW.setNewGlobalVideoStreamName(streamCreatedMessage.meetingId, globalVideoStreamName);
 				}
+                else if (msg instanceof UpdateSipVideoStatus) {
+                    UpdateSipVideoStatus udpateSipVideoStatus = (UpdateSipVideoStatus) msg;
+                    log.info("Received UpdateSipVideoStatus [ meetingId: {} width: {} height: {} ].", udpateSipVideoStatus.meetingId, udpateSipVideoStatus.width , udpateSipVideoStatus.height);
+                    bbbGW.updateSipVideoStatus(udpateSipVideoStatus.meetingId, udpateSipVideoStatus.width , udpateSipVideoStatus.height);
+                }
 			}
 		} else if (channel.equalsIgnoreCase(MessagingConstants.TO_SYSTEM_CHANNEL)) {
 			IMessage msg = MessageFromJsonConverter.convert(message);

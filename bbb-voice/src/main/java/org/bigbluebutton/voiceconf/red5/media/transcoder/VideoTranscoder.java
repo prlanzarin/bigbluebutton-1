@@ -25,6 +25,8 @@ public class VideoTranscoder {
     private String remoteVideoPort;
     private String sdpPath;
     private VideoTranscoderObserver observer;
+    private String globalVideoWidth = "640";
+    private String globalVideoHeight = "480";
 
     public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;
@@ -81,6 +83,7 @@ public class VideoTranscoder {
                 ffmpeg.setMaxKeyFrameInterval("10");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setAnalyzeDuration("10000"); // 10ms
+                ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
                 log.debug("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
@@ -96,7 +99,16 @@ public class VideoTranscoder {
                 ffmpeg.setFormat("flv");
                 ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
-                ffmpeg.addCustomParameter("-q:v", "1");
+                ffmpeg.setCodec("libx264");
+                ffmpeg.setPreset("ultrafast");
+                ffmpeg.setProfile("baseline");
+                ffmpeg.setAnalyzeDuration("10000"); // 10ms
+                //ffmpeg.addCustomParameter("-q:v", "1");
+                ffmpeg.setMaxKeyFrameInterval("30"); //2*fps. 1 key frame on each 2s
+                ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
+                ffmpeg.addCustomParameter("-crf", "30");
+                ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
+                ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=15");
                 log.debug("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;

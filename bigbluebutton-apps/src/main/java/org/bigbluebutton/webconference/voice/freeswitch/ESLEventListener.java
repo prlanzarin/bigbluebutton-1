@@ -241,10 +241,6 @@ public class ESLEventListener implements IEslEventListener {
         }
 	}
 
-    private String getCallerIdNameFromUserAgent(EslEvent event) {
-        return getSipUserAgentFromEvent(event);
-    }
-
     private boolean isUnknownCaller(String callerIdName) {
         return callerIdName.equals("unknown");
     }
@@ -274,7 +270,7 @@ public class ESLEventListener implements IEslEventListener {
         String callerIdName = this.getCallerIdNameFromEvent(e);
         String sipUserAgent = this.getSipUserAgentFromEvent(e);
         if (isUnknownCaller(callerIdName) && sipUserAgent != null && !sipUserAgent.equals("") && EquipmentTypes.isValidEquipment(sipUserAgent))
-            callerIdName = getCallerIdNameFromUserAgent(e); //we might truncate this string
+            callerIdName = sipUserAgent; //we might truncate this string
         return callerIdName;
     }
 
