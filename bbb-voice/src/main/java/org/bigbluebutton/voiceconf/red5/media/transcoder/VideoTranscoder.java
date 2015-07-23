@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.bigbluebutton.voiceconf.sip.FFProbeCommand;
 import org.bigbluebutton.voiceconf.sip.FFmpegCommand;
+import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
 import org.red5.app.sip.codecs.H264Codec;
 import org.red5.logging.Red5LoggerFactory;
@@ -25,8 +26,8 @@ public class VideoTranscoder {
     private String remoteVideoPort;
     private String sdpPath;
     private VideoTranscoderObserver observer;
-    private String globalVideoWidth = "640";
-    private String globalVideoHeight = "480";
+    private String globalVideoWidth = GlobalCall.getGlobalVideoWidth();
+    private String globalVideoHeight = GlobalCall.getGlobalVideoHeight();
 
     public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;

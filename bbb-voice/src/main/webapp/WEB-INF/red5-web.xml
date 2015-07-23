@@ -78,7 +78,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<property name="messagingService" ref="messagingService"/>
 		
 	</bean>
-	
+
+	<bean id="GlobalCall" class="org.bigbluebutton.voiceconf.sip.GlobalCall">
+		<property name="sipVideoResolution" value="${bbb.sip.app.sip-video-resolution}" />
+	</bean>
+
 	<bean id="clientConnectionManager" class="org.bigbluebutton.voiceconf.red5.ClientConnectionManager"/>
 
   <import resource="bbb-redis-pool.xml"/>

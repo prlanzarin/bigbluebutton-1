@@ -23,6 +23,9 @@ import org.slf4j.Logger;
 
 public class GlobalCall {
     private static final Logger log = Red5LoggerFactory.getLogger( GlobalCall.class, "sip" );
+    private static final String LOW_QUALITY = "160x120";
+    private static final String MEDIUM_QUALITY = "320x240";
+    private static final String HIGH_QUALITY = "640x480";
 
     private static Set<String> globalCalls = new HashSet<String>();
     private static Map<String,String> roomToAudioStreamMap = new ConcurrentHashMap<String, String>();
@@ -42,6 +45,9 @@ public class GlobalCall {
     private static OpenOption[] fileOptions = new OpenOption[] {StandardOpenOption.CREATE,StandardOpenOption.WRITE};
 
     private static boolean sipVideoEnabled = false;
+
+    public static String sipVideoWidth;
+    public static String sipVideoHeight;
 
     public static synchronized boolean reservePlaceToCreateGlobal(String roomName) {
         if (globalCalls.contains(roomName)) {
@@ -257,5 +263,42 @@ public class GlobalCall {
     public static void setSipVideoEnabled(boolean flag){
         log.debug("Setting sip-video status: {} ",flag?"Enabled":"Disabled");
         sipVideoEnabled = flag;
+    }
+
+    private void validateResolution(String resolution) {
+        log.debug("Validating sip video resolution: {}", resolution);
+        switch(resolution) {
+            case LOW_QUALITY:
+            case MEDIUM_QUALITY:
+            case HIGH_QUALITY: parseResolution(resolution);
+                               break;
+            //using the default resolution
+            default: parseResolution(MEDIUM_QUALITY);
+        }
+    }
+
+    private void parseResolution(String resolution) {
+        String[] dimensions = resolution.split("x");
+        sipVideoWidth = dimensions[0];
+        sipVideoHeight = dimensions[1];
+        log.debug("Sip Video Resolution is {}x{}", sipVideoWidth, sipVideoHeight);
+    }
+
+    public static String getGlobalVideoWidth() {
+        log.debug("Getting sip video width: {} (Resolution is {}x{})", sipVideoWidth, sipVideoWidth, sipVideoHeight);
+        return sipVideoWidth;
+    }
+
+    public static String getGlobalVideoHeight() {
+        log.debug("Getting sip video heigth: {} (Resolution is {}x{})", sipVideoHeight, sipVideoWidth, sipVideoHeight);
+        return sipVideoHeight;
+    }
+
+    public void setSipVideoResolution(String resolution) {
+        validateResolution(resolution);
+    }
+
+    public void setSipVideoHeight(String height) {
+        this.sipVideoHeight = height;
     }
 }
