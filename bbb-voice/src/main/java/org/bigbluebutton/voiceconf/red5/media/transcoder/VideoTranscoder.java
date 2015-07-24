@@ -147,6 +147,9 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     }
 
     public synchronized boolean restart(String streamName){
+        /*
+         * It doesn't instantiate a new processMonitor, but uses the same reference, to restart the transcoder
+         */
         if ((ffmpegProcessMonitor != null) && (ffmpeg != null)){
             switch(type){
                 case TRANSCODE_RTMP_TO_RTP:

@@ -199,7 +199,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     		notifyListenersOfOnCallClosed();
     	} else {
             closeAudioStream();
-            closeVideoStream();
+            stopVideoTranscoder();
     		if (call != null) call.hangup();
     	}
     	callState = CallState.UA_IDLE; 
@@ -326,34 +326,40 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     }
 
-    private boolean createVideoStream() {
-
-        //Starting FreeswitchToBbb Video Stream - this method is called only by global stream
-        //this method can be called createGlobalVideoStream
-        try {
-            SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
-            String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
-            GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
-            String sdpPath = GlobalCall.getSdpVideoPath(getDestination());
-            setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() +"_"+System.currentTimeMillis());
-
-            // Free local port before starting ffmpeg
-            localVideoSocket.close();
-
-            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
-                    sdpPath,getVideoStreamName(),getMeetingId(),getServerIp());
-            videoTranscoder.setVideoTranscoderObserver(this);
-            videoTranscoder.start();
-            //videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
-        } catch (Exception e) {
-            log.debug("Failed to start FFMPEG for global video (fs->bbb) stream");
-            e.printStackTrace();
-        }
-
-        return false;
+    private synchronized void beginGlobalVideoTranscoding() {
+        if (videoTranscoder == null){
+            try {
+                prepareGlobalVideoTranscoder();
+                setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() +"_"+System.currentTimeMillis());
+                // Free local port before starting ffmpeg
+                localVideoSocket.close();
+                startGlobalVideoTranscoder();
+                //videoCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
+                messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+            } catch (Exception e) {
+                log.debug("Failed to start FFMPEG for global video (fs->bbb) stream");
+                e.printStackTrace();
+            }
+        }else
+            log.debug("No need to start User's Video Transcoder [uid={}], it is already running.",getUserId());
     }
 
-        
+    private void prepareGlobalVideoTranscoder(){
+        SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
+        String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
+        GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
+    }
+
+    private synchronized void startGlobalVideoTranscoder(){
+        if (videoTranscoder == null){
+            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
+                    GlobalCall.getSdpVideoPath(getDestination()),getVideoStreamName(),getMeetingId(),getServerIp());
+            videoTranscoder.setVideoTranscoderObserver(this);
+            videoTranscoder.start();
+        }else
+            log.debug("No need to start Global Video Transcoder [uid={}], it is already running.",getUserId());
+    }
+
    public void startBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
     	try {
 			audioCallStream.startBbbToFreeswitchStream(broadcastStream, scope);
@@ -406,9 +412,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         	// Free local port before starting ffmpeg
         	localVideoSocket.close();
-            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
-            videoTranscoder.setVideoTranscoderObserver(this);
-            videoTranscoder.start();
+            startUserVideoTranscoder();
 
         } catch (Exception e) {
             log.debug("Exception when starting video transcoder [UserID={} , Listeonly={}]",getUserId(),isListeningToGlobal());
@@ -417,7 +421,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     public void stopBbbToFreeswitchFlashVideoStream() {
-        closeVideoStream();
+        stopVideoTranscoder();
     }
     
     public void startBbbToFreeswitchWebRTCVideoStream(){
@@ -427,21 +431,25 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
         //start webRTCVideoStream
         log.debug("{} is requesting to send video through webRTC. " + "[uid=" + getUserId() + "]");
-        videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
-        videoTranscoder.setVideoTranscoderObserver(this);
-        videoTranscoder.start();
+        startUserVideoTranscoder();
     }
 
+    public synchronized void startUserVideoTranscoder(){
+        if (videoTranscoder == null){
+            videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+            videoTranscoder.setVideoTranscoderObserver(this);
+            videoTranscoder.start();
+        }else
+            log.debug("No need to start User's Video Transcoder [uid={}], it is already running.",getUserId());
+    }
+
+
     public void stopBbbToFreeswitchWebRTCVideoStream(){
-        if (videoTranscoder != null) {
-            videoTranscoder.stop();
-            videoTranscoder=null;
-        }
+        stopVideoTranscoder();
     }
 
     public void startFreeswitchToBbbVideoStream(){
-       createVideoStream();
-       messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+       beginGlobalVideoTranscoding();
        //onCallStreamStarted();
     }
     
@@ -452,7 +460,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public void stopFreeswitchToBbbGlobalVideoStream(){
-    	closeVideoStream();
+        stopVideoTranscoder();
     }
 
     private void closeAudioStream() {
@@ -465,7 +473,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
 
-    private void closeVideoStream(){
+    private synchronized void stopVideoTranscoder(){
       /*
        * closes videoTranscoder
        */
@@ -483,7 +491,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 messagingService.globalVideoStreamCreated(getMeetingId(),"");
             }
         }else{
-            log.debug("Can't shutdown VIDEO transcoder: already NULL");
+            log.debug("No need to stop Video Transcoder [uid={}], it already stopped.",getUserId());
         }
     }
 
@@ -688,7 +696,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
         closeAudioStream();
-        closeVideoStream();
+        stopVideoTranscoder();
         notifyCallAgentObserverOnCallAgentClosed();
 
         // Reset local sdp for next call.
@@ -709,7 +717,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
         closeAudioStream();
-        closeVideoStream();
+        stopVideoTranscoder();
 
     }
 
@@ -803,31 +811,28 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }else restartUserTranscoder();
     }
 
-    public void restartGlobalTranscoder(){
-        if (videoTranscoder == null){
-            log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
-            return;
-        }
-
-        setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
-        if(videoTranscoder.restart(getVideoStreamName())){
-            log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
-            messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+    public synchronized void restartGlobalTranscoder(){
+        if (videoTranscoder != null){
+            setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
+            if(videoTranscoder.restart(getVideoStreamName())){
+                log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
+                messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
+            }else
+                log.debug("No need to restart Global Video Transcoder, it already restarted");
         }else
-            log.debug("No need to restart Global Video Transcoder, it already restarted");
+            log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
     }
 
-    public void restartUserTranscoder(){
-        if (videoTranscoder == null){
+    public synchronized void restartUserTranscoder(){
+        if (videoTranscoder != null){
+            videoTranscoder.restart("");
+        }else
             log.debug("User's Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
-            return;
-        }
-        videoTranscoder.restart("");
     }
     @Override
     public void handleTranscodingFinishedWithSuccess() {
         //called by ProcessMonitor when successfully finished
-        closeVideoStream();
+        stopVideoTranscoder();
         if(isGlobalStream()){
             log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
         }else log.debug("Transcoder for user [uid={}] finished with success.",getUserId());
