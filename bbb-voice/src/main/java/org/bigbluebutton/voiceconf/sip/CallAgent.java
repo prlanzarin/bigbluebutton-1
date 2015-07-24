@@ -93,7 +93,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private CallState callState;
 
-    private Map<String, String> currentVideoAspect;
+    private Map<String, String> currentVideoProbe;
 
     public String getDestination() {
         return _destination;
@@ -118,7 +118,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.userProfile.userID = this._userId;
         this.isGlobal = isGlobalUserId();
         this.localVideoSocket = null;
-        this.currentVideoAspect = null;
+        this.currentVideoProbe = null;
     }
     
     public String getCallId() {
@@ -446,23 +446,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
     
     public void startFreeswitchToBbbVideoProbe(){
-      Map<String, String> probeResult = videoTranscoder.probeVideoStream();
-
-      //Send to apps
-      if(probeResult != null) {
-         currentVideoAspect = probeResult;
-         String newWidth = currentVideoAspect.get("width");
-         String newHeight = currentVideoAspect.get("height");
-
-         if(newWidth != null && !newWidth.isEmpty() && newHeight != null && !newHeight.isEmpty()) {
-            log.debug("Sending updateSipVideoStatus [{}x{}]", currentVideoAspect.get("width"), currentVideoAspect.get("height"));
-            messagingService.updateSipVideoStatus(getMeetingId(),currentVideoAspect.get("width"), currentVideoAspect.get("height"));
-         }
-         else
-            log.debug("Could not send updateSipVideoStatus: failed to get the new resolution");
-      }
-      else {
-        log.debug("Probe result is null");
+      if(videoTranscoder != null){
+          videoTranscoder.probeVideoStream();
       }
     }
 
@@ -812,32 +797,32 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     @Override
-    public void handleTranscodingRestarted() {
+    public void handleTranscodingFinishedUnsuccessfully() {
         if(isGlobalStream()){
-            restartGlobalTranscoder(videoTranscoder);
-        }else restartUserTranscoder(videoTranscoder);
+            restartGlobalTranscoder();
+        }else restartUserTranscoder();
     }
 
-    public void restartGlobalTranscoder(VideoTranscoder vc){
-        if (vc == null){
+    public void restartGlobalTranscoder(){
+        if (videoTranscoder == null){
             log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
             return;
         }
 
         setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
-        if(vc.restart(getVideoStreamName())){
+        if(videoTranscoder.restart(getVideoStreamName())){
             log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
             messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
         }else
             log.debug("No need to restart Global Video Transcoder, it already restarted");
     }
 
-    public void restartUserTranscoder(VideoTranscoder vc){
-        if (vc == null){
+    public void restartUserTranscoder(){
+        if (videoTranscoder == null){
             log.debug("User's Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
             return;
         }
-        vc.restart("");
+        videoTranscoder.restart("");
     }
     @Override
     public void handleTranscodingFinishedWithSuccess() {
@@ -846,6 +831,26 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if(isGlobalStream()){
             log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
         }else log.debug("Transcoder for user [uid={}] finished with success.",getUserId());
+    }
+
+    @Override
+    public void handleVideoProbingFinishedWithSuccess(Map<String,String> ffprobeResult) {
+        //Send to apps
+        if(ffprobeResult != null) {
+           currentVideoProbe = ffprobeResult;
+           String newWidth = currentVideoProbe.get("width");
+           String newHeight = currentVideoProbe.get("height");
+
+           if(newWidth != null && !newWidth.isEmpty() && newHeight != null && !newHeight.isEmpty()) {
+              log.debug("Sending updateSipVideoStatus [{}x{}]", currentVideoProbe.get("width"), currentVideoProbe.get("height"));
+              messagingService.updateSipVideoStatus(getMeetingId(),currentVideoProbe.get("width"), currentVideoProbe.get("height"));
+           }
+           else
+              log.debug("Could not send updateSipVideoStatus: failed to get the new resolution");
+        }
+        else {
+          log.debug("Could not send updateSipVideoStatus: Probe result is null.");
+        }
     }
 
 	public void setLocalVideoPort(String localVideoPort){
@@ -885,7 +890,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 	}
 
     public Map<String,String> getCurrentVideoAspect(){
-        return this.currentVideoAspect;
+        return this.currentVideoProbe;
     }
 
 	private void notifyCallAgentObserverOnCallAgentClosed(){
@@ -896,4 +901,5 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 			log.debug("Can't notify CallAgentObserver that CallAgent with userid={} has been closed. CallAgentObserver = null",getUserId());
 		}
 	}
+
 }

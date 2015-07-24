@@ -8,7 +8,6 @@ import org.red5.logging.Red5LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
-import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
 
 
 public class ProcessMonitor implements Runnable {
@@ -16,6 +15,7 @@ public class ProcessMonitor implements Runnable {
 
     private String[] command;
     private Process process;
+    private String name;
     private static final int EXIT_WITH_SUCCESS_CODE = 0;
     private static final int FATAL_ERROR_CODE = 128;
     private static final int EXIT_WITH_SIGKILL_CODE = FATAL_ERROR_CODE + 9;
@@ -24,13 +24,14 @@ public class ProcessMonitor implements Runnable {
     ProcessStream errorStreamMonitor;
 
     private Thread thread = null;
-    private VideoTranscoderObserver observer;
+    private ProcessMonitorObserver observer;
 
-    public ProcessMonitor(String[] command) {
+    public ProcessMonitor(String[] command,String name) {
         this.command = command;
         this.process = null;
         this.inputStreamMonitor = null;
         this.errorStreamMonitor = null;
+        this.name = name;
     }
 
     public String toString() {
@@ -52,7 +53,7 @@ public class ProcessMonitor implements Runnable {
     }
     public void run() {
         try {
-            log.debug("Creating thread to execute FFmpeg");
+            log.debug("Creating thread to execute {}",this.name);
             log.debug("Executing: " + this.toString());
             this.process = Runtime.getRuntime().exec(this.command);
 
@@ -91,30 +92,30 @@ public class ProcessMonitor implements Runnable {
         int ret = this.process.exitValue();
 
         if (acceptableExitCode(ret)){
-            log.debug("Exiting thread that executes FFmpeg. Exit value: "+ ret);
-            notifyVideoTranscoderObserverOnFinished();
+            log.debug("Exiting thread that executes {}. Exit value: {} ",this.name,ret);
+            notifyProcessMonitorObserverOnFinished();
         }
         else{
-            log.debug("Exiting thread that executes FFmpeg. Exit value: "+ ret);
-            notifyVideoTranscoderObserverOnRestart();
+            log.debug("Exiting thread that executes {}. Exit value: {}",this.name,ret);
+            notifyProcessMonitorObserverOnFinishedUnsuccessfully();
         }
     }
 
-    private void notifyVideoTranscoderObserverOnRestart() {
+    private void notifyProcessMonitorObserverOnFinishedUnsuccessfully() {
         if(observer != null){
-            log.debug("Notifying VideoTranscoder to restart");
-            observer.handleTranscodingRestarted();
+            log.debug("Notifying ProcessMonitorObserver that process finished unsuccessfully");
+            observer.handleProcessFinishedUnsuccessfully(this.name,inputStreamMonitor.getOutput());
         }else {
-            log.debug("Cannot notify VideoTranscoder to restart: VideoTranscoderObserver null");
+            log.debug("Cannot notify ProcessMonitorObserver that process finished unsuccessfully: ProcessMonitorObserver null");
         }
     }
 
-    private void notifyVideoTranscoderObserverOnFinished() {
+    private void notifyProcessMonitorObserverOnFinished() {
         if(observer != null){
-            log.debug("Notifying VideoTranscoderObserver that FFmpeg successfully finished");
-            observer.handleTranscodingFinishedWithSuccess();
+            log.debug("Notifying ProcessMonitorObserver that {} successfully finished",this.name);
+            observer.handleProcessFinishedWithSuccess(this.name,inputStreamMonitor.getOutput());
         }else {
-            log.debug("Cannot notify VideoTranscoderObserver that FFmpeg finished: VideoTranscoderObserver null");
+            log.debug("Cannot notify ProcessMonitorObserver that {} finished: ProcessMonitorObserver null",this.name);
         }
     }
 
@@ -138,7 +139,7 @@ public class ProcessMonitor implements Runnable {
         }
 
         if(this.process != null) {
-            log.debug("Closing FFmpeg process");
+            log.debug("Closing {} process",this.name);
             this.process.destroy();
             this.process = null;
         }
@@ -149,9 +150,9 @@ public class ProcessMonitor implements Runnable {
         log.debug("ProcessMonitor successfully finished");
     }
 
-    public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
+    public void setProcessMonitorObserver(ProcessMonitorObserver observer){
         if (observer==null){
-            log.debug("Cannot assign observer: VideoTranscoderObserver null");
+            log.debug("Cannot assign observer: ProcessMonitorObserver null");
         }else this.observer = observer;
     }
 
@@ -165,8 +166,7 @@ public class ProcessMonitor implements Runnable {
             return pid;
         } catch (IllegalArgumentException | IllegalAccessException
                 | NoSuchFieldException | SecurityException e) {
-            // TODO Auto-generated catch block
-            log.debug("Error when obtaining ffmpeg PID");
+            log.debug("Error when obtaining {} PID",this.name);
             return -1;
         }
     }
@@ -175,8 +175,7 @@ public class ProcessMonitor implements Runnable {
         try {
             Runtime.getRuntime().exec("kill -9 "+ getPid());
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            log.debug("Failed to force-kill ffmpeg process");
+            log.debug("Failed to force-kill {} process",this.name);
             e.printStackTrace();
         }
     }

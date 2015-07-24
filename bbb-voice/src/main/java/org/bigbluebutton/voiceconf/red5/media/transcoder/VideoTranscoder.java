@@ -1,22 +1,29 @@
 package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
-import java.util.Map;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bigbluebutton.voiceconf.sip.FFProbeCommand;
 import org.bigbluebutton.voiceconf.sip.FFmpegCommand;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.bigbluebutton.voiceconf.sip.ProcessMonitor;
+import org.bigbluebutton.voiceconf.sip.ProcessMonitorObserver;
 import org.red5.app.sip.codecs.H264Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
-public class VideoTranscoder {
+public class VideoTranscoder implements ProcessMonitorObserver {
     private static Logger log = Red5LoggerFactory.getLogger(VideoTranscoder.class, "sip");
 
     public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP};
     private Type type;
-    private ProcessMonitor processMonitor;
+    private ProcessMonitor ffmpegProcessMonitor;
+    private ProcessMonitor ffprobeProcessMonitor;
     private FFmpegCommand ffmpeg;
     private String videoStreamName;
     private String outputLive;
@@ -28,6 +35,8 @@ public class VideoTranscoder {
     private VideoTranscoderObserver observer;
     private String globalVideoWidth = GlobalCall.getGlobalVideoWidth();
     private String globalVideoHeight = GlobalCall.getGlobalVideoHeight();
+    public static final String FFMPEG_NAME = "FFMPEG";
+    public static final String FFPROBE_NAME = "FFPROBE";
 
     public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;
@@ -52,7 +61,7 @@ public class VideoTranscoder {
     }
 
     public synchronized boolean start(){
-        if ((processMonitor != null) &&(ffmpeg != null)) {
+        if ((ffmpegProcessMonitor != null) &&(ffmpeg != null)) {
             log.debug("There's already an FFMPEG process running for this transcoder. No need to start a new one");
             return false;
         }
@@ -118,38 +127,38 @@ public class VideoTranscoder {
         }
 
         if(command != null){
-            this.processMonitor = new ProcessMonitor(command);
-            processMonitor.setVideoTranscoderObserver(observer);
-            processMonitor.start();
+            this.ffmpegProcessMonitor = new ProcessMonitor(command,FFMPEG_NAME);
+            ffmpegProcessMonitor.setProcessMonitorObserver(this);
+            ffmpegProcessMonitor.start();
             return true;
         }
         return false;
     }
 
     public synchronized boolean stop(){
-        if (processMonitor != null) {
+        if (ffmpegProcessMonitor != null) {
             if(type == Type.TRANSCODE_RTP_TO_RTMP)
-                processMonitor.forceDestroy();
-            else processMonitor.destroy();
-            processMonitor = null;
+                ffmpegProcessMonitor.forceDestroy();
+            else ffmpegProcessMonitor.destroy();
+            ffmpegProcessMonitor = null;
             ffmpeg = null;
         }else log.debug("There's no FFMPEG process running for this transcoder. No need to destroy it");
         return true;
     }
 
     public synchronized boolean restart(String streamName){
-        if ((processMonitor != null) && (ffmpeg != null)){
+        if ((ffmpegProcessMonitor != null) && (ffmpeg != null)){
             switch(type){
                 case TRANSCODE_RTMP_TO_RTP:
                     //user's video stream : parameters are the same
                     log.debug("Restarting the user's video stream: "+this.videoStreamName);
-                    processMonitor.restart();
+                    ffmpegProcessMonitor.restart();
                     return true;
                 case TRANSCODE_RTP_TO_RTMP:
                     //global's video stream : stream name got a new timestamp
                     updateGlobalStreamName(streamName);
                     log.debug("Restarting the global's video stream: "+this.videoStreamName);
-                    processMonitor.restart();
+                    ffmpegProcessMonitor.restart();
                     return true;
                 default:
                     log.debug("Video Transcoder error: Unknown TRANSCODING TYPE");
@@ -162,21 +171,28 @@ public class VideoTranscoder {
         }
     }
 
-    public Map<String, String> probeVideoStream(){
-        log.debug("Preparing to run probe command");
-        Map<String, String> probeResult = null;
-        if (processMonitor != null) {
-          try {
-            FFProbeCommand probeCommand = new FFProbeCommand(outputLive);
-            probeResult = probeCommand.run();
-          }
-          catch(IOException ex) {
-            log.debug("Failed to probe video stream [" + outputLive + "]");
-          }
+    public synchronized void probeVideoStream(){
+        if (ffmpegProcessMonitor != null) {
+            log.debug("Preparing to run probe command");
+            FFProbeCommand ffprobe = new FFProbeCommand(outputLive);
+            String command[];
+
+            ffprobe.setFFprobepath("/usr/local/bin/ffprobe");
+            ffprobe.setInput(outputLive);
+            ffprobe.setAnalyzeDuration("1");
+            ffprobe.setShowStreams();
+            ffprobe.setLoglevel("quiet");
+            ffprobe.getFFprobeCommand(true);
+
+            command = ffprobe.getFFprobeCommand(true);
+            if(command != null){
+                this.ffprobeProcessMonitor = new ProcessMonitor(command,FFPROBE_NAME);
+                ffprobeProcessMonitor.setProcessMonitorObserver(this);
+                ffprobeProcessMonitor.start();
+            }
         } else {
           log.debug("There's no FFMPEG process running for this transcoder. Stream can't be analyzed");
         }
-        return probeResult;
     }
 
     private void updateGlobalStreamName(String streamName){
@@ -187,10 +203,63 @@ public class VideoTranscoder {
                 + this.videoStreamName+" live=1";
         ffmpeg.setOutput(outputLive); //update ffmpeg's output
         newCommand = ffmpeg.getFFmpegCommand(true);
-        processMonitor.setCommand(newCommand); //update ffmpeg command
+        ffmpegProcessMonitor.setCommand(newCommand); //update ffmpeg command
     }
 
     public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
         this.observer = observer;
+    }
+
+    @Override
+    public void handleProcessFinishedUnsuccessfully(String processMonitorName,String processOutput) {
+        if ((processMonitorName == null)|| processMonitorName.isEmpty()){
+            log.debug("Can't handle process process monitor finishing unsuccessfully: UNKNOWN PROCESS");
+            return;
+        }
+
+        if (FFMPEG_NAME.equals(processMonitorName)){
+            observer.handleTranscodingFinishedUnsuccessfully();
+        }else if (FFPROBE_NAME.equals(processMonitorName)){
+            log.debug("Failed to probe video stream [{}]",outputLive);
+        }
+    }
+
+    @Override
+    public void handleProcessFinishedWithSuccess(String processMonitorName, String processOutput) {
+        if ((processMonitorName == null)|| processMonitorName.isEmpty()){
+            log.debug("Can't handle process process monitor finishing with success: UNKNOWN PROCESS");
+            return;
+        }
+
+        if (FFMPEG_NAME.equals(processMonitorName)){
+            observer.handleTranscodingFinishedWithSuccess();
+        }
+        else if (FFPROBE_NAME.equals(processMonitorName)){
+            String ffprobeOutput = processOutput;
+            log.debug("{} finished with success with the output: {}",processMonitorName,processOutput);
+            Map<String,String> ffprobeData = parseFFprobeOutput(ffprobeOutput);
+            observer.handleVideoProbingFinishedWithSuccess(ffprobeData);
+        }else{
+            log.debug("Can't handle process monitor finishing with success: UNKNOWN PROCESS");
+        }
+    }
+
+    public Map<String,String> parseFFprobeOutput(String ffprobeOutput){
+        Pattern pattern = Pattern.compile("(.*)=(.*)");
+        Map<String, String> ffprobeResult = new HashMap<String, String>();
+
+        BufferedReader buf = new BufferedReader(new StringReader(ffprobeOutput));
+        String line = null;
+        try {
+            while( (line=buf.readLine()) != null){
+                Matcher matcher = pattern.matcher(line);
+                if(matcher.matches()) {
+                    ffprobeResult.put(matcher.group(1), matcher.group(2));
+                }
+            }
+        } catch (IOException e){
+            log.debug("Error when parsing FFprobe's output");
+        }
+        return ffprobeResult;
     }
 }

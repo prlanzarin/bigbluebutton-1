@@ -14,11 +14,13 @@ public class ProcessStream implements Runnable {
     private InputStream stream;
     private Thread thread;
     private String type;
+    private String output;
 
     ProcessStream(InputStream stream, String type) {
         if(stream != null)
             this.stream = stream;
             this.type = type;
+            this.output = "";
     }
 
     public void run() {
@@ -26,8 +28,10 @@ public class ProcessStream implements Runnable {
             String line;
             InputStreamReader isr = new InputStreamReader(this.stream);
             BufferedReader ibr = new BufferedReader(isr);
+            output = "";
             while ((line = ibr.readLine()) != null) {
-                log.debug("[{}]"+line,type);
+                //log.debug("[{}]"+line,type);
+                output+=line+"\n";
             }
 
             close();
@@ -54,5 +58,9 @@ public class ProcessStream implements Runnable {
         catch(IOException ioe) {
             log.debug("IOException");
         }
+    }
+
+    public String getOutput(){
+        return this.output;
     }
 }

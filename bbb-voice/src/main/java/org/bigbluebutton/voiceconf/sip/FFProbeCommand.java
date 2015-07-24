@@ -2,6 +2,9 @@ package org.bigbluebutton.voiceconf.sip;
 
 import java.lang.Runtime;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.regex.Pattern;
@@ -18,42 +21,79 @@ public class FFProbeCommand {
 
   private static Logger log = Red5LoggerFactory.getLogger(ProcessMonitor.class, "sip");
   private String input;
+  private String[] command;
+
+    private String ffprobePath;
+    private HashMap args;
+
+    /* Analyze duration is a special parameter that MUST come before the input */
+    private String analyzeDuration;
 
   public FFProbeCommand(String input) {
     this.input = input;
+    this.command = null;
+    this.ffprobePath = null;
+    this.args = new HashMap();
   }
 
-  public Map<String, String> run() throws IOException {
-    String[] command = {
-      "/usr/local/bin/ffprobe",
-      "-select_streams", "v:0",
-      "-show_streams",
-      "-analyzeduration", "1",
-      "-loglevel", "quiet",
-      "-i", this.input
-    };
+    public String[] getFFprobeCommand(boolean shouldBuild){
+        if(shouldBuild)
+            buildFFprobeCommand();
 
-    Process process = Runtime.getRuntime().exec(command);
-
-    if(process == null) {
-       log.debug("FFProbe: process is null");
-       return null;
+        return this.command;
     }
 
-    BufferedReader stdOutput = new BufferedReader(
-            new InputStreamReader(process.getInputStream()));
+    public void buildFFprobeCommand() {
+        List comm = new ArrayList<String>();
 
-    Pattern pattern = Pattern.compile("(.*)=(.*)");
-    Map<String, String> result = new HashMap<String, String>();
+        if(this.ffprobePath == null)
+            this.ffprobePath = "/usr/local/bin/ffprobe";
 
-    String line;
-    while ((line = stdOutput.readLine()) != null) {
-      Matcher matcher = pattern.matcher(line);
-      if(matcher.matches()) {
-        result.put(matcher.group(1), matcher.group(2));
-      }
+        comm.add(this.ffprobePath);
+
+        /* Analyze duration MUST come before the input */
+        if(analyzeDuration != null && !analyzeDuration.isEmpty()) {
+            comm.add("-analyzeduration");
+            comm.add(analyzeDuration);
+        }
+
+        comm.add("-i");
+        comm.add(input);
+
+        Iterator argsIter = this.args.entrySet().iterator();
+        while (argsIter.hasNext()) {
+            Map.Entry pairs = (Map.Entry)argsIter.next();
+            comm.add(pairs.getKey());
+            if (pairs.getValue()!=null)
+                comm.add(pairs.getValue());
+        }
+
+        this.command = new String[comm.size()];
+        comm.toArray(this.command);
     }
 
-    return result;
-  }
+    public void setFFprobepath(String arg) {
+        this.ffprobePath = arg;
+    }
+
+    public void setAnalyzeDuration(String duration) {
+        this.analyzeDuration = duration;
+    }
+
+    public void setInput(String arg){
+        this.input = arg;
+    }
+
+    public void setLoglevel(String arg){
+        this.args.put("-loglevel", arg);
+    }
+
+    public void setShowStreams(){
+        this.args.put("-show_streams",null);
+    }
+
+    public void selectStream(String arg){
+        this.args.put("-select_streams", arg);
+    }
+
 }
