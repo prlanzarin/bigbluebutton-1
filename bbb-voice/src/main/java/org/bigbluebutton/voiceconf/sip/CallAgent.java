@@ -813,6 +813,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public synchronized void restartGlobalTranscoder(){
         if (videoTranscoder != null){
+            //update global's video stream name every time the transcoder is restarted
             setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
             if(videoTranscoder.restart(getVideoStreamName())){
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());

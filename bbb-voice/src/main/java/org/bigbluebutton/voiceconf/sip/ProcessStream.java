@@ -9,7 +9,7 @@ import org.red5.logging.Red5LoggerFactory;
 
 import java.io.IOException;
 
-public class ProcessStream implements Runnable {
+public class ProcessStream {
     private static Logger log = Red5LoggerFactory.getLogger(ProcessStream.class, "sip");
     private InputStream stream;
     private Thread thread;
@@ -23,31 +23,31 @@ public class ProcessStream implements Runnable {
             this.output = "";
     }
 
-    public void run() {
-        try {
-            String line;
-            InputStreamReader isr = new InputStreamReader(this.stream);
-            BufferedReader ibr = new BufferedReader(isr);
-            output = "";
-            while ((line = ibr.readLine()) != null) {
-                //log.debug("[{}]"+line,type);
-                output+=line+"\n";
+    protected void start() {
+        this.thread = new Thread( new Runnable(){
+            public void run(){
+                try {
+                    String line;
+                    InputStreamReader isr = new InputStreamReader(stream);
+                    BufferedReader ibr = new BufferedReader(isr);
+                    output = "";
+                    while ((line = ibr.readLine()) != null) {
+                        //log.debug("[{}]"+line,type);
+                        output+=line+"\n";
+                    }
+
+                    close();
+                }
+                catch(IOException ioe) {
+                    log.debug("Finishing process stream [type={}] because there's no more data to be read",type);
+                    close();
+                }
             }
-
-            close();
-        }
-        catch(IOException ioe) {
-            log.debug("Finishing process stream because there's no more data to be read");
-            close();
-        }
-    }
-
-    public void start() {
-        this.thread = new Thread(this);
+        });
         this.thread.start();
     }
 
-    public void close() {
+    protected void close() {
         try {
             if(this.stream != null) {
                 //log.debug("Closing process stream");
@@ -60,7 +60,7 @@ public class ProcessStream implements Runnable {
         }
     }
 
-    public String getOutput(){
+    protected String getOutput(){
         return this.output;
     }
 }

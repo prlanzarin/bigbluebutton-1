@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 
 
 
-public class ProcessMonitor implements Runnable {
+public class ProcessMonitor {
     private static Logger log = Red5LoggerFactory.getLogger(ProcessMonitor.class, "sip");
 
     private String[] command;
@@ -23,12 +23,13 @@ public class ProcessMonitor implements Runnable {
     ProcessStream inputStreamMonitor;
     ProcessStream errorStreamMonitor;
 
-    private Thread thread = null;
+    private Thread thread;
     private ProcessMonitorObserver observer;
 
     public ProcessMonitor(String[] command,String name) {
         this.command = command;
         this.process = null;
+        this.thread = null;
         this.inputStreamMonitor = null;
         this.errorStreamMonitor = null;
         this.name = name;
@@ -51,55 +52,6 @@ public class ProcessMonitor implements Runnable {
     public void setCommand(String[] command){
         this.command = command;
     }
-    public void run() {
-        try {
-            log.debug("Creating thread to execute {}",this.name);
-            log.debug("Executing: " + this.toString());
-            this.process = Runtime.getRuntime().exec(this.command);
-
-            if(this.process == null) {
-                log.debug("process is null");
-                return;
-            }
-
-            InputStream is = this.process.getInputStream();
-            InputStream es = this.process.getErrorStream();
-
-            inputStreamMonitor = new ProcessStream(is,"STDOUT");
-            errorStreamMonitor = new ProcessStream(es,"STDERR");
-
-            inputStreamMonitor.start();
-            errorStreamMonitor.start();
-
-            this.process.waitFor();
-        }
-        catch(SecurityException se) {
-            log.debug("Security Exception");
-        }
-        catch(IOException ioe) {
-            log.debug("IO Exception");
-        }
-        catch(NullPointerException npe) {
-            log.debug("NullPointer Exception");
-        }
-        catch(IllegalArgumentException iae) {
-            log.debug("IllegalArgument Exception");
-        }
-        catch(InterruptedException ie) {
-            log.debug("Interrupted Exception");
-        }
-
-        int ret = this.process.exitValue();
-
-        if (acceptableExitCode(ret)){
-            log.debug("Exiting thread that executes {}. Exit value: {} ",this.name,ret);
-            notifyProcessMonitorObserverOnFinished();
-        }
-        else{
-            log.debug("Exiting thread that executes {}. Exit value: {}",this.name,ret);
-            notifyProcessMonitorObserverOnFinishedUnsuccessfully();
-        }
-    }
 
     private void notifyProcessMonitorObserverOnFinishedUnsuccessfully() {
         if(observer != null){
@@ -119,25 +71,86 @@ public class ProcessMonitor implements Runnable {
         }
     }
 
-	public void start() {
-        this.thread = new Thread(this);
-        this.thread.start();
+	public synchronized void start() {
+        if(this.thread == null){
+            this.thread = new Thread( new Runnable(){
+                public void run(){
+                    try {
+                        log.debug("Creating thread to execute {}",name);
+                        log.debug("Executing: " + this.toString());
+                        process = Runtime.getRuntime().exec(command);
+
+                        if(process == null) {
+                            log.debug("process is null");
+                            return;
+                        }
+
+                        InputStream is = process.getInputStream();
+                        InputStream es = process.getErrorStream();
+
+                        inputStreamMonitor = new ProcessStream(is,"STDOUT");
+                        errorStreamMonitor = new ProcessStream(es,"STDERR");
+
+                        inputStreamMonitor.start();
+                        errorStreamMonitor.start();
+
+                        process.waitFor();
+                    }
+                    catch(SecurityException se) {
+                        log.debug("Security Exception");
+                    }
+                    catch(IOException ioe) {
+                        log.debug("IO Exception");
+                    }
+                    catch(NullPointerException npe) {
+                        log.debug("NullPointer Exception");
+                    }
+                    catch(IllegalArgumentException iae) {
+                        log.debug("IllegalArgument Exception");
+                    }
+                    catch(InterruptedException ie) {
+                        log.debug("Interrupted Exception");
+                    }
+
+                    int ret = process.exitValue();
+
+                    if (acceptableExitCode(ret)){
+                        log.debug("Exiting thread that executes {}. Exit value: {} ",name,ret);
+                        notifyProcessMonitorObserverOnFinished();
+                    }
+                    else{
+                        log.debug("Exiting thread that executes {}. Exit value: {}",name,ret);
+                        notifyProcessMonitorObserverOnFinishedUnsuccessfully();
+                    }
+                }
+            });
+            this.thread.start();
+        }else
+            log.debug("Can't start a new process monitor: It is already running.");
     }
 
-    public void restart(){
+    public synchronized void restart(){
         clearData();
         start();
     }
 
-    public void clearData(){
-        if(this.inputStreamMonitor != null 
-            && this.errorStreamMonitor != null) {
+    private void clearData(){
+        closeProcessStream();
+        closeProcess();
+    }
+
+    private void closeProcessStream(){
+        if(this.inputStreamMonitor != null){
             this.inputStreamMonitor.close();
-            this.errorStreamMonitor.close();
             this.inputStreamMonitor = null;
+        }
+        if (this.errorStreamMonitor != null) {
+            this.errorStreamMonitor.close();
             this.errorStreamMonitor = null;
         }
+    }
 
+    private void closeProcess(){
         if(this.process != null) {
             log.debug("Closing {} process",this.name);
             this.process.destroy();
@@ -145,9 +158,12 @@ public class ProcessMonitor implements Runnable {
         }
     }
 
-    public void destroy() {
-        clearData();
-        log.debug("ProcessMonitor successfully finished");
+    public synchronized void destroy() {
+        if (this.thread != null){
+            clearData();
+            log.debug("ProcessMonitor successfully finished");
+        }else
+            log.debug("Can't destroy this process monitor: There's no process running.");
     }
 
     public void setProcessMonitorObserver(ProcessMonitorObserver observer){
@@ -171,16 +187,19 @@ public class ProcessMonitor implements Runnable {
         }
     }
 
-    public void forceDestroy(){
+    public synchronized void forceDestroy(){
+        if (this.thread != null) {
         try {
             Runtime.getRuntime().exec("kill -9 "+ getPid());
         } catch (IOException e) {
             log.debug("Failed to force-kill {} process",this.name);
             e.printStackTrace();
         }
+        }else
+            log.debug("Can't force-destroy this process monitor: There's no process running.");
     }
 
-    public boolean acceptableExitCode(int code){
+    private boolean acceptableExitCode(int code){
         int i;
         if ((ACCEPTABLE_EXIT_CODES == null) || (code < 0)) return false;
         for(i=0;i<ACCEPTABLE_EXIT_CODES.length;i++)
