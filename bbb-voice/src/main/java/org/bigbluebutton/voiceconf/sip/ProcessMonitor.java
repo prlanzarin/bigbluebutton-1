@@ -7,6 +7,8 @@ import org.red5.logging.Red5LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 
@@ -35,18 +37,28 @@ public class ProcessMonitor {
         this.name = name;
     }
 
+    @Override
     public String toString() {
         if (this.command == null || this.command.length == 0) { 
             return "";
         }
         
+        Pattern pattern = Pattern.compile("(.*) (.*)");
         StringBuffer result = new StringBuffer();
         String delim = "";
         for (String i : this.command) {
-        	result.append(delim).append(i);
+            Matcher matcher = pattern.matcher(i);
+            if(matcher.matches()) {
+                result.append(delim).append("\""+matcher.group(1)+" "+matcher.group(2)+"\"");
+            }else result.append(delim).append(i);
             delim = " ";
         }
         return result.toString();
+    }
+
+    private String getCommandString(){
+        //used by the process's thread instead of toString()
+        return this.toString();
     }
 
     public void setCommand(String[] command){
@@ -77,7 +89,7 @@ public class ProcessMonitor {
                 public void run(){
                     try {
                         log.debug("Creating thread to execute {}",name);
-                        log.debug("Executing: " + this.toString());
+                        log.debug("Executing: " + getCommandString());
                         process = Runtime.getRuntime().exec(command);
 
                         if(process == null) {
