@@ -33,6 +33,8 @@ trait VoiceApp {
 
   def handleNewGlobalVideoStreamName(msg: NewGlobalVideoStreamName) {
     globalVideoStreamName = msg.globalVideoStreamName
+    if (globalVideoDied())
+        isSipVideoPresent=false
     logger.debug("New video stream name is set: Sending SipVideoUpdated event " +
                  "(isSipVideoPresent=" + isSipVideoPresent + ") " +
                  "(globalVideoStreamName=" + globalVideoStreamName + ")")
@@ -50,5 +52,9 @@ trait VoiceApp {
                  "(height:"+globalVideoStreamHeight+")")
 
     outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId,globalVideoStreamWidth,globalVideoStreamHeight))
+  }
+
+  private def globalVideoDied():Boolean = {
+    globalVideoStreamName.equals("")
   }
 }

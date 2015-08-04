@@ -2,7 +2,8 @@ package org.bigbluebutton.webconference.voice.freeswitch;
 
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -23,6 +24,8 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
+import scala.actors.threadpool.Arrays;
+
 public class ESLEventListener implements IEslEventListener {
 	private static Logger log = Red5LoggerFactory.getLogger(ESLEventListener.class, "bigbluebutton");
 	
@@ -36,7 +39,7 @@ public class ESLEventListener implements IEslEventListener {
     
     private ConferenceEventListener conferenceEventListener;
     
-    private static List<String> confsThatVideoIsActive = new ArrayList<String>();
+    private static Set<String> confsThatVideoIsActive = new HashSet<String>();
 
     @Override
     public void conferenceEventPlayFile(String uniqueId, String confName, int confSize, EslEvent event) {
@@ -210,6 +213,10 @@ public class ESLEventListener implements IEslEventListener {
                     log.debug("Received " + action + " from Freeswitch");
                     VideoPausedEvent vPaused = new VideoPausedEvent(confName);
                     conferenceEventListener.handleConferenceEvent(vPaused);
+                    if(isThereVideoActive(confName)) {
+                        confsThatVideoIsActive.remove(confName);
+                        log.debug("Received video paused => " + confName + " doesn't have active video anymore.");
+                    }
                     break;
 
                 case VIDEO_RESUMED_EVENT:
@@ -226,10 +233,12 @@ public class ESLEventListener implements IEslEventListener {
                         log.debug(confName + " video floor passed to the holderMemberId = " + holderMemberId);
                         if(!isThereVideoActive(confName))
                             confsThatVideoIsActive.add(confName);
-                    } else {
-                        log.debug(confName + " doesn't have active video anymore.");
-                        confsThatVideoIsActive.remove(confName);
                     }
+                    else if(isThereVideoActive(confName)) {
+                            confsThatVideoIsActive.remove(confName);
+                            log.debug("Received an empty id as video floor => " + confName + " doesn't have active video anymore.");
+                         }
+
 
                     VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
                     conferenceEventListener.handleConferenceEvent(vFloor);
@@ -302,8 +311,7 @@ public class ESLEventListener implements IEslEventListener {
 
     private void printConfsThatHaveActiveVideo() {
         String message = "Rooms that have active video at this precise moment: ";
-        for (int i=0 ; i < confsThatVideoIsActive.size() ; i++)
-            message = message + confsThatVideoIsActive.get(i) + " ";
+        message = message + Arrays.toString(confsThatVideoIsActive.toArray(new String[0]));
 
         log.debug(message);
     }
