@@ -54,7 +54,9 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
 
     @Override
 	public boolean appConnect(IConnection conn, Object[] params) {
-		log.info("BBB Video appConnect"); 		
+        String remoteAddress = Red5.getConnectionLocal().getRemoteAddress();
+        int  remotePort = Red5.getConnectionLocal().getRemotePort();
+        log.info("BBB Video appConnect. RemoteHost={}, RemotePort={}",remoteAddress,remotePort);
 		return super.appConnect(conn, params);
 	}
 

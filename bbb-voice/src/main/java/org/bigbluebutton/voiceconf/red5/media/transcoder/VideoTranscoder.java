@@ -137,9 +137,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public synchronized boolean stop(){
         if (ffmpegProcessMonitor != null) {
-            if(type == Type.TRANSCODE_RTP_TO_RTMP)
-                ffmpegProcessMonitor.forceDestroy();
-            else ffmpegProcessMonitor.destroy();
+            ffmpegProcessMonitor.forceDestroy();
             ffmpegProcessMonitor = null;
             ffmpeg = null;
         }else log.debug("There's no FFMPEG process running for this transcoder. No need to destroy it");

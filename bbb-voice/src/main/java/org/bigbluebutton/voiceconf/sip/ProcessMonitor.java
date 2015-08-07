@@ -24,6 +24,8 @@ public class ProcessMonitor {
     private static final int ACCEPTABLE_EXIT_CODES[] = {EXIT_WITH_SUCCESS_CODE,EXIT_WITH_SIGKILL_CODE};
     ProcessStream inputStreamMonitor;
     ProcessStream errorStreamMonitor;
+    private String inputStreamMonitorOutput;
+    private String errorStreamMonitorOutput;
 
     private Thread thread;
     private ProcessMonitorObserver observer;
@@ -35,6 +37,8 @@ public class ProcessMonitor {
         this.inputStreamMonitor = null;
         this.errorStreamMonitor = null;
         this.name = name;
+        this.inputStreamMonitorOutput = null;
+        this.errorStreamMonitor = null;
     }
 
     @Override
@@ -68,7 +72,7 @@ public class ProcessMonitor {
     private void notifyProcessMonitorObserverOnFinishedUnsuccessfully() {
         if(observer != null){
             log.debug("Notifying ProcessMonitorObserver that process finished unsuccessfully");
-            observer.handleProcessFinishedUnsuccessfully(this.name,inputStreamMonitor.getOutput());
+            observer.handleProcessFinishedUnsuccessfully(this.name,inputStreamMonitorOutput);
         }else {
             log.debug("Cannot notify ProcessMonitorObserver that process finished unsuccessfully: ProcessMonitorObserver null");
         }
@@ -77,7 +81,7 @@ public class ProcessMonitor {
     private void notifyProcessMonitorObserverOnFinished() {
         if(observer != null){
             log.debug("Notifying ProcessMonitorObserver that {} successfully finished",this.name);
-            observer.handleProcessFinishedWithSuccess(this.name,inputStreamMonitor.getOutput());
+            observer.handleProcessFinishedWithSuccess(this.name,inputStreamMonitorOutput);
         }else {
             log.debug("Cannot notify ProcessMonitorObserver that {} finished: ProcessMonitorObserver null",this.name);
         }
@@ -128,10 +132,14 @@ public class ProcessMonitor {
 
                     if (acceptableExitCode(ret)){
                         log.debug("Exiting thread that executes {}. Exit value: {} ",name,ret);
+                        storeProcessOutputs(inputStreamMonitor.getOutput(), errorStreamMonitor.getOutput());
+                        clearData();
                         notifyProcessMonitorObserverOnFinished();
                     }
                     else{
                         log.debug("Exiting thread that executes {}. Exit value: {}",name,ret);
+                        storeProcessOutputs(inputStreamMonitor.getOutput(), errorStreamMonitor.getOutput());
+                        clearData();
                         notifyProcessMonitorObserverOnFinishedUnsuccessfully();
                     }
                 }
@@ -149,6 +157,12 @@ public class ProcessMonitor {
     private void clearData(){
         closeProcessStream();
         closeProcess();
+        clearMonitorThread();
+    }
+
+    private void clearMonitorThread(){
+        if (this.thread !=null)
+            this.thread=null;
     }
 
     private void closeProcessStream(){
@@ -168,6 +182,11 @@ public class ProcessMonitor {
             this.process.destroy();
             this.process = null;
         }
+    }
+
+    private void storeProcessOutputs(String inputStreamOutput,String errorStreamOutput){
+        this.inputStreamMonitorOutput = inputStreamOutput;
+        this.errorStreamMonitorOutput = errorStreamOutput;
     }
 
     public synchronized void destroy() {

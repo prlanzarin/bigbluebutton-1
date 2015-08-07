@@ -535,6 +535,11 @@ package org.bigbluebutton.modules.videoconf.maps
       if(hasSpeakerWindow()){
         if((streamName == globalVideoStreamName)) {
           trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
+        }else{
+            trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream changed but window still is open, closing and reopening it...");
+            closeFreeswitchVideo();
+            globalVideoStreamName = streamName;
+            startFreeswitchWindow();
         }
 
         if (speakerVideoResolutionChanged(width, height)){
