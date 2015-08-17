@@ -18,6 +18,7 @@ import org.bigbluebutton.webconference.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserLeftEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserMutedEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserTalkingEvent;
+import org.bigbluebutton.webconference.voice.freeswitch.response.ConferenceMember;
 import org.freeswitch.esl.client.IEslEventListener;
 import org.freeswitch.esl.client.transport.event.EslEvent;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -250,10 +251,6 @@ public class ESLEventListener implements IEslEventListener {
         }
 	}
 
-    private boolean isUnknownCaller(String callerIdName) {
-        return callerIdName.equals("unknown");
-    }
-
 
     private Integer getMemberIdFromEvent(EslEvent e) {
         try {
@@ -278,9 +275,7 @@ public class ESLEventListener implements IEslEventListener {
          */
         String callerIdName = this.getCallerIdNameFromEvent(e);
         String sipUserAgent = this.getSipUserAgentFromEvent(e);
-        if (isUnknownCaller(callerIdName) && sipUserAgent != null && !sipUserAgent.equals("") && EquipmentTypes.isValidEquipment(sipUserAgent))
-            callerIdName = sipUserAgent; //we might truncate this string
-        return callerIdName;
+        return ConferenceMember.getValidCallerIdName(callerIdName,sipUserAgent,sipUserAgent);
     }
 
     private String getSipUserAgentFromEvent(EslEvent e){

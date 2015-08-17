@@ -19,6 +19,8 @@
 
 package org.bigbluebutton.webconference.voice.freeswitch.response;
 
+import org.bigbluebutton.webconference.voice.freeswitch.EquipmentTypes;
+
 /**
  *
  * @author leif
@@ -29,6 +31,8 @@ public class ConferenceMember {
     protected ConferenceMemberFlags flags;
     protected String uuid;
     protected String callerIdName;
+    protected String callerNetworkAddress;
+    protected String sipUserAgent;
     protected String callerId;
     protected Integer joinTime;
     protected Integer lastTalking;
@@ -46,7 +50,30 @@ public class ConferenceMember {
     }
 
     public String getCallerIdName() {
-        return callerIdName;
+        return getValidCallerIdName(callerIdName,sipUserAgent,sipUserAgent);
+    }
+
+    public static String getValidCallerIdName(String callerIdName, String sipUserAgent, String newCallerIdName) {
+        /*
+         * For some equipments (matched in the UserAgent), if callerIdName is 'unknown', we set the caller id name
+         * from newCallerIdName's value.
+         */
+        String validCallerIdName = callerIdName;
+        if (isUnknownCaller(callerIdName) && sipUserAgent != null && !sipUserAgent.equals("") && !newCallerIdName.equals("") && EquipmentTypes.isValidEquipment(sipUserAgent))
+            validCallerIdName = newCallerIdName;
+        return validCallerIdName;
+    }
+
+    public static boolean isUnknownCaller(String callerIdName) {
+        return callerIdName.equals("unknown");
+    }
+
+    public String getCallerNetworkAddress() {
+        return callerNetworkAddress;
+    }
+
+    public String getSipUserAgent() {
+        return sipUserAgent;
     }
 
     public boolean getMuted() {
@@ -71,6 +98,14 @@ public class ConferenceMember {
 
     public void setCallerIdName(String tempVal) {
         this.callerIdName = tempVal;
+    }
+
+    public void setCallerNetworkAddress(String tempVal) {
+        this.callerNetworkAddress = tempVal;
+    }
+
+    public void setSipUserAgent(String tempVal) {
+        this.sipUserAgent = tempVal;
     }
 
     public void setCallerId(String tempVal) {
