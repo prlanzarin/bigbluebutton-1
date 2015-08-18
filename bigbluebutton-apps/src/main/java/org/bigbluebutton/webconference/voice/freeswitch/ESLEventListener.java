@@ -1,7 +1,6 @@
 package org.bigbluebutton.webconference.voice.freeswitch;
 
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Map;
@@ -274,12 +273,12 @@ public class ESLEventListener implements IEslEventListener {
          * from the sip user agent
          */
         String callerIdName = this.getCallerIdNameFromEvent(e);
-        String sipUserAgent = this.getSipUserAgentFromEvent(e);
-        return ConferenceMember.getValidCallerIdName(callerIdName,sipUserAgent,sipUserAgent);
+        String callerIPAddress = this.getCallerNetworkAddress(e);
+        return ConferenceMember.getValidCallerIdName(callerIdName,callerIPAddress);
     }
 
-    private String getSipUserAgentFromEvent(EslEvent e){
-        return e.getEventHeaders().get("variable_sip_user_agent");
+    private String getCallerNetworkAddress(EslEvent e){
+        return e.getEventHeaders().get("Caller-Network-Addr");
     }
 
     

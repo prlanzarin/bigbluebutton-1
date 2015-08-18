@@ -146,8 +146,6 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
             tempMember.setCallerIdName(tempVal);
         }else if (qName.equalsIgnoreCase("network_addr")) {
             tempMember.setCallerNetworkAddress(tempVal);
-        }else if (qName.equalsIgnoreCase("variable_sip_user_agent")) {
-            tempMember.setSipUserAgent(tempVal);
         }else if (qName.equalsIgnoreCase("caller_id_number")) {
             tempMember.setCallerId(tempVal);
         }else if (qName.equalsIgnoreCase("join_time")) {

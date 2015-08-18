@@ -19,8 +19,6 @@
 
 package org.bigbluebutton.webconference.voice.freeswitch.response;
 
-import org.bigbluebutton.webconference.voice.freeswitch.EquipmentTypes;
-
 /**
  *
  * @author leif
@@ -32,7 +30,6 @@ public class ConferenceMember {
     protected String uuid;
     protected String callerIdName;
     protected String callerNetworkAddress;
-    protected String sipUserAgent;
     protected String callerId;
     protected Integer joinTime;
     protected Integer lastTalking;
@@ -50,17 +47,18 @@ public class ConferenceMember {
     }
 
     public String getCallerIdName() {
-        return getValidCallerIdName(callerIdName,sipUserAgent,sipUserAgent);
+        return getValidCallerIdName(callerIdName,callerNetworkAddress);
     }
 
-    public static String getValidCallerIdName(String callerIdName, String sipUserAgent, String newCallerIdName) {
+    public static String getValidCallerIdName(String callerIdName, String callerNetworkAddress) {
         /*
-         * For some equipments (matched in the UserAgent), if callerIdName is 'unknown', we set the caller id name
-         * from newCallerIdName's value.
+         * If Freeswitch sends 'unknown' as the callerIdName, it means something is wrong with the caller's sip user name
+         * (probably the sip phone that made the call has the sip user name empty or misconfigured)
+         * In this case, we set the ip address as the callerIdName.
          */
         String validCallerIdName = callerIdName;
-        if (isUnknownCaller(callerIdName) && sipUserAgent != null && !sipUserAgent.equals("") && !newCallerIdName.equals("") && EquipmentTypes.isValidEquipment(sipUserAgent))
-            validCallerIdName = newCallerIdName;
+        if (isUnknownCaller(callerIdName) && callerNetworkAddress != null && !callerNetworkAddress.isEmpty())
+            validCallerIdName = callerNetworkAddress;
         return validCallerIdName;
     }
 
@@ -70,10 +68,6 @@ public class ConferenceMember {
 
     public String getCallerNetworkAddress() {
         return callerNetworkAddress;
-    }
-
-    public String getSipUserAgent() {
-        return sipUserAgent;
     }
 
     public boolean getMuted() {
@@ -102,10 +96,6 @@ public class ConferenceMember {
 
     public void setCallerNetworkAddress(String tempVal) {
         this.callerNetworkAddress = tempVal;
-    }
-
-    public void setSipUserAgent(String tempVal) {
-        this.sipUserAgent = tempVal;
     }
 
     public void setCallerId(String tempVal) {
