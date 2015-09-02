@@ -437,11 +437,11 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
 	def voiceUserJoined(meetingId: String, userId: String, webUserId: String, 
 	                            conference: String, callerIdNum: String, 
 	                            callerIdName: String,
-								muted: java.lang.Boolean, speaking: java.lang.Boolean) {
+								muted: java.lang.Boolean, speaking: java.lang.Boolean, hasVideo: java.lang.Boolean) {
 	  
 	  voiceGW.voiceUserJoined(meetingId, userId, webUserId, 
 	                            conference, callerIdNum, 
-	                            callerIdName, muted, speaking)
+	                            callerIdName, muted, speaking, hasVideo)
 	}
 	
 	def voiceUserLeft(meetingId: String, userId: String) {

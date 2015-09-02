@@ -78,6 +78,10 @@ public class ConferenceMember {
         return flags.getIsSpeaking();
     }
 
+    public boolean getHasVideo() {
+        return flags.getHasVideo();
+    }
+
     public void setFlags(ConferenceMemberFlags flags) {
         this.flags = flags;
     }

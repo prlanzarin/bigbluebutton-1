@@ -27,7 +27,7 @@ public class ConferenceMemberFlags {
     //private boolean canHear = false;
     private boolean canSpeak = false;
     private boolean talking = false;
-    //private boolean hasVideo = false;
+    private boolean hasVideo = false;
     //private boolean hasFloor = false;
     //private boolean isModerator = false;
     //private boolean endConference = false;
@@ -43,6 +43,9 @@ public class ConferenceMemberFlags {
         return true;
     }
 
+    boolean getHasVideo() {
+        return hasVideo;
+    }
     void setCanSpeak(String tempVal) {
         canSpeak = tempVal.equals("true") ? true : false;
     }
@@ -51,4 +54,7 @@ public class ConferenceMemberFlags {
         talking = tempVal.equals("true") ? true : false;
     }
 
+    void setHasVideo(String tempVal) {
+        hasVideo = tempVal.equals("true") ? true : false;
+    }
 }

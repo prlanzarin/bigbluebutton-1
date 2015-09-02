@@ -85,12 +85,12 @@ class FreeswitchConferenceService(fsproxy: FreeswitchManagerProxy,
   
   def voiceUserJoined(userId: String, webUserId: String, conference: String, 
 			          callerIdNum: String, callerIdName: String,
-			          muted: java.lang.Boolean, talking: java.lang.Boolean) {
+			          muted: java.lang.Boolean, talking: java.lang.Boolean, hasVideo: java.lang.Boolean) {
 //    println("******** FreeswitchConferenceService received voiceUserJoined vui=[" + userId + "] wui=[" + webUserId + "]")
     val vuj = new FsVoiceUserJoined(userId, webUserId, 
                              conference, callerIdNum, 
                              callerIdName, muted, 
-                             talking)
+                             talking, hasVideo)
     fsActor ! vuj
   }
   

@@ -275,7 +275,7 @@ trait UsersApp {
     val regUser = regUsers.get(msg.authToken)
     regUser foreach { ru =>
       val vu = new VoiceUser(msg.userID, msg.userID, ru.name, ru.name,  
-                           false, false, false, false)
+                           false, false, false, false, false)
       val uvo = new UserVO(msg.userID, ru.externId, ru.name, 
                   ru.role, raiseHand=false, presenter=false, 
                   hasStream=false, locked=getInitialLockStatus(ru.role), 
@@ -341,13 +341,13 @@ trait UsersApp {
           val webUserId = users.generateWebUserId
           val vu = new VoiceUser(msg.voiceUser.userId, webUserId, 
                                  msg.voiceUser.callerName, msg.voiceUser.callerNum,
-                                 true, false, false, false)
+                                 true, false, false, false, msg.voiceUser.hasVideo)
           
           val sessionId = "PHONE-" + webUserId;
           
           val uvo = new UserVO(webUserId, webUserId, msg.voiceUser.callerName, 
 		                  Role.VIEWER, raiseHand=false, presenter=false, 
-		                  hasStream=false, locked=getInitialLockStatus(Role.VIEWER), webcamStreams=new ListSet[String](),
+		                  hasStream=msg.voiceUser.hasVideo, locked=getInitialLockStatus(Role.VIEWER), webcamStreams=new ListSet[String](),
 		                  phoneUser=true, vu, listenOnly=false)
 		  	
 		      users.addUser(uvo)
@@ -358,7 +358,8 @@ trait UsersApp {
 		      if (meetingMuted)
             outGW.send(new MuteVoiceUser(meetingID, recorded, uvo.userID, uvo.userID, meetingMuted))      
 
-            sendSipPhonePresent()
+            logger.debug("Is " + uvo.name + " sending video? {}", uvo.hasStream);
+            sendSipPhonePresent(uvo.hasStream);
         }
     }
   }
@@ -383,7 +384,7 @@ trait UsersApp {
   def handleVoiceUserLeft(msg: VoiceUserLeft) {
     users.getUser(msg.userId) foreach {user =>
       val vu = new VoiceUser(user.userID, user.userID, user.name, user.name,  
-                           false, false, false, false)
+                           false, false, false, false, false)
       val nu = user.copy(voiceUser=vu)
       users.addUser(nu)
             
@@ -402,20 +403,20 @@ trait UsersApp {
     }    
   }
 
-    def sendSipPhonePresent(){
-        if(!isSipPhonePresent) {
-            logger.info("Sending SipPhoneUpdate event, because now we have a sip phone in the conference")
+    def sendSipPhonePresent(hasVideo: Boolean){
+        if(!isSipPhonePresent && hasVideo) {
+            logger.info("Sending SipPhoneUpdate event, because now we have a sip phone sending video in the conference")
             isSipPhonePresent = true
             outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
         }
     }
 
     def sendSipPhoneLeft(){
-        if(users.getPhoneUsers.isEmpty){
+        if(users.getPhoneUsersSendingVideo.isEmpty){
             isSipPhonePresent = false
             outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
         }
-        logger.info("Is there any phoneUser in this meeting? "+isSipPhonePresent )
+        logger.info("Is there any phoneUser sending video in this meeting? "+isSipPhonePresent )
   }
 
   def handleVoiceUserMuted(msg: VoiceUserMuted) {

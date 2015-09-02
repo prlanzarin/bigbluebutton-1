@@ -134,7 +134,9 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
             }else if (qName.equalsIgnoreCase("talking")) {
                 tempFlags.setTalking(tempVal);
             }
-        }else if (qName.equalsIgnoreCase("id")) {
+        } else if(qName.equalsIgnoreCase("has_video")) {
+             tempFlags.setHasVideo(tempVal);
+        } else if (qName.equalsIgnoreCase("id")) {
             try {
                 tempMember.setId(Integer.parseInt(tempVal));
             } catch(NumberFormatException nfe) {

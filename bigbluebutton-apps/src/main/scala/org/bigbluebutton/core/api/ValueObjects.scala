@@ -83,7 +83,8 @@ case class VoiceUser(userId: String,
   joined: Boolean, 
   locked: Boolean, 
   muted: Boolean, 
-  talking: Boolean)                  
+  talking: Boolean,
+  hasVideo: Boolean)
                   
 case class MeetingConfig(name: String, 
   id: MeetingID, 

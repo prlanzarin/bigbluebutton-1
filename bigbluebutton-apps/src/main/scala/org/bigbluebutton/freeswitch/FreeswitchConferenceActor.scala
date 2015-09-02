@@ -8,7 +8,7 @@ import org.bigbluebutton.core.util._
 case class FsVoiceUserJoined(userId: String, webUserId: String, 
                              conference: String, callerIdNum: String, 
                              callerIdName: String, muted: Boolean, 
-                             speaking: Boolean)
+                             speaking: Boolean, hasVideo: Boolean)
                
 case class FsVoiceUserLeft(userId: String, conference: String)
 case class FsVoiceUserLocked(userId: String, conference: String, locked: Boolean)
@@ -189,7 +189,7 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
   private def sendNonWebUserJoined(meetingId: String, webUserId: String, msg: FsVoiceUserJoined) {
     bbbInGW.voiceUserJoined(meetingId, msg.userId, 
 	              webUserId, msg.conference, msg.callerIdNum, msg.callerIdName,
-	              msg.muted, msg.speaking)    
+	              msg.muted, msg.speaking, msg.hasVideo);
   }
   
   private def handleFsVoiceUserJoined(msg: FsVoiceUserJoined) {

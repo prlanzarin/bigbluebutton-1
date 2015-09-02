@@ -103,7 +103,7 @@ public class PopulateRoomCommand extends FreeswitchCommand {
         		} 
         		
                 pj = new VoiceUserJoinedEvent(voiceUserId, member.getId().toString(), confXML.getConferenceRoom(),
-                		callerId, callerIdName, member.getMuted(), member.getSpeaking());
+                               callerId, callerIdName, member.getMuted(), member.getSpeaking(), member.getHasVideo());
                 eventListener.handleConferenceEvent(pj);
             }
 

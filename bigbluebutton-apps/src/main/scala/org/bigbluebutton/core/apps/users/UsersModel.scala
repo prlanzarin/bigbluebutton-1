@@ -102,4 +102,8 @@ class UsersModel {
   def getPhoneUsers():Array[UserVO] = {
     uservos.values filter (u=>u.phoneUser == true) toArray
   }
+
+  def getPhoneUsersSendingVideo():Array[UserVO] = {
+    uservos.values filter (u=>(u.phoneUser == true && u.hasStream == true)) toArray
+  }
 }

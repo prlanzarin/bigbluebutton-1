@@ -70,6 +70,7 @@ public class ESLEventListener implements IEslEventListener {
 
         boolean muted = headers.get("Speak").equals("true") ? false : true; //Was inverted which was causing a State issue
         boolean speaking = headers.get("Talking").equals("true") ? true : false;
+        boolean hasVideo = headers.get("Video").equals("true") ? true : false;
 
         String voiceUserId = callerIdName;
         
@@ -96,7 +97,7 @@ public class ESLEventListener implements IEslEventListener {
 			    callerIdName = matcher.group(2).trim();
 		    } 
         
-        VoiceUserJoinedEvent pj = new VoiceUserJoinedEvent(voiceUserId, memberId.toString(), confName, callerId, callerIdName, muted, speaking);
+        VoiceUserJoinedEvent pj = new VoiceUserJoinedEvent(voiceUserId, memberId.toString(), confName, callerId, callerIdName, muted, speaking, hasVideo);
         conferenceEventListener.handleConferenceEvent(pj);
     }
 
