@@ -78,6 +78,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private String remoteVideoPort;
     private boolean isWebRTC = false;
     private boolean isGlobal = false;
+    private boolean isVideoRunning = false;
     private CallAgentObserver callAgentObserver;
 
     private String destinationPrefix;
@@ -119,6 +120,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.isGlobal = isGlobalUserId();
         this.localVideoSocket = null;
         this.currentVideoProbe = null;
+        this._videoStreamName = "";
     }
     
     public String getCallId() {
@@ -355,6 +357,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
                     GlobalCall.getSdpVideoPath(getDestination()),getVideoStreamName(),getMeetingId(),getServerIp());
             videoTranscoder.setVideoTranscoderObserver(this);
+            setVideoRunning(true);
             videoTranscoder.start();
         }else
             log.debug("No need to start Global Video Transcoder [uid={}], it is already running.",getUserId());
@@ -397,7 +400,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
            stopBbbToFreeswitchFlashVideoStream();
     }
 
-    public void startBbbToFreeswitchFlashVideoStream() {
+    private void startBbbToFreeswitchFlashVideoStream() {
         if (_videoStreamName.equals("")){
             log.debug("There's no videoStream for this FlashCall. Waiting for the user to enable your webcam");
             return;
@@ -420,11 +423,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
     
-    public void stopBbbToFreeswitchFlashVideoStream() {
+    private void stopBbbToFreeswitchFlashVideoStream() {
         stopVideoTranscoder();
     }
     
-    public void startBbbToFreeswitchWebRTCVideoStream(){
+    private void startBbbToFreeswitchWebRTCVideoStream(){
         if (_videoStreamName.equals("")){
             log.debug("There's no videoStream for this webRTCCall. Waiting for the user to enable your webcam");
             return;
@@ -438,13 +441,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (videoTranscoder == null){
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
             videoTranscoder.setVideoTranscoderObserver(this);
+            setVideoRunning(true);
             videoTranscoder.start();
         }else
             log.debug("No need to start User's Video Transcoder [uid={}], it is already running.",getUserId());
     }
 
 
-    public void stopBbbToFreeswitchWebRTCVideoStream(){
+    private void stopBbbToFreeswitchWebRTCVideoStream(){
         stopVideoTranscoder();
     }
 
@@ -493,6 +497,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }else{
             log.debug("No need to stop Video Transcoder [uid={}], it already stopped.",getUserId());
         }
+        setVideoRunning(false);
     }
 
     public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
@@ -908,4 +913,22 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 		}
 	}
 
+    /**
+     * Set the video status of the CallAgent.
+     * This is useful, for example, when the user is the floor
+     * but his video isn't running yet because there's no sip-user
+     * in the conference
+     * @param flag default: false
+     */
+    private void setVideoRunning(boolean flag){
+        this.isVideoRunning = flag;
+    }
+
+    /**
+     * Informs the status of user's transcoder
+     * @return true if the user's transcoder is running, false otherwise
+     */
+    public boolean isVideoRunning(){
+        return this.isVideoRunning;
+    }
 }

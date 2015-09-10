@@ -22,6 +22,7 @@ public class FFmpegCommand {
 
     /* Analyze duration is a special parameter that MUST come before the input */
     private String analyzeDuration;
+    private String probeSize;
 
     public FFmpegCommand() {
         this.args = new HashMap();
@@ -49,10 +50,15 @@ public class FFmpegCommand {
             comm.add("-re");
         }
 
-        /* Analyze duration MUST come before the input */
+        /* Analyze duration and probesize MUST come before the input */
         if(analyzeDuration != null && !analyzeDuration.isEmpty()) {
             comm.add("-analyzeduration");
             comm.add(analyzeDuration);
+        }
+
+        if(probeSize != null && !probeSize.isEmpty()) {
+            comm.add("-probesize");
+            comm.add(probeSize);
         }
 
         comm.add("-i");
@@ -152,5 +158,14 @@ public class FFmpegCommand {
     */
    public void setAnalyzeDuration(String duration) {
        this.analyzeDuration = duration;
+   }
+
+   /**
+    * Probe size, in bytes.
+    * Minimum value: 32
+    * Default: 5000000
+    **/
+   public void setProbeSize(String size) {
+       this.probeSize = size;
    }
 }

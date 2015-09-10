@@ -19,7 +19,6 @@
 package org.bigbluebutton.voiceconf.sip;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -29,12 +28,9 @@ import org.slf4j.Logger;
 import org.bigbluebutton.voiceconf.messaging.IMessagingService;
 import org.bigbluebutton.voiceconf.red5.CallStreamFactory;
 import org.bigbluebutton.voiceconf.red5.ClientConnectionManager;
-import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
-import org.red5.server.api.Red5;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 
 /**
  * Class that is a peer to the sip server. This class will maintain
@@ -241,9 +237,8 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
                 return;
             }
 
-            log.debug("There's a CallAgent and a video Stream running for this userId={}. Starting BbbToFreeswitchVideoStream.", userId);
+            log.debug("There's a CallAgent and a video Stream running for this userId={}. This user is able to send video (when he becomes the floor holder).", userId);
             ca.setVideoStreamName(videoStreamName);
-            ca.startBbbToFreeswitchVideoStream();
         } else {
             //ca null means that this method was called when publishing a video stream
             log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
@@ -353,11 +348,13 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         restartGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
-    public synchronized void restartGlobalCall(String clientId, String callerName, String userId, String destination, String meetingId, String serverIp){
+    public void restartGlobalCall(String clientId, String callerName, String userId, String destination, String meetingId, String serverIp){
+    synchronized(callManager){
         if (callManager.get(userId)== null){ //avoids RC if another user joins the room and call createGlobalCall() in Application.java before this gets done
             log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetindId={}]",clientId, callerName, userId, destination, meetingId);
             createGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
         }else log.debug("Cannot restart Global Call. There's already a global call agent for this room");
+    }
     }
 
     public void createGlobalCall(String clientId, String callerName, String userId,String destination,String meetingId, String serverIp){
@@ -367,22 +364,28 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         this.call(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
-    public void startSavedVideoStreams(String voiceBridge) {
-        Map<String, String> savedVideoStreams = callManager.getAllSavedVideoStreams();
-        log.debug("Starting the saved video streams for {}", voiceBridge);
+    public void startSavedVideoStreams(String voiceBridge, String userId) {
+        log.debug("Starting the video stream for uid={}, voiceBridge={}", userId,voiceBridge);
+        CallAgent ca;
 
-        for (String userId : savedVideoStreams.keySet()) {
-            CallAgent ca = callManager.getByUserId(userId);
+        if (userId.isEmpty()){
+            //when empty, we try to retrieve current floor, to start his video
+            ca = callManager.getByUserId(GlobalCall.getFloorHolder(voiceBridge));
+        }else ca = callManager.getByUserId(userId);
 
-            if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
-                if(ca.getDestination().equals(voiceBridge)) {
-                    log.debug("startSavedVideoStreams: starting video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
-                    ca.startBbbToFreeswitchVideoStream();
-                }
-                else log.debug("Could not start sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
+        if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
+            if(ca.getDestination().equals(voiceBridge)) {
+                log.debug("startSavedVideoStream: starting video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
+                changeCurrentVideoFloor(voiceBridge,ca);
             }
-            else log.debug("Could not start sip video for {}, CA is null, global or listen only", userId);
+            else log.debug("Could not start sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
         }
+        else {
+            log.debug("Could not start sip video for {}, CA is null, global or listen only", userId);
+            log.debug("Changing current video floor to a non-web user, conference={}, uid={}",voiceBridge,userId);
+            changeCurrentVideoFloor(voiceBridge,userId);
+        }
+
     }
 
     public void stopSavedVideoStreams(String voiceBridge) {
@@ -402,4 +405,56 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
             else log.debug("Could not stop sip video for {}, CA is null, global or listen only", userId);
         }
     }
+
+    public void changeCurrentVideoFloor(String voiceBridge,CallAgent ca){
+        synchronized (callManager){
+            if (GlobalCall.floorHolderChanged(voiceBridge,ca.getUserId()) || !ca.isVideoRunning()){
+                log.debug("TEST HOLD");
+                stopCurrentFloorVideo(voiceBridge);
+                updateCurrentFloorVideo(voiceBridge,ca.getUserId());
+                startNewVideoFloor(ca);
+                log.debug("TEST RELEASE");
+            }else{
+                log.debug("Video floor holder still is the same. Nothing to do about his video...");
+            }
+        }
+    }
+
+    private void changeCurrentVideoFloor(String voiceBridge, String userId){
+        synchronized (callManager){
+            if (GlobalCall.floorHolderChanged(voiceBridge,userId)){
+                log.debug("TEST HOLD");
+                stopCurrentFloorVideo(voiceBridge);
+                updateCurrentFloorVideo(voiceBridge,userId);
+                log.debug("TEST RELEASE");
+            }else{
+                log.debug("Video floor holder still is the same. Nothing to do about his video...");
+            }
+        }
+    }
+
+    private void updateCurrentFloorVideo(String voiceBridge, String userId){
+        GlobalCall.setFloorHolder(voiceBridge,userId);
+    }
+
+    private void stopCurrentFloorVideo(String voiceBridge){
+        log.debug("Stopping current video floor for the conference {}", voiceBridge);
+        String userId = GlobalCall.getFloorHolder(voiceBridge);
+        CallAgent ca;
+        if ((userId != null) && (!userId.equals(""))){
+            log.debug("{} is the current video floor holder, stopping his video.", userId);
+            ca = callManager.get(userId);
+            if(ca != null){
+                ca.stopBbbToFreeswitchVideoStream();
+            }else log.debug("Can't stop current floor video: There's no callAgent associated to this user uid={} ", userId);
+        }else log.debug("There's no video floor holder for this conference, at this moment. Conference={}",voiceBridge);
+    }
+
+    private void startNewVideoFloor(CallAgent ca){
+        if (ca == null) return;
+        log.debug("{} is the new video floor holder of the room {}. Starting it's transcoder",ca.getUserId(),ca.getDestination());
+        ca.startBbbToFreeswitchVideoStream();
+    }
+
+
 }

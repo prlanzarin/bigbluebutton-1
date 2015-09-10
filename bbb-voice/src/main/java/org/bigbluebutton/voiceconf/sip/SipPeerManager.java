@@ -197,10 +197,10 @@ public final class SipPeerManager {
 		messagingService = service;
 	}
 
-	public void startSavedVideoStreams(String peerId, String voiceBridge) {
+	public void startSavedVideoStreams(String peerId, String voiceBridge, String userId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startSavedVideoStreams(voiceBridge);
+            sipUser.startSavedVideoStreams(voiceBridge,userId);
         }
 	}
 

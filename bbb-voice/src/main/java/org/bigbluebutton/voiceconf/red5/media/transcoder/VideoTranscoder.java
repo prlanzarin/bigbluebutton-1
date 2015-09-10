@@ -92,7 +92,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setSliceMaxSize("1024");
                 ffmpeg.setMaxKeyFrameInterval("10");
                 ffmpeg.setOutput(outputLive);
-                ffmpeg.setAnalyzeDuration("10000"); // 10ms
+                ffmpeg.setAnalyzeDuration("1000"); // 1ms
+                ffmpeg.setProbeSize("32"); // 1ms
                 ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
                 log.debug("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);

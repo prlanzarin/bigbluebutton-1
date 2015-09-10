@@ -226,9 +226,13 @@ public class GlobalCall {
         roomToSipPhonePresent.put(voiceconf, flag);
     }
 
-    public static synchronized void setFlooHolder(String voiceconf, String floorHolder){
+    public static synchronized void setFloorHolder(String voiceconf, String floorHolder){
         log.debug("setFlooHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
         voiceConfToFloorHolder.put(voiceconf, floorHolder);
+    }
+
+    public static String getFloorHolder(String voiceconf){
+        return voiceConfToFloorHolder.get(voiceconf);
     }
 
     public static boolean floorHolderChanged(String voiceconf, String floorHolder) {
