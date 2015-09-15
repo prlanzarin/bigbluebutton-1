@@ -19,6 +19,7 @@ public class FFmpegCommand {
     private String input;
     private String output;
     private Boolean inputLive;
+    private String loop;
 
     /* Analyze duration is a special parameter that MUST come before the input */
     private String analyzeDuration;
@@ -30,6 +31,7 @@ public class FFmpegCommand {
 
         this.ffmpegPath = null;
         this.inputLive = false;
+        this.loop = null;
     }
 
     public String[] getFFmpegCommand(boolean shouldBuild) {
@@ -54,6 +56,11 @@ public class FFmpegCommand {
         if(analyzeDuration != null && !analyzeDuration.isEmpty()) {
             comm.add("-analyzeduration");
             comm.add(analyzeDuration);
+        }
+
+        if(loop != null) {
+            comm.add("-loop");
+            comm.add(loop);
         }
 
         if(probeSize != null && !probeSize.isEmpty()) {
@@ -111,6 +118,10 @@ public class FFmpegCommand {
 
     public void setCodec(String arg) {
         this.args.put("-vcodec", arg);
+    }
+
+    public void setLoop(String arg) {
+        this.loop = arg;
     }
 
     public void setLevel(String arg) {

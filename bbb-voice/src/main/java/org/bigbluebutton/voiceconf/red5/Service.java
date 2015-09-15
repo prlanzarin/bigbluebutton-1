@@ -102,7 +102,7 @@ public class Service {
         try{
             if (sipPeerManager != null) {
                 sipPeerManager.webRTCCall(peerId, clientId, userid, username, destination, meetingId, remoteVideoPort,localVideoPort,serverIp);
-                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userid, "");
+                sipPeerManager.setBbbToFreeswitchVideoStream(peerId, userid, "");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
         } catch (PeerNotFoundException e) {
@@ -139,7 +139,7 @@ public class Service {
         if (videoPresent){
             //start current user video
             if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
-                sipPeerManager.startSavedVideoStreams(peerId, voiceBridge,floorHolder);
+                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, voiceBridge,floorHolder);
             }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
         }else{
             //stop current user video
@@ -157,7 +157,7 @@ public class Service {
 
         if(isVideoStream(streamName) && (!userId.equals(""))){
             try {
-                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, userId, streamName);
+                sipPeerManager.setBbbToFreeswitchVideoStream(peerId, userId, streamName);
             } catch (PeerNotFoundException e) {
                 log.error("PeerNotFound {}", peerId);
             }
@@ -225,7 +225,7 @@ public class Service {
 
         if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
             log.debug("sip-video is able to run, starting video floor transcoder");
-            sipPeerManager.startSavedVideoStreams(peerId, voiceBridge,"");
+            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, voiceBridge,"");
             //we won't start the global video stream here, cause it will be initiated in the next sip video update event
         } else {
             log.debug("No more sip phones in the conference. Stopping video transcoders");

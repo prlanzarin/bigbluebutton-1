@@ -97,10 +97,10 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public void startBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName) throws PeerNotFoundException {
+    public void setBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchVideoStream(userId, videoStreamName);
+            sipUser.setBbbToFreeswitchVideoStream(userId, videoStreamName);
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
     
@@ -197,10 +197,10 @@ public final class SipPeerManager {
 		messagingService = service;
 	}
 
-	public void startSavedVideoStreams(String peerId, String voiceBridge, String userId) {
+	public void startBbbToFreeswitchVideoStream(String peerId, String voiceBridge, String userId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startSavedVideoStreams(voiceBridge,userId);
+            sipUser.startBbbToFreeswitchVideoStream(voiceBridge,userId);
         }
 	}
 

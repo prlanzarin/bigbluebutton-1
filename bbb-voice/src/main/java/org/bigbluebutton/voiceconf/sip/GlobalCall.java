@@ -48,6 +48,8 @@ public class GlobalCall {
 
     public static String sipVideoWidth;
     public static String sipVideoHeight;
+    public static String tempSipVideoImg;
+
 
     public static synchronized boolean reservePlaceToCreateGlobal(String roomName) {
         if (globalCalls.contains(roomName)) {
@@ -305,4 +307,10 @@ public class GlobalCall {
     public void setSipVideoHeight(String height) {
         this.sipVideoHeight = height;
     }
+
+    public void setTempSipVideoImg(String filePath) {
+        log.debug("Setting the temporary sip video image file to: {}", filePath);
+        this.tempSipVideoImg = filePath;
+    }
+
 }

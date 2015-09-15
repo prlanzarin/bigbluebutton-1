@@ -20,7 +20,9 @@ import org.slf4j.Logger;
 public class VideoTranscoder implements ProcessMonitorObserver {
     private static Logger log = Red5LoggerFactory.getLogger(VideoTranscoder.class, "sip");
 
-    public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP};
+    public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP,TRANSCODE_FILE_TO_RTP};
+    public static final String TEMP_SIP_VIDEO_IMG_PATH = GlobalCall.tempSipVideoImg;
+
     private Type type;
     private ProcessMonitor ffmpegProcessMonitor;
     private ProcessMonitor ffprobeProcessMonitor;
@@ -124,6 +126,32 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
 
+            case TRANSCODE_FILE_TO_RTP:
+                inputLive = TEMP_SIP_VIDEO_IMG_PATH;
+                outputLive = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
+
+                ffmpeg = new FFmpegCommand();
+                ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+                ffmpeg.setLoop("1");
+                ffmpeg.addCustomParameter("-framerate", "5");
+                ffmpeg.setInput(inputLive);
+                ffmpeg.addCustomParameter("-r", "5");
+                ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
+                ffmpeg.setLevel("1.3");
+                ffmpeg.setPayloadType(String.valueOf(H264Codec.codecId));
+                ffmpeg.setLoglevel("quiet");
+                ffmpeg.setCodec("h264");
+                ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
+                ffmpeg.setPreset("ultrafast");
+                ffmpeg.setFormat("rtp");
+                ffmpeg.setSliceMaxSize("1024");
+                ffmpeg.setMaxKeyFrameInterval("10");
+                ffmpeg.setOutput(outputLive);
+                log.debug("Preparing temporary FFmpeg process monitor");
+                command = ffmpeg.getFFmpegCommand(true);
+                break;
+
+
             default: command = null;
         }
 
@@ -160,6 +188,11 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                     //global's video stream : stream name got a new timestamp
                     updateGlobalStreamName(streamName);
                     log.debug("Restarting the global's video stream: "+this.videoStreamName);
+                    ffmpegProcessMonitor.restart();
+                    return true;
+                case TRANSCODE_FILE_TO_RTP:
+                    //user's temporary video stream : parameters are the same
+                    log.debug("Restarting the user's temporary video stream...");
                     ffmpegProcessMonitor.restart();
                     return true;
                 default:
@@ -210,6 +243,10 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public void setVideoTranscoderObserver(VideoTranscoderObserver observer){
         this.observer = observer;
+    }
+
+    public VideoTranscoder.Type getType() {
+        return type;
     }
 
     @Override

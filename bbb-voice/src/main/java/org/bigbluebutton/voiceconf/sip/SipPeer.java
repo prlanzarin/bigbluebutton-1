@@ -211,9 +211,9 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         }
     }
     
-    public void startBbbToFreeswitchVideoStream(String userId, String videoStreamName) {
+    public void setBbbToFreeswitchVideoStream(String userId, String videoStreamName) {
         if (videoStreamName.equals("")) {
-            log.debug("startBbbToFreeswitchVideoStream without video stream name, trying to retrieve it from a previously saved state");
+            log.debug("setBbbToFreeswitchVideoStream without video stream name, trying to retrieve it from a previously saved state");
             videoStreamName = callManager.getVideoStream(userId);
             if (videoStreamName != null && !videoStreamName.equals("")) {
                 log.debug("Retrieved successfully video stream name for {}, we're ready to go", userId);
@@ -248,13 +248,11 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
     public void stopBbbToFreeswitchVideoStream(String userId) {
         CallAgent ca = callManager.getByUserId(userId);
-        if (ca != null) {
+        if (ca != null)
            ca.stopBbbToFreeswitchVideoStream();
-        }
-        else{
-            log.debug("There's no webRTC call running yet: removing video stream only"
-                    + "userId " + userId);
-        }
+        else
+            log.debug("stopBbbToFreeswitchVideoStream: There's no call running for userId = {}: removing video stream only", userId);
+
         callManager.removeVideoStream(userId);
 
     }
@@ -364,7 +362,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         this.call(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
-    public void startSavedVideoStreams(String voiceBridge, String userId) {
+    public void startBbbToFreeswitchVideoStream(String voiceBridge, String userId) {
         log.debug("Starting the video stream for uid={}, voiceBridge={}", userId,voiceBridge);
         CallAgent ca;
 
@@ -375,7 +373,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
         if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
             if(ca.getDestination().equals(voiceBridge)) {
-                log.debug("startSavedVideoStream: starting video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
+                log.debug("startBbbToFreeswitchVideoStream: starting video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
                 changeCurrentVideoFloor(voiceBridge,ca);
             }
             else log.debug("Could not start sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
