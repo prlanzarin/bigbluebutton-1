@@ -238,7 +238,16 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
             }
 
             log.debug("There's a CallAgent and a video Stream running for this userId={}. This user is able to send video (when he becomes the floor holder).", userId);
-            ca.setVideoStreamName(videoStreamName);
+
+            //if this user is the current video floor, update his video (because he's sending the temporary video)
+            if(ca.isVideoRunning()) {
+                ca.stopBbbToFreeswitchVideoStream();
+                ca.setVideoStreamName(videoStreamName);
+                ca.startBbbToFreeswitchVideoStream();
+            }
+            else
+                ca.setVideoStreamName(videoStreamName);
+
         } else {
             //ca null means that this method was called when publishing a video stream
             log.debug("Could not START BbbToFreeswitchVideoStream: there is no CallAgent with"
@@ -248,8 +257,18 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
     public void stopBbbToFreeswitchVideoStream(String userId) {
         CallAgent ca = callManager.getByUserId(userId);
-        if (ca != null)
-           ca.stopBbbToFreeswitchVideoStream();
+        if (ca != null) {
+            //if this user is the current video floor, update his video (Now we have to send the temporary video)
+            if(ca.isVideoRunning()) {
+                ca.stopBbbToFreeswitchVideoStream();
+                ca.setVideoStreamName("");
+                ca.startBbbToFreeswitchVideoStream();
+            }
+            else {
+                ca.stopBbbToFreeswitchVideoStream();
+                ca.setVideoStreamName("");
+            }
+        }
         else
             log.debug("stopBbbToFreeswitchVideoStream: There's no call running for userId = {}: removing video stream only", userId);
 

@@ -407,10 +407,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
         }
         else {
-            log.debug("startBbbToFreeswitchFlashVideoStream: Checking if this user is sending temporary video and stopping it");
-            if(videoTranscoder != null && videoTranscoder.getType() == VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP)
-                stopVideoTranscoder();
-
             log.debug("startBbbToFreeswitchFlashVideoStream: Starting {}", _videoStreamName);
             type = VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP;
         }
@@ -444,10 +440,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
         }
         else {
-            log.debug("startBbbToFreeswitchWebRTCVideoStream: Checking if this user is sending temporary video and stopping it");
-            if(videoTranscoder != null && videoTranscoder.getType() == VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP)
-                stopVideoTranscoder();
-
             log.debug("startBbbToFreeswitchWebRTCVideoStream: Starting {}", _videoStreamName);
             type = VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP;
         }
@@ -504,6 +496,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         if(videoTranscoder != null) {
             log.debug("Shutting down the video transcoder...");
+
+            setVideoRunning(false);
             videoTranscoder.stop();
             videoTranscoder = null;
 
@@ -517,8 +511,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }else{
             log.debug("No need to stop Video Transcoder [uid={}], it already stopped.",getUserId());
         }
-        _videoStreamName = "";
-        setVideoRunning(false);
     }
 
     public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
@@ -859,8 +851,9 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     @Override
     public void handleTranscodingFinishedWithSuccess() {
         //called by ProcessMonitor when successfully finished
-        stopVideoTranscoder();
+
         if(isGlobalStream()){
+            stopVideoTranscoder();
             log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
         }else log.debug("Transcoder for user [uid={}] finished with success.",getUserId());
     }

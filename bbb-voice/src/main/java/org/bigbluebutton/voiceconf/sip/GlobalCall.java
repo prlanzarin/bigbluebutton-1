@@ -229,7 +229,7 @@ public class GlobalCall {
     }
 
     public static synchronized void setFloorHolder(String voiceconf, String floorHolder){
-        log.debug("setFlooHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
+        log.debug("setFloorHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
         voiceConfToFloorHolder.put(voiceconf, floorHolder);
     }
 
