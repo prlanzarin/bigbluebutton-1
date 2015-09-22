@@ -197,10 +197,10 @@ public final class SipPeerManager {
 		messagingService = service;
 	}
 
-	public void startBbbToFreeswitchVideoStream(String peerId, String voiceBridge, String userId) {
+	public void startBbbToFreeswitchVideoStream(String peerId, String voiceBridge, String userId, String meetingId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startBbbToFreeswitchVideoStream(voiceBridge,userId);
+            sipUser.startBbbToFreeswitchVideoStream(voiceBridge,userId,meetingId);
         }
 	}
 

@@ -326,6 +326,7 @@ case class SipVideoUpdated (
 ) extends IOutMessage
 
 case class SipPhoneUpdated (
+    meetingID: String,
     voiceBridge: String,
     isSipPhonePresent: Boolean,
     version:String = Versions.V_0_0_1

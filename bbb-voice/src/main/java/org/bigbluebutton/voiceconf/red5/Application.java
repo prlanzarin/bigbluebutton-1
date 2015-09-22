@@ -22,7 +22,9 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import org.slf4j.Logger;
+import org.bigbluebutton.voiceconf.messaging.IMessagingService;
 import org.bigbluebutton.voiceconf.sip.GlobalCall;
 import org.bigbluebutton.voiceconf.sip.GlobalCallNotFoundException;
 import org.bigbluebutton.voiceconf.sip.PeerNotFoundException;
@@ -35,6 +37,7 @@ import org.red5.server.api.scope.IScope;
 import org.red5.server.api.service.IServiceCapableConnection;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.stream.ClientBroadcastStream;
+
 import com.google.gson.Gson;
 
 public class Application extends MultiThreadedApplicationAdapter {
@@ -43,6 +46,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	//properties defined in red5-web.xml
 	private SipPeerManager sipPeerManager;
 	private ClientConnectionManager clientConnManager;
+	private IMessagingService messagingService;
 	private String sipServerHost;
 	private String sipClientRtpIp = "";
 	private int sipPort;
@@ -63,9 +67,12 @@ public class Application extends MultiThreadedApplicationAdapter {
     	callStreamFactory = new CallStreamFactory();
     	callStreamFactory.setScope(scope);
     	sipPeerManager.setCallStreamFactory(callStreamFactory);
+      sipPeerManager.setMessagingService(messagingService);
       sipPeerManager.setClientConnectionManager(clientConnManager);
       sipPeerManager.createSipPeer("default", sipClientRtpIp, sipServerHost, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
       GlobalCall.setSipVideoEnabled(sipVideoEnabled);
+      GlobalCall.setIp(sipServerHost);
+
       try {
       	sipPeerManager.register("default", username, password);
       } catch (PeerNotFoundException e) {
@@ -340,6 +347,10 @@ public class Application extends MultiThreadedApplicationAdapter {
 	public void setClientConnectionManager(ClientConnectionManager ccm) {
 		clientConnManager = ccm;
 	}
+
+    public void setMessagingService(IMessagingService service) {
+        messagingService = service;
+    }
 
     public void setSipVideoEnabled(boolean flag) {
         this.sipVideoEnabled = flag;

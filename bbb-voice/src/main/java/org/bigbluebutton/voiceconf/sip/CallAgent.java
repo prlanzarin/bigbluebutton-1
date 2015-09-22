@@ -402,7 +402,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private void startBbbToFreeswitchFlashVideoStream() {
         VideoTranscoder.Type type;
-        if (_videoStreamName.equals("")){
+        if (_videoStreamName.isEmpty()){
             log.debug("startBbbToFreeswitchFlashVideoStream: There's no videoStream for this FlashCall. Starting TEMPORARY video");
             type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
         }
@@ -435,7 +435,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     
     private void startBbbToFreeswitchWebRTCVideoStream(){
         VideoTranscoder.Type type;
-        if (_videoStreamName.equals("")){
+        if (_videoStreamName.isEmpty()){
             log.debug("startBbbToFreeswitchWebRTCVideoStream: There's no videoStream for this WebRTCCall. Starting TEMPORARY video");
             type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
         }
@@ -496,7 +496,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
         if(videoTranscoder != null) {
             log.debug("Shutting down the video transcoder...");
-
             setVideoRunning(false);
             videoTranscoder.stop();
             videoTranscoder = null;
@@ -935,6 +934,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
      * @param flag default: false
      */
     private void setVideoRunning(boolean flag){
+        log.debug("Setting videoRunning = {} for user uid={}",flag,getUserId());
         this.isVideoRunning = flag;
     }
 

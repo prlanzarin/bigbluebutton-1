@@ -16,7 +16,9 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import org.bigbluebutton.voiceconf.messaging.IMessagingService;
 import org.bigbluebutton.voiceconf.red5.media.CallStream;
+import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
@@ -37,9 +39,12 @@ public class GlobalCall {
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     private static Map<String, VoiceConfToGlobalVideoUsersMap> voiceConfToGlobalVideoUsersMap = new ConcurrentHashMap<String, VoiceConfToGlobalVideoUsersMap>();
     private static Map<String, String> voiceConfToFloorHolder = new ConcurrentHashMap<String, String>();
+    private static Map<String, VideoTranscoder> voiceConfToVideoLogoTranscoder = new ConcurrentHashMap<String,VideoTranscoder>();
     private static Path sdpVideoPath;
     public static final String GLOBAL_AUDIO_STREAM_NAME_PREFIX = "GLOBAL_AUDIO_";
     public static final String GLOBAL_VIDEO_STREAM_NAME_PREFIX = "sip_";
+    public static final String VIDEOCONFLOGO_STREAM_NAME_PREFIX = "video_conf_";
+
     public static final String LISTENONLY_USERID_PREFIX = "GLOBAL_CALL_"; //when changed, must also change ESLEventListener.java in bigbluebutton-apps
     private static final String sdpVideoFullPath = "/tmp/"+GLOBAL_VIDEO_STREAM_NAME_PREFIX; //when changed , must also change VideoApplication.java in bbb-video
     private static OpenOption[] fileOptions = new OpenOption[] {StandardOpenOption.CREATE,StandardOpenOption.WRITE};
@@ -49,7 +54,9 @@ public class GlobalCall {
     public static String sipVideoWidth;
     public static String sipVideoHeight;
     public static String tempSipVideoImg;
+    private static String ip;
 
+	private static IMessagingService messagingService;
 
     public static synchronized boolean reservePlaceToCreateGlobal(String roomName) {
         if (globalCalls.contains(roomName)) {
@@ -111,6 +118,7 @@ public class GlobalCall {
         roomToVideoStreamMap.remove(voiceConf);
         globalCalls.remove(voiceConf);
         roomToVideoPresent.remove(voiceConf);
+        removeVideoConfLogoStream(voiceConf, "","");
     }
 
     public static synchronized void addUser(String clientId, String callerIdName,String userId, String voiceConf) throws GlobalCallNotFoundException {
@@ -229,7 +237,7 @@ public class GlobalCall {
     }
 
     public static synchronized void setFloorHolder(String voiceconf, String floorHolder){
-        log.debug("setFloorHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
+        log.debug("setFlooHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
         voiceConfToFloorHolder.put(voiceconf, floorHolder);
     }
 
@@ -241,10 +249,10 @@ public class GlobalCall {
         Boolean floorHolderChanged;
         String oldFloorHolder;
         oldFloorHolder = voiceConfToFloorHolder.get(voiceconf);
-        if (oldFloorHolder == null)
-          floorHolderChanged = true;
+        if (oldFloorHolder == null || oldFloorHolder.isEmpty())
+          floorHolderChanged = (floorHolder != null) && (!floorHolder.isEmpty());
         else
-          floorHolderChanged = !oldFloorHolder.equals(floorHolder);
+          floorHolderChanged = isWebUser(floorHolder) ^ isWebUser(oldFloorHolder);
         log.debug("FloorHolderChanged [voiceconf={}] ? {} [floorHolder={}, oldFloorHolder={}]",voiceconf, floorHolderChanged,floorHolder,oldFloorHolder);
         return floorHolderChanged;
     }
@@ -311,6 +319,105 @@ public class GlobalCall {
     public void setTempSipVideoImg(String filePath) {
         log.debug("Setting the temporary sip video image file to: {}", filePath);
         this.tempSipVideoImg = filePath;
+    }
+
+    /**
+     * Creates a video transcoder which sends a moving-logo
+     * stream to the bbb-video app. This video will be played
+     * by the clients of the webconference, everytime any webconference
+     * user becomes the video floor holder. This avoids duplicated video
+     * window.
+     * @param voiceconf
+     * @param meetingId
+     * @return
+     */
+    public static boolean addVideoConfLogoStream(String voiceconf,String meetingId) {
+        synchronized (voiceConfToVideoLogoTranscoder){
+            if (voiceConfToVideoLogoTranscoder.containsKey(voiceconf)) {
+                log.debug("There's already a videoconf-logo transcoder for room {}, no need to create a new one", voiceconf);
+                return false;
+            } else {
+                log.debug("Reserving the place to create a video-logo transcoder for room {}", voiceconf);
+                String videoConfLogoStreamName = VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf+"_"+System.currentTimeMillis();
+                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,videoConfLogoStreamName,meetingId,ip);
+                videoTranscoder.start();
+                if ((!meetingId.isEmpty()) && (messagingService != null))
+                    messagingService.globalVideoStreamCreated(meetingId, videoConfLogoStreamName);
+                voiceConfToVideoLogoTranscoder.put(voiceconf,videoTranscoder);
+                return true;
+            }
+        }
+    }
+
+    /**
+     * Removes the current videoconf-logo stream (needed to avoid duplicated video
+     * in 'Speaker' window). This method also restores the current global video
+     * stream of the room, which will be displayed when we close the videoconf-logo stream.
+     * @param voiceconf
+     * @param meetingId
+     * @param globalVideoStream
+     * @return
+     */
+    public static boolean removeVideoConfLogoStream(String voiceconf, String meetingId, String globalVideoStream) {
+        synchronized (voiceConfToVideoLogoTranscoder){
+            if (voiceConfToVideoLogoTranscoder.containsKey(voiceconf)) {
+                log.debug("Removing videoconf-logo transcoder for room {} ", voiceconf);
+                VideoTranscoder videoTranscoder = voiceConfToVideoLogoTranscoder.remove(voiceconf);
+                videoTranscoder.stop();
+                if (!meetingId.isEmpty())
+                    messagingService.globalVideoStreamCreated(meetingId, globalVideoStream);
+                else
+                    log.debug("There's no need to restore global video stream, room is being closed");
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Removes the current videoconf-logo stream. No stream is restored after
+     * it's execution. This method should be called when we want to
+     * stop the current videoconf-logo transcoder and stream.
+     * @param voiceconf
+     * @return
+     */
+    public static boolean removeVideoConfLogoStream(String voiceconf){
+        return removeVideoConfLogoStream(voiceconf, "","");
+    }
+
+    /**
+     * Removes the current videoconf-logo stream associated to the meeting of this
+     * Call Agent belongs to. No stream is restored after
+     * it's execution, but a blank global video stream is sent, to
+     * force client to close Speaker window asap. This method should be called when we want to
+     * stop the current videoconf-logo transcoder and stream.
+     * @param ca
+     * @return
+     */
+    public static boolean removeVideoConfLogoStream(CallAgent ca){
+        if(ca==null) {
+            log.debug("CallAgent is null. Can't remove videoconf logo stream");
+            return false;
+        }
+        return removeVideoConfLogoStream(ca.getDestination(), ca.getMeetingId(),"");
+    }
+
+
+    private static boolean isWebUser(String userId){
+        return userId.matches("\\w+_\\d+");
+    }
+
+    public static void setIp(String newIp){
+        ip = newIp;
+    }
+
+    public String getIp(){
+        return ip;
+    }
+
+    public static void setMessagingService(IMessagingService service){
+        messagingService = service;
     }
 
 }

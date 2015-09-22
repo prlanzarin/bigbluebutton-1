@@ -407,14 +407,14 @@ trait UsersApp {
         if(!isSipPhonePresent && hasVideo) {
             logger.info("Sending SipPhoneUpdate event, because now we have a sip phone sending video in the conference")
             isSipPhonePresent = true
-            outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
+            outGW.send(new SipPhoneUpdated(meetingID, voiceBridge, isSipPhonePresent))
         }
     }
 
     def sendSipPhoneLeft(){
         if(users.getPhoneUsersSendingVideo.isEmpty){
             isSipPhonePresent = false
-            outGW.send(new SipPhoneUpdated(voiceBridge, isSipPhonePresent))
+            outGW.send(new SipPhoneUpdated(meetingID, voiceBridge, isSipPhonePresent))
         }
         logger.info("Is there any phoneUser sending video in this meeting? "+isSipPhonePresent )
   }

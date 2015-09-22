@@ -78,7 +78,9 @@ package org.bigbluebutton.modules.videoconf.maps
 
     private var button:ToolbarPopupButton = new ToolbarPopupButton();
     private var proxy:VideoProxy;
+    private var globalVideoUserId:String = "FreeSWITCH video";
     private var globalVideoStreamName:String;
+    private var globalVideoRunning:Boolean = false;
     private var currentSpeakerVideoStreamWidth:String; //get this from usergraphics
     private var currentSpeakerVideoStreamHeight:String;
 
@@ -263,10 +265,10 @@ package org.bigbluebutton.modules.videoconf.maps
 
       _graphics.addCameraFor(userID, camIndex, videoProfile);
     }
-    
+
     public function closeFreeswitchVideo():void {
       /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
-      _graphics.removeGraphicsFor("FreeSWITCH video");
+      _graphics.removeGraphicsFor(globalVideoUserId);
     }
 
     private function hasWindow(userID:String):Boolean {
@@ -288,7 +290,7 @@ package org.bigbluebutton.modules.videoconf.maps
       if (bbbUser.hasStream) {
         closeAllAvatarWindows(userID);
       }
-      
+
       if (streamName) {
         _graphics.addVideoFor(userID, proxy.connection, streamName);
       } else {
@@ -518,8 +520,8 @@ package org.bigbluebutton.modules.videoconf.maps
        var width:String = event.payload.globalVideoStreamWidth;
        var height:String = event.payload.globalVideoStreamHeight;
 
-       trace("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
-       LogUtil.debug("VideoEventMapDelegate:: Resuming FreeSWITCH video...");
+       trace("VideoEventMapDelegate:: Resuming "+globalVideoUserId+"...");
+       LogUtil.debug("VideoEventMapDelegate:: Resuming "+globalVideoUserId+"...");
 
       if(!proxy.connection.connected) {
         trace("Not opening freeswitch window because the video connection is not ready yet.");
@@ -528,7 +530,7 @@ package org.bigbluebutton.modules.videoconf.maps
 
       if(!streamName){
         trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Not opening the window, because there's not a stream name.");
-        return;        
+        return;
       }
 
 
@@ -557,20 +559,20 @@ package org.bigbluebutton.modules.videoconf.maps
     }
 
     public function hasSpeakerWindow():Boolean {
-      return hasWindow("FreeSWITCH video");
+      return hasWindow(globalVideoUserId);
     }
 
     public function updateSpeakerWindowResolution(width: String, height: String):void{
       trace("VideoEventMapDelegate:: Speaker's window resolution changed:" + currentSpeakerVideoStreamWidth + "x" + currentSpeakerVideoStreamHeight+ " -> " + width + "x"+ height);
       currentSpeakerVideoStreamWidth = width;
       currentSpeakerVideoStreamHeight = height;
-      _graphics.updateVideoDimensions("FreeSWITCH video", Number(currentSpeakerVideoStreamWidth), Number(currentSpeakerVideoStreamHeight));
+      _graphics.updateVideoDimensions(globalVideoUserId, Number(currentSpeakerVideoStreamWidth), Number(currentSpeakerVideoStreamHeight));
     }
 
     public function startFreeswitchWindow():void {
       trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
-      LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName); 
-      _graphics.addVideoFor("FreeSWITCH video", proxy.connection, globalVideoStreamName);
+      LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+      _graphics.addVideoFor(globalVideoUserId, proxy.connection, globalVideoStreamName);
     }
 
     public function videoModuleReady():void {

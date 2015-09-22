@@ -19,11 +19,15 @@ public class FFmpegCommand {
     private String input;
     private String output;
     private Boolean inputLive;
-    private String loop;
 
     /* Analyze duration is a special parameter that MUST come before the input */
     private String analyzeDuration;
     private String probeSize;
+
+    /* Parameters when the input is a loop image/file */
+    private String loop;
+    private String frameRate;
+    private String frameSize;
 
     public FFmpegCommand() {
         this.args = new HashMap();
@@ -48,6 +52,12 @@ public class FFmpegCommand {
             this.ffmpegPath = "/usr/local/bin/ffmpeg";
 
         comm.add(this.ffmpegPath);
+
+        if(frameRate != null && !frameRate.isEmpty()){
+            comm.add("-framerate");
+            comm.add(frameRate);
+        }
+
         if (this.inputLive){
             comm.add("-re");
         }
@@ -58,7 +68,7 @@ public class FFmpegCommand {
             comm.add(analyzeDuration);
         }
 
-        if(loop != null) {
+        if(loop != null && !loop.isEmpty()){
             comm.add("-loop");
             comm.add(loop);
         }
@@ -178,5 +188,17 @@ public class FFmpegCommand {
     **/
    public void setProbeSize(String size) {
        this.probeSize = size;
+   }
+
+   /**
+    * Set frame rate of the input data
+    * @param value
+    */
+   public void setFrameRate(String value){
+       this.frameRate = value;
+   }
+
+   public void setFrameSize(String value){
+       this.frameSize = value;
    }
 }

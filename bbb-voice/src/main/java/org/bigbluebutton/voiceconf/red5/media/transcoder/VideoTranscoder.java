@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 public class VideoTranscoder implements ProcessMonitorObserver {
     private static Logger log = Red5LoggerFactory.getLogger(VideoTranscoder.class, "sip");
 
-    public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP,TRANSCODE_FILE_TO_RTP};
+    public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP,TRANSCODE_FILE_TO_RTP, TRANSCODE_FILE_TO_RTMP};
     public static final String TEMP_SIP_VIDEO_IMG_PATH = GlobalCall.tempSipVideoImg;
 
     private Type type;
@@ -59,6 +59,23 @@ public class VideoTranscoder implements ProcessMonitorObserver {
         this.ip = ip;
         this.localVideoPort = "";
         this.remoteVideoPort = "";
+        this.outputLive = "";
+    }
+
+    /**
+     * Creates a new VideoTranscoder, which doesn't need local neither remote video ports.
+     * This is useful for FILE_TO_RTMP type of transcoder.
+     * @param type
+     * @param videoStreamName
+     * @param meetingId
+     * @param ip
+     */
+    public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip){
+        this.type = type;
+        this.sdpPath = "";
+        this.videoStreamName = videoStreamName;
+        this.meetingId = meetingId;
+        this.ip = ip;
         this.outputLive = "";
     }
 
@@ -151,6 +168,32 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
 
+            case TRANSCODE_FILE_TO_RTMP:
+                inputLive = TEMP_SIP_VIDEO_IMG_PATH;
+                outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
+                        + videoStreamName+" live=1";
+
+                ffmpeg = new FFmpegCommand();
+                ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+                ffmpeg.setInput(inputLive);
+                ffmpeg.setInputLive(true);
+                ffmpeg.setFrameRate("15");
+                ffmpeg.setFrameSize("640x480");
+                ffmpeg.setLoop("1");
+                ffmpeg.setFormat("flv");
+                ffmpeg.setLoglevel("quiet");
+                ffmpeg.setOutput(outputLive);
+                ffmpeg.setCodec("libopenh264");
+                //ffmpeg.setPreset("ultrafast");
+                //ffmpeg.setProfile("baseline");
+                ffmpeg.setAnalyzeDuration("10000"); // 10ms
+                //ffmpeg.addCustomParameter("-q:v", "1");
+                ffmpeg.setMaxKeyFrameInterval("30"); //2*fps. 1 key frame on each 2s
+                //ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
+                //ffmpeg.addCustomParameter("-crf", "30");
+                log.debug("Preparing FFmpeg process monitor");
+                command = ffmpeg.getFFmpegCommand(true);
+                break;
 
             default: command = null;
         }
@@ -193,6 +236,11 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 case TRANSCODE_FILE_TO_RTP:
                     //user's temporary video stream : parameters are the same
                     log.debug("Restarting the user's temporary video stream...");
+                    ffmpegProcessMonitor.restart();
+                    return true;
+                case TRANSCODE_FILE_TO_RTMP:
+                    //videoconf-logo video stream : parameters are the same
+                    log.debug("Restarting the videconf's logo temporary video stream...");
                     ffmpegProcessMonitor.restart();
                     return true;
                 default:

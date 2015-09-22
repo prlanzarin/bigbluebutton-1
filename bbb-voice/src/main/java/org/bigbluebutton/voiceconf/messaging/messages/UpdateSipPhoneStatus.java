@@ -8,10 +8,12 @@ public class UpdateSipPhoneStatus implements IMessage {
 
     public final String voiceBridge;
     public final Boolean sipPhonePresent;
+    public final String meetingId;
 
-    public UpdateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent) {
+    public UpdateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent,String meetingId) {
         this.voiceBridge =  voiceBridge;
         this.sipPhonePresent = sipPhonePresent;
+        this.meetingId = meetingId;
     }
 
 }

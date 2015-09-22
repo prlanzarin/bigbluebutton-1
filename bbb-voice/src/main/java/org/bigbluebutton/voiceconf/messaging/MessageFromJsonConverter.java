@@ -37,10 +37,11 @@ public class MessageFromJsonConverter {
 	}
 
 	private static IMessage processUpdateVideoStatus(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
 		String voiceBridge = payload.get(Constants.VOICE_CONF).getAsString();
 		String floorHolder = payload.get(Constants.TALKER_USER_ID).getAsString();
 		Boolean videoPresent = payload.get(Constants.IS_SIP_VIDEO_PRESENT).getAsBoolean();
-		return new UpdateVideoStatus(voiceBridge, floorHolder, videoPresent);
+		return new UpdateVideoStatus(meetingId,voiceBridge, floorHolder, videoPresent);
 	}
 
     private static IMessage processUserSharedWebcam(JsonObject payload) {
@@ -57,6 +58,7 @@ public class MessageFromJsonConverter {
     private static IMessage processUpdateSipPhoneStatus(JsonObject payload) {
         String voiceBridge = payload.get(Constants.VOICE_CONF).getAsString();
         Boolean sipPhonePresent = payload.get(Constants.IS_SIP_PHONE_PRESENT).getAsBoolean();
-        return new UpdateSipPhoneStatus(voiceBridge, sipPhonePresent);
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        return new UpdateSipPhoneStatus(voiceBridge, sipPhonePresent,meetingId);
     }
 }

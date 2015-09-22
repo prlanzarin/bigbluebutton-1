@@ -64,6 +64,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 		<property name="sipPeerManager" ref="sipPeerManager"/>
 		<property name="clientConnectionManager" ref="clientConnectionManager"/>
+		<property name="messagingService" ref="messagingService"/>
 		<property name="sipVideoEnabled" value="${bbb.sip.app.enable-sip-video}" />
 	</bean>
 
@@ -75,7 +76,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<bean id="sipPeerManager" class="org.bigbluebutton.voiceconf.sip.SipPeerManager">
 		<property name="sipStackDebugLevel" value="${sipStackDebugLevel}"/>
 		<property name="sipRemotePort" value="${freeswitch.port}"/>
-		<property name="messagingService" ref="messagingService"/>
 		
 	</bean>
 

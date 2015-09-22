@@ -21,8 +21,8 @@ public class VoiceMessageHandler implements MessageHandler {
             if (msg != null) {
                 if(msg instanceof UpdateVideoStatus) {
                     UpdateVideoStatus uvs = (UpdateVideoStatus) msg;
-                    log.info("Handling Update Video Status [{}, {}, {}]", uvs.voiceBridge, uvs.floorHolder, uvs.videoPresent);
-                    service.updateVideoStatus(uvs.voiceBridge, uvs.floorHolder, uvs.videoPresent);
+                    log.info("Handling Update Video Status [{}, {}, {}, {}]",uvs.meetingId, uvs.voiceBridge, uvs.floorHolder, uvs.videoPresent);
+                    service.updateVideoStatus(uvs.meetingId, uvs.voiceBridge, uvs.floorHolder, uvs.videoPresent);
                 }
                 else if(msg instanceof UserSharedWebcam) {
                     UserSharedWebcam usw = (UserSharedWebcam) msg;
@@ -37,7 +37,7 @@ public class VoiceMessageHandler implements MessageHandler {
                 else if (msg instanceof UpdateSipPhoneStatus) {
                     UpdateSipPhoneStatus usps = (UpdateSipPhoneStatus) msg;
                     log.info("Handling Update Sip Phone Status [{}]", usps.sipPhonePresent);
-                    service.updateSipPhoneStatus(usps.voiceBridge, usps.sipPhonePresent);
+                    service.updateSipPhoneStatus(usps.voiceBridge, usps.sipPhonePresent,usps.meetingId);
                 }
             }
         }

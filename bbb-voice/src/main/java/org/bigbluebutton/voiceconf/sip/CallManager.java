@@ -79,6 +79,15 @@ public class CallManager {
 		return calls.get(userId);
 	}
 
+    /**
+     * Return the global CallAgent of the given conference.
+     * @param voiceconf
+     * @return
+     */
+    public CallAgent getGlobalCallAgent(String voiceconf){
+        return getByUserId(GlobalCall.LISTENONLY_USERID_PREFIX+voiceconf);
+    }
+
 	public String getVideoStream(String userId) {
 		String uid = userId;
 		log.debug("[Video context] stream retrieved for the userid " + uid);
