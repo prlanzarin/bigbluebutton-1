@@ -70,6 +70,7 @@ public class Application extends MultiThreadedApplicationAdapter {
       sipPeerManager.setMessagingService(messagingService);
       sipPeerManager.setClientConnectionManager(clientConnManager);
       sipPeerManager.createSipPeer("default", sipClientRtpIp, sipServerHost, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
+      GlobalCall.setMessagingService(messagingService);
       GlobalCall.setSipVideoEnabled(sipVideoEnabled);
       GlobalCall.setIp(sipServerHost);
 
