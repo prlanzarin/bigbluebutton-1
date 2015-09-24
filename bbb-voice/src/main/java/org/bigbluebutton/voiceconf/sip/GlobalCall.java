@@ -220,8 +220,8 @@ public class GlobalCall {
         return videoPresent;
     }
 
-    public static synchronized boolean isGlobalVideoAbleToRun(String voiceconf){
-        return !isVideoPresent(voiceconf) && isSipPhonePresent(voiceconf) && isSipVideoEnabled();
+    public static synchronized boolean isGlobalVideoAbleToRun(String voiceconf,String newFloorHolder){
+        return !isVideoPresent(voiceconf) && isSipPhonePresent(voiceconf) && isSipVideoEnabled() && !isWebUser(newFloorHolder);
     }
 
     public static synchronized boolean isUserVideoAbleToRun(String voiceconf){
@@ -243,6 +243,10 @@ public class GlobalCall {
 
     public static String getFloorHolder(String voiceconf){
         return voiceConfToFloorHolder.get(voiceconf);
+    }
+
+    public static boolean isFloorHolder(String voiceconf, String userId){
+        return voiceConfToFloorHolder.get(voiceconf).equals(userId);
     }
 
     public static boolean floorHolderChanged(String voiceconf, String floorHolder) {

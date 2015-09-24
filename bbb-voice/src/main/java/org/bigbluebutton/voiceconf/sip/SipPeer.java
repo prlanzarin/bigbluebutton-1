@@ -402,22 +402,17 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
     }
 
-    public void stopSavedVideoStreams(String voiceBridge) {
-        Map<String, String> savedVideoStreams = callManager.getAllSavedVideoStreams();
-        log.debug("Stopping the saved video streams for {}", voiceBridge);
-
-        for (String userId : savedVideoStreams.keySet()) {
-            CallAgent ca = callManager.getByUserId(userId);
-
-            if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
-                if(ca.getDestination().equals(voiceBridge)) {
-                    log.debug("stopSavedVideoStreams: stopping video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
-                    ca.stopBbbToFreeswitchVideoStream();
-                }
-                else log.debug("Could not stop sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
-            }
-            else log.debug("Could not stop sip video for {}, CA is null, global or listen only", userId);
-        }
+    /**
+     * This method stops the current floor video and videoconf-logo transcoder
+     * (if there is any for this user). Unlikely changeCurrentVideoFloor() method,
+     * no global-video is restored after this execution
+     * @param voiceBridge
+     * @param meetingId
+     */
+    public void stopCurrentFloorVideo(String voiceBridge,String meetingId) {
+        stopCurrentFloorVideo(voiceBridge);
+        updateCurrentFloorVideo(voiceBridge,"");
+        GlobalCall.removeVideoConfLogoStream(voiceBridge, meetingId,"");
     }
 
     /**
@@ -432,7 +427,10 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         synchronized (callManager){
             if (GlobalCall.floorHolderChanged(ca.getDestination(),ca.getUserId()) || !ca.isVideoRunning()){
                 log.debug("TEST HOLD");
-                stopCurrentFloorVideo(ca.getDestination());
+                if (!GlobalCall.isFloorHolder(ca.getDestination(),ca.getUserId()) && !ca.isVideoRunning()){
+                    log.debug("Stopping floor video, because this is not the current user");
+                    stopCurrentFloorVideo(ca.getDestination());
+                }
                 updateCurrentFloorVideo(ca.getDestination(),ca.getUserId());
                 if(startNewVideoFloor(ca))
                     GlobalCall.addVideoConfLogoStream(ca.getDestination(),ca.getMeetingId());

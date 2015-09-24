@@ -158,6 +158,9 @@ public class FFmpegCommand {
         this.args.put("-loglevel", arg);
     }
 
+    public void setPixelFormat(String arg){
+        this.args.put("-pix_fmt", arg);
+    }
     public void setSliceMaxSize(String arg) {
         this.x264Params.put("slice-max-size", arg);
     }

@@ -124,7 +124,7 @@ public class Service {
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
         if (videoPresent){
-            if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge)){
+            if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge,floorHolder)){
                 sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
             }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
 
@@ -219,11 +219,11 @@ public class Service {
 
         if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
             log.debug("sip-video is able to run, starting video floor transcoder");
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, voiceBridge,"",meetingId);
+            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, voiceBridge,GlobalCall.getFloorHolder(voiceBridge),meetingId);
             //we won't start the global video stream here, cause it will be initiated in the next sip video update event
         } else {
             log.debug("No more sip phones in the conference. Stopping video transcoders");
-            sipPeerManager.stopSavedVideoStreams(peerId, voiceBridge);
+            sipPeerManager.stopCurrentFloorVideo(peerId, voiceBridge,meetingId);
             log.debug("Now stopping the global transconder");
             String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
             sipPeerManager.stopFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
@@ -232,16 +232,11 @@ public class Service {
 
     /**
      * Set current floor holder.
-     * If current floor got no video (videoPresent == false), we don't
-     * set this user as the floor holder.
      * @param voiceBridge
      * @param floorHolder
      * @param videoPresent
      */
     private void updateFloorHolder(String voiceBridge, String floorHolder, boolean videoPresent){
-        if (videoPresent)
-            GlobalCall.setFloorHolder(voiceBridge, floorHolder);
-        else
-            GlobalCall.setFloorHolder(voiceBridge, "");
+        GlobalCall.setFloorHolder(voiceBridge, floorHolder);
     }
 }

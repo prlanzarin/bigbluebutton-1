@@ -127,6 +127,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setFormat("flv");
+                ffmpeg.setPixelFormat("yuv420p");
                 ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setCodec("libx264");

@@ -204,10 +204,10 @@ public final class SipPeerManager {
         }
 	}
 
-	public void stopSavedVideoStreams(String peerId, String voiceBridge) {
+	public void stopCurrentFloorVideo(String peerId, String voiceBridge, String meetingId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.stopSavedVideoStreams(voiceBridge);
+            sipUser.stopCurrentFloorVideo(voiceBridge,meetingId);
         }
 	}
 }

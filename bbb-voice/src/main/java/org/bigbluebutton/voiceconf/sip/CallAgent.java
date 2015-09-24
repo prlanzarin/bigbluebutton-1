@@ -504,6 +504,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 log.debug("Shutting down the (****GLOBAL VIDEO TRANSCODER ****) ...");
                 GlobalCall.removeSDPVideoFile(getDestination());
                 GlobalCall.setVideoPresent(getDestination(), false);
+                GlobalCall.setFloorHolder(getDestination(), "");
                 log.debug("Informing client the global stream is null");
                 messagingService.globalVideoStreamCreated(getMeetingId(),"");
             }
