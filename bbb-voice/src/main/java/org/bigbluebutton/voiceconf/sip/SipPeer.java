@@ -378,7 +378,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         this.call(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
-    public void startBbbToFreeswitchVideoStream(String voiceBridge, String userId, String meetingId) {
+    public void startCurrentFloorVideo(String voiceBridge, String userId, String meetingId) {
         log.debug("Starting the video stream for uid={}, voiceBridge={}", userId,voiceBridge);
         CallAgent ca;
 

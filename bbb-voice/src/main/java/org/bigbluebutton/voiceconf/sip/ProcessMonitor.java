@@ -57,7 +57,7 @@ public class ProcessMonitor {
             }else result.append(delim).append(i);
             delim = " ";
         }
-        return result.toString();
+        return removeLogLevelFlag(result.toString());
     }
 
     private String getCommandString(){
@@ -93,8 +93,8 @@ public class ProcessMonitor {
                 public void run(){
                     try {
                         log.debug("Creating thread to execute {}",name);
-                        log.debug("Executing: " + getCommandString());
                         process = Runtime.getRuntime().exec(command);
+                        log.debug("Executing (pid={}): {}",getPid(),getCommandString());
 
                         if(process == null) {
                             log.debug("process is null");
@@ -208,6 +208,7 @@ public class ProcessMonitor {
         int pid;
         try {
             f = this.process.getClass().getDeclaredField("pid");
+            if (this.process == null) return -1;
             f.setAccessible(true);
             pid = (int)f.get(this.process);
             return pid;
@@ -221,7 +222,12 @@ public class ProcessMonitor {
     public synchronized void forceDestroy(){
         if (this.thread != null) {
         try {
-            Runtime.getRuntime().exec("kill -9 "+ getPid());
+            int pid = getPid();
+            if (pid < 0){
+                log.debug("Process doesn't exist. Not destroying it...");
+                return;
+            }else
+                Runtime.getRuntime().exec("kill -9 "+ getPid());
         } catch (IOException e) {
             log.debug("Failed to force-kill {} process",this.name);
             e.printStackTrace();
@@ -238,4 +244,19 @@ public class ProcessMonitor {
                 return true;
         return false;
     }
+
+    public boolean isFFmpegProcess(){
+        return this.name.toLowerCase().contains("ffmpeg");
+    }
+
+    /**
+     * Removes loglevel flag of ffmpeg command.
+     * Usefull for faster debugging
+     */
+    private String removeLogLevelFlag(String commandString){
+        if (isFFmpegProcess()){
+            return commandString.replaceAll("-loglevel \\w+", "");
+        }else return commandString;
+    }
+
 }

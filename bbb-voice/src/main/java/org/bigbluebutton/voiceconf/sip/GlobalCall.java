@@ -343,7 +343,7 @@ public class GlobalCall {
             } else {
                 log.debug("Reserving the place to create a video-logo transcoder for room {}", voiceconf);
                 String videoConfLogoStreamName = VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf+"_"+System.currentTimeMillis();
-                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,videoConfLogoStreamName,meetingId,ip);
+                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf,videoConfLogoStreamName,meetingId,ip);
                 videoTranscoder.start();
                 if ((!meetingId.isEmpty()) && (messagingService != null))
                     messagingService.globalVideoStreamCreated(meetingId, videoConfLogoStreamName);

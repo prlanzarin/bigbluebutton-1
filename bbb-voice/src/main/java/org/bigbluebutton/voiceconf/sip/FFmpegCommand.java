@@ -6,12 +6,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.slf4j.Logger;
-import org.red5.logging.Red5LoggerFactory;
-
 public class FFmpegCommand {
     private HashMap args;
     private HashMap x264Params;
+    private List<String[]> rtmpInputConnParams;
+    private List<String[]> rtmpOutputConnParams;
 
     private String[] command;
     
@@ -32,6 +31,9 @@ public class FFmpegCommand {
     public FFmpegCommand() {
         this.args = new HashMap();
         this.x264Params = new HashMap();
+        this.rtmpInputConnParams = new ArrayList<String[]>();
+        this.rtmpOutputConnParams = new ArrayList<String[]>();
+
 
         this.ffmpegPath = null;
         this.inputLive = false;
@@ -78,6 +80,8 @@ public class FFmpegCommand {
             comm.add(probeSize);
         }
 
+        buildRtmpInput();
+
         comm.add("-i");
         comm.add(input);
 
@@ -104,11 +108,42 @@ public class FFmpegCommand {
             comm.add(params);
         }
 
+        buildRtmpOutput();
+
         comm.add(this.output);
 
         this.command = new String[comm.size()];
         comm.toArray(this.command);
     }
+
+    /**
+     * Add rtmp parameters (if there are any) to the current input,
+     * if the input is rtmp.
+     */
+    private void buildRtmpInput() {
+        if(!rtmpInputConnParams.isEmpty() && isRtmpInput()) {
+            StringBuilder sb = new StringBuilder();
+            for (String s[] : rtmpInputConnParams){
+                sb.append("conn="+s[0]+":"+s[1]+" ");
+            }
+            input+=" "+sb.toString().trim();
+        }
+    }
+
+    /**
+     * Add rtmp parameters (if there are any) to the current output,
+     * if the output is rtmp.
+     */
+    private void buildRtmpOutput() {
+        if(!rtmpOutputConnParams.isEmpty() && isRtmpOutput()) {
+            StringBuilder sb = new StringBuilder();
+            for (String s[] : rtmpOutputConnParams){
+                sb.append("conn="+s[0]+":"+s[1]+" ");
+            }
+            output+=" "+sb.toString().trim();
+        }
+    }
+
 
     public void setFFmpegPath(String arg) {
         this.ffmpegPath = arg;
@@ -203,5 +238,81 @@ public class FFmpegCommand {
 
    public void setFrameSize(String value){
        this.frameSize = value;
+   }
+
+   /**
+    * Add parameters for rtmp connections.
+    * The order of parameters is the order they are added
+    * @param value
+    */
+   public void addRtmpInputConnectionParameter(String value){
+       //S: String
+       this.rtmpInputConnParams.add(new String[]{"S", value});
+   }
+
+   /**
+    * Add parameters for rtmp connections.
+    * The order of parameters is the order they are added
+    * @param value
+    */
+   public void addRtmpInputConnectionParameter(boolean value){
+       //B: Boolean
+       this.rtmpInputConnParams.add(new String[]{"B", value?"1":"0"});
+   }
+
+   /**
+    * Add parameters for rtmp connections.
+    * The order of parameters is the order they are added
+    * @param value
+    */
+   public void addRtmpInputConnectionParameter(int value){
+       //N : Number
+       this.rtmpInputConnParams.add(new String[]{"N", Integer.toString(value)});
+   }
+
+   /**
+    * Add parameters for rtmp connections.
+    * The order of parameters is the order they are added
+    * @param value
+    */
+   public void addRtmpOutputConnectionParameter(String value){
+       //S: String
+       this.rtmpOutputConnParams.add(new String[]{"S", value});
+   }
+
+   /**
+    * Add parameters for rtmp connections.
+    * The order of parameters is the order they are added
+    * @param value
+    */
+   public void addRtmpOutputConnectionParameter(boolean value){
+       //B: Boolean
+       this.rtmpOutputConnParams.add(new String[]{"B", value?"1":"0"});
+   }
+
+   /**
+    * Add parameters for rtmp connections.
+    * The order of parameters is the order they are added
+    * @param value
+    */
+   public void addRtmpOutputConnectionParameter(int value){
+       //N : Number
+       this.rtmpOutputConnParams.add(new String[]{"N", Integer.toString(value)});
+   }
+
+   /**
+    * Check if the current set intput is rtmp
+    * @return
+    */
+   private boolean isRtmpInput(){
+       return input.contains("rtmp");
+   }
+
+   /**
+    * Check if the current set output is rtmp
+    * @return
+    */
+   private boolean isRtmpOutput(){
+       return output.contains("rtmp");
    }
 }

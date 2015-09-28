@@ -27,6 +27,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     private ProcessMonitor ffmpegProcessMonitor;
     private ProcessMonitor ffprobeProcessMonitor;
     private FFmpegCommand ffmpeg;
+    private String userId;
     private String videoStreamName;
     private String outputLive;
     private String meetingId;
@@ -40,9 +41,10 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public static final String FFMPEG_NAME = "FFMPEG";
     public static final String FFPROBE_NAME = "FFPROBE";
 
-    public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
+    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;
         this.sdpPath = "";
+        this.userId = userId;
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
         this.ip = ip;
@@ -51,8 +53,9 @@ public class VideoTranscoder implements ProcessMonitorObserver {
         this.outputLive = "";
     }
 
-    public VideoTranscoder(Type type,String sdpPath, String videoStreamName, String meetingId, String ip){
+    public VideoTranscoder(Type type,String sdpPath, String userId, String videoStreamName, String meetingId, String ip){
         this.type = type;
+        this.userId = userId;
         this.videoStreamName = videoStreamName;
         this.sdpPath = sdpPath;
         this.meetingId = meetingId;
@@ -70,9 +73,10 @@ public class VideoTranscoder implements ProcessMonitorObserver {
      * @param meetingId
      * @param ip
      */
-    public VideoTranscoder(Type type,String videoStreamName,String meetingId,String ip){
+    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId,String ip){
         this.type = type;
         this.sdpPath = "";
+        this.userId = userId;
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
         this.ip = ip;
@@ -101,6 +105,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
                 ffmpeg.setInput(inputLive);
+                ffmpeg.addRtmpInputConnectionParameter(meetingId);
+                ffmpeg.addRtmpInputConnectionParameter("transcoder-"+userId);
                 ffmpeg.setCodec("h264");
                 ffmpeg.setPreset("ultrafast");
                 ffmpeg.setProfile("baseline");
@@ -130,6 +136,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setPixelFormat("yuv420p");
                 ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
+                ffmpeg.addRtmpOutputConnectionParameter(meetingId);
+                ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
                 ffmpeg.setCodec("libx264");
                 ffmpeg.setPreset("ultrafast");
                 ffmpeg.setProfile("baseline");
@@ -183,6 +191,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setLoop("1");
                 ffmpeg.setFormat("flv");
                 ffmpeg.setLoglevel("quiet");
+                ffmpeg.addRtmpOutputConnectionParameter(meetingId);
+                ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setCodec("libopenh264");
                 //ffmpeg.setPreset("ultrafast");

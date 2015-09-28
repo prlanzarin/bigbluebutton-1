@@ -136,14 +136,10 @@ public class Service {
 
     private void handleUserVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent,String meetingId){
         log.debug("handling user video status: voiceBridge={}, floorHolder={}, videoPresent={}",voiceBridge,floorHolder,videoPresent);
-        if (videoPresent){
             //start current user video
             if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
-                sipPeerManager.startBbbToFreeswitchVideoStream(peerId, voiceBridge,floorHolder,meetingId);
+                sipPeerManager.startCurrentFloorVideo(peerId, voiceBridge,floorHolder,meetingId);
             }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
-        }else{
-            log.debug("The current floor [uid={}] of conference [{}] got no video. His transcoder will be stopped when the floor changes, anyways.",floorHolder,voiceBridge);
-        }
     }
 
     public void userSharedWebcam(String userId, String streamName){
@@ -219,7 +215,7 @@ public class Service {
 
         if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
             log.debug("sip-video is able to run, starting video floor transcoder");
-            sipPeerManager.startBbbToFreeswitchVideoStream(peerId, voiceBridge,GlobalCall.getFloorHolder(voiceBridge),meetingId);
+            sipPeerManager.startCurrentFloorVideo(peerId, voiceBridge,GlobalCall.getFloorHolder(voiceBridge),meetingId);
             //we won't start the global video stream here, cause it will be initiated in the next sip video update event
         } else {
             log.debug("No more sip phones in the conference. Stopping video transcoders");

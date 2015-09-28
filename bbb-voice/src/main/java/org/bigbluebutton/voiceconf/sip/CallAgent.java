@@ -355,7 +355,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private synchronized void startGlobalVideoTranscoder(){
         if (videoTranscoder == null){
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
-                    GlobalCall.getSdpVideoPath(getDestination()),getVideoStreamName(),getMeetingId(),getServerIp());
+                    GlobalCall.getSdpVideoPath(getDestination()),getUserId(),getVideoStreamName(),getMeetingId(),getServerIp());
             videoTranscoder.setVideoTranscoderObserver(this);
             setVideoRunning(true);
             videoTranscoder.start();
@@ -451,7 +451,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public synchronized void startUserVideoTranscoder(VideoTranscoder.Type type){
         if (videoTranscoder == null){
-            videoTranscoder = new VideoTranscoder(type,getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+            videoTranscoder = new VideoTranscoder(type,getUserId(),getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
             videoTranscoder.setVideoTranscoderObserver(this);
             setVideoRunning(true);
             videoTranscoder.start();
