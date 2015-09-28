@@ -52,7 +52,8 @@ public class MessageFromJsonConverter {
 
     private static IMessage processUserUnsharedWebcam(JsonObject payload) {
         String userId = payload.get(Constants.USER_ID).getAsString();
-        return new UserUnsharedWebcam(userId);
+        String streamName = payload.get(Constants.STREAM).getAsString();
+        return new UserUnsharedWebcam(userId,streamName);
     }
 
     private static IMessage processUpdateSipPhoneStatus(JsonObject payload) {

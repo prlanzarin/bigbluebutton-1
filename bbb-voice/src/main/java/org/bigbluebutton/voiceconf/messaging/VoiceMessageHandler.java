@@ -31,8 +31,8 @@ public class VoiceMessageHandler implements MessageHandler {
                 }
                 else if(msg instanceof UserUnsharedWebcam) {
                     UserUnsharedWebcam uuw = (UserUnsharedWebcam) msg;
-                    log.info("Handling User Unshared Webcam [{}]",uuw.userId);
-                    service.userUnsharedWebcam(uuw.userId);
+                    log.info("Handling User Unshared Webcam [{}] [{}]",uuw.userId,uuw.streamName);
+                    service.userUnsharedWebcam(uuw.userId,uuw.streamName);
                 }
                 else if (msg instanceof UpdateSipPhoneStatus) {
                     UpdateSipPhoneStatus usps = (UpdateSipPhoneStatus) msg;

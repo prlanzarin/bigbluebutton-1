@@ -157,9 +157,9 @@ public class Service {
         }
     }
 
-    public void userUnsharedWebcam(String userId){
-        log.debug("userUnsharedWebcam [userId={}]",userId);
-        if (!userId.equals("")) {
+    public void userUnsharedWebcam(String userId, String streamName){
+        log.debug("userUnsharedWebcam [userId={}] [streamName={}]",userId,streamName);
+        if (!userId.isEmpty() && !streamName.isEmpty()) {
             try {
                 sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId);
             } catch (PeerNotFoundException e) {
