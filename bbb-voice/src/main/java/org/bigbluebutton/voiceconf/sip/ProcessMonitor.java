@@ -207,8 +207,8 @@ public class ProcessMonitor {
         Field f;
         int pid;
         try {
-            f = this.process.getClass().getDeclaredField("pid");
             if (this.process == null) return -1;
+            f = this.process.getClass().getDeclaredField("pid");
             f.setAccessible(true);
             pid = (int)f.get(this.process);
             return pid;
