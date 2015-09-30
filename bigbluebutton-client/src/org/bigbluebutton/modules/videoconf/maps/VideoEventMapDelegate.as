@@ -539,9 +539,8 @@ package org.bigbluebutton.modules.videoconf.maps
           trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
         }else{
             trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream changed but window still is open, closing and reopening it...");
-            closeFreeswitchVideo();
             globalVideoStreamName = streamName;
-            startFreeswitchWindow();
+            updateFreeswitchWindow();
         }
 
         if (speakerVideoResolutionChanged(width, height)){
@@ -573,6 +572,12 @@ package org.bigbluebutton.modules.videoconf.maps
       trace("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
       LogUtil.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
       _graphics.addVideoFor(globalVideoUserId, proxy.connection, globalVideoStreamName);
+    }
+
+    public function updateFreeswitchWindow():void {
+      trace("VideoEventMapDelegate:: updateFreeswitchWindow:: Updating Freeswitch window with new stream: " + globalVideoStreamName);
+      LogUtil.debug("VideoEventMapDelegate:: updateFreeswitchWindow:: Updating Freeswitch window with new stream: " + globalVideoStreamName);
+      _graphics.updateSpeakerVideo(proxy.connection, globalVideoStreamName);
     }
 
     public function videoModuleReady():void {

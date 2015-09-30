@@ -175,6 +175,25 @@ package org.bigbluebutton.modules.videoconf.views
       invalidateDisplayList();
     }
 
+    public function updateView(connection:NetConnection, oldStreamName:String, streamName:String):void {
+        if (_ns != null){
+            if (!streamName){
+                trace(LOG + "Can't update view with the new streamName. Stream Name is empty!");
+            }else{
+                trace(LOG + "Updating view with the new streamName=["+streamName+"]");
+                _ns.close();
+                if (user != null) {
+                    user.removeViewingStream(oldStreamName);
+                }else{
+                    trace(LOG + "Error: no user associated with the stream: +"+streamName);
+                }
+                view(connection, streamName);
+            }
+        }else{
+            trace(LOG + "Can't update view with the new streamName=["+streamName+"] , current NetStream is null");
+        }
+    }
+
     private function onNetStatus(e:NetStatusEvent):void{
       switch(e.info.code){
         case "NetStream.Publish.Start":

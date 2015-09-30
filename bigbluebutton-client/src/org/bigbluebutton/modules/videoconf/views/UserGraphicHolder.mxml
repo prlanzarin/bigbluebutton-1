@@ -121,6 +121,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 setUserProperties();
             }
 
+            public function updateVideo(options:VideoConfOptions, connection:NetConnection, oldStreamName:String, streamName:String):void{
+                video.options = options;
+                video.updateView(connection, oldStreamName, streamName);
+                setUserProperties();
+            }
+
             public function updateVideoDimensions(w:Number, h:Number):void {
                 trace("[UserGraphicHolder:updateVideoDimensions] Updating video resolution to " + w + "x" + h);
                 video.updateVideoDimensions(w,h);

@@ -25,6 +25,7 @@ package org.bigbluebutton.modules.videoconf.views
         private var priorityItem:DisplayObject = null;
         private var _minContentAspectRatio:Number=4/3;
         private var globalVideoStreamName: String;
+        private var globalVideoGraphic: UserGraphicHolder;
 
         public function GraphicsWrapper() {
             percentWidth = percentHeight = 100;
@@ -300,16 +301,29 @@ package org.bigbluebutton.modules.videoconf.views
             var graphic:UserGraphicHolder = new UserGraphicHolder();
             graphic.userId = userId;
             graphic.addEventListener(FlexEvent.CREATION_COMPLETE, function(event:FlexEvent):void {
-                if (isSpeakerVideo(userId))
+                if (isSpeakerVideo(userId)){
                     graphic.loadVideo(_options, connection, globalVideoStreamName); //load the last received global stream
-                else
+                    globalVideoGraphic = graphic;
+                }
+                else{
                     graphic.loadVideo(_options, connection, streamName);
-                    onChildAdd(event);
+                }
+                onChildAdd(event);
             });
             graphic.addEventListener(MouseEvent.CLICK, onVBoxClick);
             graphic.addEventListener(FlexEvent.REMOVE, onChildRemove);
 
             super.addChild(graphic);
+        }
+
+        public function updateSpeakerVideo(connection:NetConnection, streamName:String):void{
+            // check if video window is already open
+            if (globalVideoGraphic != null) {
+                globalVideoGraphic.updateVideo(_options, connection, globalVideoStreamName, streamName); //load the last received global stream
+            }
+
+            trace("updating globalVideoStream = "+streamName+ " oldStreamName = "+globalVideoStreamName);
+            globalVideoStreamName=streamName;
         }
 
         private function addCameraForHelper(userId:String, camIndex:int, videoProfile:VideoProfile):void {

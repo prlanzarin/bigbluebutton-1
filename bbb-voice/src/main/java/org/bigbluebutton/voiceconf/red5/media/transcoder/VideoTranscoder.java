@@ -133,7 +133,6 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setFormat("flv");
-                ffmpeg.setPixelFormat("yuv420p");
                 ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
@@ -196,7 +195,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setCodec("libopenh264");
                 //ffmpeg.setPreset("ultrafast");
-                //ffmpeg.setProfile("baseline");
+                ffmpeg.setProfile("baseline");
                 ffmpeg.setAnalyzeDuration("10000"); // 10ms
                 //ffmpeg.addCustomParameter("-q:v", "1");
                 ffmpeg.setMaxKeyFrameInterval("30"); //2*fps. 1 key frame on each 2s
