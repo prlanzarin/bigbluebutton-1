@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
@@ -53,7 +54,7 @@ public class GlobalCall {
 
     public static String sipVideoWidth;
     public static String sipVideoHeight;
-    public static String tempSipVideoImg;
+    public static String tempSipVideoImg = "";
     private static String ip;
 
 	private static IMessagingService messagingService;
@@ -317,12 +318,22 @@ public class GlobalCall {
     }
 
     public void setSipVideoHeight(String height) {
-        this.sipVideoHeight = height;
+        sipVideoHeight = height;
     }
 
     public void setTempSipVideoImg(String filePath) {
-        log.debug("Setting the temporary sip video image file to: {}", filePath);
-        this.tempSipVideoImg = filePath;
+        log.debug("Trying to set the temporary sip video image file to: {}", filePath);
+
+        if(tempSipVideoImgExists(filePath)) {
+           tempSipVideoImg = filePath;
+           log.debug("Temporary sip video image file set to: {}", tempSipVideoImg);
+        }
+        else
+           log.debug("Could NOT set {} as the temporary sip video image", filePath);
+    }
+
+    public static boolean tempSipVideoImgExists(String filePath) {
+        return new File(filePath).isFile();
     }
 
     /**

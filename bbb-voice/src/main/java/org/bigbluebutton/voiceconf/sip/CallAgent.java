@@ -387,10 +387,27 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             return;
         }
 
+        VideoTranscoder.Type type;
+        if (_videoStreamName.isEmpty()){
+
+            if(GlobalCall.tempSipVideoImgExists(GlobalCall.tempSipVideoImg)){
+               log.debug("startBbbToFreeswitchVideoStream: TEMPORARY video will be started...");
+               type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
+            }
+            else {
+                log.debug("startBbbToFreeswitchVideoStream: Cannot start the TEMPORARY video: no file is set");
+                return;
+            }
+        }
+        else {
+            log.debug("startBbbToFreeswitchVideoStream: {} will be started", _videoStreamName);
+            type = VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP;
+        }
+
         if (isWebRTC())
-             startBbbToFreeswitchWebRTCVideoStream();
+             startBbbToFreeswitchWebRTCVideoStream(type);
         else
-            startBbbToFreeswitchFlashVideoStream();
+            startBbbToFreeswitchFlashVideoStream(type);
     }
 
     public void stopBbbToFreeswitchVideoStream(){
@@ -400,17 +417,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
            stopBbbToFreeswitchFlashVideoStream();
     }
 
-    private void startBbbToFreeswitchFlashVideoStream() {
-        VideoTranscoder.Type type;
-        if (_videoStreamName.isEmpty()){
-            log.debug("startBbbToFreeswitchFlashVideoStream: There's no videoStream for this FlashCall. Starting TEMPORARY video");
-            type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
-        }
-        else {
-            log.debug("startBbbToFreeswitchFlashVideoStream: Starting {}", _videoStreamName);
-            type = VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP;
-        }
-
+    private void startBbbToFreeswitchFlashVideoStream(VideoTranscoder.Type type) {
         //start flash video transcoder
         try {
             SessionDescriptor remoteSdp = new SessionDescriptor(call.getRemoteSessionDescriptor());
@@ -433,17 +440,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         stopVideoTranscoder();
     }
     
-    private void startBbbToFreeswitchWebRTCVideoStream(){
-        VideoTranscoder.Type type;
-        if (_videoStreamName.isEmpty()){
-            log.debug("startBbbToFreeswitchWebRTCVideoStream: There's no videoStream for this WebRTCCall. Starting TEMPORARY video");
-            type = VideoTranscoder.Type.TRANSCODE_FILE_TO_RTP;
-        }
-        else {
-            log.debug("startBbbToFreeswitchWebRTCVideoStream: Starting {}", _videoStreamName);
-            type = VideoTranscoder.Type.TRANSCODE_RTMP_TO_RTP;
-        }
-
+    private void startBbbToFreeswitchWebRTCVideoStream(VideoTranscoder.Type type){
         //start webRTCVideoStream
         log.debug("{} is requesting to send video through webRTC. " + "[uid=" + getUserId() + "]");
         startUserVideoTranscoder(type);
