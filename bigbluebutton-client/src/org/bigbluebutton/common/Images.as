@@ -312,5 +312,11 @@ package org.bigbluebutton.common
 		
 		[Embed(source="assets/images/presenter_white.png")]
 		public var presenter_white:Class;
+
+		[Embed(source="assets/images/phone.png")]
+		public var phone:Class;
+
+		[Embed(source="assets/images/phone_video_20.png")]
+		public var phone_video_20:Class;
 	}
 }

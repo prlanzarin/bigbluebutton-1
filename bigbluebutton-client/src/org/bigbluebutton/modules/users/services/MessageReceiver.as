@@ -333,7 +333,8 @@ package org.bigbluebutton.modules.users.services
         globalDispatcher.dispatchEvent(bbbEvent);
         
         if (l.phoneUser) {
-          _conference.removeUser(l.userID);
+          //_conference.removeUser(l.userID);
+          trace(LOG + "User " + voiceUser.userId + " that left voice was a phone user");
         }
       } else {
         trace(LOG + "Could not find voice user id" + voiceUser.userId + "]");
@@ -390,7 +391,12 @@ package org.bigbluebutton.modules.users.services
       UsersService.getInstance().userLeft(webUser);
       
       var user:BBBUser = UserManager.getInstance().getConference().getUser(webUserId);
-      
+
+      if(user == null) {
+        trace(LOG + "handleParticipantLeft: user is null, doing nothing");
+        return;
+      }
+
       trace(LOG + "Notify others that user [" + user.userID + ", " + user.name + "] is leaving!!!!");
       
       // Flag that the user is leaving the meeting so that apps (such as avatar) doesn't hang
@@ -401,7 +407,7 @@ package org.bigbluebutton.modules.users.services
       joinEvent.userID = user.userID;
       dispatcher.dispatchEvent(joinEvent);	
       
-      UserManager.getInstance().getConference().removeUser(webUserId);	        
+      UserManager.getInstance().getConference().removeUser(webUserId);
     }
     
     public function handleParticipantJoined(msg:Object):void {
@@ -554,16 +560,25 @@ package org.bigbluebutton.modules.users.services
       user.isLeavingFlag = false;
       user.listenOnly = joinedUser.listenOnly;
       user.userLocked = joinedUser.locked;
+      user.phoneUser = joinedUser.phoneUser;
 	  
       trace(LOG + "User status: hasStream " + joinedUser.hasStream);
+      trace(LOG + "Is a phone user? " + user.phoneUser);
+
       
       trace(LOG + "Joined as [" + user.userID + "," + user.name + "," + user.role + "," + joinedUser.hasStream + "]");
       UserManager.getInstance().getConference().addUser(user);
       
       if (joinedUser.hasStream) {
-        var streams:Array = joinedUser.webcamStream.split("|");
-        for each(var stream:String in streams) {
-          UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
+
+        if(joinedUser.phoneUser)
+            user.hasStream = joinedUser.hasStream;
+
+        else {
+           var streams:Array = joinedUser.webcamStream.split("|");
+           for each(var stream:String in streams) {
+              UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
+           }
         }
       }
 

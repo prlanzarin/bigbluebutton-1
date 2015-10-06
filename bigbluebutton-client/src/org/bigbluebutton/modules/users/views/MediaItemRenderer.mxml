@@ -205,11 +205,21 @@
 					if (data.hasStream) {
 						// if it's myself or if I'm watching all the streams from the given user, then don't activate the button
 						if (data.me || data.isViewingAllStreams()) {
+						    if(data.phoneUser) {
+						    	webcamImg.source = images.phone_video_20;
+						    	webcamImg.toolTip= ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer.phoneVideo');
+						    }
+						    else {
+						    	webcamImg.source = images.webcam_new_20;
+						    	webcamImg.toolTip= ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer.webcam');
+						    }
+
 							webcamImg.visible = true;
 							webcamImg.includeInLayout = true;
 							webcamBtn.visible = false;
 							webcamBtn.includeInLayout = false;
-						} else {
+
+						} else if(!data.phoneUser) {
 							webcamImg.visible = false;
 							webcamImg.includeInLayout = false;
 							webcamBtn.visible = true;
@@ -258,9 +268,7 @@
 	
 	<!--mx:Image id="talkingIcon" visible="{data.talking}" source="{images.sound_new}" width="20" height="16" 
 				toolTip="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer.talking')}" /-->
-	<mx:Image id="webcamImg" visible="false" source="{images.webcam_new_20}"
-				width="20" height="20"
-				toolTip="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer.webcam')}" />
+	<mx:Image id="webcamImg" visible="false" width="20" height="20" />
     <mx:Button id="webcamBtn" visible="false" includeInLayout="false" icon="{images.webcam_new_20}"
               width="20" height="20" enabled="true" click="viewCamera()"
               toolTip="{ResourceUtil.getInstance().getString('bbb.users.usersGrid.mediaItemRenderer.webcamBtn')}" />

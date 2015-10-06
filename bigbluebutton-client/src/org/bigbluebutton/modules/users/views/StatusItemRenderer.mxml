@@ -120,6 +120,12 @@
 	  					roleImg.visible = true;
 	  					roleBtn.visible = false;
 	  					roleBtn.enabled = false;
+	  				} else if (data.phoneUser) {
+	  					roleImg.source = images.phone;
+	  					roleImg.toolTip = ResourceUtil.getInstance().getString('bbb.users.usersGrid.statusItemRenderer.phoneUser');
+	  					roleImg.visible = true;
+	  					roleBtn.visible = false;
+	  					roleBtn.enabled = false;
 	  				} else {
 	  					roleImg.source = null;
 	  					roleImg.toolTip = "";

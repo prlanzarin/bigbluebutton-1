@@ -45,6 +45,10 @@ package org.bigbluebutton.main.model.users
 		[Bindable] public var talking:Boolean = false;
 		[Bindable] public var phoneUser:Boolean = false;
     [Bindable] public var listenOnly:Boolean = false;
+
+    //used only when this user is a phone user
+    [Bindable] public var hasVideo:Boolean = false;
+
     
 		[Bindable] public var disableMyCam:Boolean = false;
 		[Bindable] public var disableMyMic:Boolean = false;
@@ -54,10 +58,16 @@ package org.bigbluebutton.main.model.users
     
 		[Bindable]
 		public function get hasStream():Boolean {
-			return streamNames.length > 0;
+			if(phoneUser)
+			   return hasVideo;
+			else
+			   return streamNames.length > 0;
 		}
 		public function set hasStream(s:Boolean):void {
-			throw new Error("hasStream cannot be set. It is derived directly from streamName");
+			if(phoneUser)
+			    hasVideo = s;
+			else
+			    throw new Error("hasStream cannot be set. It is derived directly from streamName");
 		}
 
         [Bindable] private var _viewingStream:Array = new Array();
@@ -338,6 +348,7 @@ package org.bigbluebutton.main.model.users
 			n.customdata = user.customdata;
 			n.media = user.media;
 			n.phoneUser = user.phoneUser;
+			n.hasVideo = user.hasVideo;
 			n.talking = user.talking;
 			n.userStatus = user.userStatus;
 			n.voiceJoined = user.voiceJoined;
