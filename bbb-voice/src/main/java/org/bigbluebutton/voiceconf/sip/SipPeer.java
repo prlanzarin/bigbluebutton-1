@@ -247,7 +247,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
             }
             else{
                 ca.stopBbbToFreeswitchVideoStream();
-                changeCurrentVideoFloor(ca);
+                changeCurrentVideoFloorToWebUser(ca);
             }
         } else {
             //ca null means that this method was called when publishing a video stream
@@ -390,14 +390,14 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
             if(ca.getDestination().equals(voiceBridge)) {
                 log.debug("startBbbToVideoStream: starting video stream for {} (videoStreamName = {})",ca.getUserId(), ca.getVideoStreamName());
-                changeCurrentVideoFloor(ca);
+                changeCurrentVideoFloorToWebUser(ca);
             }
             else log.debug("Could not start sip video for {} cause this user has different voiceBridge ({})", ca.getUserId(), ca.getDestination());
         }
         else {
             log.debug("Could not start sip video for {}, CA is null, global or listen only", userId);
             log.debug("Changing current video floor to a non-web user, conference={}, uid={}",voiceBridge,userId);
-            changeCurrentVideoFloor(voiceBridge,userId,meetingId);
+            changeCurrentVideoFloorToPhoneUser(voiceBridge,userId,meetingId);
         }
 
     }
@@ -422,7 +422,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
      *  updates it and start the new floor holder video.
      * @param ca
      */
-    public void changeCurrentVideoFloor(CallAgent ca){
+    public void changeCurrentVideoFloorToWebUser(CallAgent ca){
         if (ca == null) return;
         synchronized (callManager){
             if (GlobalCall.floorHolderChanged(ca.getDestination(),ca.getUserId()) || !ca.isVideoRunning()){
@@ -451,7 +451,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
      * @param userId
      * @param meetingId
      */
-    private void changeCurrentVideoFloor(String voiceBridge, String userId , String meetingId){
+    private void changeCurrentVideoFloorToPhoneUser(String voiceBridge, String userId , String meetingId){
         synchronized (callManager){
             if (GlobalCall.floorHolderChanged(voiceBridge,userId)){
                 log.debug("TEST HOLD");
