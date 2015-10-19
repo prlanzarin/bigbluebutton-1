@@ -299,7 +299,8 @@ public class GlobalCall {
             case HIGH_QUALITY: parseResolution(resolution);
                                break;
             //using the default resolution
-            default: parseResolution(MEDIUM_QUALITY);
+            default: log.debug("****The resolution set in bigbluebutton-sip.properties is invalid. Using the default resolution.");
+                     parseResolution(MEDIUM_QUALITY);
         }
     }
 
@@ -336,7 +337,7 @@ public class GlobalCall {
            log.debug("Temporary sip video image file set to: {}", tempSipVideoImg);
         }
         else
-           log.debug("Could NOT set {} as the temporary sip video image", imgPath);
+           log.debug("****Could NOT set {} as the temporary sip video image", imgPath);
     }
 
     public static boolean tempSipVideoImgExists(String imgPath) {
@@ -351,7 +352,7 @@ public class GlobalCall {
             log.debug("ffmpeg path set to: {}", ffmpegPath);
          }
          else
-            log.debug("Could NOT set {} as the ffmpeg path", ffPath);
+            log.debug("****Could NOT set {} as the ffmpeg path", ffPath);
      }
 
      public static boolean ffmpegExists(String ffPath) {

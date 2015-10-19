@@ -427,7 +427,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
            return false;
         }
 
-        return arePortsValid();
+        return areVideoPortsValid();
     }
 
     public boolean areRtpToRtmpParametersValid() {
@@ -448,7 +448,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public boolean areFileToRtpParametersValid() {
         log.debug("Checking File to Rtp Transcoder Parameters...");
-        return arePortsValid() && isTempVideoImgValid();
+        return areVideoPortsValid() && isTempVideoImgValid();
     }
 
     public boolean areFileToRtmpParametersValid() {
@@ -467,7 +467,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
         return isTempVideoImgValid();
     }
 
-    public boolean arePortsValid() {
+    public boolean areVideoPortsValid() {
         if(localVideoPort == null || localVideoPort.isEmpty()) {
            log.debug("localVideoPort is null or empty");
            return false;

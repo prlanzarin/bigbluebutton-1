@@ -57,7 +57,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private final String clientRtpIp;
     private ExtendedCall call;
     private CallStream audioCallStream; 
-    private CallStream videoCallStream;    
     private String localSession = null;
     private Codec sipAudioCodec = null;
     private CallStreamFactory callStreamFactory;
@@ -274,12 +273,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             audioStreamCreatedSuccesfully = createAudioStream(remoteMediaAddress,localAudioPort,remoteAudioPort); 
                     	
         }else log.debug("AUDIO application is already running.");
+
+        remoteVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
+        localVideoPort = Integer.toString(SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
+        log.debug("Video stream port-setup done");
         
-        if (videoCallStream == null) {        
-            remoteVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(remoteSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
-            localVideoPort = Integer.toString(SessionDescriptorUtil.getLocalMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
-            log.debug("Video stream port-setup done");
-        }else log.debug("VIDEO application is already running.");
+        if(isGlobal())
+           checkVideoPorts();
 
         if(audioStreamCreatedSuccesfully && !isGlobalStream()) {
 
@@ -357,7 +357,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     private boolean prepareGlobalVideoTranscoder(){
-        if(!checkPorts()) {
+        if(!checkVideoPorts()) {
             log.debug("Cannot prepare global video transcoder: ports are invalid");
             return false;
         }
@@ -368,7 +368,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return true;
     }
 
-    private boolean checkPorts() {
+    private boolean checkVideoPorts() {
         log.debug("Checking ports..");
 
         if(localVideoPort == null || localVideoPort.isEmpty()) {
@@ -387,7 +387,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
          }
 
          if(remoteVideoPort.equals("0")) {
-            log.debug("remoteVideoPort is 0");
+            log.debug("***remoteVideoPort is 0. Did you set any video codecs in Freeswitch (vars.xml) ?");
             return false;
          }
 
@@ -398,7 +398,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private synchronized boolean startGlobalVideoTranscoder(){
         if (videoTranscoder == null){
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
-                    GlobalCall.getSdpVideoPath(getDestination()),getUserId(),getVideoStreamName(),getMeetingId(),getServerIp());
+                                                  GlobalCall.getSdpVideoPath(getDestination()),
+                                                  getUserId(),
+                                                  getVideoStreamName(),
+                                                  getMeetingId(),
+                                                  getServerIp());
 
             boolean startedSuccesfully = videoTranscoder.start();
             if(!startedSuccesfully)
