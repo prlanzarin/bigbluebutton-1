@@ -24,6 +24,8 @@ import org.red5.app.sip.codecs.Codec;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
+import ch.qos.logback.core.property.FileExistsPropertyDefiner;
+
 public class GlobalCall {
     private static final Logger log = Red5LoggerFactory.getLogger( GlobalCall.class, "sip" );
     private static final String LOW_QUALITY = "160x120";
@@ -55,6 +57,7 @@ public class GlobalCall {
     public static String sipVideoWidth;
     public static String sipVideoHeight;
     public static String tempSipVideoImg = "";
+    public static String ffmpegPath = "";
     private static String ip;
 
 	private static IMessagingService messagingService;
@@ -205,6 +208,10 @@ public class GlobalCall {
         return sdpVideoFullPath+voiceconf+".sdp";
     }
 
+    public static boolean sdpVideoExists(String sdpFilePath) {
+        return fileExists(sdpFilePath);
+    }
+
     public static synchronized void setVideoPresent(String voiceconf, Boolean flag){
         /*
          * set current transcoder status
@@ -321,20 +328,35 @@ public class GlobalCall {
         sipVideoHeight = height;
     }
 
-    public void setTempSipVideoImg(String filePath) {
-        log.debug("Trying to set the temporary sip video image file to: {}", filePath);
+    public void setTempSipVideoImg(String imgPath) {
+        log.debug("Trying to set the temporary sip video image file to: {}", imgPath);
 
-        if(tempSipVideoImgExists(filePath)) {
-           tempSipVideoImg = filePath;
+        if(tempSipVideoImgExists(imgPath)) {
+           tempSipVideoImg = imgPath;
            log.debug("Temporary sip video image file set to: {}", tempSipVideoImg);
         }
         else
-           log.debug("Could NOT set {} as the temporary sip video image", filePath);
+           log.debug("Could NOT set {} as the temporary sip video image", imgPath);
     }
 
-    public static boolean tempSipVideoImgExists(String filePath) {
-        return new File(filePath).isFile();
+    public static boolean tempSipVideoImgExists(String imgPath) {
+        return fileExists(imgPath);
     }
+
+    public void setFfmpegPath(String ffPath) {
+        log.debug("Trying to set the ffmpeg path to: {}", ffPath);
+
+        if(ffmpegExists(ffPath)) {
+            ffmpegPath = ffPath;
+            log.debug("ffmpeg path set to: {}", ffmpegPath);
+         }
+         else
+            log.debug("Could NOT set {} as the ffmpeg path", ffPath);
+     }
+
+     public static boolean ffmpegExists(String ffPath) {
+         return fileExists(ffPath);
+     }
 
     /**
      * Creates a video transcoder which sends a moving-logo
@@ -355,11 +377,14 @@ public class GlobalCall {
                 log.debug("Reserving the place to create a video-logo transcoder for room {}", voiceconf);
                 String videoConfLogoStreamName = VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf+"_"+System.currentTimeMillis();
                 VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf,videoConfLogoStreamName,meetingId,ip);
-                videoTranscoder.start();
-                if ((!meetingId.isEmpty()) && (messagingService != null))
+                boolean startedSuccesfully = videoTranscoder.start();
+                if (startedSuccesfully && (!meetingId.isEmpty()) && (messagingService != null)) {
                     messagingService.globalVideoStreamCreated(meetingId, videoConfLogoStreamName);
-                voiceConfToVideoLogoTranscoder.put(voiceconf,videoTranscoder);
-                return true;
+                    voiceConfToVideoLogoTranscoder.put(voiceconf,videoTranscoder);
+                    return true;
+                }
+                log.debug("Could not start video conf logo stream");
+                return false;
             }
         }
     }
@@ -433,6 +458,13 @@ public class GlobalCall {
 
     public static void setMessagingService(IMessagingService service){
         messagingService = service;
+    }
+
+    private static boolean fileExists(String filePath) {
+        if(filePath == null || filePath.isEmpty())
+           return false;
+
+        return new File(filePath).isFile();
     }
 
 }

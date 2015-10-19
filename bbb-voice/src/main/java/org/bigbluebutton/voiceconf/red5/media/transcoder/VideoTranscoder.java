@@ -22,6 +22,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP,TRANSCODE_FILE_TO_RTP, TRANSCODE_FILE_TO_RTMP};
     public static final String TEMP_SIP_VIDEO_IMG_PATH = GlobalCall.tempSipVideoImg;
+    public static final String FFMPEG_PATH = GlobalCall.ffmpegPath;
+
 
     private Type type;
     private ProcessMonitor ffmpegProcessMonitor;
@@ -91,10 +93,22 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
         String[] command;
         String inputLive;
+
+        if(!canFFmpegRun()) {
+            log.debug("***TRANSCODER WILL NOT START: ffmpeg cannot run");
+            return false;
+        }
+
         log.debug("Starting Video Transcoder...");
 
         switch(type){
             case TRANSCODE_RTMP_TO_RTP:
+
+                if(!areRtmpToRtpParametersValid()) {
+                    log.debug("***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
+                    return false;
+                }
+
                 log.debug("Video Parameters: remotePort = "+remoteVideoPort+ ", localPort = "+localVideoPort+" rtmp-stream = rtmp://" + ip + "/video/" + meetingId + "/"
                         + videoStreamName);
 
@@ -103,7 +117,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 outputLive = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
 
                 ffmpeg = new FFmpegCommand();
-                ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(inputLive);
                 ffmpeg.addRtmpInputConnectionParameter(meetingId);
                 ffmpeg.addRtmpInputConnectionParameter("transcoder-"+userId);
@@ -125,12 +139,18 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 break;
 
             case TRANSCODE_RTP_TO_RTMP:
+
+                if(!areRtpToRtmpParametersValid()) {
+                    log.debug("***TRANSCODER WILL NOT START: Rtp to Rtmp Parameters are invalid");
+                    return false;
+                }
+
                 inputLive = sdpPath;
                 outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
                         + videoStreamName+" live=1";
 
                 ffmpeg = new FFmpegCommand();
-                ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setFormat("flv");
                 ffmpeg.setLoglevel("quiet");
@@ -152,11 +172,17 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 break;
 
             case TRANSCODE_FILE_TO_RTP:
+
+                if(!areFileToRtpParametersValid())  {
+                    log.debug("***TRANSCODER WILL NOT START: File to Rtp Parameters are invalid");
+                    return false;
+                }
+
                 inputLive = TEMP_SIP_VIDEO_IMG_PATH;
                 outputLive = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
 
                 ffmpeg = new FFmpegCommand();
-                ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setLoop("1");
                 ffmpeg.addCustomParameter("-framerate", "5");
                 ffmpeg.setInput(inputLive);
@@ -177,12 +203,18 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 break;
 
             case TRANSCODE_FILE_TO_RTMP:
+
+                if(!areFileToRtmpParametersValid()) {
+                    log.debug("***TRANSCODER WILL NOT START: File to Rtmp Parameters are invalid");
+                    return false;
+                }
+
                 inputLive = TEMP_SIP_VIDEO_IMG_PATH;
                 outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
                         + videoStreamName+" live=1";
 
                 ffmpeg = new FFmpegCommand();
-                ffmpeg.setFFmpegPath("/usr/local/bin/ffmpeg");
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setInputLive(true);
                 ffmpeg.setFrameRate("15");
@@ -358,5 +390,123 @@ public class VideoTranscoder implements ProcessMonitorObserver {
             log.debug("Error when parsing FFprobe's output");
         }
         return ffprobeResult;
+    }
+
+
+    public boolean canFFmpegRun() {
+        log.debug("Checking if FFmpeg can run...");
+
+        if(ip == null || ip.isEmpty()) {
+           log.debug("ip is null or empty");
+           return false;
+        }
+
+        return isFFmpegPathValid();
+    }
+
+    public boolean isFFmpegPathValid() {
+        if (!GlobalCall.ffmpegExists(FFMPEG_PATH)) {
+            log.debug("***FFMPEG DOESN'T EXIST: check the FFMPEG path in bigbluebutton-sip.properties");
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public boolean areRtmpToRtpParametersValid() {
+        log.debug("Checking Rtmp to Rtp Transcoder Parameters...");
+
+        if(meetingId == null || meetingId.isEmpty()) {
+           log.debug("meetingId is null or empty");
+           return false;
+        }
+
+        if(videoStreamName == null || videoStreamName.isEmpty()) {
+           log.debug("videoStreamName is null or empty");
+           return false;
+        }
+
+        return arePortsValid();
+    }
+
+    public boolean areRtpToRtmpParametersValid() {
+        log.debug("Checking Rtp to Rtmp Transcoder Parameters...");
+
+        if(meetingId == null || meetingId.isEmpty()) {
+           log.debug("meetingId is null or empty");
+           return false;
+        }
+
+        if(videoStreamName == null || videoStreamName.isEmpty()) {
+           log.debug("videoStreamName is null or empty");
+           return false;
+        }
+
+        return isSdpPathValid();
+    }
+
+    public boolean areFileToRtpParametersValid() {
+        log.debug("Checking File to Rtp Transcoder Parameters...");
+        return arePortsValid() && isTempVideoImgValid();
+    }
+
+    public boolean areFileToRtmpParametersValid() {
+        log.debug("Checking File to Rtmp Transcoder Parameters...");
+
+        if(meetingId == null || meetingId.isEmpty()) {
+           log.debug("meetingId is null or empty");
+           return false;
+        }
+
+        if(videoStreamName == null || videoStreamName.isEmpty()) {
+           log.debug("videoStreamName is null or empty");
+           return false;
+        }
+
+        return isTempVideoImgValid();
+    }
+
+    public boolean arePortsValid() {
+        if(localVideoPort == null || localVideoPort.isEmpty()) {
+           log.debug("localVideoPort is null or empty");
+           return false;
+        }
+
+        if(remoteVideoPort == null || remoteVideoPort.isEmpty()) {
+           log.debug("remoteVideoPort is null or empty");
+           return false;
+        }
+
+        if(localVideoPort.equals("0")) {
+           log.debug("localVideoPort is 0");
+           return false;
+        }
+
+        if(remoteVideoPort.equals("0")) {
+           log.debug("remoteVideoPort is 0");
+           return false;
+        }
+
+        return true;
+
+    }
+
+    public boolean isTempVideoImgValid() {
+        if(!GlobalCall.tempSipVideoImgExists(TEMP_SIP_VIDEO_IMG_PATH)) {
+            log.debug("***IMAGE FOR TEMPORARY VIDEO DOESN'T EXIST: check the image path in bigbluebutton-sip.properties");
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isSdpPathValid() {
+        if(!GlobalCall.sdpVideoExists(sdpPath)) {
+            log.debug("***SDP FOR GLOBAL FFMPEG ({}) doesn't exist", sdpPath);
+            return false;
+        }
+
+        return true;
     }
 }
