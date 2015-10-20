@@ -25,6 +25,7 @@ public class FFmpegCommand {
 
     /* Parameters when the input is a loop image/file */
     private String loop;
+    private String ignoreLoop;
     private String frameRate;
     private String frameSize;
 
@@ -73,6 +74,11 @@ public class FFmpegCommand {
         if(loop != null && !loop.isEmpty()){
             comm.add("-loop");
             comm.add(loop);
+        }
+
+        if(ignoreLoop != null && !ignoreLoop.isEmpty()){
+            comm.add("-ignore_loop");
+            comm.add(ignoreLoop);
         }
 
         if(probeSize != null && !probeSize.isEmpty()) {
@@ -169,6 +175,15 @@ public class FFmpegCommand {
         this.loop = arg;
     }
 
+    /**
+     * Set ignore loop (valid for GIFs input, only)
+     * 0: means that input GIF will loop indefinitely
+     * @param arg
+     */
+    public void setIgnoreLoop(int arg) {
+        this.ignoreLoop = Integer.toString(arg);
+    }
+
     public void setLevel(String arg) {
         this.args.put("-level", arg);
     }
@@ -196,6 +211,47 @@ public class FFmpegCommand {
     public void setPixelFormat(String arg){
         this.args.put("-pix_fmt", arg);
     }
+
+    /**
+     * Set maximum bitrate, in Kbps.
+     * @param arg
+     */
+    public void setMaxRate(int arg){
+        this.args.put("-maxrate", Integer.toString(arg)+"k");
+    }
+
+    /**
+     * Set Group of images (GOP)
+     * @param arg
+     */
+    public void setGop(int arg){
+        this.args.put("-g", Integer.toString(arg));
+    }
+    /**
+     * Set maximum NAL size, in bytes.
+     * This option works with libopenh264 encoder,only
+     * @param arg
+     */
+    public void setMaxNalSize(String arg){
+        this.args.put("-max_nal_size", arg);
+    }
+
+    /**
+      * Set slice_mode for libopenh264 encoder.
+      * @param arg
+      */
+    public void setSliceMode(String arg){
+        this.args.put("-slice_mode", arg);
+    }
+
+    /**
+      * Set rtpflags for RTP encoder.
+      * @param arg
+      */
+    public void setRtpFlags(String arg){
+        this.args.put("-rtpflags", arg);
+    }
+
     public void setSliceMaxSize(String arg) {
         this.x264Params.put("slice-max-size", arg);
     }

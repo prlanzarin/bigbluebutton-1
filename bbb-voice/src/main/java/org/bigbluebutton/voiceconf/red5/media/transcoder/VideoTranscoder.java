@@ -21,7 +21,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     private static Logger log = Red5LoggerFactory.getLogger(VideoTranscoder.class, "sip");
 
     public static enum Type{TRANSCODE_RTP_TO_RTMP,TRANSCODE_RTMP_TO_RTP,TRANSCODE_FILE_TO_RTP, TRANSCODE_FILE_TO_RTMP};
-    public static final String TEMP_SIP_VIDEO_IMG_PATH = GlobalCall.tempSipVideoImg;
+    public static final String VIDEO_CONF_LOGO_PATH = GlobalCall.videoConfLogo;
     public static final String FFMPEG_PATH = GlobalCall.ffmpegPath;
 
 
@@ -121,19 +121,18 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setInput(inputLive);
                 ffmpeg.addRtmpInputConnectionParameter(meetingId);
                 ffmpeg.addRtmpInputConnectionParameter("transcoder-"+userId);
-                ffmpeg.setCodec("h264");
-                ffmpeg.setPreset("ultrafast");
+                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setMaxRate(512);
+                ffmpeg.setSliceMode("dyn");
+                ffmpeg.setMaxNalSize("1024");
+                ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
                 ffmpeg.setProfile("baseline");
-                ffmpeg.setLevel("1.3");
                 ffmpeg.setFormat("rtp");
                 ffmpeg.setPayloadType(String.valueOf(H264Codec.codecId));
                 ffmpeg.setLoglevel("quiet");
-                ffmpeg.setSliceMaxSize("1024");
-                ffmpeg.setMaxKeyFrameInterval("10");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setAnalyzeDuration("1000"); // 1ms
                 ffmpeg.setProbeSize("32"); // 1ms
-                ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
                 log.debug("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
@@ -157,14 +156,10 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
-                ffmpeg.setCodec("libx264");
-                ffmpeg.setPreset("ultrafast");
+                ffmpeg.setMaxRate(512);
+                ffmpeg.setCodec("libopenh264");
                 ffmpeg.setProfile("baseline");
-                ffmpeg.setAnalyzeDuration("10000"); // 10ms
-                //ffmpeg.addCustomParameter("-q:v", "1");
-                ffmpeg.setMaxKeyFrameInterval("30"); //2*fps. 1 key frame on each 2s
-                ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
-                ffmpeg.addCustomParameter("-crf", "30");
+                ffmpeg.setAnalyzeDuration("1000"); // 10ms
                 ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
                 ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=15");
                 log.debug("Preparing FFmpeg process monitor");
@@ -178,25 +173,24 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                     return false;
                 }
 
-                inputLive = TEMP_SIP_VIDEO_IMG_PATH;
+                inputLive = VIDEO_CONF_LOGO_PATH;
                 outputLive = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
-                ffmpeg.setLoop("1");
-                ffmpeg.addCustomParameter("-framerate", "5");
+                ffmpeg.setIgnoreLoop(0);
+                //ffmpeg.addCustomParameter("-framerate", "15");
                 ffmpeg.setInput(inputLive);
-                ffmpeg.addCustomParameter("-r", "5");
+                ffmpeg.setInputLive(true);
                 ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
-                ffmpeg.setLevel("1.3");
                 ffmpeg.setPayloadType(String.valueOf(H264Codec.codecId));
                 ffmpeg.setLoglevel("quiet");
-                ffmpeg.setCodec("h264");
-                ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
-                ffmpeg.setPreset("ultrafast");
+                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setSliceMode("dyn");
+                ffmpeg.setMaxNalSize("1024");
+                ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
+                ffmpeg.setProfile("baseline");
                 ffmpeg.setFormat("rtp");
-                ffmpeg.setSliceMaxSize("1024");
-                ffmpeg.setMaxKeyFrameInterval("10");
                 ffmpeg.setOutput(outputLive);
                 log.debug("Preparing temporary FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
@@ -209,7 +203,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                     return false;
                 }
 
-                inputLive = TEMP_SIP_VIDEO_IMG_PATH;
+                inputLive = VIDEO_CONF_LOGO_PATH;
                 outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
                         + videoStreamName+" live=1";
 
@@ -217,22 +211,15 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setInputLive(true);
-                ffmpeg.setFrameRate("15");
                 ffmpeg.setFrameSize("640x480");
-                ffmpeg.setLoop("1");
+                ffmpeg.setIgnoreLoop(0);
                 ffmpeg.setFormat("flv");
                 ffmpeg.setLoglevel("quiet");
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setCodec("libopenh264");
-                //ffmpeg.setPreset("ultrafast");
                 ffmpeg.setProfile("baseline");
-                ffmpeg.setAnalyzeDuration("10000"); // 10ms
-                //ffmpeg.addCustomParameter("-q:v", "1");
-                ffmpeg.setMaxKeyFrameInterval("30"); //2*fps. 1 key frame on each 2s
-                //ffmpeg.addCustomParameter("-tune", "zerolatency"); //x264 parameter
-                //ffmpeg.addCustomParameter("-crf", "30");
                 log.debug("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
@@ -448,7 +435,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public boolean areFileToRtpParametersValid() {
         log.debug("Checking File to Rtp Transcoder Parameters...");
-        return areVideoPortsValid() && isTempVideoImgValid();
+        return areVideoPortsValid() && isVideoConfLogoValid();
     }
 
     public boolean areFileToRtmpParametersValid() {
@@ -464,7 +451,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
            return false;
         }
 
-        return isTempVideoImgValid();
+        return isVideoConfLogoValid();
     }
 
     public boolean areVideoPortsValid() {
@@ -492,8 +479,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     }
 
-    public boolean isTempVideoImgValid() {
-        if(!GlobalCall.tempSipVideoImgExists(TEMP_SIP_VIDEO_IMG_PATH)) {
+    public boolean isVideoConfLogoValid() {
+        if(!GlobalCall.videoConfLogoExists(VIDEO_CONF_LOGO_PATH)) {
             log.debug("***IMAGE FOR TEMPORARY VIDEO DOESN'T EXIST: check the image path in bigbluebutton-sip.properties");
             return false;
         }

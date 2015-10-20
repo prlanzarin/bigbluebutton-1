@@ -81,7 +81,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 	<bean id="GlobalCall" class="org.bigbluebutton.voiceconf.sip.GlobalCall">
 		<property name="sipVideoResolution" value="${bbb.sip.app.sip-video-resolution}" />
-		<property name="tempSipVideoImg" value="${bbb.sip.app.sip-temp-video-img}" />
+		<property name="videoConfLogo" value="${bbb.sip.app.video-conf-logo}" />
 		<property name="ffmpegPath" value="${bbb.sip.app.ffmpeg-path}" />
 	</bean>
 

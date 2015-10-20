@@ -56,7 +56,7 @@ public class GlobalCall {
 
     public static String sipVideoWidth;
     public static String sipVideoHeight;
-    public static String tempSipVideoImg = "";
+    public static String videoConfLogo = "";
     public static String ffmpegPath = "";
     private static String ip;
 
@@ -329,19 +329,19 @@ public class GlobalCall {
         sipVideoHeight = height;
     }
 
-    public void setTempSipVideoImg(String imgPath) {
-        log.debug("Trying to set the temporary sip video image file to: {}", imgPath);
+    public void setVideoConfLogo(String filePath) {
+        log.debug("Trying to set the temporary sip video image file to: {}", filePath);
 
-        if(tempSipVideoImgExists(imgPath)) {
-           tempSipVideoImg = imgPath;
-           log.debug("Temporary sip video image file set to: {}", tempSipVideoImg);
+        if(videoConfLogoExists(filePath)) {
+           videoConfLogo = filePath;
+           log.debug("Temporary sip video image file set to: {}", videoConfLogo);
         }
         else
-           log.debug("****Could NOT set {} as the temporary sip video image", imgPath);
+           log.debug("Could NOT set {} as the temporary sip video image", filePath);
     }
 
-    public static boolean tempSipVideoImgExists(String imgPath) {
-        return fileExists(imgPath);
+    public static boolean videoConfLogoExists(String filePath) {
+        return new File(filePath).isFile();
     }
 
     public void setFfmpegPath(String ffPath) {
