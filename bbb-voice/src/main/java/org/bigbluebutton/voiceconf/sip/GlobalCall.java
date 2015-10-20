@@ -341,7 +341,7 @@ public class GlobalCall {
     }
 
     public static boolean videoConfLogoExists(String filePath) {
-        return new File(filePath).isFile();
+        return fileExists(filePath);
     }
 
     public void setFfmpegPath(String ffPath) {

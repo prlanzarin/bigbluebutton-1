@@ -192,7 +192,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setProfile("baseline");
                 ffmpeg.setFormat("rtp");
                 ffmpeg.setOutput(outputLive);
-                log.debug("Preparing temporary FFmpeg process monitor");
+                log.debug("Preparing video-conf-logo's FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
 
@@ -263,13 +263,13 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                     ffmpegProcessMonitor.restart();
                     return true;
                 case TRANSCODE_FILE_TO_RTP:
-                    //user's temporary video stream : parameters are the same
-                    log.debug("Restarting the user's temporary video stream...");
+                    //user's videoconf-logo video stream : parameters are the same
+                    log.debug("Restarting the user's videoconf-logo video stream...");
                     ffmpegProcessMonitor.restart();
                     return true;
                 case TRANSCODE_FILE_TO_RTMP:
                     //videoconf-logo video stream : parameters are the same
-                    log.debug("Restarting the videconf's logo temporary video stream...");
+                    log.debug("Restarting the videconf's logo videoconf-logo video stream...");
                     ffmpegProcessMonitor.restart();
                     return true;
                 default:
@@ -481,7 +481,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public boolean isVideoConfLogoValid() {
         if(!GlobalCall.videoConfLogoExists(VIDEO_CONF_LOGO_PATH)) {
-            log.debug("***IMAGE FOR TEMPORARY VIDEO DOESN'T EXIST: check the image path in bigbluebutton-sip.properties");
+            log.debug("***IMAGE FOR VIDEOCONF-LOGO VIDEO DOESN'T EXIST: check the image path in bigbluebutton-sip.properties");
             return false;
         }
 
