@@ -24,6 +24,12 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public static final String VIDEO_CONF_LOGO_PATH = GlobalCall.videoConfLogo;
     public static final String FFMPEG_PATH = GlobalCall.ffmpegPath;
 
+    //if ffmpeg restarts 5 times in less than 5 seconds, we will not restart it anymore
+    //this is to prevent a infinite loop of ffmpeg restartings
+    private static final int MAX_RESTARTINGS_NUMBER = 5;
+    private static final long MIN_RESTART_TIME = 5000; //5 seconds
+    private int currentFFmpegRestartNumber = 0;
+    private long lastFFmpegRestartTime = 0;
 
     private Type type;
     private ProcessMonitor ffmpegProcessMonitor;
@@ -250,33 +256,48 @@ public class VideoTranscoder implements ProcessMonitorObserver {
          * It doesn't instantiate a new processMonitor, but uses the same reference, to restart the transcoder
          */
         if ((ffmpegProcessMonitor != null) && (ffmpeg != null)){
+
+            currentFFmpegRestartNumber++;
+            if(currentFFmpegRestartNumber == MAX_RESTARTINGS_NUMBER) {
+               long timeInterval = System.currentTimeMillis() - lastFFmpegRestartTime;
+               if(timeInterval <= MIN_RESTART_TIME) {
+                  log.debug("****Max number of ffmpeg restartings reached in " + timeInterval + " miliseconds for {}'s Video Transcoder." + 
+                            " Not restating it anymore.", userId);
+                  return false;
+               }
+               else
+                  currentFFmpegRestartNumber = 0;
+            }
+
             switch(type){
                 case TRANSCODE_RTMP_TO_RTP:
                     //user's video stream : parameters are the same
                     log.debug("Restarting the user's video stream: "+this.videoStreamName);
                     ffmpegProcessMonitor.restart();
-                    return true;
+                    break;
                 case TRANSCODE_RTP_TO_RTMP:
                     //global's video stream : stream name got a new timestamp
                     updateGlobalStreamName(streamName);
                     log.debug("Restarting the global's video stream: "+this.videoStreamName);
                     ffmpegProcessMonitor.restart();
-                    return true;
+                    break;
                 case TRANSCODE_FILE_TO_RTP:
                     //user's videoconf-logo video stream : parameters are the same
                     log.debug("Restarting the user's videoconf-logo video stream...");
                     ffmpegProcessMonitor.restart();
-                    return true;
+                    break;
                 case TRANSCODE_FILE_TO_RTMP:
                     //videoconf-logo video stream : parameters are the same
                     log.debug("Restarting the videconf's logo videoconf-logo video stream...");
                     ffmpegProcessMonitor.restart();
-                    return true;
+                    break;
                 default:
                     log.debug("Video Transcoder error: Unknown TRANSCODING TYPE");
-                    break;
+                    return false;
             }
-            return false;
+
+            lastFFmpegRestartTime = System.currentTimeMillis();
+            return true;
         }else {
             log.debug(" Can't restart VideoTranscoder. There's no ProcessMonitor running");
             return false;

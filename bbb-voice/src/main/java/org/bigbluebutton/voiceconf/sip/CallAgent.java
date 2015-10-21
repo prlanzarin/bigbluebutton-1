@@ -878,7 +878,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
                 messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
             }else
-                log.debug("No need to restart Global Video Transcoder, it already restarted");
+                log.debug("Global Video Transcoder not restarted");
         }else
             log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
     }
