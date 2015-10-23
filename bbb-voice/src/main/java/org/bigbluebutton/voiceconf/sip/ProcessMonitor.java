@@ -19,9 +19,10 @@ public class ProcessMonitor {
     private Process process;
     private String name;
     private static final int EXIT_WITH_SUCCESS_CODE = 0;
+    private static final int EXIT_WITH_NO_INPUT = 1; //we are accepting this as valid, to avoid restarting when there's no input.
     private static final int FATAL_ERROR_CODE = 128;
     private static final int EXIT_WITH_SIGKILL_CODE = FATAL_ERROR_CODE + 9;
-    private static final int ACCEPTABLE_EXIT_CODES[] = {EXIT_WITH_SUCCESS_CODE,EXIT_WITH_SIGKILL_CODE};
+    private static final int ACCEPTABLE_EXIT_CODES[] = {EXIT_WITH_SUCCESS_CODE,EXIT_WITH_NO_INPUT,EXIT_WITH_SIGKILL_CODE};
     ProcessStream inputStreamMonitor;
     ProcessStream errorStreamMonitor;
     private String inputStreamMonitorOutput;

@@ -616,6 +616,8 @@ package org.bigbluebutton.modules.users.services
 
       isSipVideoPresent=map.isSipVideoPresent;
       globalVideoStreamName=map.sipVideoStreamName;
+      if (globalVideoStreamName)
+        isSipVideoPresent = true; //non-empty streams are played anyways (e.g videoconf-logo's one)
       globalVideoStreamWidth=map.width;
       globalVideoStreamHeight=map.height;
       sipVideoUpdate();

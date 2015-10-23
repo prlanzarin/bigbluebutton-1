@@ -41,7 +41,7 @@ public class GlobalCall {
     private static Map<String,Boolean> roomToSipPhonePresent = new ConcurrentHashMap<String,Boolean>();
     private static Map<String, VoiceConfToListenOnlyUsersMap> voiceConfToListenOnlyUsersMap = new ConcurrentHashMap<String, VoiceConfToListenOnlyUsersMap>();
     private static Map<String, VoiceConfToGlobalVideoUsersMap> voiceConfToGlobalVideoUsersMap = new ConcurrentHashMap<String, VoiceConfToGlobalVideoUsersMap>();
-    private static Map<String, String> voiceConfToFloorHolder = new ConcurrentHashMap<String, String>();
+    private static Map<String, FloorHolder> voiceConfToFloorHolder = new ConcurrentHashMap<String, FloorHolder>();
     private static Map<String, VideoTranscoder> voiceConfToVideoLogoTranscoder = new ConcurrentHashMap<String,VideoTranscoder>();
     private static Path sdpVideoPath;
     public static final String GLOBAL_AUDIO_STREAM_NAME_PREFIX = "GLOBAL_AUDIO_";
@@ -220,6 +220,12 @@ public class GlobalCall {
         roomToVideoPresent.put(voiceconf, flag);
     }
 
+    /**
+     * Informs if the current room already has a global video transcoder
+     * running. True when there's a VideoTranscoder running for this room.
+     * False otherwise.
+     * @param voiceconf
+     */
     public static synchronized boolean isVideoPresent(String voiceconf){
         Boolean videoPresent;
         videoPresent = roomToVideoPresent.get(voiceconf);
@@ -244,33 +250,69 @@ public class GlobalCall {
         roomToSipPhonePresent.put(voiceconf, flag);
     }
 
-    public static synchronized void setFloorHolder(String voiceconf, String floorHolder){
-        log.debug("setFlooHolder: {} [oldFloorHolder = {}]",floorHolder,voiceConfToFloorHolder.get(voiceconf));
-        voiceConfToFloorHolder.put(voiceconf, floorHolder);
+    public static synchronized void setFloorHolder(String voiceconf, String userId, Boolean videoPresent){
+        FloorHolder floorHolder;
+        floorHolder = voiceConfToFloorHolder.get(voiceconf);
+        if (floorHolder != null){
+            log.debug("Contains key [{}]. ",voiceconf);
+            floorHolder.setUserId(userId);
+            floorHolder.setUserHasVideo(videoPresent);
+        } else{
+            log.debug("Doesn't contain key [{}]. ",voiceconf);
+            floorHolder = new FloorHolder(userId,videoPresent);
+            voiceConfToFloorHolder.put(voiceconf, floorHolder);
+        }
+        log.debug("setFlooHolder: {} [oldFloorHolder = {}]",userId,floorHolder.getUserId());
     }
 
-    public static String getFloorHolder(String voiceconf){
-        return voiceConfToFloorHolder.get(voiceconf);
+    public static String getFloorHolderUserId(String voiceconf){
+        FloorHolder floorHolder = voiceConfToFloorHolder.get(voiceconf);
+        if (floorHolder != null)
+            return floorHolder.getUserId();
+        else return "";
+    }
+
+    public static boolean floorHolderHasVideo(String voiceconf){
+        FloorHolder floorHolder = voiceConfToFloorHolder.get(voiceconf);
+        if (floorHolder != null)
+            return floorHolder.hasVideo();
+        else return false;
     }
 
     public static boolean isFloorHolder(String voiceconf, String userId){
-        return voiceConfToFloorHolder.get(voiceconf).equals(userId);
+        return getFloorHolderUserId(voiceconf).equals(userId);
     }
 
-    public static boolean floorHolderChanged(String voiceconf, String floorHolder) {
+    /**
+     * True every time floor holder changes, or his video status changes,
+     * false otherwise.
+     * The status of the floor holder is a boolean which determines if
+     * he got video.
+     * @param voiceconf
+     * @param floorHolder
+     * @param videoPresent
+     * @return
+     */
+    public static boolean floorHolderChanged(String voiceconf, String floorHolder, Boolean videoPresent) {
         Boolean floorHolderChanged;
+        Boolean floorHolderVideoStatusChanged;
         String oldFloorHolder;
-        oldFloorHolder = voiceConfToFloorHolder.get(voiceconf);
+        oldFloorHolder = getFloorHolderUserId(voiceconf);
+        floorHolderVideoStatusChanged = floorHolderHasVideo(voiceconf) ^ videoPresent;
         if (oldFloorHolder == null || oldFloorHolder.isEmpty())
           floorHolderChanged = (floorHolder != null) && (!floorHolder.isEmpty());
         else
           floorHolderChanged = isWebUser(floorHolder) ^ isWebUser(oldFloorHolder);
         log.debug("FloorHolderChanged [voiceconf={}] ? {} [floorHolder={}, oldFloorHolder={}]",voiceconf, floorHolderChanged,floorHolder,oldFloorHolder);
-        return floorHolderChanged;
+        return floorHolderChanged || floorHolderVideoStatusChanged;
     }
 
-    public static synchronized boolean shouldProbeGlobalVideo(String voiceconf,String floorHolder){
-        return floorHolderChanged(voiceconf,floorHolder) && isVideoPresent(voiceconf);
+    public static synchronized boolean shouldProbeGlobalVideo(String voiceconf,String floorHolder,Boolean videoPresent){
+        return floorHolderChanged(voiceconf,floorHolder,videoPresent) && isVideoPresent(voiceconf) && globalCallHasVideo(videoPresent);
+    }
+
+    public static boolean globalCallHasVideo(Boolean videoPresent){
+        return videoPresent;
     }
 
     private static synchronized boolean isSipPhonePresent(String voiceconf) {

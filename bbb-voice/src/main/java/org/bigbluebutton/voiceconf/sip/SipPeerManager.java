@@ -197,10 +197,10 @@ public final class SipPeerManager {
 		messagingService = service;
 	}
 
-	public void startCurrentFloorVideo(String peerId, String voiceBridge, String userId, String meetingId) {
+	public void startCurrentFloorVideo(String peerId, String voiceBridge, String userId, Boolean videoPresent,String meetingId) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startCurrentFloorVideo(voiceBridge,userId,meetingId);
+			sipUser.startCurrentFloorVideo(voiceBridge,userId,videoPresent,meetingId);
         }
 	}
 

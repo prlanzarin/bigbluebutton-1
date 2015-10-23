@@ -380,13 +380,13 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         this.call(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
-    public void startCurrentFloorVideo(String voiceBridge, String userId, String meetingId) {
+    public void startCurrentFloorVideo(String voiceBridge, String userId, Boolean videoPresent, String meetingId) {
         log.debug("Starting the video stream for uid={}, voiceBridge={}", userId,voiceBridge);
         CallAgent ca;
 
         if (userId.isEmpty()){
             //when empty, we try to retrieve current floor, to start his video
-            ca = callManager.getByUserId(GlobalCall.getFloorHolder(voiceBridge));
+            ca = callManager.getByUserId(GlobalCall.getFloorHolderUserId(voiceBridge));
         }else ca = callManager.getByUserId(userId);
 
         if (ca != null && !ca.isGlobalStream() && !ca.isListeningToGlobal()) {
@@ -399,7 +399,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         else {
             log.debug("Could not start sip video for {}, CA is null, global or listen only", userId);
             log.debug("Changing current video floor to a non-web user, conference={}, uid={}",voiceBridge,userId);
-            changeCurrentVideoFloorToPhoneUser(voiceBridge,userId,meetingId);
+            changeCurrentVideoFloorToPhoneUser(voiceBridge,userId,videoPresent,meetingId);
         }
 
     }
@@ -413,7 +413,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
      */
     public void stopCurrentFloorVideo(String voiceBridge,String meetingId) {
         stopCurrentFloorVideo(voiceBridge);
-        updateCurrentFloorVideo(voiceBridge,"");
+        updateCurrentFloorVideo(voiceBridge,"",false);
         GlobalCall.removeVideoConfLogoStream(voiceBridge, meetingId,"");
     }
 
@@ -427,13 +427,13 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
     public void changeCurrentVideoFloorToWebUser(CallAgent ca){
         if (ca == null) return;
         synchronized (callManager){
-            if (GlobalCall.floorHolderChanged(ca.getDestination(),ca.getUserId()) || !ca.isVideoRunning()){
+            if (GlobalCall.floorHolderChanged(ca.getDestination(),ca.getUserId(),true) || !ca.isVideoRunning()){
                 log.debug("TEST HOLD");
                 if (!GlobalCall.isFloorHolder(ca.getDestination(),ca.getUserId()) && !ca.isVideoRunning()){
                     log.debug("Stopping floor video, because this is not the current user");
                     stopCurrentFloorVideo(ca.getDestination());
                 }
-                updateCurrentFloorVideo(ca.getDestination(),ca.getUserId());
+                updateCurrentFloorVideo(ca.getDestination(),ca.getUserId(),true); //webuser always has video
                 if(startNewVideoFloor(ca))
                     GlobalCall.addVideoConfLogoStream(ca.getDestination(),ca.getMeetingId());
                 log.debug("TEST RELEASE");
@@ -453,14 +453,16 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
      * @param userId
      * @param meetingId
      */
-    private void changeCurrentVideoFloorToPhoneUser(String voiceBridge, String userId , String meetingId){
+    private void changeCurrentVideoFloorToPhoneUser(String voiceBridge, String userId , Boolean videoPresent, String meetingId){
         synchronized (callManager){
-            if (GlobalCall.floorHolderChanged(voiceBridge,userId)){
+            if (GlobalCall.floorHolderChanged(voiceBridge,userId,videoPresent)){
                 log.debug("TEST HOLD");
                 stopCurrentFloorVideo(voiceBridge);
-                updateCurrentFloorVideo(voiceBridge,userId);
+                updateCurrentFloorVideo(voiceBridge,userId,videoPresent);
                 CallAgent ca = callManager.getGlobalCallAgent(voiceBridge);
-                GlobalCall.removeVideoConfLogoStream(voiceBridge, meetingId, (ca!=null) ? ca.getVideoStreamName():"");
+                if (videoPresent)
+                    GlobalCall.removeVideoConfLogoStream(voiceBridge, meetingId, (ca!=null) ? ca.getVideoStreamName():"");
+                else GlobalCall.addVideoConfLogoStream(ca.getDestination(),ca.getMeetingId());
                 log.debug("TEST RELEASE");
             }else{
                 log.debug("Video floor holder still is the same. Nothing to do about his video...");
@@ -468,13 +470,13 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         }
     }
 
-    private void updateCurrentFloorVideo(String voiceBridge, String userId){
-        GlobalCall.setFloorHolder(voiceBridge,userId);
+    private void updateCurrentFloorVideo(String voiceBridge, String userId, Boolean videoPresent){
+        GlobalCall.setFloorHolder(voiceBridge,userId, videoPresent);
     }
 
     private void stopCurrentFloorVideo(String voiceBridge){
         log.debug("Stopping current video floor for the conference {}", voiceBridge);
-        String userId = GlobalCall.getFloorHolder(voiceBridge);
+        String userId = GlobalCall.getFloorHolderUserId(voiceBridge);
         CallAgent ca;
         if ((userId != null) && (!userId.equals(""))){
             log.debug("{} is the current video floor holder, stopping his video.", userId);
