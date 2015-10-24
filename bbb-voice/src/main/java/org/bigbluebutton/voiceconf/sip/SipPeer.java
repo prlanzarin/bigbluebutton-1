@@ -297,15 +297,18 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
     }
 
     public void stopFreeswitchToBbbGlobalVideoStream(String userId) {
+        synchronized (callManager){
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null) {
             if(ca.isGlobalStream()) {
                 ca.stopFreeswitchToBbbGlobalVideoStream();
+                messagingService.globalVideoStreamCreated(ca.getMeetingId(),"");
             }
         }
         else
             log.debug("Could not STOP FreeswitchToBbbGlobalVideoStream: there is no Global CallAgent with"
                        + "userId " + userId);
+        }
     }
 
     public void webRTCCall(String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort, String serverIp) throws PeerNotFoundException {
