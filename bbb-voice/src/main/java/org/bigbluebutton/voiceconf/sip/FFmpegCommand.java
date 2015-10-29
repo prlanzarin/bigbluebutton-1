@@ -26,7 +26,7 @@ public class FFmpegCommand {
     /* Parameters when the input is a loop image/file */
     private String loop;
     private String ignoreLoop;
-    private String frameRate;
+    private int frameRate;
     private String frameSize;
 
     public FFmpegCommand() {
@@ -39,6 +39,7 @@ public class FFmpegCommand {
         this.ffmpegPath = null;
         this.inputLive = false;
         this.loop = null;
+        this.frameRate = 0;
     }
 
     public String[] getFFmpegCommand(boolean shouldBuild) {
@@ -55,11 +56,6 @@ public class FFmpegCommand {
             this.ffmpegPath = "/usr/local/bin/ffmpeg";
 
         comm.add(this.ffmpegPath);
-
-        if(frameRate != null && !frameRate.isEmpty()){
-            comm.add("-framerate");
-            comm.add(frameRate);
-        }
 
         if (this.inputLive){
             comm.add("-re");
@@ -213,6 +209,22 @@ public class FFmpegCommand {
     }
 
     /**
+     * Set video bitrate, in Kbps.
+     * @param arg
+     */
+    public void setVideoBitRate(int arg){
+        this.args.put("-b:v", Integer.toString(arg)+"k");
+    }
+
+    /**
+     * Set bufsize, in Kb.
+     * @param arg
+     */
+    public void setBufSize(int arg){
+        this.args.put("-bufsize", Integer.toString(arg)+"k");
+    }
+
+    /**
      * Set maximum bitrate, in Kbps.
      * @param arg
      */
@@ -288,9 +300,10 @@ public class FFmpegCommand {
     * Set frame rate of the input data
     * @param value
     */
-   public void setFrameRate(String value){
-       this.frameRate = value;
-   }
+    public void setFrameRate(int value){
+        if (value>0)
+            this.args.put("-r",Integer.toString(value));
+    }
 
    public void setFrameSize(String value){
        this.frameSize = value;

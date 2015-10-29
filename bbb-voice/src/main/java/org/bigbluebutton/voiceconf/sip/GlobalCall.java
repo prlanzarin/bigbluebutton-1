@@ -59,6 +59,7 @@ public class GlobalCall {
     public static String videoConfLogo = "";
     public static String ffmpegPath = "";
     private static String ip;
+    private static boolean enableUserVideoSubtitle;
 
 	private static IMessagingService messagingService;
 
@@ -493,6 +494,14 @@ public class GlobalCall {
 
     public static void setIp(String newIp){
         ip = newIp;
+    }
+
+    public void setEnableUserVideoSubtitle(boolean flag){
+        enableUserVideoSubtitle = flag;
+    }
+
+    public static boolean isUserVideoSubtitleEnabled(){
+        return enableUserVideoSubtitle;
     }
 
     public String getIp(){

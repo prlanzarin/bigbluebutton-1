@@ -45,6 +45,10 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.net.URLDecoder;
+import java.io.UnsupportedEncodingException;
 
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
 import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
@@ -65,6 +69,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private final ConferenceProvider portProvider;
     private DatagramSocket localAudioSocket;
     private DatagramSocket localVideoSocket;
+    private String _username; //Same as visualized in participant's list
     private String _callerName;
     private String _userId;
     private String _destination;
@@ -141,6 +146,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public void call(String callerName, String userId, String destination) {
     	_callerName = callerName;
+        _username = getUserNameFromCallerName(callerName);
         _userId = userId;
     	_destination = destination;
     	log.debug("{} making a call to {}", callerName, destination);  
@@ -494,7 +500,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public synchronized void startUserVideoTranscoder(VideoTranscoder.Type type){
         if (videoTranscoder == null){
-            videoTranscoder = new VideoTranscoder(type,getUserId(),getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+            videoTranscoder = new VideoTranscoder(type,getUserId(),getUserName(),getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
             videoTranscoder.setVideoTranscoderObserver(this);
             setVideoRunning(true);
             videoTranscoder.start();
@@ -822,6 +828,10 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return userProfile.username;
     }
 
+    public String getUserName() {
+        return _username;
+    }
+
     @Override
     public void onFirRequest() {
         log.debug("Sending FIR request to FreeSwitch..."); 
@@ -849,6 +859,40 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public void setMeetingId(String meetingId){
         this._meetingId = meetingId;
+    }
+
+    public void setCallerName(String callerName){
+        this._callerName = callerName;
+        if(userProfile != null)
+            userProfile.username = callerName;
+    }
+
+    public void setUserNameFromCallerName(String callerName){
+        this._username = getUserNameFromCallerName(callerName);
+    }
+
+    /**
+     * Get user's name from callername(or callerIdName) string.
+     * The returned username is URL decoded
+     * @param callername
+     */
+    private String getUserNameFromCallerName(String callerName){
+        if ((callerName == null) || (callerName.isEmpty()))
+            return "";
+
+        try{
+            Pattern p = Pattern.compile("(\\w+)-(bbbID)-(.+)");
+            Matcher m = p.matcher(callerName);
+
+            if (m.find()) {
+                log.debug("Pattern found from callerName={}: {}",callerName,m.group(3));
+                return URLDecoder.decode(m.group(3),"UTF-8");
+            } else return "";
+        }
+        catch (UnsupportedEncodingException e){
+            log.debug("Invalid encoding for callerName: {} ", callerName);
+            return "";
+        }
     }
 
     public String getMeetingId(){

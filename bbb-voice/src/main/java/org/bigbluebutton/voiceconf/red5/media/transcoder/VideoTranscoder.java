@@ -1,5 +1,5 @@
-package org.bigbluebutton.voiceconf.red5.media.transcoder;
 
+package org.bigbluebutton.voiceconf.red5.media.transcoder;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -36,6 +36,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     private ProcessMonitor ffprobeProcessMonitor;
     private FFmpegCommand ffmpeg;
     private String userId;
+    private String username;
     private String videoStreamName;
     private String outputLive;
     private String meetingId;
@@ -49,10 +50,11 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public static final String FFMPEG_NAME = "FFMPEG";
     public static final String FFPROBE_NAME = "FFPROBE";
 
-    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
+    public VideoTranscoder(Type type,String userId, String username, String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;
         this.sdpPath = "";
         this.userId = userId;
+        this.username = username;
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
         this.ip = ip;
@@ -64,6 +66,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public VideoTranscoder(Type type,String sdpPath, String userId, String videoStreamName, String meetingId, String ip){
         this.type = type;
         this.userId = userId;
+        this.username = "";
         this.videoStreamName = videoStreamName;
         this.sdpPath = sdpPath;
         this.meetingId = meetingId;
@@ -127,8 +130,11 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setInput(inputLive);
                 ffmpeg.addRtmpInputConnectionParameter(meetingId);
                 ffmpeg.addRtmpInputConnectionParameter("transcoder-"+userId);
+                ffmpeg.setFrameRate(15);
+                ffmpeg.setVideoBitRate(1024);
+                ffmpeg.setBufSize(1024);
                 ffmpeg.setCodec("libopenh264");
-                ffmpeg.setMaxRate(512);
+                ffmpeg.setMaxRate(1024);
                 ffmpeg.setSliceMode("dyn");
                 ffmpeg.setMaxNalSize("1024");
                 ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
@@ -162,7 +168,9 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
-                ffmpeg.setMaxRate(512);
+                ffmpeg.setVideoBitRate(1024);
+                ffmpeg.setBufSize(1024);
+                ffmpeg.setMaxRate(1024);
                 ffmpeg.setCodec("libopenh264");
                 ffmpeg.setProfile("baseline");
                 ffmpeg.setAnalyzeDuration("1000"); // 10ms
@@ -185,12 +193,14 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setIgnoreLoop(0);
-                //ffmpeg.addCustomParameter("-framerate", "15");
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setInputLive(true);
                 ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
+                ffmpeg.setFrameRate(15);
                 ffmpeg.setPayloadType(String.valueOf(H264Codec.codecId));
                 ffmpeg.setLoglevel("quiet");
+                if (GlobalCall.isUserVideoSubtitleEnabled())
+                    ffmpeg.addCustomParameter("-vf","drawtext=fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:text="+username+":x="+globalVideoWidth+"-tw-20:y="+globalVideoHeight+"-th-20:fontcolor=white@0.9:shadowcolor=black:shadowx=2:shadowy=2:fontsize=20");
                 ffmpeg.setCodec("libopenh264");
                 ffmpeg.setSliceMode("dyn");
                 ffmpeg.setMaxNalSize("1024");
