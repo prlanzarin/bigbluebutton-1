@@ -275,7 +275,7 @@ trait UsersApp {
     val regUser = regUsers.get(msg.authToken)
     regUser foreach { ru =>
       val vu = new VoiceUser(msg.userID, msg.userID, ru.name, ru.name,  
-                           false, false, false, false, false)
+                           false, false, false, false, false, false)
       val uvo = new UserVO(msg.userID, ru.externId, ru.name, 
                   ru.role, raiseHand=false, presenter=false, 
                   hasStream=false, locked=getInitialLockStatus(ru.role), 
@@ -341,7 +341,7 @@ trait UsersApp {
           val webUserId = users.generateWebUserId
           val vu = new VoiceUser(msg.voiceUser.userId, webUserId, 
                                  msg.voiceUser.callerName, msg.voiceUser.callerNum,
-                                 true, false, false, false, msg.voiceUser.hasVideo)
+                                 true, false, false, false, msg.voiceUser.hasVideo, msg.voiceUser.hasFloor)
           
           val sessionId = "PHONE-" + webUserId;
           
@@ -360,6 +360,7 @@ trait UsersApp {
 
             logger.debug("Is " + uvo.name + " sending video? {}", uvo.hasStream);
             sendSipPhonePresent(uvo.hasStream);
+            outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId,globalVideoStreamWidth,globalVideoStreamHeight)) //update video everytime user joins the room
         }
     }
   }
@@ -384,7 +385,7 @@ trait UsersApp {
   def handleVoiceUserLeft(msg: VoiceUserLeft) {
     users.getUser(msg.userId) foreach {user =>
       val vu = new VoiceUser(user.userID, user.userID, user.name, user.name,  
-                           false, false, false, false, false)
+                           false, false, false, false, false, false)
       val nu = user.copy(voiceUser=vu)
       users.addUser(nu)
             
@@ -414,6 +415,7 @@ trait UsersApp {
     def sendSipPhoneLeft(){
         if(users.getPhoneUsersSendingVideo.isEmpty){
             isSipPhonePresent = false
+            isSipVideoPresent = false
             outGW.send(new SipPhoneUpdated(meetingID, voiceBridge, isSipPhonePresent))
         }
         logger.info("Is there any phoneUser sending video in this meeting? "+isSipPhonePresent )

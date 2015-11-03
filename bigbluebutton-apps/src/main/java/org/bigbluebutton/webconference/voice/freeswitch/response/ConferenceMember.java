@@ -82,6 +82,10 @@ public class ConferenceMember {
         return flags.getHasVideo();
     }
 
+    public boolean getHasFloor() {
+        return flags.getHasFloor();
+    }
+
     public void setFlags(ConferenceMemberFlags flags) {
         this.flags = flags;
     }

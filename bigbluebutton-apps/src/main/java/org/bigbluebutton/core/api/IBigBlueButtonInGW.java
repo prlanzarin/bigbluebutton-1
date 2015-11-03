@@ -54,7 +54,7 @@ public interface IBigBlueButtonInGW {
 	void ejectUserFromMeeting(String meetingId, String userId, String ejectedBy);
 	void voiceUserJoined(String meetingId, String userId, String webUserId, String conference, 
 								String callerIdNum, String callerIdName,
-								Boolean muted, Boolean speaking, Boolean hasVideo);
+								Boolean muted, Boolean speaking, Boolean hasVideo, Boolean hasFloor);
 	void voiceUserLeft(String meetingId, String userId);
 	void voiceUserLocked(String meetingId, String userId, Boolean locked);
 	void voiceUserMuted(String meetingId, String userId, Boolean muted);
@@ -122,5 +122,6 @@ public interface IBigBlueButtonInGW {
 	//Global Video
 	void setNewGlobalVideoStreamName(String meetingId, String globalVideoStreamName);
 	void updateSipVideoStatus(String meetingId, String width, String height);
+    void requestUpdateVideoStatus(String meetingId, String voiceConf);
 	
 }

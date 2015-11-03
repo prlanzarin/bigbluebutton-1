@@ -28,6 +28,7 @@ trait VoiceApp {
 
   def handleActiveTalkerChanged(msg: ActiveTalkerChanged) {
     talkerUserId = msg.talkerUserId
+    logger.debug("Active Talker Changed: talkerUserId={"+talkerUserId+"}")
     outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId,globalVideoStreamWidth,globalVideoStreamHeight))
   }
 
@@ -53,6 +54,14 @@ trait VoiceApp {
 
     outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId,globalVideoStreamWidth,globalVideoStreamHeight))
   }
+
+    def handleRequestUpdateVideoStatus(msg: RequestUpdateVideoStatus){
+        logger.debug("SipVideoUpdate requested. Sending it "+
+                    "(globalVideoStreamName="+globalVideoStreamName+")"+
+                    "(currentFloorHolder="+talkerUserId+")"+
+                    "(isSipVideoPresent="+isSipVideoPresent+ ")")
+        outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId,globalVideoStreamWidth,globalVideoStreamHeight))
+    }
 
   private def globalVideoDied():Boolean = {
     globalVideoStreamName.equals("")

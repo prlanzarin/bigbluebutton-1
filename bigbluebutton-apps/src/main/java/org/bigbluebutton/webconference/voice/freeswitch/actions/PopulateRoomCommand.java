@@ -35,6 +35,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
+import org.bigbluebutton.webconference.voice.events.VideoFloorChangedEvent;
 
 public class PopulateRoomCommand extends FreeswitchCommand {
     private static Logger log = Red5LoggerFactory.getLogger(PopulateRoomCommand.class, "bigbluebutton");
@@ -103,7 +104,7 @@ public class PopulateRoomCommand extends FreeswitchCommand {
         		} 
         		
                 pj = new VoiceUserJoinedEvent(voiceUserId, member.getId().toString(), confXML.getConferenceRoom(),
-                               callerId, callerIdName, member.getMuted(), member.getSpeaking(), member.getHasVideo());
+                               callerId, callerIdName, member.getMuted(), member.getSpeaking(), member.getHasVideo(), member.getHasFloor());
                 eventListener.handleConferenceEvent(pj);
             }
 

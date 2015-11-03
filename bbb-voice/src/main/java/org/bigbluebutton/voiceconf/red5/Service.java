@@ -122,15 +122,13 @@ public class Service {
         log.debug("handling global video status: voiceBridge={}, floorHolder={}, videoPresent={}",voiceBridge,floorHolder,videoPresent);
         String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
 
-        if (videoPresent){
             if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge,floorHolder)){
-                sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
+                sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId,videoPresent);
             }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
 
             if(GlobalCall.shouldProbeGlobalVideo(voiceBridge, floorHolder,videoPresent)) {
-                sipPeerManager.startFreeswitchToBbbGlobalVideoProbe(peerId, globalUserId);
+                sipPeerManager.startFreeswitchToBbbGlobalVideoProbe(peerId, globalUserId,videoPresent);
             }
-        }
     }
 
     private void handleUserVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent,String meetingId){

@@ -124,6 +124,8 @@ public class GlobalCall {
         globalCalls.remove(voiceConf);
         roomToVideoPresent.remove(voiceConf);
         removeVideoConfLogoStream(voiceConf, "","");
+        voiceConfToFloorHolder.remove(voiceConf);
+        voiceConfToVideoLogoTranscoder.remove(voiceConf);
     }
 
     public static synchronized void addUser(String clientId, String callerIdName,String userId, String voiceConf) throws GlobalCallNotFoundException {
@@ -420,7 +422,7 @@ public class GlobalCall {
             } else {
                 log.debug("Reserving the place to create a video-logo transcoder for room {}", voiceconf);
                 String videoConfLogoStreamName = VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf+"_"+System.currentTimeMillis();
-                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf,videoConfLogoStreamName,meetingId,ip);
+                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf,videoConfLogoStreamName,meetingId,voiceconf,ip);
                 boolean startedSuccesfully = videoTranscoder.start();
                 if (startedSuccesfully && (!meetingId.isEmpty()) && (messagingService != null)) {
                     messagingService.globalVideoStreamCreated(meetingId, videoConfLogoStreamName);
@@ -519,4 +521,16 @@ public class GlobalCall {
         return new File(filePath).isFile();
     }
 
+    public static boolean isGlobalCallAgent(String userId){
+        return userId.startsWith(LISTENONLY_USERID_PREFIX);
+    }
+
+    public static boolean isVideoConfLogoStream(String videoStreamName){
+        return ((videoStreamName != null) && (videoStreamName.startsWith(VIDEOCONFLOGO_STREAM_NAME_PREFIX)));
+    }
+
+    public static void restartVideoConfLogoStream(String voiceConf, String meetingId){
+        removeVideoConfLogoStream(voiceConf);
+        addVideoConfLogoStream(voiceConf, meetingId);
+    }
 }

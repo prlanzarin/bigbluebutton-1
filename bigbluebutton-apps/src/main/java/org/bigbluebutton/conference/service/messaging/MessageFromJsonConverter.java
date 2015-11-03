@@ -39,6 +39,8 @@ public class MessageFromJsonConverter {
 						return processGlobalVideoStreamCreated(payload);
                   case UpdateSipVideoStatus.UPDATE_SIP_VIDEO_STATUS_EVENT:
                     return processUpdateSipVideoStatus(payload);
+                  case RequestUpdateVideoStatus.REQUEST_UPDATE_VIDEO_STATUS_EVENT:
+                    return processRequestUpdateVideoStatus(payload);
 				}
 			}
 		}
@@ -102,5 +104,10 @@ public class MessageFromJsonConverter {
         return new UpdateSipVideoStatus(meetingId, width, height);
     }
 
+	private static IMessage processRequestUpdateVideoStatus(JsonObject payload) {
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        String voiceConf = payload.get(Constants.VOICE_CONF).getAsString();
+        return new RequestUpdateVideoStatus(meetingId, voiceConf);
+    }
 	//private static IMessage processGetAllMeetings(JsonObject)
 }

@@ -273,7 +273,9 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         callManager.removeVideoStream(userId);
     }
 
-    public void startFreeswitchToBbbGlobalVideoStream(String userId) {
+    public void startFreeswitchToBbbGlobalVideoStream(String userId, Boolean videoPresent) {
+        if (!videoPresent) return;
+        synchronized (callManager){
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null){
             if(ca.isGlobalStream()){ //this MUST be a globalStream, because the global is the only one that sends video
@@ -285,8 +287,11 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
             }
         }else log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId);
     }
+    }
 
-    public void startFreeswitchToBbbGlobalVideoProbe(String userId) {
+    public void startFreeswitchToBbbGlobalVideoProbe(String userId, Boolean videoPresent) {
+        if (!videoPresent) return;
+        synchronized (callManager){
         CallAgent ca = callManager.getByUserId(userId);
         if (ca != null){
             if(ca.isGlobalStream()){ //this MUST be a globalStream, because the global is the only one that sends video
@@ -294,6 +299,7 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
                 ca.startFreeswitchToBbbVideoProbe();
             }
         }else log.debug("startFreeswitchToBbbGlobalVideoStream(): There's no global call agent for the user: "+userId);
+        }
     }
 
     public void stopFreeswitchToBbbGlobalVideoStream(String userId) {
@@ -369,10 +375,34 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         restartGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
+    @Override
+    public void handleCallAccepted(String userId, String destination, String meetingId){
+        /**
+         * After creating Global Call Agent, we must handle the current
+         * video status in the conference, because there might be a sip-phone
+         * in there.
+         */
+
+        if (GlobalCall.isGlobalCallAgent(userId)){
+            log.debug("Global CallAgent running. Handling video.");
+            requestUpdateVideoStatus(meetingId,destination);
+        }
+    }
+
+    private void requestUpdateVideoStatus(String meetingId, String destination){
+        if (messagingService != null){
+            log.debug("Requesting updateVideoStatus for room={}, meetingId={}",destination, meetingId);
+            messagingService.requestUpdateVideoStatus(meetingId, destination);
+        }else {
+            log.debug("Failed to request updateVideoStatus for room={}, meetingId={}",destination,meetingId);
+        }
+
+    }
+
     public void restartGlobalCall(String clientId, String callerName, String userId, String destination, String meetingId, String serverIp){
     synchronized(callManager){
         if (callManager.get(userId)== null){ //avoids RC if another user joins the room and call createGlobalCall() in Application.java before this gets done
-            log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetindId={}]",clientId, callerName, userId, destination, meetingId);
+            log.debug("Restarting Global Call [clientId={}] [callerName={}] [userId={}] [destination={}] [meetingId={}]",clientId, callerName, userId, destination, meetingId);
             createGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
         }else log.debug("Cannot restart Global Call. There's already a global call agent for this room");
     }
@@ -462,9 +492,13 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
         synchronized (callManager){
             if (GlobalCall.floorHolderChanged(voiceBridge,userId,videoPresent)){
                 log.debug("TEST HOLD");
+                CallAgent ca = callManager.getGlobalCallAgent(voiceBridge);
+                if (ca == null){
+                    log.debug("Global Call Agent hasn't been created yet for room={}. Global Video transcoder will start when it is created [currentFloor = {\"\"} (not updated)]",voiceBridge,GlobalCall.getFloorHolderUserId(voiceBridge));
+                    return;
+                }
                 stopCurrentFloorVideo(voiceBridge);
                 updateCurrentFloorVideo(voiceBridge,userId,videoPresent);
-                CallAgent ca = callManager.getGlobalCallAgent(voiceBridge);
                 if (videoPresent)
                     GlobalCall.removeVideoConfLogoStream(voiceBridge, meetingId, (ca!=null) ? ca.getVideoStreamName():"");
                 else GlobalCall.addVideoConfLogoStream(ca.getDestination(),ca.getMeetingId());

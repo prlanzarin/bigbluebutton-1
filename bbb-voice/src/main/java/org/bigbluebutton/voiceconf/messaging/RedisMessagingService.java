@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 import org.bigbluebutton.voiceconf.messaging.messages.GlobalVideoStreamCreated;
 import org.bigbluebutton.voiceconf.messaging.messages.UpdateSipVideoStatus;
+import org.bigbluebutton.voiceconf.messaging.messages.RequestUpdateVideoStatus;
 import org.bigbluebutton.voiceconf.messaging.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.voiceconf.messaging.messages.UserDisconnectedFromGlobalAudio;
 import org.red5.logging.Red5LoggerFactory;
@@ -59,6 +60,18 @@ public class RedisMessagingService implements IMessagingService {
     public void updateSipVideoStatus(String meetingId, String width,String height) {
 	    String json = new UpdateSipVideoStatus(meetingId, width,height).toJson();
         log.debug("Sending SipVideoStatus message to bbb-apps...");
+        sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
+    }
+
+    /**
+     * Request bigbluebutton-apps to send an UpdateVideoStatus message.
+     * @param  meetingId
+     * @param  voiceConf
+     */
+    @Override
+    public void requestUpdateVideoStatus(String meetingId, String voiceConf){
+        String json = new RequestUpdateVideoStatus(meetingId, voiceConf).toJson();
+        log.debug("Sending RequestUpdateVideoStatus message to bbb-apps...");
         sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
     }
 

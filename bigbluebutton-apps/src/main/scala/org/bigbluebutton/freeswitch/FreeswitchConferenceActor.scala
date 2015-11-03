@@ -8,7 +8,7 @@ import org.bigbluebutton.core.util._
 case class FsVoiceUserJoined(userId: String, webUserId: String, 
                              conference: String, callerIdNum: String, 
                              callerIdName: String, muted: Boolean, 
-                             speaking: Boolean, hasVideo: Boolean)
+                             speaking: Boolean, hasVideo: Boolean, hasFloor: Boolean)
                
 case class FsVoiceUserLeft(userId: String, conference: String)
 case class FsVoiceUserLocked(userId: String, conference: String, locked: Boolean)
@@ -105,6 +105,12 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
         logger.info("Meeting is recorded. Tell FreeSWITCH to start recording. mid[" + fc.meetingId + "]")
         fsproxy.startRecording(fc.conferenceNum, fc.meetingId)
       }
+
+        if(msg.user.voiceUser.hasFloor){
+            //if the user has floor, updates it
+            logger.info("User [id="+msg.user.userID+", conf="+fc.conferenceNum+"mid="+fc.meetingId+"] has floor. Updating it.")
+            bbbInGW.activeTalkerChanged(fc.meetingId, msg.user.userID)
+        }
     }
   }
   
@@ -189,7 +195,7 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
   private def sendNonWebUserJoined(meetingId: String, webUserId: String, msg: FsVoiceUserJoined) {
     bbbInGW.voiceUserJoined(meetingId, msg.userId, 
 	              webUserId, msg.conference, msg.callerIdNum, msg.callerIdName,
-	              msg.muted, msg.speaking, msg.hasVideo);
+	              msg.muted, msg.speaking, msg.hasVideo, msg.hasFloor);
   }
   
   private def handleFsVoiceUserJoined(msg: FsVoiceUserJoined) {
@@ -271,7 +277,7 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
 
   private def handleFsActiveTalkerChanged(msg: FsActiveTalkerChanged) {
     val fsconf = confs.values find (c => c.conferenceNum == msg.conference)
-
+    logger.info("Active Talker Changed. [conference="+msg.conference+" user="+msg.userId+"]")
     fsconf foreach (fc => {
       val user = fc.getVoiceUser(msg.userId)
       user foreach (u => bbbInGW.activeTalkerChanged(fc.meetingId, u.userID))

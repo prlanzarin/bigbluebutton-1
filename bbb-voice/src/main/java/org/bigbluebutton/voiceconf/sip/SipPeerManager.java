@@ -111,17 +111,17 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public void startFreeswitchToBbbGlobalVideoStream(String peerId, String userId) {
+    public void startFreeswitchToBbbGlobalVideoStream(String peerId, String userId, Boolean videoPresent) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startFreeswitchToBbbGlobalVideoStream(userId);
+            sipUser.startFreeswitchToBbbGlobalVideoStream(userId, videoPresent);
         }else log.debug("Can't find sip peer " + peerId);
     }
 
-    public void startFreeswitchToBbbGlobalVideoProbe(String peerId, String userId) {
+    public void startFreeswitchToBbbGlobalVideoProbe(String peerId, String userId, Boolean videoPresent) {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
-            sipUser.startFreeswitchToBbbGlobalVideoProbe(userId);
+            sipUser.startFreeswitchToBbbGlobalVideoProbe(userId, videoPresent);
         }else log.debug("Can't find sip peer " + peerId);
     }
 

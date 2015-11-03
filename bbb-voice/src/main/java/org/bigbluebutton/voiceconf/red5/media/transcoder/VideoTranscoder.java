@@ -40,6 +40,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     private String videoStreamName;
     private String outputLive;
     private String meetingId;
+    private String voiceBridge;
     private String ip;
     private String localVideoPort;
     private String remoteVideoPort;
@@ -50,26 +51,28 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public static final String FFMPEG_NAME = "FFMPEG";
     public static final String FFPROBE_NAME = "FFPROBE";
 
-    public VideoTranscoder(Type type,String userId, String username, String videoStreamName,String meetingId,String ip, String localVideoPort, String remoteVideoPort){
+    public VideoTranscoder(Type type,String userId, String username, String videoStreamName,String meetingId, String voiceBridge, String ip, String localVideoPort, String remoteVideoPort){
         this.type = type;
         this.sdpPath = "";
         this.userId = userId;
         this.username = username;
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
+        this.voiceBridge = voiceBridge;
         this.ip = ip;
         this.localVideoPort = localVideoPort;
         this.remoteVideoPort = remoteVideoPort;
         this.outputLive = "";
     }
 
-    public VideoTranscoder(Type type,String sdpPath, String userId, String videoStreamName, String meetingId, String ip){
+    public VideoTranscoder(Type type,String sdpPath, String userId, String videoStreamName, String meetingId, String voiceBridge, String ip){
         this.type = type;
         this.userId = userId;
         this.username = "";
         this.videoStreamName = videoStreamName;
         this.sdpPath = sdpPath;
         this.meetingId = meetingId;
+        this.voiceBridge = voiceBridge;
         this.ip = ip;
         this.localVideoPort = "";
         this.remoteVideoPort = "";
@@ -84,12 +87,13 @@ public class VideoTranscoder implements ProcessMonitorObserver {
      * @param meetingId
      * @param ip
      */
-    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId,String ip){
+    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId, String voiceBridge, String ip){
         this.type = type;
         this.sdpPath = "";
         this.userId = userId;
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
+        this.voiceBridge = voiceBridge;
         this.ip = ip;
         this.outputLive = "";
     }
@@ -298,7 +302,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                     break;
                 case TRANSCODE_FILE_TO_RTMP:
                     //videoconf-logo video stream : parameters are the same
-                    log.debug("Restarting the videconf's logo videoconf-logo video stream...");
+                    log.debug("Restarting the videoconf-logo video stream...");
                     ffmpegProcessMonitor.restart();
                     break;
                 default:
@@ -361,6 +365,12 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public void handleProcessFinishedUnsuccessfully(String processMonitorName,String processOutput) {
         if ((processMonitorName == null)|| processMonitorName.isEmpty()){
             log.debug("Can't handle process process monitor finishing unsuccessfully: UNKNOWN PROCESS");
+            return;
+        }
+
+        if(observer == null){
+            log.debug("There's no observer for this VideoTranscoder (This is probably a video-conf-logo transcoder). Restarting it...");
+            GlobalCall.restartVideoConfLogoStream(voiceBridge, meetingId);
             return;
         }
 

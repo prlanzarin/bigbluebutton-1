@@ -536,3 +536,8 @@ case class UpdateSipVideoStatus(
     width: String,
     height: String
 ) extends InMessage
+
+case class RequestUpdateVideoStatus(
+    meetingID: String,
+    voiceConf: String
+) extends InMessage

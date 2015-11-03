@@ -26,12 +26,13 @@ public class VoiceUserJoinedEvent extends VoiceConferenceEvent {
 	private final Boolean muted;
 	private final Boolean speaking;
 	private final Boolean hasVideo;
+    private final Boolean hasFloor;
 	private final Boolean locked = false;
 	private final String userId;
 	
 	public VoiceUserJoinedEvent(String userId, String voiceUserId, String room, 
 								String callerIdNum, String callerIdName,
-								Boolean muted, Boolean speaking, Boolean hasVideo) {
+								Boolean muted, Boolean speaking, Boolean hasVideo, Boolean hasFloor) {
 		super(room);
 		this.userId = userId;
 		this.voiceUserId = voiceUserId;
@@ -40,6 +41,7 @@ public class VoiceUserJoinedEvent extends VoiceConferenceEvent {
 		this.muted = muted;
 		this.speaking = speaking;
 		this.hasVideo = hasVideo;
+        this.hasFloor = hasFloor;
 	}
 
 	public String getUserId() {
@@ -69,6 +71,10 @@ public class VoiceUserJoinedEvent extends VoiceConferenceEvent {
 	public Boolean getHasVideo() {
 		return hasVideo;
 	}
+
+    public Boolean getHasFloor(){
+        return hasFloor;
+    }
 
 	public Boolean isLocked() {
 		return locked;

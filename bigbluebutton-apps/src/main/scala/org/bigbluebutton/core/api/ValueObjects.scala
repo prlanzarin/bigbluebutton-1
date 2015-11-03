@@ -84,7 +84,8 @@ case class VoiceUser(userId: String,
   locked: Boolean, 
   muted: Boolean, 
   talking: Boolean,
-  hasVideo: Boolean)
+  hasVideo: Boolean,
+  hasFloor: Boolean)
                   
 case class MeetingConfig(name: String, 
   id: MeetingID, 

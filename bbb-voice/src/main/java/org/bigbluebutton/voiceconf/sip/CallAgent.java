@@ -408,6 +408,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                                                   getUserId(),
                                                   getVideoStreamName(),
                                                   getMeetingId(),
+                                                  getDestination(),
                                                   getServerIp());
 
             boolean startedSuccesfully = videoTranscoder.start();
@@ -500,7 +501,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public synchronized void startUserVideoTranscoder(VideoTranscoder.Type type){
         if (videoTranscoder == null){
-            videoTranscoder = new VideoTranscoder(type,getUserId(),getUserName(),getVideoStreamName(),getMeetingId(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+            videoTranscoder = new VideoTranscoder(type,getUserId(),getUserName(),getVideoStreamName(),getMeetingId(),getDestination(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
             videoTranscoder.setVideoTranscoderObserver(this);
             setVideoRunning(true);
             videoTranscoder.start();
@@ -635,6 +636,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
 
         createStreams();
+        callAgentObserver.handleCallAccepted(getUserId(),getDestination(),getMeetingId());
     }
 
     /** Callback function called when arriving an ACK method (call confirmed) */

@@ -437,11 +437,11 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
 	def voiceUserJoined(meetingId: String, userId: String, webUserId: String, 
 	                            conference: String, callerIdNum: String, 
 	                            callerIdName: String,
-								muted: java.lang.Boolean, speaking: java.lang.Boolean, hasVideo: java.lang.Boolean) {
+								muted: java.lang.Boolean, speaking: java.lang.Boolean, hasVideo: java.lang.Boolean, hasFloor: java.lang.Boolean) {
 	  
 	  voiceGW.voiceUserJoined(meetingId, userId, webUserId, 
 	                            conference, callerIdNum, 
-	                            callerIdName, muted, speaking, hasVideo)
+	                            callerIdName, muted, speaking, hasVideo, hasFloor)
 	}
 	
 	def voiceUserLeft(meetingId: String, userId: String) {
@@ -485,4 +485,8 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
   def updateSipVideoStatus(meetingId: String, width: String, height: String) {
     bbbGW.accept(new UpdateSipVideoStatus(meetingId, width,height))
   }
+
+    def requestUpdateVideoStatus(meetingId: String, voiceConf: String) {
+        bbbGW.accept(new RequestUpdateVideoStatus(meetingId, voiceConf))
+    }
 }
