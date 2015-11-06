@@ -52,6 +52,7 @@ public class DialCommand extends FreeswitchCommand {
 		}
 		this.params.put("caller_number", room);
 		this.options.put("origination_callee_id_name", params.get("destination"));
+        this.options.put("rtp_video_fmtp","profile-level-id=42800d; max-mbps=108000; max-fs=3840; max-br=1920;");
 	}
 
 	public String getParticipant() {
