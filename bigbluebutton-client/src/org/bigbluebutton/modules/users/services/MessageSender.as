@@ -249,7 +249,44 @@ package org.bigbluebutton.modules.users.services
         }
       ); 
     }
-    
+
+    public function dial(options:Array, params:Array):void {
+      trace("Sending dial");
+      var message:Object = new Object();
+      message["options"] = options;
+      message["params"] = params;
+
+      var _nc:ConnectionManager = BBB.initConnectionManager();
+      _nc.sendMessage(
+        "voice.dial",// Remote function name
+        function(result:String):void { // On successful result
+          trace(result); 
+        },                     
+        function(status:String):void { // status - On error occurred
+          trace(status); 
+        },
+        message
+      ); //_netConnection.call
+    }
+
+    public function cancelDial(uuid:String):void {
+      trace("Sending cancel dial uuid " + uuid);
+      var message:Object = new Object();
+      message["uuid"] = uuid;
+
+      var _nc:ConnectionManager = BBB.initConnectionManager();
+      _nc.sendMessage(
+        "voice.cancelDial",// Remote function name
+        function(result:String):void { // On successful result
+          trace(result); 
+        },                     
+        function(status:String):void { // status - On error occurred
+          trace(status); 
+        },
+        message
+      ); //_netConnection.call
+    }
+
     public function getRoomLockState():void{
       trace("Sending getRoomLockState.");
       var message:Object = new Object();

@@ -96,4 +96,9 @@ object Constants {
   val VIEWER_PASS                     = "viewer_pass"
   val CREATE_TIME                     = "create_time"
   val CREATE_DATE                     = "create_date"
+  val OPTIONS                         = "options"
+  val PARAMS                          = "params"
+  val UUID                            = "uuid"
+  val STATE                           = "state"
+  val CAUSE                           = "cause"
 }

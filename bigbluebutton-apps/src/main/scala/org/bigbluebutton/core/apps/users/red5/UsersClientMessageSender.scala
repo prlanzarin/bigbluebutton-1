@@ -45,6 +45,8 @@ class UsersClientMessageSender(service: ConnectionInvokerService) extends OutMes
       case msg: UserLocked                             => handleUserLocked(msg)
 	    case msg: MeetingMuted                           => handleMeetingMuted(msg)
 	    case msg: MeetingState                           => handleMeetingState(msg)
+      case msg: VoiceDialing2                          => handleVoiceDialing(msg)
+      case msg: VoiceHangingUp2                        => handleVoiceHangingUp(msg)
 	    
 	    case _ => // println("Unhandled message in UsersClientMessageSender")
 	  }
@@ -491,4 +493,37 @@ class UsersClientMessageSender(service: ConnectionInvokerService) extends OutMes
  	  var m = new BroadcastClientMessage(msg.meetingID, "userListeningOnly", message);
  	  service.sendMessage(m);	  
 	}
+
+  private def handleVoiceDialing(msg: VoiceDialing2) {
+    var args = new HashMap[String, Object](); 
+    args.put("userId", msg.userID);
+    args.put("uuid", msg.uuid);
+    args.put("state", msg.callState);
+  
+    val message = new java.util.HashMap[String, Object]() 
+    val gson = new Gson();
+    message.put("msg", gson.toJson(args))
+        
+    println("UsersClientMessageSender - handleVoiceDialing \n" + message.get("msg") + "\n")
+        
+    var m = new BroadcastClientMessage(msg.meetingID, "dialing", message);
+    service.sendMessage(m);   
+  }
+  
+  private def handleVoiceHangingUp(msg: VoiceHangingUp2) {
+    var args = new HashMap[String, Object](); 
+    args.put("userId", msg.userID);
+    args.put("uuid", msg.uuid);
+    args.put("state", msg.callState);
+    args.put("hangupCause", msg.hangupCause);
+  
+    val message = new java.util.HashMap[String, Object]() 
+    val gson = new Gson();
+    message.put("msg", gson.toJson(args))
+        
+    println("UsersClientMessageSender - handleVoiceHangingUp \n" + message.get("msg") + "\n")
+        
+    var m = new BroadcastClientMessage(msg.meetingID, "hangingUp", message);
+    service.sendMessage(m);   
+  }
 }

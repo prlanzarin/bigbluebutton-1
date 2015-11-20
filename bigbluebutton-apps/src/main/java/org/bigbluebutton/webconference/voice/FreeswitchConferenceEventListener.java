@@ -23,11 +23,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.bigbluebutton.webconference.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.webconference.voice.events.ChannelHangupCompleteEvent;
+import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.events.VideoFloorChangedEvent;
 import org.bigbluebutton.webconference.voice.events.VideoPausedEvent;
 import org.bigbluebutton.webconference.voice.events.VideoResumedEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceConferenceEvent;
-import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserLeftEvent;
 import org.bigbluebutton.webconference.voice.events.VoiceUserMutedEvent;
@@ -93,6 +96,14 @@ public class FreeswitchConferenceEventListener implements ConferenceEventListene
 				VideoFloorChangedEvent evt = (VideoFloorChangedEvent) event;
 				System.out.println("************** FreeswitchConferenceEventListener VideoFloorHolderChangedEvent");
 				vcs.activeTalkerChanged(evt.getRoom(), evt.getFloorHolderVoiceUserId());
+			} else if (event instanceof ChannelCallStateEvent) {
+				ChannelCallStateEvent evt = (ChannelCallStateEvent) event;
+				System.out.println("************** FreeswitchConferenceEventListener ChannelCallStateEvent ");
+				vcs.channelCallState(evt.getRoom(), evt.getUniqueId(), evt.getCallState(), evt.getParticipant());
+			} else if (event instanceof ChannelHangupCompleteEvent) {
+				ChannelHangupCompleteEvent evt = (ChannelHangupCompleteEvent) event;
+				System.out.println("************** FreeswitchConferenceEventListener ChannelHangupCompleteEvent ");
+				vcs.channelHangup(evt.getRoom(), evt.getUniqueId(), evt.getCallState(), evt.getHangupCause(), evt.getParticipant());
 			}
 			}
 		};
@@ -126,5 +137,4 @@ public class FreeswitchConferenceEventListener implements ConferenceEventListene
 	public void handleConferenceEvent(VoiceConferenceEvent event) {
 		queueMessage(event);
 	}
-	
 }

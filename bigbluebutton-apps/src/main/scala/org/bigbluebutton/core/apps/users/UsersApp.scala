@@ -5,8 +5,8 @@ import scala.collection.mutable.HashMap
 import org.bigbluebutton.core.User
 import java.util.ArrayList
 import org.bigbluebutton.core.MeetingActor
-import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListSet
+import scala.collection.mutable.ArrayBuffer
 
 trait UsersApp {
   this : MeetingActor =>
@@ -440,6 +440,22 @@ trait UsersApp {
 //      println("Received voice talking=[" + msg.talking + "] wid=[" + msg.userId + "]" )
       outGW.send(new UserVoiceTalking(meetingID, recorded, voiceBridge, nu))        
     }     
+  }
+
+  def handleVoiceOutboundDialRequest(msg: VoiceOutboundDialRequest) {
+    outGW.send(new VoiceOutboundDial(msg.meetingID, recorded, msg.requesterID, msg.options, msg.params));
+  }
+  
+  def handleVoiceCancelDialRequest(msg: VoiceCancelDialRequest) {
+    outGW.send(new VoiceCancelDial(msg.meetingID, recorded, msg.uuid));
+  }
+  
+  def handleVoiceDialing(msg: VoiceDialing) {
+    outGW.send(new VoiceDialing2(msg.meetingID, recorded, msg.requesterID, msg.uuid, msg.callState));
+  }
+  
+  def handleVoiceHangingUp(msg: VoiceHangingUp) {
+    outGW.send(new VoiceHangingUp2(msg.meetingID, recorded, msg.requesterID, msg.uuid, msg.callState, msg.hangupCause));
   }
 
   def handleAssignPresenter(msg: AssignPresenter):Unit = {

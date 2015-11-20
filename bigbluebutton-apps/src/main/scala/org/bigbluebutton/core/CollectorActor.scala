@@ -91,6 +91,10 @@ class CollectorActor(dispatcher: IDispatcher) extends Actor {
         case msg: VoiceUserMuted                => handleVoiceUserMuted(msg)
         case msg: VoiceUserTalking              => handleVoiceUserTalking(msg)
         case msg: VoiceRecording                => handleVoiceRecording(msg)
+        case msg: VoiceOutboundDialRequest      => handleVoiceOutboundDialRequest(msg)
+        case msg: VoiceCancelDialRequest        => handleVoiceCancelDialRequest(msg)
+        case msg: VoiceDialing                  => handleVoiceDialing(msg)
+        case msg: VoiceHangingUp                => handleVoiceHangingUp(msg)
         case msg: SendWhiteboardAnnotationRequest => handleSendWhiteboardAnnotationRequest(msg)
         case msg: GetWhiteboardShapesRequest    => handleGetWhiteboardShapesRequest(msg)
         case msg: ClearWhiteboardRequest        => handleClearWhiteboardRequest(msg)
@@ -1271,6 +1275,70 @@ class CollectorActor(dispatcher: IDispatcher) extends Actor {
     header.put(Constants.CURRENT_TIME, TimestampGenerator.getCurrentTime)
     
 //    println("***** DISPATCHING VOICE RECORDING *****************")
+    dispatcher.dispatch(buildJson(header, payload))
+  }
+  
+  private def handleVoiceOutboundDialRequest(msg: VoiceOutboundDialRequest) {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.OPTIONS, msg.options)
+    payload.put(Constants.PARAMS, msg.params)
+    
+    val header = new java.util.HashMap[String, Any]()
+    header.put(Constants.NAME, MessageNames.VOICE_OUTBOUND_DIAL)
+    header.put(Constants.TIMESTAMP, TimestampGenerator.generateTimestamp)
+    header.put(Constants.CURRENT_TIME, TimestampGenerator.getCurrentTime)
+    
+//    println("***** DISPATCHING VOICE OUTBOUND DIAL *****************")
+    dispatcher.dispatch(buildJson(header, payload))
+  }
+  
+  private def handleVoiceCancelDialRequest(msg: VoiceCancelDialRequest) {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.UUID, msg.uuid)
+    
+    val header = new java.util.HashMap[String, Any]()
+    header.put(Constants.NAME, MessageNames.VOICE_CANCEL_DIAL)
+    header.put(Constants.TIMESTAMP, TimestampGenerator.generateTimestamp)
+    header.put(Constants.CURRENT_TIME, TimestampGenerator.getCurrentTime)
+    
+//    println("***** DISPATCHING VOICE CANCEL DIAL *****************")
+    dispatcher.dispatch(buildJson(header, payload))
+  }
+  
+  private def handleVoiceDialing(msg: VoiceDialing) {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.UUID, msg.uuid)
+    payload.put(Constants.STATE, msg.callState)
+    
+    val header = new java.util.HashMap[String, Any]()
+    header.put(Constants.NAME, MessageNames.VOICE_DIALING)
+    header.put(Constants.TIMESTAMP, TimestampGenerator.generateTimestamp)
+    header.put(Constants.CURRENT_TIME, TimestampGenerator.getCurrentTime)
+    
+//    println("***** DISPATCHING VOICE DIALING *****************")
+    dispatcher.dispatch(buildJson(header, payload))
+  }
+  
+  private def handleVoiceHangingUp(msg: VoiceHangingUp) {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.UUID, msg.uuid)
+    payload.put(Constants.STATE, msg.callState)
+    payload.put(Constants.CAUSE, msg.hangupCause)
+    
+    val header = new java.util.HashMap[String, Any]()
+    header.put(Constants.NAME, MessageNames.VOICE_HANGING_UP)
+    header.put(Constants.TIMESTAMP, TimestampGenerator.generateTimestamp)
+    header.put(Constants.CURRENT_TIME, TimestampGenerator.getCurrentTime)
+    
+//    println("***** DISPATCHING VOICE HANGING UP *****************")
     dispatcher.dispatch(buildJson(header, payload))
   }
   

@@ -272,6 +272,41 @@ case class UserVoiceMuted(
     version:String = Versions.V_0_0_1
 ) extends IOutMessage
 
+case class VoiceOutboundDial(
+    meetingID: String, 
+    recorded: Boolean, 
+    requesterID: String, 
+    options: Map[String, String], 
+    params: Map[String, String], 
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
+case class VoiceCancelDial(
+    meetingID: String, 
+    recorded: Boolean, 
+    uuid: String, 
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
+case class VoiceDialing2(
+    meetingID: String, 
+    recorded: Boolean, 
+    userID: String, 
+    uuid: String, 
+    callState: String, 
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
+case class VoiceHangingUp2(
+    meetingID: String, 
+    recorded: Boolean, 
+    userID: String, 
+    uuid: String, 
+    callState: String, 
+    hangupCause: String, 
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
 case class UserVoiceTalking(
     meetingID: String, 
     recorded: Boolean, 

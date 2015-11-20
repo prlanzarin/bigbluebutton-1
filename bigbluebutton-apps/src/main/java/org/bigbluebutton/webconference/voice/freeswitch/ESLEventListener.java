@@ -1,13 +1,17 @@
 package org.bigbluebutton.webconference.voice.freeswitch;
 
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bigbluebutton.webconference.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.webconference.voice.events.ChannelHangupCompleteEvent;
 import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.events.VideoFloorChangedEvent;
 import org.bigbluebutton.webconference.voice.events.VideoPausedEvent;
@@ -24,8 +28,6 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
-import scala.actors.threadpool.Arrays;
-
 public class ESLEventListener implements IEslEventListener {
 	private static Logger log = Red5LoggerFactory.getLogger(ESLEventListener.class, "bigbluebutton");
 	
@@ -40,15 +42,53 @@ public class ESLEventListener implements IEslEventListener {
     private ConferenceEventListener conferenceEventListener;
     
     private static Set<String> confsThatVideoIsActive = new HashSet<String>();
+    private Map<String, DialReferenceValuePair> outboundDialReferences = new ConcurrentHashMap<String, DialReferenceValuePair>();
 
     @Override
     public void conferenceEventPlayFile(String uniqueId, String confName, int confSize, EslEvent event) {
         //Ignored, Noop
     }
 
+    private static final Pattern DIAL_ORIGINATION_UUID_PATTERN = Pattern.compile(".* dial .*origination_uuid='([^']*)'.*");
+    private static final Pattern DIAL_RESPONSE_PATTERN = Pattern.compile("^\\[Call Requested: result: \\[(.*)\\].*\\]$");
+    private static final String[] DIAL_IGNORED_RESPONSES = new String[]{ "SUCCESS" };
+    
     @Override
     public void backgroundJobResultReceived(EslEvent event) {
         log.debug( "Background job result received [{}]", event );
+        
+        log.debug(event.getEventBodyLines().toString());
+        log.debug(event.getEventHeaders().toString());
+        
+        String arg = event.getEventHeaders().get("Job-Command-Arg");
+        if (arg != null) {
+            Matcher matcher = DIAL_ORIGINATION_UUID_PATTERN.matcher(arg);
+            if (matcher.matches()) {
+                String uuid = matcher.group(1).trim();
+                String responseString = event.getEventBodyLines().toString().trim();
+                
+                log.debug("Background job result for uuid {}, response: {}", uuid, responseString);
+                
+                matcher = DIAL_RESPONSE_PATTERN.matcher(responseString);
+                if (matcher.matches()) {
+                    String error = matcher.group(1).trim();
+                    
+                    if (Arrays.asList(DIAL_IGNORED_RESPONSES).contains(error)) {
+                        log.debug("Ignoring error code {}", error);
+                        return;
+                    }
+
+                    DialReferenceValuePair ref = removeDialReference(uuid);
+                    if (ref == null) {
+                        return;
+                    }
+                    
+                    ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uuid, 
+                            "HANGUP", error, ref.getRoom(), ref.getParticipant());
+                    conferenceEventListener.handleConferenceEvent(hce);
+                }
+            }
+        }
     }
 
     @Override
@@ -207,52 +247,141 @@ public class ESLEventListener implements IEslEventListener {
     public void eventReceived(EslEvent event) {
         log.debug("ESL Event Listener received event=[" + event.getEventName() + "]");
 
-        String action = event.getEventHeaders().get("Action");
-        String confName = event.getEventHeaders().get("Conference-Name");
-        if (action != null && confName != null) {
-            switch (action) {
-                case VIDEO_PAUSED_EVENT:
-                    log.debug("Received " + action + " from Freeswitch");
-                    VideoPausedEvent vPaused = new VideoPausedEvent(confName);
-                    conferenceEventListener.handleConferenceEvent(vPaused);
-                    if(isThereVideoActive(confName)) {
-                        confsThatVideoIsActive.remove(confName);
-                        log.debug("Received video paused => " + confName + " doesn't have active video anymore.");
-                    }
-                    break;
-
-                case VIDEO_RESUMED_EVENT:
-                    log.debug("Received " + action + " from Freeswitch");
-                    VideoResumedEvent vResumed = new VideoResumedEvent(confName);
-                    conferenceEventListener.handleConferenceEvent(vResumed);
-                    break;
-
-                case VIDEO_FLOOR_CHANGE_EVENT:
-                    log.debug("Received " + action + " from Freeswitch");
-                    String holderMemberId = getNewFloorHolderMemberIdFromEvent(event);
-
-                    if(!holderMemberId.isEmpty()) {
-                        log.debug(confName + " video floor passed to the holderMemberId = " + holderMemberId);
-                        if(!isThereVideoActive(confName))
-                            confsThatVideoIsActive.add(confName);
-                    }
-                    else if(isThereVideoActive(confName)) {
+        if(event.getEventName().equals("CUSTOM")) {
+            String action = event.getEventHeaders().get("Action");
+            String confName = event.getEventHeaders().get("Conference-Name");
+            if (action != null && confName != null) {
+                switch (action) {
+                    case VIDEO_PAUSED_EVENT:
+                        log.debug("Received " + action + " from Freeswitch");
+                        VideoPausedEvent vPaused = new VideoPausedEvent(confName);
+                        conferenceEventListener.handleConferenceEvent(vPaused);
+                        if(isThereVideoActive(confName)) {
                             confsThatVideoIsActive.remove(confName);
-                            log.debug("Received an empty id as video floor => " + confName + " doesn't have active video anymore.");
-                         }
+                            log.debug("Received video paused => " + confName + " doesn't have active video anymore.");
+                        }
+                        break;
 
+                    case VIDEO_RESUMED_EVENT:
+                        log.debug("Received " + action + " from Freeswitch");
+                        VideoResumedEvent vResumed = new VideoResumedEvent(confName);
+                        conferenceEventListener.handleConferenceEvent(vResumed);
+                        break;
 
-                    VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
-                    conferenceEventListener.handleConferenceEvent(vFloor);
-                    break;
+                    case VIDEO_FLOOR_CHANGE_EVENT:
+                        log.debug("Received " + action + " from Freeswitch");
+                        String holderMemberId = getNewFloorHolderMemberIdFromEvent(event);
 
-                default:
-                    log.debug("Unknown conference Action [{}]", action);
+                        if(!holderMemberId.isEmpty()) {
+                            log.debug(confName + " video floor passed to the holderMemberId = " + holderMemberId);
+                            if(!isThereVideoActive(confName))
+                                confsThatVideoIsActive.add(confName);
+                        }
+                        else if(isThereVideoActive(confName)) {
+                                confsThatVideoIsActive.remove(confName);
+                                log.debug("Received an empty id as video floor => " + confName + " doesn't have active video anymore.");
+                             }
+
+                        VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
+                        conferenceEventListener.handleConferenceEvent(vFloor);
+                        break;
+
+                    default:
+                        log.debug("Unknown conference Action [{}]", action);
+                }
             }
         }
-	}
+        else if(event.getEventName().equals("CHANNEL_CALLSTATE")) {
+            String uniqueId = this.getUniqueIdFromEvent(event);
+            String callState = this.getChannelCallStateFromEvent(event);
+            String originalCallState = this.getOrigChannelCallStateFromEvent(event);
+            String origCallerIdName = this.getOrigCallerIdNameFromEvent(event);
+            String channelName = this.getCallerChannelNameFromEvent(event);
+            
+            log.debug("Received {} for uuid {}, CallState {}", event.getEventName(), uniqueId, callState);
 
+            DialReferenceValuePair ref = getDialReferenceValue(uniqueId);
+            if (ref == null) {
+                return;
+            }
+            
+            String room = ref.getRoom();
+            String participant = ref.getParticipant();
 
+            ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, callState, 
+                                                    room, participant);
+            
+            conferenceEventListener.handleConferenceEvent(cse);
+        }
+        else if(event.getEventName().equals("CHANNEL_HANGUP_COMPLETE")) {
+            String uniqueId = getUniqueIdFromEvent(event);
+            String callState = getChannelCallStateFromEvent(event);
+            String hangupCause = getHangupCauseFromEvent(event);
+            String origCallerIdName = getOrigCallerIdNameFromEvent(event);
+            String channelName = getCallerChannelNameFromEvent(event);
+
+            log.debug("Received {} for uuid {}, CallState {}, HangupCause {}", event.getEventName(), uniqueId, callState, hangupCause);
+
+            DialReferenceValuePair ref = removeDialReference(uniqueId);
+            if (ref == null) {
+                return;
+            }
+            
+            String room = ref.getRoom();
+            String participant = ref.getParticipant();
+
+            ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uniqueId, callState, 
+                                                    hangupCause, room, participant);
+            
+            conferenceEventListener.handleConferenceEvent(hce);
+        }
+    }
+    
+    public void addDialReference(String uuid, DialReferenceValuePair value) {
+        log.debug("Adding dial reference: {} -> {}, {}", uuid, value.getRoom(), value.getParticipant());
+        if (!outboundDialReferences.containsKey(uuid)) {
+            outboundDialReferences.put(uuid, value);
+        }
+    }
+    
+    private DialReferenceValuePair removeDialReference(String uuid) {
+        log.debug("Removing dial reference: {}", uuid);
+        DialReferenceValuePair r = outboundDialReferences.remove(uuid);
+        if (r == null) {
+            log.debug("Returning null because the uuid has already been removed");
+        }
+        log.debug("Current dial references size: {}", outboundDialReferences.size());
+        return r;
+    }
+    
+    private DialReferenceValuePair getDialReferenceValue(String uuid) {
+        return outboundDialReferences.get(uuid);
+    }
+    
+    private String getChannelCallStateFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Channel-Call-State");
+    }
+    
+    private String getHangupCauseFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Hangup-Cause");
+    }
+    
+    private String getCallerChannelNameFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Caller-Channel-Name");
+    }
+    
+    private String getOrigChannelCallStateFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Original-Channel-Call-State");
+    }
+    
+    private String getUniqueIdFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Unique-ID");
+    }
+    
+    private String getOrigCallerIdNameFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Caller-Orig-Caller-ID-Name");
+    }
+    
     private Integer getMemberIdFromEvent(EslEvent e) {
         try {
             return new Integer(e.getEventHeaders().get("Member-ID"));

@@ -64,6 +64,11 @@ public interface IBigBlueButtonInGW {
 	void sipVideoPaused(String meetingId);
 	void sipVideoResumed(String meetingId);
 	void activeTalkerChanged(String meetingId, String userId);
+
+	void dial(String meetingID, String requesterID, Map<String, String> options, Map<String, String> params);
+	void cancelDial(String meetingID, String requesterID, String uuid);
+	void dialing(String meetingID, String userId, String uuid, String callState);
+	void hangingUp(String meetingID, String userId, String uuid, String callState, String hangupCause);
 	
 	// Presentation
 	void clear(String meetingID);

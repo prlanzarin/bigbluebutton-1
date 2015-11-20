@@ -32,6 +32,8 @@ class FreeswitchConferenceService(fsproxy: FreeswitchManagerProxy,
 	    case msg: UserJoinedVoice               => handleUserJoinedVoice(msg)
 	    case msg: UserLeftVoice                 => handleUserLeftVoice(msg)
 	    case msg: EjectAllVoiceUsers            => handleEjectAllVoiceUsers(msg)
+	    case msg: VoiceOutboundDial             => handleVoiceOutboundDial(msg)
+	    case msg: VoiceCancelDial               => handleVoiceCancelDial(msg)
 	    case _ => // do nothing
 	  }
   }
@@ -74,6 +76,14 @@ class FreeswitchConferenceService(fsproxy: FreeswitchManagerProxy,
     
   
   private def handleEjectAllVoiceUsers(msg: EjectAllVoiceUsers) {
+    fsActor ! msg
+  }
+  
+  private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
+    fsActor ! msg
+  }
+  
+  private def handleVoiceCancelDial(msg: VoiceCancelDial) {
     fsActor ! msg
   }
   
@@ -130,5 +140,17 @@ class FreeswitchConferenceService(fsproxy: FreeswitchManagerProxy,
   def activeTalkerChanged(conference: String, userId: String) {
     val vr = new FsActiveTalkerChanged(conference, userId)
     fsActor ! vr
+  }
+  
+  def channelCallState(conference: String, uniqueId: String, callState: String, userId: String) {
+    println("******** FreeswitchConferenceService received channelCallState")
+    val ev = new FsChannelCallState(conference, uniqueId, callState, userId)
+    fsActor ! ev
+  }
+  
+  def channelHangup(conference: String, uniqueId: String, callState: String, hangupCause: String, userId: String) {
+    println("******** FreeswitchConferenceService received channelHangup")
+    val ev = new FsChannelHangup(conference, uniqueId, callState, hangupCause, userId)
+    fsActor ! ev
   }
 }

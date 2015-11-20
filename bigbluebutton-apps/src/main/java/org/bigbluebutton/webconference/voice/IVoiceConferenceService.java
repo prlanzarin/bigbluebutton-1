@@ -13,4 +13,8 @@ public interface IVoiceConferenceService {
   void videoPaused(String meetingId);
   void videoResumed(String meetingId);
   void activeTalkerChanged(String meetingId, String floorHolderVoiceUserId);
+  void channelCallState(String conference, String uniqueId, String callState,
+    String userId);
+  void channelHangup(String conference, String uniqueId, String callState,
+    String hangupCause, String userId);
 }
