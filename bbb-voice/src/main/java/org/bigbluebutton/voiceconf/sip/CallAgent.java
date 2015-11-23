@@ -921,11 +921,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         if (videoTranscoder != null){
             //update global's video stream name every time the transcoder is restarted
             setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
-            if(videoTranscoder.restart(getVideoStreamName())){
+            if(videoTranscoder.restart(getVideoStreamName()) && !GlobalCall.isFloorHolderAnWebUser(getDestination())){
                 log.debug("Informing client about the new Global Video Stream name: "+ getVideoStreamName());
                 messagingService.globalVideoStreamCreated(getMeetingId(),getVideoStreamName());
             }else
-                log.debug("Global Video Transcoder not restarted");
+                log.debug("Global Video Transcoder not restarted. Current floor = {}",GlobalCall.getFloorHolderUserId(getDestination()));
         }else
             log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
     }

@@ -287,6 +287,9 @@ public class GlobalCall {
         return getFloorHolderUserId(voiceconf).equals(userId);
     }
 
+    public static boolean isFloorHolderAnWebUser(String voiceconf){
+        return isWebUser(getFloorHolderUserId(voiceconf));
+    }
     /**
      * True every time floor holder changes, or his video status changes,
      * false otherwise.
