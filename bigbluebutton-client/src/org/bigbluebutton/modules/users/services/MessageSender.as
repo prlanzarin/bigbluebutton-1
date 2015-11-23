@@ -286,7 +286,7 @@ package org.bigbluebutton.modules.users.services
         message
       ); //_netConnection.call
     }
-
+    
     public function getRoomLockState():void{
       trace("Sending getRoomLockState.");
       var message:Object = new Object();

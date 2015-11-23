@@ -132,7 +132,7 @@ package org.bigbluebutton.modules.users.services
         case "joinMeetingReply":
           handleJoinedMeeting(message);
           break;
-        case "userListeningOnly":
+        case "user_listening_only":
           handleUserListeningOnly(message);
           break;
         case "permissionsSettingsChanged":
@@ -432,7 +432,7 @@ package org.bigbluebutton.modules.users.services
         trace(LOG + "handleParticipantLeft: user is null, doing nothing");
         return;
       }
-
+      
       trace(LOG + "Notify others that user [" + user.userID + ", " + user.name + "] is leaving!!!!");
       
       // Flag that the user is leaving the meeting so that apps (such as avatar) doesn't hang
@@ -443,7 +443,7 @@ package org.bigbluebutton.modules.users.services
       joinEvent.userID = user.userID;
       dispatcher.dispatchEvent(joinEvent);	
       
-      UserManager.getInstance().getConference().removeUser(webUserId);
+      UserManager.getInstance().getConference().removeUser(webUserId);	        
     }
     
     public function handleParticipantJoined(msg:Object):void {

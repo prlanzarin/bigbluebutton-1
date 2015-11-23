@@ -49,18 +49,18 @@ package org.bigbluebutton.modules.videoconf.views
       setOriginalDimensions(_videoProfile.width, _videoProfile.height);
 
       _video.updateCamera(camIndex, _videoProfile, _background.width, _background.height);
-
+      
       invalidateDisplayList();
       startPublishing();
     }
 
     private function newStreamName():String {
       /**
-       * Add timestamp to create a unique stream name. This way we can record
-       * stream without overwriting previously recorded streams.
-       */
+       * Add timestamp to create a unique stream name. This way we can record   
+       * stream without overwriting previously recorded streams.    
+       */   
       var d:Date = new Date();
-      var curTime:Number = d.getTime();
+      var curTime:Number = d.getTime(); 
       var uid:String = user.userID;
       return _videoProfile.id + "-" + uid + "-" + curTime;
     }
@@ -124,7 +124,7 @@ package org.bigbluebutton.modules.videoconf.views
       user.removeViewingStream(_streamName);
       stopEvent.webcamUserID = user.userID;
       stopEvent.streamName = _streamName;
-      _dispatcher.dispatchEvent(stopEvent);
+      _dispatcher.dispatchEvent(stopEvent); 
     }
 
     private function stopPublishing():void {
@@ -145,7 +145,7 @@ package org.bigbluebutton.modules.videoconf.views
       _ns.bufferTime = 0;
       _ns.receiveVideo(true);
       _ns.receiveAudio(false);
-
+      
       _videoProfile = getVideoProfile(streamName);
       trace("Remote video profile: " + _videoProfile.toString());
       if (_videoProfile == null) {
@@ -155,7 +155,7 @@ package org.bigbluebutton.modules.videoconf.views
       setOriginalDimensions(_videoProfile.width, _videoProfile.height);
 
       _video.attachNetStream(_ns, _videoProfile, _background.width, _background.height);
-
+      
       if (options.applyConvolutionFilter) {
         var filter:ConvolutionFilter = new ConvolutionFilter();
         filter.matrixX = 3;
@@ -166,7 +166,7 @@ package org.bigbluebutton.modules.videoconf.views
         filter.divisor = options.filterDivisor;
         _video.videoFilters([filter]);
       }
-
+      
       _ns.play(streamName);
 
       if (user != null) {
@@ -218,7 +218,7 @@ package org.bigbluebutton.modules.videoconf.views
     private function onAsyncError(e:AsyncErrorEvent):void{
       trace(LOG + e.text);
     }
-
+    
     private function onMetaData(info:Object):void {
       trace(LOG + " width=" + info.width + " height=" + info.height);
     }

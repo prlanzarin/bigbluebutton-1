@@ -288,7 +288,7 @@ trait UsersApp {
 	
 	    outGW.send(new MeetingState(meetingID, recorded, uvo.userID, permissions, meetingMuted))
 	    outGW.send(new SipVideoUpdated(meetingID, recorded, voiceBridge, isSipVideoPresent, globalVideoStreamName, talkerUserId,globalVideoStreamWidth,globalVideoStreamHeight)) //update video everytime user joins the room
-
+	    
 	    // Become presenter if the only moderator		
 	    if (users.numModerators == 1) {
 	      if (ru.role == Role.MODERATOR) {
@@ -420,7 +420,7 @@ trait UsersApp {
         }
         logger.info("Is there any phoneUser sending video in this meeting? "+isSipPhonePresent )
   }
-
+  
   def handleVoiceUserMuted(msg: VoiceUserMuted) {
     users.getUser(msg.userId) foreach {user =>
       val talking:Boolean = if (msg.muted) false else user.voiceUser.talking

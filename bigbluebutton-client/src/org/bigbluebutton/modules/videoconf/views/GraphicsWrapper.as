@@ -122,7 +122,7 @@ package org.bigbluebutton.modules.videoconf.views
                 item.setActualSize(itemWidth, itemHeight);
                 item.move(itemX, itemY);
             }
-        }
+        }    
 
         private function findPriorityConfiguration(unscaledWidth:Number, unscaledHeight:Number):Object{
             var pBestConf:Object = {
@@ -385,7 +385,7 @@ package org.bigbluebutton.modules.videoconf.views
         }
 
         private function removeChildHelper(child:UserGraphicHolder):void {
-            child.shutdown();
+            child.shutdown(); 
 
             if (contains(child)) {
                 removeChild(child);

@@ -490,7 +490,7 @@ class UsersClientMessageSender(service: ConnectionInvokerService) extends OutMes
   	    
 //    println("UsersClientMessageSender - handleUserListeningOnly \n" + message.get("msg") + "\n")
   	    
- 	  var m = new BroadcastClientMessage(msg.meetingID, "userListeningOnly", message);
+ 	  var m = new BroadcastClientMessage(msg.meetingID, "user_listening_only", message);
  	  service.sendMessage(m);	  
 	}
 
