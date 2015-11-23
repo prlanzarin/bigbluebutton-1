@@ -41,7 +41,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     private String outputLive;
     private String meetingId;
     private String voiceBridge;
-    private String ip;
+    private String sourceIp;
+    private String destinationIp;
     private String localVideoPort;
     private String remoteVideoPort;
     private String sdpPath;
@@ -51,7 +52,21 @@ public class VideoTranscoder implements ProcessMonitorObserver {
     public static final String FFMPEG_NAME = "FFMPEG";
     public static final String FFPROBE_NAME = "FFPROBE";
 
-    public VideoTranscoder(Type type,String userId, String username, String videoStreamName,String meetingId, String voiceBridge, String ip, String localVideoPort, String remoteVideoPort){
+    /**
+     * Creates a new VideoTranscoder, which it's input is an RTMP path
+     * This is useful for RTMP_TO_RTP (webuser's transcoder).
+     * @param type
+     * @param userId
+     * @param username
+     * @param videoStreamName
+     * @param meetingId
+     * @param voiceBridge
+     * @param sourceIp
+     * @param destinationIp
+     * @param localVideoPort
+     * @param remoteVideoPort
+     */
+    public VideoTranscoder(Type type,String userId, String username, String videoStreamName,String meetingId, String voiceBridge, String sourceIp, String destinationIp, String localVideoPort, String remoteVideoPort){
         this.type = type;
         this.sdpPath = "";
         this.userId = userId;
@@ -59,13 +74,26 @@ public class VideoTranscoder implements ProcessMonitorObserver {
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
         this.voiceBridge = voiceBridge;
-        this.ip = ip;
+        this.sourceIp = sourceIp;
+        this.destinationIp = destinationIp;
         this.localVideoPort = localVideoPort;
         this.remoteVideoPort = remoteVideoPort;
         this.outputLive = "";
     }
 
-    public VideoTranscoder(Type type,String sdpPath, String userId, String videoStreamName, String meetingId, String voiceBridge, String ip){
+    /**
+     * Creates a new VideoTranscoder, which it's input is an SDP file.
+     * This is useful for RTP_TO_RTMP (global) type of transcoder.
+     * @param type
+     * @param sdpPath
+     * @param userId
+     * @param videoStreamName
+     * @param meetingId
+     * @param voiceBridge
+     * @param sourceIp
+     * @param destinationIp
+     */
+    public VideoTranscoder(Type type,String sdpPath, String userId, String videoStreamName, String meetingId, String voiceBridge, String sourceIp, String destinationIp){
         this.type = type;
         this.userId = userId;
         this.username = "";
@@ -73,7 +101,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
         this.sdpPath = sdpPath;
         this.meetingId = meetingId;
         this.voiceBridge = voiceBridge;
-        this.ip = ip;
+        this.sourceIp = sourceIp;
+        this.destinationIp = destinationIp;
         this.localVideoPort = "";
         this.remoteVideoPort = "";
         this.outputLive = "";
@@ -81,20 +110,20 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     /**
      * Creates a new VideoTranscoder, which doesn't need local neither remote video ports.
-     * This is useful for FILE_TO_RTMP type of transcoder.
+     * This is useful for FILE_TO_RTMP (videoconf logo) type of transcoder.
      * @param type
      * @param videoStreamName
      * @param meetingId
-     * @param ip
+     * @param destinationIp
      */
-    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId, String voiceBridge, String ip){
+    public VideoTranscoder(Type type,String userId,String videoStreamName,String meetingId, String voiceBridge, String destinationIp){
         this.type = type;
         this.sdpPath = "";
         this.userId = userId;
         this.videoStreamName = videoStreamName;
         this.meetingId = meetingId;
         this.voiceBridge = voiceBridge;
-        this.ip = ip;
+        this.destinationIp = destinationIp;
         this.outputLive = "";
     }
 
@@ -122,12 +151,12 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                     return false;
                 }
 
-                log.debug("Video Parameters: remotePort = "+remoteVideoPort+ ", localPort = "+localVideoPort+" rtmp-stream = rtmp://" + ip + "/video/" + meetingId + "/"
+                log.debug("Video Parameters: remotePort = "+remoteVideoPort+ ", localPort = "+localVideoPort+" rtmp-stream = rtmp://" + sourceIp + "/video/" + meetingId + "/"
                         + videoStreamName);
 
-                inputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
+                inputLive = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
                         + videoStreamName + " live=1";
-                outputLive = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
+                outputLive = "rtp://" + destinationIp + ":" + remoteVideoPort + "?localport=" + localVideoPort;
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
@@ -161,7 +190,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 }
 
                 inputLive = sdpPath;
-                outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
+                outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
                         + videoStreamName+" live=1";
 
                 ffmpeg = new FFmpegCommand();
@@ -192,7 +221,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 }
 
                 inputLive = VIDEO_CONF_LOGO_PATH;
-                outputLive = "rtp://" + ip + ":" + remoteVideoPort + "?localport=" + localVideoPort;
+                outputLive = "rtp://" + destinationIp + ":" + remoteVideoPort + "?localport=" + localVideoPort;
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
@@ -224,7 +253,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 }
 
                 inputLive = VIDEO_CONF_LOGO_PATH;
-                outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
+                outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
                         + videoStreamName+" live=1";
 
                 ffmpeg = new FFmpegCommand();
@@ -346,7 +375,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
         this.videoStreamName = streamName;
         String outputLive;
         String[] newCommand;
-        outputLive = "rtmp://" + ip + "/video/" + meetingId + "/"
+        outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
                 + this.videoStreamName+" live=1";
         ffmpeg.setOutput(outputLive); //update ffmpeg's output
         newCommand = ffmpeg.getFFmpegCommand(true);
@@ -423,13 +452,22 @@ public class VideoTranscoder implements ProcessMonitorObserver {
 
     public boolean canFFmpegRun() {
         log.debug("Checking if FFmpeg can run...");
+        return validateIps() && isFFmpegPathValid();
+    }
 
-        if(ip == null || ip.isEmpty()) {
-           log.debug("ip is null or empty");
-           return false;
-        }
+    public boolean validateIps(){
+        if ((sourceIp == null || sourceIp.isEmpty())
+            && (type == Type.TRANSCODE_RTMP_TO_RTP))
+            return false;
 
-        return isFFmpegPathValid();
+        if ((destinationIp == null || destinationIp.isEmpty())
+            && (type == Type.TRANSCODE_FILE_TO_RTMP
+                || type == Type.TRANSCODE_FILE_TO_RTP
+                || type == Type.TRANSCODE_RTMP_TO_RTP
+                || type == Type.TRANSCODE_FILE_TO_RTP))
+            return false;
+
+        return true;
     }
 
     public boolean isFFmpegPathValid() {

@@ -79,4 +79,13 @@ public class ClientConnectionManager {
             log.warn("Can't find client {} to inform user that the Global Call has been destroyed.", clientId);
         }
     }
+
+    public void successfullyRequestedSipParams(String clientId, String sipServerHost){
+        ClientConnection cc = clients.get(clientId);
+        if (cc != null) {
+            cc.successfullyRequestedSipParams(sipServerHost);
+        } else {
+            log.warn("Can't find client {} to inform user about requested SIP params.", clientId);
+        }
+    }
 }

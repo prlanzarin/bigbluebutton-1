@@ -40,6 +40,7 @@ package org.bigbluebutton.modules.phone.managers {
 	import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
 	import org.bigbluebutton.modules.phone.events.RegistrationFailedEvent;
 	import org.bigbluebutton.modules.phone.events.RegistrationSuccessEvent;
+    import org.bigbluebutton.modules.phone.events.RequestedSipParamsEvent;
 	
 	public class ConnectionManager {
     private static const LOG:String = "Phone::ConnectionManager - ";
@@ -122,6 +123,7 @@ package org.bigbluebutton.modules.phone.managers {
       switch (statusCode) {
         case "NetConnection.Connect.Success":
           trace(LOG + "Connection success");
+          requestSipParams();
           JSLog.debug("Successfully connected to BBB Voice", logData);
           dispatcher.dispatchEvent(new FlashVoiceConnectionStatusEvent(FlashVoiceConnectionStatusEvent.CONNECTED));           
           break;
@@ -182,6 +184,12 @@ package org.bigbluebutton.modules.phone.managers {
         var event:FlashGlobalCallDestroyedEvent = new FlashGlobalCallDestroyedEvent();
         dispatcher.dispatchEvent(event);
     }
+
+    public function successfullyRequestedSipParams(sipServerHost: String):void {
+        trace(LOG + "successfullyRequestedSipParams [ sipServerHost = " + sipServerHost+ "]");
+        var event:RequestedSipParamsEvent = new RequestedSipParamsEvent(sipServerHost);
+        dispatcher.dispatchEvent(event);
+    }
 		//********************************************************************************************
 		//			
 		//			SIP Actions
@@ -227,5 +235,10 @@ package org.bigbluebutton.modules.phone.managers {
 			// when the bandwidth check is complete 
 			trace("bandwidth = " + p_bw + " Kbps."); 
 		}
+
+        public function requestSipParams():void {
+            trace(LOG + "Requesting sip params to bbb-voice");
+            netConnection.call("voiceconf.requestSipParams", null);
+        }
 	}
 }

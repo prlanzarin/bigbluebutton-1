@@ -38,6 +38,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.phone.events.WebRTCEchoTestEvent;
 			import org.bigbluebutton.modules.phone.events.WebRTCMediaEvent;
 			import org.bigbluebutton.modules.phone.events.WebRTCUserChangedMicEvent;
+			import org.bigbluebutton.modules.phone.events.RequestedSipParamsEvent;
 			import org.bigbluebutton.modules.phone.managers.WebRTCCallManager;
 		]]>
 	</mx:Script>
@@ -118,5 +119,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   
   <EventHandlers type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}">        
     <MethodInvoker generator="{WebRTCCallManager}" method="handleBecomeViewer"/>
+  </EventHandlers>
+
+  <EventHandlers type="{RequestedSipParamsEvent.REQUESTED_SIP_PARAMS_EVENT}">
+    <MethodInvoker generator="{WebRTCCallManager}" method="handleRequestedSipParamsEvent" arguments="{event}"/>
   </EventHandlers>
 </EventMap>

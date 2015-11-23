@@ -1,5 +1,5 @@
 
-var userID, callerIdName, conferenceVoiceBridge, userAgent=null, userMicMedia, userWebcamMedia, currentSession=null, callTimeout, callActive, callICEConnected, callFailCounter, callPurposefullyEnded, uaConnected, transferTimeout;
+var userID, callerIdName, conferenceVoiceBridge, userAgent=null, userMicMedia, userWebcamMedia, currentSession=null, callTimeout, callActive, callICEConnected, callFailCounter, callPurposefullyEnded, uaConnected, transferTimeout, sipServerHost;
 var inEchoTest = true;
 
 function webRTCCallback(message) {
@@ -496,4 +496,9 @@ function isWebRTCAvailable() {
 
 function getCallStatus() {
 	return currentSession;
+}
+
+function storeSipParams(sip_server_host){
+    console.log("Storing SIP params needed for webRTCCallManager. [sipServerHost = "+ sip_server_host +"]");
+	sipServerHost = sip_server_host;
 }

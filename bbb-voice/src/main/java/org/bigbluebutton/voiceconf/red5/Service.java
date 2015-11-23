@@ -112,6 +112,12 @@ public class Service {
         return true;
 	}
 
+    public void requestSipParams(){
+        //webrtc's user agent needs this information to define it's video description of sdp
+        log.debug("Client requested SIP params. Sending it [sipServerHost = {}",GlobalCall.getSipServerHost());
+        clientConnectionManager.successfullyRequestedSipParams(getClientId(),GlobalCall.getSipServerHost());
+    }
+
     public void updateVideoStatus(String meetingId, String voiceBridge, String floorHolder, Boolean videoPresent) {
         log.debug("updateVideoStatus [meetingId={},voiceBridge={}, floorHolder={}, isVideoPresent={}]", meetingId, voiceBridge, floorHolder, videoPresent);
         handleGlobalVideoStatus(voiceBridge,floorHolder,videoPresent,meetingId);

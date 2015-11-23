@@ -58,7 +58,8 @@ public class GlobalCall {
     public static String sipVideoHeight;
     public static String videoConfLogo = "";
     public static String ffmpegPath = "";
-    private static String ip;
+    private static String sipServerHost;
+    private static String sipClientRtpIp; //this is the ip address where bbb stands
     private static boolean enableUserVideoSubtitle;
 
 	private static IMessagingService messagingService;
@@ -422,7 +423,7 @@ public class GlobalCall {
             } else {
                 log.debug("Reserving the place to create a video-logo transcoder for room {}", voiceconf);
                 String videoConfLogoStreamName = VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf+"_"+System.currentTimeMillis();
-                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf,videoConfLogoStreamName,meetingId,voiceconf,ip);
+                VideoTranscoder videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_FILE_TO_RTMP,VIDEOCONFLOGO_STREAM_NAME_PREFIX+voiceconf,videoConfLogoStreamName,meetingId,voiceconf,getSipClientRtpIp());
                 boolean startedSuccesfully = videoTranscoder.start();
                 if (startedSuccesfully && (!meetingId.isEmpty()) && (messagingService != null)) {
                     messagingService.globalVideoStreamCreated(meetingId, videoConfLogoStreamName);
@@ -494,8 +495,12 @@ public class GlobalCall {
         return userId.matches("\\w+_\\d+");
     }
 
-    public static void setIp(String newIp){
-        ip = newIp;
+    public static void setSipServerHost(String newIp){
+        sipServerHost = newIp;
+    }
+
+    public static void setSipClientRtpIp(String newIp){
+        sipClientRtpIp = newIp;
     }
 
     public void setEnableUserVideoSubtitle(boolean flag){
@@ -506,8 +511,12 @@ public class GlobalCall {
         return enableUserVideoSubtitle;
     }
 
-    public String getIp(){
-        return ip;
+    public static String getSipServerHost(){
+        return sipServerHost;
+    }
+
+    public static String getSipClientRtpIp(){
+        return sipClientRtpIp;
     }
 
     public static void setMessagingService(IMessagingService service){

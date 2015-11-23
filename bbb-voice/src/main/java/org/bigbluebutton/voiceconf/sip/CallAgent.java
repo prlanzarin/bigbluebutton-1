@@ -409,7 +409,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                                                   getVideoStreamName(),
                                                   getMeetingId(),
                                                   getDestination(),
-                                                  getServerIp());
+                                                  getSipServerHost(),
+                                                  getSipClientRtpIp());
 
             boolean startedSuccesfully = videoTranscoder.start();
             if(!startedSuccesfully)
@@ -501,7 +502,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     public synchronized void startUserVideoTranscoder(VideoTranscoder.Type type){
         if (videoTranscoder == null){
-            videoTranscoder = new VideoTranscoder(type,getUserId(),getUserName(),getVideoStreamName(),getMeetingId(),getDestination(),getServerIp(),getLocalVideoPort(),getRemoteVideoPort());
+            videoTranscoder = new VideoTranscoder(type,getUserId(),getUserName(),getVideoStreamName(),getMeetingId(),getDestination(),getSipServerHost(),getSipClientRtpIp(),getLocalVideoPort(),getRemoteVideoPort());
             videoTranscoder.setVideoTranscoderObserver(this);
             setVideoRunning(true);
             videoTranscoder.start();
@@ -1032,5 +1033,13 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
      */
     public boolean isVideoRunning(){
         return this.isVideoRunning;
+    }
+
+    public String getSipServerHost(){
+        return GlobalCall.getSipServerHost();
+    }
+
+    public String getSipClientRtpIp(){
+        return GlobalCall.getSipClientRtpIp();
     }
 }

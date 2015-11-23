@@ -69,4 +69,11 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
             connection.invoke("destroyedGlobalCallCallback", new Object[] {"onUaCallClosed"});
         }
     }
+
+    public void successfullyRequestedSipParams(String sipServerHost) {
+        log.debug("Notify client {} about the SIP params [sipServerHost = {}].", username,sipServerHost);
+        if (connection.isConnected()) {
+            connection.invoke("successfullyRequestedSipParams", new Object[] {sipServerHost});
+        }
+    }
 }

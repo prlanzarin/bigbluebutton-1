@@ -48,7 +48,7 @@ public class Application extends MultiThreadedApplicationAdapter {
 	private ClientConnectionManager clientConnManager;
 	private IMessagingService messagingService;
 	private String sipServerHost;
-	private String sipClientRtpIp = "";
+	private String sipClientRtpIp;
 	private int sipPort;
 	private String password;
 	private String username;
@@ -72,7 +72,8 @@ public class Application extends MultiThreadedApplicationAdapter {
       sipPeerManager.createSipPeer("default", sipClientRtpIp, sipServerHost, sipPort, startAudioPort, stopAudioPort, startVideoPort, stopVideoPort);
       GlobalCall.setMessagingService(messagingService);
       GlobalCall.setSipVideoEnabled(sipVideoEnabled);
-      GlobalCall.setIp(sipServerHost);
+      GlobalCall.setSipServerHost(sipServerHost);
+      GlobalCall.setSipClientRtpIp(sipClientRtpIp);
 
       try {
       	sipPeerManager.register("default", username, password);

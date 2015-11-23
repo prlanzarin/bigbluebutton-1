@@ -2488,7 +2488,7 @@ var Hacks = module.exports = {
       /*  Freeswitch receives AUDIO directly from WebRTC (client),
           but the VIDEO will flow from bbb-voice.
           So, the VIDEO "c" attribute is going to be the server IP (not the client IP) */
-      var videoCIN = "c=IN IP4 "+ userAgent.configuration.hostportParams + "\r\n"
+      var videoCIN = "c=IN IP4 "+ sipServerHost + "\r\n"
 
       /* 
           Setting the H264 codec and the others attributes we use when we call ffmpeg in bbb-voice
