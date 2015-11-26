@@ -10,19 +10,12 @@ import java.lang.reflect.Field;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-
 public class ProcessMonitor {
     private static Logger log = Red5LoggerFactory.getLogger(ProcessMonitor.class, "sip");
 
     private String[] command;
     private Process process;
     private String name;
-    private static final int EXIT_WITH_SUCCESS_CODE = 0;
-    private static final int EXIT_WITH_NO_INPUT = 1; //we are accepting this as valid, to avoid restarting when there's no input.
-    private static final int FATAL_ERROR_CODE = 128;
-    private static final int EXIT_WITH_SIGKILL_CODE = FATAL_ERROR_CODE + 9;
-    private static final int ACCEPTABLE_EXIT_CODES[] = {EXIT_WITH_SUCCESS_CODE,EXIT_WITH_NO_INPUT,EXIT_WITH_SIGKILL_CODE};
     ProcessStream inputStreamMonitor;
     ProcessStream errorStreamMonitor;
     private String inputStreamMonitorOutput;
@@ -131,14 +124,14 @@ public class ProcessMonitor {
 
                     int ret = process.exitValue();
 
-                    if (acceptableExitCode(ret)){
-                        log.debug("Exiting thread that executes {}. Exit value: {} ",name,ret);
+                    if (FFmpegConstants.acceptableExitCode(ret) || errorStreamMonitor.acceptableExitStatus()){
+                        log.debug("Exiting thread that executes {}. Exit value: {}, Exit status (from stdout): {} ",name,ret, errorStreamMonitor.getExitStatus());
                         storeProcessOutputs(inputStreamMonitor.getOutput(), errorStreamMonitor.getOutput());
                         clearData();
                         notifyProcessMonitorObserverOnFinished();
                     }
                     else{
-                        log.debug("Exiting thread that executes {}. Exit value: {}",name,ret);
+                        log.debug("Exiting thread that executes {}. Exit value: {}, Exit status (from stdout): {}",name,ret,errorStreamMonitor.getExitStatus());
                         storeProcessOutputs(inputStreamMonitor.getOutput(), errorStreamMonitor.getOutput());
                         clearData();
                         notifyProcessMonitorObserverOnFinishedUnsuccessfully();
@@ -235,15 +228,6 @@ public class ProcessMonitor {
         }
         }else
             log.debug("Can't force-destroy this process monitor: There's no process running.");
-    }
-
-    private boolean acceptableExitCode(int code){
-        int i;
-        if ((ACCEPTABLE_EXIT_CODES == null) || (code < 0)) return false;
-        for(i=0;i<ACCEPTABLE_EXIT_CODES.length;i++)
-            if (ACCEPTABLE_EXIT_CODES[i] == code)
-                return true;
-        return false;
     }
 
     public boolean isFFmpegProcess(){

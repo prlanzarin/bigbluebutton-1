@@ -174,7 +174,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setProfile("baseline");
                 ffmpeg.setFormat("rtp");
                 ffmpeg.setPayloadType(String.valueOf(H264Codec.codecId));
-                ffmpeg.setLoglevel("quiet");
+                ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setAnalyzeDuration("1000"); // 1ms
                 ffmpeg.setProbeSize("32"); // 1ms
@@ -197,7 +197,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(inputLive);
                 ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("quiet");
+                ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
@@ -263,7 +263,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setFrameSize("640x480");
                 ffmpeg.setIgnoreLoop(0);
                 ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("quiet");
+                ffmpeg.setLoglevel("verbose");
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+userId);
                 ffmpeg.setOutput(outputLive);
