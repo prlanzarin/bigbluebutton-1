@@ -238,7 +238,7 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
 	      case None => {
           logger.info("User is not a web user. Must be a phone caller. [" + 
                 msg.conference + "] user=[" + msg.callerIdName + "] wid=[" + msg.webUserId + "]")	
-	         sendNonWebUserJoined(fc.meetingId, msg.userId, msg)
+	         sendNonWebUserJoined(fc.meetingId, msg.webUserId, msg)
 	      }
 	    }
     })
