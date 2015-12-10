@@ -164,8 +164,8 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.addRtmpInputConnectionParameter(meetingId);
                 ffmpeg.addRtmpInputConnectionParameter("transcoder-"+userId);
                 ffmpeg.setFrameRate(15);
-                ffmpeg.setVideoBitRate(1024);
                 ffmpeg.setBufSize(1024);
+                ffmpeg.setGop(1); //MCU compatibility
                 ffmpeg.setCodec("libopenh264");
                 ffmpeg.setMaxRate(1024);
                 ffmpeg.setSliceMode("dyn");
@@ -234,6 +234,7 @@ public class VideoTranscoder implements ProcessMonitorObserver {
                 ffmpeg.setLoglevel("quiet");
                 if (GlobalCall.isUserVideoSubtitleEnabled())
                     ffmpeg.addCustomParameter("-vf","drawtext=fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:text="+username+":x="+globalVideoWidth+"-tw-20:y="+globalVideoHeight+"-th-20:fontcolor=white@0.9:shadowcolor=black:shadowx=2:shadowy=2:fontsize=20");
+                ffmpeg.setGop(1);
                 ffmpeg.setCodec("libopenh264");
                 ffmpeg.setSliceMode("dyn");
                 ffmpeg.setMaxNalSize("1024");
