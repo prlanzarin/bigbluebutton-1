@@ -372,7 +372,8 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
         log.debug("handleCallAgentClosed(): CallAgent for the user [uid={}] has been closed.",userId);
         callManager.remove(userId);
-        restartGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
+        if (GlobalCall.isGlobalCallAgent(userId))
+            restartGlobalCall(clientId, callerName, userId, destination, meetingId, serverIp);
     }
 
     @Override
