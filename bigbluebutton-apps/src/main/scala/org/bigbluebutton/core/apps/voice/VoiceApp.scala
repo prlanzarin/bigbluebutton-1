@@ -34,8 +34,6 @@ trait VoiceApp {
 
   def handleNewGlobalVideoStreamName(msg: NewGlobalVideoStreamName) {
     globalVideoStreamName = msg.globalVideoStreamName
-    if (globalVideoDied())
-        isSipVideoPresent=false
     logger.debug("New video stream name is set: Sending SipVideoUpdated event " +
                  "(isSipVideoPresent=" + isSipVideoPresent + ") " +
                  "(globalVideoStreamName=" + globalVideoStreamName + ")")
