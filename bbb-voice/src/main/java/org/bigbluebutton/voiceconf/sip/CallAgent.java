@@ -556,6 +556,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 GlobalCall.setVideoPresent(getDestination(), false);
                 GlobalCall.setFloorHolder(getDestination(), "",false);
                 log.debug("Informing client the global stream is null");
+                messagingService.globalVideoStreamCreated(getMeetingId(),"");
             }
         }else{
             log.debug("No need to stop Video Transcoder [uid={}], it already stopped.",getUserId());
