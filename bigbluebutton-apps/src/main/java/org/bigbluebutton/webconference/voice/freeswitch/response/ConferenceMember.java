@@ -63,7 +63,7 @@ public class ConferenceMember {
     }
 
     public static boolean isUnknownCaller(String callerIdName) {
-        return callerIdName.equals("unknown");
+        return callerIdName.equals("unknown") || callerIdName.matches("ip\\$\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+");
     }
 
     public String getCallerNetworkAddress() {
