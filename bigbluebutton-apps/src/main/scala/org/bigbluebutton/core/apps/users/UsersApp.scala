@@ -415,7 +415,6 @@ trait UsersApp {
     def sendSipPhoneLeft(){
         if(users.getPhoneUsersSendingVideo.isEmpty){
             isSipPhonePresent = false
-            isSipVideoPresent = false
             outGW.send(new SipPhoneUpdated(meetingID, voiceBridge, isSipPhonePresent))
         }
         logger.info("Is there any phoneUser sending video in this meeting? "+isSipPhonePresent )
