@@ -448,9 +448,11 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
      * @param meetingId
      */
     public void stopCurrentFloorVideo(String voiceBridge,String meetingId) {
+        synchronized (callManager){
         stopCurrentFloorVideo(voiceBridge);
         updateCurrentFloorVideo(voiceBridge,"",false);
         GlobalCall.removeVideoConfLogoStream(voiceBridge, meetingId,"");
+        }
     }
 
     /**

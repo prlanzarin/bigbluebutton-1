@@ -20,6 +20,8 @@ public class ProcessMonitor {
     ProcessStream errorStreamMonitor;
     private String inputStreamMonitorOutput;
     private String errorStreamMonitorOutput;
+    public static enum Status{RUNNING,CLOSED_BY_USER};
+    private Status status;
 
     private Thread thread;
     private ProcessMonitorObserver observer;
@@ -90,8 +92,9 @@ public class ProcessMonitor {
                         process = Runtime.getRuntime().exec(command);
                         log.debug("Executing (pid={}): {}",getPid(),getCommandString());
 
-                        if(process == null) {
-                            log.debug("process is null");
+                        if(status == Status.CLOSED_BY_USER) {
+                            log.debug("ProcessMonitor closed by user. Closing {} it immediatelly",name);
+                            forceDestroy();
                             return;
                         }
 
@@ -138,6 +141,7 @@ public class ProcessMonitor {
                     }
                 }
             });
+            status = Status.RUNNING;
             this.thread.start();
         }else
             log.debug("Can't start a new process monitor: It is already running.");
@@ -145,6 +149,7 @@ public class ProcessMonitor {
 
     public synchronized void restart(){
         clearData();
+        status = Status.CLOSED_BY_USER;
         start();
     }
 
@@ -172,6 +177,7 @@ public class ProcessMonitor {
 
     private void closeProcess(){
         if(this.process != null) {
+            status = Status.CLOSED_BY_USER;
             log.debug("Closing {} process",this.name);
             this.process.destroy();
             this.process = null;
@@ -185,6 +191,7 @@ public class ProcessMonitor {
 
     public synchronized void destroy() {
         if (this.thread != null){
+            status = Status.CLOSED_BY_USER;
             clearData();
             log.debug("ProcessMonitor successfully finished");
         }else
@@ -215,13 +222,16 @@ public class ProcessMonitor {
 
     public synchronized void forceDestroy(){
         if (this.thread != null) {
+            status = Status.CLOSED_BY_USER;
         try {
             int pid = getPid();
             if (pid < 0){
                 log.debug("Process doesn't exist. Not destroying it...");
                 return;
-            }else
+            }else {
                 Runtime.getRuntime().exec("kill -9 "+ getPid());
+                clearData();
+            }
         } catch (IOException e) {
             log.debug("Failed to force-kill {} process",this.name);
             e.printStackTrace();
