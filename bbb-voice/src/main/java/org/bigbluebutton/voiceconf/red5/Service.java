@@ -223,7 +223,7 @@ public class Service {
         } else {
             log.debug("No more sip phones in the conference. Stopping video transcoders");
             sipPeerManager.stopCurrentFloorVideo(peerId, voiceBridge,meetingId);
-            log.debug("Now stopping the global transconder");
+            log.debug("Now stopping the global transcoder");
             String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
             sipPeerManager.stopFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
         }

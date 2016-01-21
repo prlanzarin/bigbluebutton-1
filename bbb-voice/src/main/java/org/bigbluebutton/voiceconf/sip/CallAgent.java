@@ -17,6 +17,7 @@
 *
 */
 package org.bigbluebutton.voiceconf.sip;
+import java.util.Random;
 
 import org.zoolu.sip.call.*;
 import org.zoolu.sip.provider.SipProvider;
@@ -68,7 +69,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private final String clientId;
     private final ConferenceProvider portProvider;
     private DatagramSocket localAudioSocket;
-    private DatagramSocket localVideoSocket;
     private String _username; //Same as visualized in participant's list
     private String _callerName;
     private String _userId;
@@ -122,7 +122,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         this.serverIp = serverIp;
         this.userProfile.userID = this._userId;
         this.isGlobal = isGlobalUserId();
-        this.localVideoSocket = null;
         this.currentVideoProbe = null;
         this._videoStreamName = "";
     }
@@ -154,9 +153,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
 			localAudioSocket = getLocalAudioSocket();
 			userProfile.audioPort = localAudioSocket.getLocalPort();
-
-            localVideoSocket = getLocalVideoSocket();
-            userProfile.videoPort = localVideoSocket.getLocalPort();
+            userProfile.videoPort = getValidLocalVideoPort();
 
 		} catch (Exception e) {
 			log.debug("{} failed to allocate local port for call to {}. Notifying client that call failed.", callerName, destination); 
@@ -183,6 +180,18 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         } else {
             call.call(destination, localSession);
         }
+    }
+
+    /**
+     * Return a random local video port based on start/stop values
+     * defined in bigbluebutton-sip.properties
+     * @return A valid port
+     */
+    private int getValidLocalVideoPort(){
+        Random r  = new Random();
+        int videoPortRange = portProvider.getStopVideoPort() - portProvider.getStartVideoPort() +1;
+        int videoPort = r.nextInt(videoPortRange) + portProvider.getStartVideoPort();
+        return videoPort;
     }
 
     private void setupCallerDisplayName(String callerName, String destination) {
@@ -241,31 +250,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return (_callerName != null && _callerName.startsWith(GlobalCall.LISTENONLY_USERID_PREFIX));
     }
 
-    private DatagramSocket getLocalVideoSocket() throws Exception {
-        DatagramSocket socket = null;
-        boolean failedToGetSocket = true;
-        StringBuilder failedPorts = new StringBuilder("Failed ports: ");
-        
-        for (int i = portProvider.getStartVideoPort(); i <= portProvider.getStopVideoPort(); i++) {
-            int freePort = portProvider.getFreeVideoPort();
-            try {               
-                socket = new DatagramSocket(freePort);
-                failedToGetSocket = false;
-                log.info("Successfully setup local VIDEO port {}. {}", freePort, failedPorts);
-                break;
-            } catch (SocketException e) {
-                failedPorts.append(freePort + ", ");            
-            }
-        }
-        
-        if (failedToGetSocket) {
-            log.warn("Failed to setup local VIDEO port {}.", failedPorts); 
-            throw new Exception("Exception while initializing CallStream");
-        }
-        
-        return socket;
-    }
-    
     private void createStreams() {
         boolean audioStreamCreatedSuccesfully = false;
 
@@ -342,8 +326,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                     return false;
                 }
                 setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() +"_"+System.currentTimeMillis());
-                // Free local port before starting ffmpeg
-                localVideoSocket.close();
                 boolean startedSuccesfully = startGlobalVideoTranscoder();
                 if(!startedSuccesfully) {
                     log.debug("beginGlobalVideoTranscoding: Cannot start global video transcoder");
@@ -481,7 +463,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             localVideoPort = Integer.toString(SessionDescriptorUtil.getRemoteMediaPort(localSdp, SessionDescriptorUtil.SDP_MEDIA_VIDEO));
 
         	// Free local port before starting ffmpeg
-        	localVideoSocket.close();
             startUserVideoTranscoder(type);
 
         } catch (Exception e) {
@@ -741,11 +722,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     private void cleanupVideo(){
-        if (localVideoSocket == null) return;
-
-        log.debug("Closing local video port {}", localAudioSocket.getLocalPort());
-        localVideoSocket.close();
     }
+
     private void cleanup() {
         cleanupAudio();
         cleanupVideo();

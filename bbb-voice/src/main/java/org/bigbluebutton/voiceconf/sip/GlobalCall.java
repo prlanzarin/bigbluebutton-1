@@ -460,6 +460,7 @@ public class GlobalCall {
                     log.debug("There's no need to restore global video stream, room is being closed");
                 return true;
             } else {
+                log.debug("There is no videoconf-logo transcoder for room {} ", voiceconf);
                 return false;
             }
         }
