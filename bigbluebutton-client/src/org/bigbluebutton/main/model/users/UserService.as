@@ -257,6 +257,10 @@ package org.bigbluebutton.main.model.users
       sender.cancelDial(command.uuid);
     }
 
+    public function sendDtmf(command:VoiceConfEvent):void {
+        sender.sendDtmf(command.uuid,command.dtmfDigit);
+    }
+
     //Lock events
     public function lockAllUsers(command:LockControlEvent):void {
       sender.setAllUsersLock(true);			

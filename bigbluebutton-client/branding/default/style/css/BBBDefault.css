@@ -566,6 +566,12 @@ DataGrid {
   fontWeight: bold;
 }
 
+.dialSipKeypadStyle {
+  fontFamily: Arial;
+  fontSize: 18;
+  fontWeight: bold;
+}
+
 .webcamSettingsWindowTitleStyle, .micSettingsWindowTitleStyle, .dialWindowTitleStyle {
   fontFamily: Arial;
   fontSize: 20;  

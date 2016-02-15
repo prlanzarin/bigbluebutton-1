@@ -119,6 +119,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <EventHandlers type="{VoiceConfEvent.CANCEL_DIAL}" >
     <MethodInvoker generator="{UserService}" method="cancelDial" arguments="{event}" />
   </EventHandlers>
+
+  <EventHandlers type="{VoiceConfEvent.SEND_DTMF}" >
+    <MethodInvoker generator="{UserService}" method="sendDtmf" arguments="{event}" />
+  </EventHandlers>
   
   <!-- Lock Events -->
   <EventHandlers type="{LockControlEvent.LOCK_ALL}" >

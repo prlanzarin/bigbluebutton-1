@@ -36,6 +36,7 @@ package org.bigbluebutton.core.events
 		public static const DIALING:String = "VOICECONF_DIALING";
 		public static const HANGINGUP:String = "VOICECONF_HANGINGUP";
 		public static const CANCEL_DIAL:String = "VOICECONF_CANCEL_DIAL";
+		public static const SEND_DTMF:String = "VOICECONF_SEND_DTMF";
 		
 		public var userid:String;
 		public var mute:Boolean;
@@ -46,6 +47,7 @@ package org.bigbluebutton.core.events
 		public var uuid:String;
 		public var dialState:String;
 		public var dialHangupCause:String;
+		public var dtmfDigit:String;
 		
 		public function VoiceConfEvent(type:String)
 		{

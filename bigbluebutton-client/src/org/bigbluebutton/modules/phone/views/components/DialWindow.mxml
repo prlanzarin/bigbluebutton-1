@@ -63,6 +63,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             private static const ACCEPTED:String = "accepted";
             private static const HANGING_UP:String = "hanging up";
             private var _callState:String = IDLE;
+            private var currentDestination:String;
 
             [Bindable]
             private var statusString:String;
@@ -104,9 +105,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                         break;
                     case ACCEPTED:
                         closeBtn.enabled = true;
-                        destination.enabled = false;
+                        destination.enabled = true;
                         dialCancelBtn.enabled = true;
                         dialCancelBtn.label = ResourceUtil.getInstance().getString('bbb.dialWindow.hangupBtn');
+                        destination.text = "";
                         break;
                     case DIALING:
                         closeBtn.enabled = false;
@@ -172,7 +174,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                         trace("Remembering UUID " + event.uuid);
                         uuid = event.uuid;
                         callState = ACCEPTED;
-                        statusString = getDialStateString(event.dialState);
+                        statusString = getDialStateString(event.dialState) + "\n(" + currentDestination +")" ;
                         break;
                     case "DOWN":
                         trace("Forgetting UUID " + uuid);
@@ -201,6 +203,33 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 }
             }
 
+            private function keypadClick(text: String):void {
+                switch (callState){
+                    case ACCEPTED:
+                        insertDigit(text);
+                        sendDtmf(text);
+                        break;
+                    case IDLE:
+                        insertDigit(text);
+                        break;
+                    default:
+                        return;
+                }
+            }
+
+            private function insertDigit(text:String):void {
+                destination.text+=text;
+                destination.setFocus();
+                destination.setSelection(destination.length,destination.length);
+            }
+
+            private function sendDtmf(digit:String ):void {
+                var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.SEND_DTMF);
+                e.uuid = uuid;
+                e.dtmfDigit = digit;
+                dispatchEvent(e);
+            }
+
             private function get meetingTitle():String {
                 return BBB.initUserConfigManager().getMeetingTitle();
             }
@@ -210,6 +239,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                     statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.hangupcause.empty_destination');
                 }
                 else {
+                    currentDestination = destination.text;
                     statusString = ResourceUtil.getInstance().getString('bbb.dialWindow.state.dialing');
 
                     options["origination_caller_id_name"] = meetingTitle;
@@ -234,6 +264,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                 callState = HANGING_UP;
 
                 sendCancel();
+                currentDestination = "";
             }
 
             private function sendCancel():void {
@@ -258,7 +289,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         ]]>
     </mx:Script>
 
-    <mx:VBox id="dialDisplay" width="100%" height="100%" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+    <mx:VBox id="dialDisplay" width="100%" height="100%" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5" horizontalAlign="center">
         <mx:HBox width="100%" horizontalAlign="left" paddingTop="5" paddingLeft="5" paddingRight="5" paddingBottom="5">
             <mx:Label text="{ResourceUtil.getInstance().getString('bbb.dialWindow.windowTitle')}" styleName="webcamSettingsWindowTitleStyle"/>
         </mx:HBox>
@@ -267,10 +298,58 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
         <mx:HBox paddingTop="20" paddingBottom="10" paddingLeft="5" paddingRight="5" verticalAlign="middle">
             <mx:Label id="sipLabel" styleName="dialSipLabelStyle" text="{ResourceUtil.getInstance().getString('bbb.dialWindow.sip.label')}"/>
-            <mx:TextInput id="destination" width="210" text="" keyDown="btn_keyDown(event)" />
-            <mx:HBox paddingLeft="5">
-                <mx:Button id="dialCancelBtn" width="80" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
+            <mx:TextInput id="destination" width="170" text="" keyDown="btn_keyDown(event)" />
+        </mx:HBox>
+
+        <mx:VBox paddingBottom="10" paddingLeft="20" paddingRight="20" verticalAlign="middle">
+            <mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadOneBtn" styleName="dialSipKeypadStyle" click="keypadClick('1')" label="1"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadTwoBtn" styleName="dialSipKeypadStyle" click="keypadClick('2')" label="2"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadThreeBtn" styleName="dialSipKeypadStyle" click="keypadClick('3')" label="3"/>
+                </mx:HBox>
             </mx:HBox>
+            <mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadFourBtn" styleName="dialSipKeypadStyle" click="keypadClick('4')" label="4"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadFiveBtn" styleName="dialSipKeypadStyle" click="keypadClick('5')" label="5"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadSixBtn" styleName="dialSipKeypadStyle" click="keypadClick('6')" label="6"/>
+                </mx:HBox>
+            </mx:HBox>
+            <mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadSevenBtn" styleName="dialSipKeypadStyle" click="keypadClick('7')" label="7"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadEightBtn" styleName="dialSipKeypadStyle" click="keypadClick('8')" label="8"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadNineBtn" styleName="dialSipKeypadStyle" click="keypadClick('9')" label="9"/>
+                </mx:HBox>
+            </mx:HBox>
+            <mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadAsteriskBtn" styleName="dialSipKeypadStyle" click="keypadClick('*')" label="*"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadZeroBtn" styleName="dialSipKeypadStyle" click="keypadClick('0')" label="0"/>
+                </mx:HBox>
+                <mx:HBox paddingLeft="3">
+                    <mx:Button width="60" id="keypadHashtagBtn" styleName="dialSipKeypadStyle" click="keypadClick('#')" label="#"/>
+                </mx:HBox>
+            </mx:HBox>
+        </mx:VBox>
+
+        <mx:HBox width="100%" horizontalAlign="center" paddingLeft="20" paddingRight="20"  >
+            <mx:Button id="dialCancelBtn" width="100%" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
         </mx:HBox>
 
         <mx:Text id="statusTxt" text="{statusString}" paddingLeft="{destination.x}"/>

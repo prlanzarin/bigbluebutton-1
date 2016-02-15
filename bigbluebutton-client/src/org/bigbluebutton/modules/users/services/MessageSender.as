@@ -287,6 +287,25 @@ package org.bigbluebutton.modules.users.services
       ); //_netConnection.call
     }
     
+    public function sendDtmf(uuid:String,dtmfDigit:String):void{
+        trace(LOG + "Sending sendDtmf. uuid=[" + uuid + "], dtmfDigit=[" + dtmfDigit + "]");
+        var message:Object = new Object();
+        message["uuid"] = uuid;
+        message["dtmfDigit"] = dtmfDigit;
+
+        var _nc:ConnectionManager = BBB.initConnectionManager();
+        _nc.sendMessage(
+          "voice.sendDtmf",
+          function(result:String):void { // On successful result
+            LogUtil.debug(result);
+          },
+          function(status:String):void { // status - On error occurred
+            LogUtil.error(status);
+          },
+          message
+        );
+    }
+
     public function getRoomLockState():void{
       trace("Sending getRoomLockState.");
       var message:Object = new Object();
