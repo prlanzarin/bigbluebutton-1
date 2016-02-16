@@ -282,9 +282,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             }
 
             private function btn_keyDown(event:KeyboardEvent):void {
-                if (event.keyCode == Keyboard.ENTER && destination.enabled) {
+                if (event.keyCode == Keyboard.ENTER && callState == IDLE && destination.enabled)
                     dialCancelBtn.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
+
+                if(callState == ACCEPTED) {
+                    var dtmfDigit:String = String.fromCharCode(event.charCode);
+                    if(dtmfDigit.match("\\d") || dtmfDigit == "#" || dtmfDigit == "*") {
+                        trace("DialWindow: Sending " + dtmfDigit + " via dtmf");
+                        sendDtmf(dtmfDigit);
+                    }
                 }
+
+
             }
         ]]>
     </mx:Script>
