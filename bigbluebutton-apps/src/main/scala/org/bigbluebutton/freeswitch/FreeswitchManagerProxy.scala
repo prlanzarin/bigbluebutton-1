@@ -38,4 +38,8 @@ class FreeswitchManagerProxy(fsApp: FreeswitchApplication) {
   def voiceCancelDial(conference: String, uuid: String) {
     fsApp.cancelDial(conference, uuid);
   }
+
+  def voiceSendDtmf(conference: String, uuid: String, dtmfDigit:String) {
+    fsApp.sendDtmf(conference, uuid, dtmfDigit);
+  }
 }

@@ -449,6 +449,11 @@ trait UsersApp {
     outGW.send(new VoiceCancelDial(msg.meetingID, recorded, msg.uuid));
   }
   
+  def handleVoiceSendDtmfRequest(msg: VoiceSendDtmfRequest) {
+    logger.info("sendDtmf: mid=[" + msg.meetingID + "] uuid=[" + msg.uuid + "] dtmfDigit=[" + msg.dtmfDigit + "]");
+    outGW.send(new VoiceSendDtmf(msg.meetingID, recorded, msg.uuid, msg.dtmfDigit));
+  }
+
   def handleVoiceDialing(msg: VoiceDialing) {
     outGW.send(new VoiceDialing2(msg.meetingID, recorded, msg.requesterID, msg.uuid, msg.callState));
   }

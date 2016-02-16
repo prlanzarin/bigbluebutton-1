@@ -471,6 +471,13 @@ case class VoiceCancelDialRequest(
     uuid: String
 ) extends InMessage
 
+case class VoiceSendDtmfRequest(
+    meetingID: String,
+    requesterID: String,
+    uuid: String,
+    dtmfDigit: String
+) extends InMessage
+
 case class VoiceDialing(
     meetingID: String, 
     requesterID: String, 

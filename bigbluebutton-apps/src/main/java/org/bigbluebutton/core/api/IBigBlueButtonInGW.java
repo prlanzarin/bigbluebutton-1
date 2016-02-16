@@ -67,6 +67,7 @@ public interface IBigBlueButtonInGW {
 
 	void dial(String meetingID, String requesterID, Map<String, String> options, Map<String, String> params);
 	void cancelDial(String meetingID, String requesterID, String uuid);
+	void sendDtmf(String meetingID, String requesterID, String uuid, String dtmfDigit);
 	void dialing(String meetingID, String userId, String uuid, String callState);
 	void hangingUp(String meetingID, String userId, String uuid, String callState, String hangupCause);
 	

@@ -288,6 +288,14 @@ case class VoiceCancelDial(
     version:String = Versions.V_0_0_1
 ) extends IOutMessage
 
+case class VoiceSendDtmf(
+    meetingID: String,
+    recorded: Boolean,
+    uuid: String,
+    dtmfDigit: String,
+    version:String = Versions.V_0_0_1
+) extends IOutMessage
+
 case class VoiceDialing2(
     meetingID: String, 
     recorded: Boolean, 

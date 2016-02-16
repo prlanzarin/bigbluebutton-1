@@ -121,6 +121,16 @@ public class VoiceService {
 
 		bbbInGW.cancelDial(meetingID, requesterID, uuid);
 	}
+
+	public void sendDtmf(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		String uuid = (String) msg.get("uuid");
+		String dtmfDigit = (String) msg.get("dtmfDigit");
+		log.debug("Send dtmf from [" + meetingID + "]. Digit = ["+dtmfDigit+"]");
+
+		bbbInGW.sendDtmf(meetingID, requesterID, uuid, dtmfDigit);
+	}
 		
 	private BigBlueButtonSession getBbbSession() {
 		return (BigBlueButtonSession) Red5.getConnectionLocal().getAttribute(Constants.SESSION);

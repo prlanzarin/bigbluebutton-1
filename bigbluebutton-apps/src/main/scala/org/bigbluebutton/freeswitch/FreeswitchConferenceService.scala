@@ -34,6 +34,7 @@ class FreeswitchConferenceService(fsproxy: FreeswitchManagerProxy,
 	    case msg: EjectAllVoiceUsers            => handleEjectAllVoiceUsers(msg)
 	    case msg: VoiceOutboundDial             => handleVoiceOutboundDial(msg)
 	    case msg: VoiceCancelDial               => handleVoiceCancelDial(msg)
+        case msg: VoiceSendDtmf                 => handleVoiceSendDtmf(msg)
 	    case _ => // do nothing
 	  }
   }
@@ -87,6 +88,10 @@ class FreeswitchConferenceService(fsproxy: FreeswitchManagerProxy,
     fsActor ! msg
   }
   
+  private def handleVoiceSendDtmf (msg:VoiceSendDtmf) {
+    fsActor ! msg
+  }
+
   def voiceStartedRecording(conference: String, recordingFile: String, 
                             timestamp: String, recording: java.lang.Boolean) {
     val fsRec = new FsRecording(conference, recordingFile, timestamp, recording)

@@ -442,6 +442,10 @@ class BigBlueButtonInGW(bbbGW: BigBlueButtonGateway, presUtil: PreuploadedPresen
     voiceGW.cancelDial(meetingId, userId, uuid);
   }
   
+  def sendDtmf(meetingId: String, userId: String, uuid: String, dtmfDigit:String) {
+    voiceGW.sendDtmf(meetingId, userId, uuid, dtmfDigit);
+  }
+
   def dialing(meetingId: String, userId: String, uuid: String, callState: String) {
     voiceGW.dialing(meetingId, userId, uuid, callState);
   }

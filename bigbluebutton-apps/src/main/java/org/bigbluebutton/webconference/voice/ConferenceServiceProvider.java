@@ -28,4 +28,5 @@ public interface ConferenceServiceProvider {
 	public void broadcast(String room, String meetingid);
 	public void dial(String room, String participant, Map<String, String> options, Map<String, String> params);
 	public void cancelDial(String room, String uuid);
+	public void sendDtmf(String room, String uuid, String dtmfDigit);
 }

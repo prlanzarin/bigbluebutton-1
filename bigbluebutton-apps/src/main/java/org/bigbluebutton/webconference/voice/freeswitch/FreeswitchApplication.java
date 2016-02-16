@@ -30,6 +30,7 @@ import org.bigbluebutton.webconference.voice.ConferenceServiceProvider;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.BroadcastConferenceCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.CancelDialCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.DialCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.SendDtmfCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectParticipantCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.FreeswitchCommand;
@@ -125,6 +126,13 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
     queueMessage(command);
   }
 
+  @Override
+  public void sendDtmf(String room, String uuid, String dtmfDigit) {
+    log.debug("Queueing sendDialCommand uuid={}, dtmfDigit={}", uuid,dtmfDigit);
+    SendDtmfCommand command = new SendDtmfCommand(room, uuid, dtmfDigit, USER);
+    queueMessage(command);
+  }
+
   private void broadcastToIcecast(String room, String meetingid) {
    	String shoutPath = icecastProtocol + "://" + icecastUsername + ":" + icecastPassword + "@" + icecastHost + ":" + icecastPort 
     			+ File.separatorChar + meetingid + "." + icecastStreamExtension;       
@@ -194,6 +202,9 @@ public class FreeswitchApplication implements ConferenceServiceProvider {
 				} else if (command instanceof CancelDialCommand) {
 					CancelDialCommand cmd = (CancelDialCommand) command;
 					manager.cancelDial(cmd);
+				} else if (command instanceof SendDtmfCommand) {
+					SendDtmfCommand sdc = (SendDtmfCommand) command;
+					manager.sendDtmf(sdc);
 				}
 			}
 		};

@@ -89,6 +89,7 @@ class MeetingActor(val meetingID: String, val externalMeetingID: String, val mee
 	    case msg: ActiveTalkerChanged                    => handleActiveTalkerChanged(msg)
       case msg: VoiceOutboundDialRequest               => handleVoiceOutboundDialRequest(msg)
       case msg: VoiceCancelDialRequest                 => handleVoiceCancelDialRequest(msg)
+      case msg: VoiceSendDtmfRequest                 => handleVoiceSendDtmfRequest(msg)
       case msg: VoiceDialing                           => handleVoiceDialing(msg)
       case msg: VoiceHangingUp                         => handleVoiceHangingUp(msg)
     	case msg: UserJoining                            => handleUserJoin(msg)

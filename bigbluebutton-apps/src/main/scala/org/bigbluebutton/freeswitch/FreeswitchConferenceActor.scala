@@ -42,6 +42,7 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
 	    case msg: StopRecording                      => handleStopRecording(msg)
 	    case msg: VoiceOutboundDial                  => handleVoiceOutboundDial(msg)
 	    case msg: VoiceCancelDial                    => handleVoiceCancelDial(msg)
+        case msg: VoiceSendDtmf                      => handleVoiceSendDtmf(msg)
 	    case msg: FsRecording                        => handleFsRecording(msg)
 	    case msg: FsVoiceUserJoined                  => handleFsVoiceUserJoined(msg)
 	    case msg: FsVoiceUserLeft                    => handleFsVoiceUserLeft(msg)
@@ -182,6 +183,14 @@ class FreeswitchConferenceActor(fsproxy: FreeswitchManagerProxy, bbbInGW: IBigBl
     })
   }
   
+  private def handleVoiceSendDtmf(msg: VoiceSendDtmf) {
+    val fsconf = confs.values find (c => c.meetingId == msg.meetingID)
+    logger.debug("handleVoiceSendDtmf")
+    fsconf foreach (fc => {
+      fsproxy.voiceSendDtmf(fc.conferenceNum, msg.uuid, msg.dtmfDigit)
+    })
+  }
+
   private def handleEjectVoiceUser(msg: EjectVoiceUser) {
     val fsconf = confs.values find (c => c.meetingId == msg.meetingID)
     

@@ -27,6 +27,7 @@ import org.bigbluebutton.webconference.voice.events.ConferenceEventListener;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.BroadcastConferenceCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.CancelDialCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.DialCommand;
+import org.bigbluebutton.webconference.voice.freeswitch.actions.SendDtmfCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.EjectParticipantCommand;
 import org.bigbluebutton.webconference.voice.freeswitch.actions.MuteParticipantCommand;
@@ -172,6 +173,15 @@ public class ConnectionManager  {
 			c.sendAsyncApiCommand(cdc.getCommand(), cdc.getCommandArgs());
 		}
 	}
+
+    public void sendDtmf(SendDtmfCommand cdc) {
+        log.debug("Sending async send dtmf command");
+
+        Client c = manager.getESLClient();
+        if (c.canSend()) {
+            c.sendAsyncApiCommand(cdc.getCommand(), cdc.getCommandArgs());
+        }
+    }
 
 	public void eject(EjectParticipantCommand mpc) {
 		Client c = manager.getESLClient();

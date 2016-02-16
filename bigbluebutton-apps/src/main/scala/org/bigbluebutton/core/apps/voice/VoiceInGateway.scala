@@ -82,6 +82,10 @@ class VoiceInGateway(bbbGW: BigBlueButtonGateway) {
   def cancelDial(meetingId: String, userId: String, uuid: String) {
     bbbGW.accept(new VoiceCancelDialRequest(meetingId, userId, uuid))
   }
+
+  def sendDtmf(meetingId: String, userId: String, uuid: String, dtmfDigit:String) {
+    bbbGW.accept(new VoiceSendDtmfRequest(meetingId, userId, uuid, dtmfDigit))
+  }
   
   def dialing(meetingId: String, userId: String, uuid: String, callState: String) {
     bbbGW.accept(new VoiceDialing(meetingId, userId, uuid, callState));
