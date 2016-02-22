@@ -355,13 +355,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                     <mx:Button width="60" id="keypadHashtagBtn" styleName="dialSipKeypadStyle" click="keypadClick('#')" label="#"/>
                 </mx:HBox>
             </mx:HBox>
+
+	        <mx:HBox width="100%" horizontalAlign="center" paddingTop="20">
+	            <mx:Button id="dialCancelBtn" width="100%" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
+	        </mx:HBox>
+
+	        <mx:Text id="statusTxt" text="{statusString}" width="100%" />
         </mx:VBox>
 
-        <mx:HBox width="100%" horizontalAlign="center" paddingLeft="20" paddingRight="20"  >
-            <mx:Button id="dialCancelBtn" width="100%" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
-        </mx:HBox>
 
-        <mx:Text id="statusTxt" text="{statusString}" paddingLeft="{destination.x}"/>
 
         <mx:HRule width="100%"/>
 
