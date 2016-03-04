@@ -21,6 +21,8 @@ package org.bigbluebutton.freeswitch.voice.freeswitch.actions;
 import org.freeswitch.esl.client.transport.message.EslMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
+import org.bigbluebutton.freeswitch.voice.events.VideoPausedEvent;
+import org.bigbluebutton.freeswitch.voice.events.VideoResumedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.freeswitch.voice.freeswitch.response.ConferenceMember;
 import org.bigbluebutton.freeswitch.voice.freeswitch.response.XMLResponseConferenceListParser;
@@ -88,6 +90,14 @@ public class GetAllUsersCommand extends FreeswitchCommand {
 
             //Maybe move this to XMLResponseConferenceListParser, sendConfrenceEvents ?
             VoiceUserJoinedEvent pj;
+
+            if(confXML.isVideoPresent()) {
+               VideoResumedEvent vr = new VideoResumedEvent(confXML.getConferenceRoom());
+               eventListener.handleConferenceEvent(vr);
+            } else {
+                VideoPausedEvent vr = new VideoPausedEvent(confXML.getConferenceRoom());
+                eventListener.handleConferenceEvent(vr);
+            }
 
             for(ConferenceMember member : confXML.getConferenceList()) {
                 //Foreach found member in conference create a JoinedEvent

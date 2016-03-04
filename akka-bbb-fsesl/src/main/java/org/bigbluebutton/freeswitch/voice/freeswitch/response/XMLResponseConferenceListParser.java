@@ -35,6 +35,7 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
     private ConferenceMember tempMember;
     private ConferenceMemberFlags tempFlags;
     private String room;
+    private boolean isVideoPresent = false;
     private boolean inFlags = false;
     
     public XMLResponseConferenceListParser() {
@@ -43,6 +44,10 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
 
     public String getConferenceRoom() {
         return room;
+    }
+
+    public boolean isVideoPresent() {
+        return isVideoPresent;
     }
 
     public void printConferneceMemebers() {
@@ -104,6 +109,10 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
 
         if(qName.equalsIgnoreCase("conference")) {
             room = attributes.getValue("name");
+        }
+
+        if(qName.equalsIgnoreCase("conference")) {
+            isVideoPresent = Boolean.valueOf(attributes.getValue("video_present"));
         }
     }
 
