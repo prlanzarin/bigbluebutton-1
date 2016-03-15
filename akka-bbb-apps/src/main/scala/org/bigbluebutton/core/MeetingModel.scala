@@ -16,6 +16,12 @@ class MeetingModel {
   private var muted = false;
   private var meetingEnded = false
   private var meetingMuted = false
+  private var _isSipVideoPresent = false
+  private var _isSipPhonePresent = false
+  private var _talkerUserId = ""
+  private var _globalVideoStreamName = ""
+  private var _globalVideoStreamWidth = ""
+  private var _globalVideoStreamHeight = ""
 
   val TIMER_INTERVAL = 30000
   private var hasLastWebUserLeft = false
@@ -111,5 +117,53 @@ class MeetingModel {
 
   def timeNowInMinutes(): Long = {
     TimeUnit.NANOSECONDS.toMinutes(System.nanoTime())
+  }
+
+  def setSipVideoPresent(value: Boolean) {
+    _isSipVideoPresent = value
+  }
+
+  def isSipVideoPresent(): Boolean = {
+    _isSipVideoPresent
+  }
+
+  def setSipPhonePresent(value: Boolean) {
+    _isSipPhonePresent = value
+  }
+
+  def isSipPhonePresent(): Boolean = {
+    _isSipPhonePresent
+  }
+
+  def setTalkerUserId(userId: String) {
+    _talkerUserId = userId
+  }
+
+  def talkerUserId(): String = {
+    _talkerUserId
+  }
+
+  def setGlobalVideoStreamName(streamName: String) {
+    _globalVideoStreamName = streamName
+  }
+
+  def globalVideoStreamName(): String = {
+    _globalVideoStreamName
+  }
+
+  def setGlobalVideoStreamWidth(streamWidth: String) {
+    _globalVideoStreamWidth = streamWidth
+  }
+
+  def globalVideoStreamWidth(): String = {
+    _globalVideoStreamWidth
+  }
+
+  def setGlobalVideoStreamHeight(streamHeight: String) {
+    _globalVideoStreamHeight = streamHeight
+  }
+
+  def globalVideoStreamHeight(): String = {
+    _globalVideoStreamHeight
   }
 }

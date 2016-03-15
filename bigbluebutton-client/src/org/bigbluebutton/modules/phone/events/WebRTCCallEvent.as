@@ -12,6 +12,8 @@ package org.bigbluebutton.modules.phone.events
 		
 		public var errorCode:Number;
 		public var cause:String;
+		public var remoteVideoPort:Number;
+		public var localVideoPort:Number;
 		
 		public function WebRTCCallEvent(type:String, errorCode:Number=0, cause:String=null, bubbles:Boolean=false, cancelable:Boolean=false)
 		{

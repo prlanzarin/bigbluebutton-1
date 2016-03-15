@@ -1,8 +1,12 @@
 
 package org.bigbluebutton.core.pubsub.receivers;
 
+import org.bigbluebutton.common.messages.ActiveTalkerChangedInVoiceConfMessage;
 import org.bigbluebutton.common.messages.AssignPresenterRequestMessage;
 import org.bigbluebutton.common.messages.BroadcastLayoutRequestMessage;
+import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage;
+import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage;
+import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage;
 import org.bigbluebutton.common.messages.EjectUserFromMeetingRequestMessage;
 import org.bigbluebutton.common.messages.EjectUserFromVoiceRequestMessage;
 import org.bigbluebutton.common.messages.GetCurrentLayoutRequestMessage;
@@ -17,6 +21,8 @@ import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.MuteAllExceptPresenterRequestMessage;
 import org.bigbluebutton.common.messages.MuteAllRequestMessage;
 import org.bigbluebutton.common.messages.MuteUserRequestMessage;
+import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage;
+import org.bigbluebutton.common.messages.SendDtmfRequestInVoiceConfMessage;
 import org.bigbluebutton.common.messages.SetRecordingStatusRequestMessage;
 import org.bigbluebutton.common.messages.SetUserStatusRequestMessage;
 import org.bigbluebutton.common.messages.UserJoinedVoiceConfMessage;
@@ -28,6 +34,8 @@ import org.bigbluebutton.common.messages.UserEmojiStatusMessage;
 import org.bigbluebutton.common.messages.UserShareWebcamRequestMessage;
 import org.bigbluebutton.common.messages.UserTalkingInVoiceConfMessage;
 import org.bigbluebutton.common.messages.UserUnshareWebcamRequestMessage;
+import org.bigbluebutton.common.messages.VideoPausedInVoiceConfMessage;
+import org.bigbluebutton.common.messages.VideoResumedInVoiceConfMessage;
 import org.bigbluebutton.common.messages.VoiceConfRecordingStartedMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 
@@ -117,7 +125,15 @@ public class UsersMessageReceiver implements MessageHandler{
 					  case EjectUserFromVoiceRequestMessage.EJECT_USER_FROM_VOICE_REQUEST:
 						  processEjectUserFromVoiceRequestMessage(message);
 						  break;
-						  
+					  case OutboundDialRequestInVoiceConfMessage.OUTBOUND_DIAL_REQUEST_IN_VOICE_CONF:
+						  processOutboundDialRequestInVoiceConfMessage(message);
+						  break;
+					  case CancelDialRequestInVoiceConfMessage.CANCEL_DIAL_REQUEST_IN_VOICE_CONF:
+						  processCancelDialRequestInVoiceConfMessage(message);
+						  break;
+					  case SendDtmfRequestInVoiceConfMessage.SEND_DTMF_REQUEST_IN_VOICE_CONF:
+						  processSendDtmfRequestInVoiceConfMessage(message);
+						  break;
 					}
 				}
 			}
@@ -149,6 +165,21 @@ public class UsersMessageReceiver implements MessageHandler{
 					  case VoiceConfRecordingStartedMessage.VOICE_CONF_RECORDING_STARTED:
 						  processVoiceConfRecordingStartedMessage(message);
 						  break;
+					  case ActiveTalkerChangedInVoiceConfMessage.ACTIVE_TALKER_CHANGED_IN_VOICE_CONF:
+						  processActiveTalkerChangedInVoiceConfMessage(message);
+						  break;
+					case VideoPausedInVoiceConfMessage.VIDEO_PAUSED_IN_VOICE_CONF:
+					  processVideoPausedInVoiceConfMessage(message);
+					  break;
+					case VideoResumedInVoiceConfMessage.VIDEO_RESUMED_IN_VOICE_CONF:
+					  processVideoResumedInVoiceConfMessage(message);
+					  break;
+					  case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
+						  processChannelCallStateInVoiceConfMessage(message);
+						  break;
+					  case ChannelHangupInVoiceConfMessage.CHANNEL_HANGUP_IN_VOICE_CONF:
+						  processChannelHangupInVoiceConfMessage(message);
+						  break;
 					}
 				}
 			}
@@ -158,7 +189,7 @@ public class UsersMessageReceiver implements MessageHandler{
 	private void processUserJoinedVoiceConfMessage(String json) {
 		UserJoinedVoiceConfMessage msg = UserJoinedVoiceConfMessage.fromJson(json);
 		if (msg != null) {
-			bbbInGW.voiceUserJoined(msg.voiceConfId, msg.voiceUserId, msg.userId, msg.callerIdName, msg.callerIdNum, msg.muted, msg.talking);
+			bbbInGW.voiceUserJoined(msg.voiceConfId, msg.voiceUserId, msg.userId, msg.callerIdName, msg.callerIdNum, msg.muted, msg.talking, msg.hasVideo, msg.hasFloor);
 		}
 	}
 
@@ -342,5 +373,61 @@ public class UsersMessageReceiver implements MessageHandler{
 		if (msg != null) {
 			bbbInGW.ejectUserFromVoice(msg.meetingId, msg.userId, msg.requesterId);
 		}		
+	}
+
+	private void processOutboundDialRequestInVoiceConfMessage(String message) {
+		OutboundDialRequestInVoiceConfMessage msg = OutboundDialRequestInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceOutboundDialRequest(msg.meetingId, msg.userId, msg.options, msg.params);
+		}
+	}
+
+	private void processCancelDialRequestInVoiceConfMessage(String message) {
+		CancelDialRequestInVoiceConfMessage msg = CancelDialRequestInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceCancelDialRequest(msg.meetingId, msg.userId, msg.uniqueId);
+		}
+	}
+
+	private void processSendDtmfRequestInVoiceConfMessage(String message) {
+		SendDtmfRequestInVoiceConfMessage msg = SendDtmfRequestInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceSendDtmfRequest(msg.meetingId, msg.userId, msg.uniqueId, msg.dtmfDigit);
+		}
+	}
+
+	private void processActiveTalkerChangedInVoiceConfMessage(String message) {
+		ActiveTalkerChangedInVoiceConfMessage msg = ActiveTalkerChangedInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.activeTalkerChanged(msg.voiceConfId, msg.voiceUserId);
+		}
+	}
+
+	private void processVideoPausedInVoiceConfMessage(String message) {
+		VideoPausedInVoiceConfMessage msg = VideoPausedInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.sipVideoPaused(msg.voiceConfId);
+		}
+	}
+
+	private void processVideoResumedInVoiceConfMessage(String message) {
+		VideoResumedInVoiceConfMessage msg = VideoResumedInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.sipVideoResumed(msg.voiceConfId);
+		}
+	}
+
+	private void processChannelCallStateInVoiceConfMessage(String message) {
+		ChannelCallStateInVoiceConfMessage msg = ChannelCallStateInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceDialing(msg.voiceConfId, msg.userId, msg.uniqueId, msg.callState);
+		}
+	}
+
+	private void processChannelHangupInVoiceConfMessage(String message) {
+		ChannelHangupInVoiceConfMessage msg = ChannelHangupInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceHangingUp(msg.voiceConfId, msg.userId, msg.uniqueId, msg.callState, msg.hangupCause);
+		}
 	}
 }

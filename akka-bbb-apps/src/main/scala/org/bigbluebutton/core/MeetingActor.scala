@@ -8,8 +8,8 @@ import org.bigbluebutton.core.api._
 import java.util.concurrent.TimeUnit
 import org.bigbluebutton.core.util._
 import scala.concurrent.duration._
-import org.bigbluebutton.core.apps.{ PollApp, UsersApp, PresentationApp, LayoutApp, ChatApp, WhiteboardApp }
-import org.bigbluebutton.core.apps.{ ChatModel, LayoutModel, UsersModel, PollModel, WhiteboardModel }
+import org.bigbluebutton.core.apps.{ PollApp, UsersApp, PresentationApp, LayoutApp, ChatApp, WhiteboardApp, VoiceApp }
+import org.bigbluebutton.core.apps.{ ChatModel, LayoutModel, UsersModel, PollModel, WhiteboardModel, VoiceModel }
 import org.bigbluebutton.core.apps.PresentationModel
 
 object MeetingActor {
@@ -19,7 +19,7 @@ object MeetingActor {
 
 class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
     extends Actor with UsersApp with PresentationApp
-    with LayoutApp with ChatApp with WhiteboardApp with PollApp
+    with LayoutApp with ChatApp with WhiteboardApp with PollApp with VoiceApp
     with ActorLogging {
 
   val chatModel = new ChatModel()
@@ -29,6 +29,7 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
   val pollModel = new PollModel()
   val wbModel = new WhiteboardModel()
   val presModel = new PresentationModel()
+  //val sipVideoModel = new SipVideoModel()
 
   import context.dispatcher
   context.system.scheduler.schedule(2 seconds, 30 seconds, self, "MonitorNumberOfWebUsers")
@@ -54,6 +55,28 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleUserMutedInVoiceConfMessage(msg)
     case msg: UserTalkingInVoiceConfMessage =>
       handleUserTalkingInVoiceConfMessage(msg)
+    case msg: SipVideoPaused =>
+      handleSipVideoPaused(msg)
+    case msg: SipVideoResumed =>
+      handleSipVideoResumed(msg)
+    case msg: NewGlobalVideoStreamName =>
+      handleNewGlobalVideoStreamName(msg)
+    case msg: UpdateSipVideoStatus =>
+      handleUpdateSipVideoStatus(msg)
+    case msg: RequestUpdateVideoStatus =>
+      handleRequestUpdateVideoStatus(msg)
+    case msg: ActiveTalkerChanged =>
+      handleActiveTalkerChanged(msg)
+    case msg: VoiceOutboundDialRequest =>
+      handleVoiceOutboundDialRequest(msg)
+    case msg: VoiceCancelDialRequest =>
+      handleVoiceCancelDialRequest(msg)
+    case msg: VoiceSendDtmfRequest =>
+      handleVoiceSendDtmfRequest(msg)
+    case msg: VoiceDialing =>
+      handleVoiceDialing(msg)
+    case msg: VoiceHangingUp =>
+      handleVoiceHangingUp(msg)
     case msg: VoiceConfRecordingStartedMessage =>
       handleVoiceConfRecordingStartedMessage(msg)
     case msg: UserJoining =>

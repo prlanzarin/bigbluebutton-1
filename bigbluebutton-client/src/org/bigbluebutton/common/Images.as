@@ -324,5 +324,11 @@ package org.bigbluebutton.common
 		
 		[Embed(source="assets/images/emoji_confused.png")]
 		public var emoji_confused:Class;
+
+		[Embed(source="assets/images/phone.png")]
+		public var phone:Class;
+
+		[Embed(source="assets/images/phone_video_20.png")]
+		public var phone_video_20:Class;
 	}
 }

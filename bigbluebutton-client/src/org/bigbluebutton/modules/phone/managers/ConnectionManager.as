@@ -35,7 +35,9 @@ package org.bigbluebutton.modules.phone.managers {
 	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallConnectedEvent;
 	import org.bigbluebutton.modules.phone.events.FlashCallDisconnectedEvent;
+	import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 	import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
+    import org.bigbluebutton.modules.phone.events.RequestedSipParamsEvent;
 	
 	public class ConnectionManager {
 		private static const LOGGER:ILogger = getClassLogger(ConnectionManager);
@@ -48,6 +50,7 @@ package org.bigbluebutton.modules.phone.managers {
 		private var externUserId:String;
 		private var uid:String;
 		private var meetingId:String;
+		private var voiceBridge:String;
 		
 		private var registered:Boolean = false;
     private var closedByUser:Boolean = false;
@@ -74,13 +77,14 @@ package org.bigbluebutton.modules.phone.managers {
 			return netConnection;
 		}
 		
-    public function setup(uid:String, externUserId:String, username:String, meetingId:String, uri:String):void {	
+    public function setup(uid:String, externUserId:String, username:String, meetingId:String, uri:String, voiceBridge: String):void {
 	  LOGGER.debug("Setup uid=[{0}] extuid=[{1}] name=[{2}] uri=[{3}]", [uid, externUserId, username, uri]);
       this.uid = uid;	
       this.username  = username;
       this.meetingId = meetingId;
       this.uri   = uri;
       this.externUserId = externUserId;
+      this.voiceBridge = voiceBridge;
     }
     
 		public function connect():void {				
@@ -97,7 +101,7 @@ package org.bigbluebutton.modules.phone.managers {
 				netConnection.client = this;
 				netConnection.addEventListener( NetStatusEvent.NET_STATUS , netStatus );
 				netConnection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
-				netConnection.connect(uri, meetingId, externUserId, username);
+				netConnection.connect(uri, meetingId, externUserId, username, voiceBridge);
 			}
 			if (reconnecting && !amIListenOnly) {
 				handleConnectionSuccess();
@@ -117,6 +121,7 @@ package org.bigbluebutton.modules.phone.managers {
         attemptSucceeded.payload.type = ReconnectionManager.SIP_CONNECTION;
         dispatcher.dispatchEvent(attemptSucceeded);
       }
+      requestSipParams();
       dispatcher.dispatchEvent(new FlashVoiceConnectionStatusEvent(FlashVoiceConnectionStatusEvent.CONNECTED));
       reconnecting = false;
     }
@@ -212,6 +217,21 @@ package org.bigbluebutton.modules.phone.managers {
 			dispatcher.dispatchEvent(event);
 		}
 						
+    public function destroyedGlobalCallCallback(msg:String):void {
+        var logData:Object = new Object();
+        logData.user = UsersUtil.getUserData();
+
+        LOGGER.info("destroyedGlobalCallCallback " + msg);
+        JSLog.debug("destroyedGlobalCallCallback " + msg, logData);
+        var event:FlashGlobalCallDestroyedEvent = new FlashGlobalCallDestroyedEvent();
+        dispatcher.dispatchEvent(event);
+    }
+
+    public function successfullyRequestedSipParams(sipServerHost: String):void {
+        LOGGER.info("successfullyRequestedSipParams [ sipServerHost = " + sipServerHost+ "]");
+        var event:RequestedSipParamsEvent = new RequestedSipParamsEvent(sipServerHost);
+        dispatcher.dispatchEvent(event);
+    }
 		//********************************************************************************************
 		//			
 		//			SIP Actions
@@ -230,6 +250,24 @@ package org.bigbluebutton.modules.phone.managers {
 				netConnection.call("voiceconf.hangup", null, "default");
 			}
 		}
+
+		public function doWebRTCHangUp():void {
+			var logData:Object = new Object();
+			logData.user = UsersUtil.getUserData();
+
+			doHangUp();
+		}
+
+		public function onWebRTCCallAccepted(remoteVideoPort:Number, localVideoPort:Number):void{
+			var logData:Object = new Object();
+			logData.user = UsersUtil.getUserData();
+
+			LOGGER.info("webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort=" + remoteVideoPort + ", localVideoPort=" + localVideoPort + "]");
+			JSLog.debug("webRTC Call Accepted: communicating with bbb-voice: [remoteVideoPort=" + remoteVideoPort + ", localVideoPort=" + localVideoPort + "]", logData);
+			netConnection.call("voiceconf.acceptWebRTCCall", null, "default", voiceBridge, remoteVideoPort, localVideoPort);
+			LOGGER.info("webRTC Call Accepted: communicating with bbb-voice done");
+			JSLog.debug("webRTC Call Accepted: communication with bbb-voice done", logData);
+		}
 		
 		public function onBWCheck(... rest):Number { 
 			return 0; 
@@ -241,5 +279,11 @@ package org.bigbluebutton.modules.phone.managers {
 			// when the bandwidth check is complete
 			LOGGER.debug("bandwidth = {0} Kbps.", [p_bw]); 
 		}
+
+        public function requestSipParams():void {
+            LOGGER.info("Requesting sip params to bbb-voice");
+            netConnection.call("voiceconf.requestSipParams", null);
+        }
+
 	}
 }

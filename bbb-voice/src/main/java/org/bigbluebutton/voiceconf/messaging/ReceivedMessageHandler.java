@@ -9,7 +9,7 @@ import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
 public class ReceivedMessageHandler {
-	private static Logger log = Red5LoggerFactory.getLogger(ReceivedMessageHandler.class, "bigbluebutton");
+	private static Logger log = Red5LoggerFactory.getLogger(ReceivedMessageHandler.class, "sip");
 	
 	private BlockingQueue<ReceivedMessage> receivedMessages = new LinkedBlockingQueue<ReceivedMessage>();
 	
@@ -50,8 +50,6 @@ public class ReceivedMessageHandler {
 	
 	private void processMessage(ReceivedMessage msg) {
 		if (handler != null) {
-			log.debug("Let's process this message: " + msg.getMessage());
-
 			handler.notifyListeners(msg.getPattern(), msg.getChannel(), msg.getMessage());
 		} else {
 			log.warn("No listeners interested in messages from Redis!");

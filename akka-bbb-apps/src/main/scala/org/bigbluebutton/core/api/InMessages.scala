@@ -100,12 +100,23 @@ case class EjectUserFromVoiceRequest(meetingID: String, userId: String, ejectedB
 case class VoiceUserJoinedMessage(meetingID: String, user: String, voiceConfId: String,
   callerIdNum: String, callerIdName: String, muted: Boolean, talking: Boolean) extends InMessage
 case class UserJoinedVoiceConfMessage(voiceConfId: String, voiceUserId: String, userId: String, externUserId: String,
-  callerIdName: String, callerIdNum: String, muted: Boolean, talking: Boolean, listenOnly: Boolean)
+  callerIdName: String, callerIdNum: String, muted: Boolean, talking: Boolean, listenOnly: Boolean, hasVideo: Boolean, hasFloor: Boolean)
 case class UserLeftVoiceConfMessage(voiceConfId: String, voiceUserId: String)
 case class UserLockedInVoiceConfMessage(voiceConfId: String, voiceUserId: String, locked: Boolean)
 case class UserMutedInVoiceConfMessage(voiceConfId: String, voiceUserId: String, muted: Boolean)
 case class UserTalkingInVoiceConfMessage(voiceConfId: String, voiceUserId: String, talking: Boolean)
 case class VoiceConfRecordingStartedMessage(voiceConfId: String, recordStream: String, recording: Boolean, timestamp: String)
+case class VoiceOutboundDialRequest(meetingID: String, requesterID: String, options: Map[String, String], params: Map[String, String]) extends InMessage
+case class VoiceCancelDialRequest(meetingID: String, requesterID: String, uuid: String) extends InMessage
+case class VoiceSendDtmfRequest(meetingID: String, requesterID: String, uuid: String, dtmfDigit: String) extends InMessage
+case class VoiceDialing(voiceConfId: String, requesterID: String, uuid: String, callState: String)
+case class VoiceHangingUp(voiceConfId: String, requesterID: String, uuid: String, callState: String, hangupCause: String)
+case class SipVideoPaused(voiceConfId: String)
+case class SipVideoResumed(voiceConfId: String)
+case class ActiveTalkerChanged(voiceConfId: String, voiceUserId: String)
+case class NewGlobalVideoStreamName(meetingID: String, globalVideoStreamName: String) extends InMessage
+case class UpdateSipVideoStatus(meetingID: String, width: String, height: String) extends InMessage
+case class RequestUpdateVideoStatus(meetingID: String) extends InMessage
 
 // Whiteboard
 case class SendWhiteboardAnnotationRequest(meetingID: String, requesterID: String, annotation: AnnotationVO) extends InMessage

@@ -32,6 +32,8 @@
   import org.bigbluebutton.modules.phone.events.FlashVoiceConnectionStatusEvent;
   import org.bigbluebutton.modules.phone.events.JoinVoiceConferenceCommand;
   import org.bigbluebutton.modules.phone.events.LeaveVoiceConferenceCommand;
+  import org.bigbluebutton.modules.phone.events.WebRTCCallEvent;
+  import org.bigbluebutton.modules.phone.events.FlashGlobalCallDestroyedEvent;
 
   public class FlashCallManager
   {
@@ -80,7 +82,8 @@
       options = new PhoneOptions();
       var uid:String = String(Math.floor(new Date().getTime()));
       var uname:String = encodeURIComponent(UsersUtil.getMyUserID() + "-bbbID-" + UsersUtil.getMyUsername()); 
-      connectionManager.setup(uid, UsersUtil.getMyUserID(), uname , UsersUtil.getInternalMeetingID(), options.uri);
+      connectionManager.setup(uid, UsersUtil.getMyUserID(), uname , UsersUtil.getInternalMeetingID(), options.uri, UsersUtil.getVoiceBridge());
+      connect();
     }
     
     private function get state():String {
@@ -324,6 +327,7 @@
       switch (state) {
         case IN_CONFERENCE:
           state = INITED;
+          streamManager.stopStreams(); //stopping streams if they are still running (this happens when voice receives an unexpected bye from fs)
           dispatcher.dispatchEvent(new FlashLeftVoiceConferenceEvent());
           break;
         case ON_LISTEN_ONLY_STREAM:
@@ -359,6 +363,32 @@
       }
     }
     
+    public function handleFlashGlobalCallDestroyedEvent(event:FlashGlobalCallDestroyedEvent):void {
+        var logData:Object = new Object();
+        logData.user = UsersUtil.getUserData();
+
+        JSLog.info("Flash global call destroyed, current state: " + state, logData);
+        LOGGER.debug("Flash global call destroyed, current state: " + state);
+        switch (state) {
+          case ON_LISTEN_ONLY_STREAM:
+            state = INITED;
+            JSLog.info("Flash user left the listen only stream. Reason: Global Call destroyed", logData);
+            LOGGER.debug("Flash user left the listen only stream. Reason: Global Call destroyed");
+            dispatcher.dispatchEvent(new FlashLeftVoiceConferenceEvent());
+            break;
+          case CONNECTING_TO_LISTEN_ONLY_STREAM: //failed to connect to global in bbb-voice
+              state = INITED;
+              JSLog.info("Flash user couldn't join the listen only stream. There's no Global Call for this room", logData);
+              LOGGER.debug("Flash user couldn't join the listen only stream. There's no Global Call for this room");
+              dispatcher.dispatchEvent(new FlashLeftVoiceConferenceEvent());
+              break;
+          default:
+            JSLog.info("There's no Global Call for this room anymore. Current State: " + state + ". Conference still running", logData);
+            LOGGER.debug("There's no Global Call for this room anymore. Current State: " + state + ". Conference still running");
+            break;
+        }
+      }
+
     public function handleJoinVoiceConferenceCommand(event:JoinVoiceConferenceCommand):void {
       LOGGER.debug("Handling JoinVoiceConferenceCommand.");
       switch(state) {
@@ -379,6 +409,7 @@
       LOGGER.debug("Handling LeaveVoiceConferenceCommand, current state: {0}, using flash: {1}", [state, usingFlash]);
       if (!usingFlash && state != ON_LISTEN_ONLY_STREAM) {
         // this is the case when the user was connected to webrtc and then leaves the conference
+          connectionManager.doWebRTCHangUp();
         return;
       }
       hangup();
@@ -461,6 +492,15 @@
         e.userid = UsersUtil.getMyUserID();
         dispatcher.dispatchEvent(e);
       }
+    }
+
+    public function handleWebRTCCallStartedEvent(event:WebRTCCallEvent):void {
+        if (!connectionManager.isConnected()) {
+            LOGGER.debug("No connection with bbb-voice app, aborting webRTC Video");
+        } else {
+            connectionManager.onWebRTCCallAccepted(event.remoteVideoPort, event.localVideoPort);
+            LOGGER.debug("onWebRTCCallAccepted: webRTC Call registered on bbb-voice");
+        }
     }
   }
 }

@@ -28,6 +28,12 @@ import org.bigbluebutton.common.messages.UserEjectedFromMeetingMessage
 import org.bigbluebutton.common.messages.LockLayoutMessage
 import org.bigbluebutton.core.pubsub.senders.WhiteboardMessageToJsonConverter
 import org.bigbluebutton.common.converters.ToJsonEncoder
+import org.bigbluebutton.common.messages.SipVideoUpdatedInVoiceConfMessage
+import org.bigbluebutton.common.messages.SipPhoneUpdatedInVoiceConfMessage
+import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage
+import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage
+import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
+import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -105,6 +111,12 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: UserLeftVoice => handleUserLeftVoice(msg)
     case msg: IsMeetingMutedReply => handleIsMeetingMutedReply(msg)
     case msg: UserListeningOnly => handleUserListeningOnly(msg)
+    case msg: SipVideoUpdated => handleSipVideoUpdated(msg)
+    case msg: SipPhoneUpdated => handleSipPhoneUpdated(msg)
+    case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
+    case msg: VoiceCancelDial => handleVoiceCancelDial(msg)
+    case msg: VoiceDialing2 => handleVoiceDialing(msg)
+    case msg: VoiceHangingUp2 => handleVoiceHangingUp(msg)
     case msg: GetCurrentLayoutReply => handleGetCurrentLayoutReply(msg)
     case msg: BroadcastLayoutEvent => handleBroadcastLayoutEvent(msg)
     case msg: LockLayoutEvent => handleLockLayoutEvent(msg)
@@ -527,11 +539,13 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleUserSharedWebcam(msg: UserSharedWebcam) {
     val json = UsersMessageToJsonConverter.userSharedWebcamToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
+    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, json)
   }
 
   private def handleUserUnsharedWebcam(msg: UserUnsharedWebcam) {
     val json = UsersMessageToJsonConverter.userUnsharedWebcamToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
+    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, json)
   }
 
   private def handleGetUsersReply(msg: GetUsersReply) {
@@ -620,6 +634,37 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleUserListeningOnly(msg: UserListeningOnly) {
     val json = UsersMessageToJsonConverter.userListeningOnlyToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
+  }
+
+  private def handleSipVideoUpdated(msg: SipVideoUpdated) {
+    val svu = new SipVideoUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipVideoPresent, msg.sipVideoStreamName, msg.talkerUserId, msg.width, msg.height)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, svu.toJson())
+    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, svu.toJson())
+  }
+
+  private def handleSipPhoneUpdated(msg: SipPhoneUpdated) {
+    val svu = new SipPhoneUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipPhonePresent)
+    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, svu.toJson())
+  }
+
+  private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
+    val odr = new OutboundDialRequestInVoiceConfMessage(msg.meetingID, msg.voiceConfId, msg.requesterID, msg.options, msg.params)
+    service.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, odr.toJson())
+  }
+
+  private def handleVoiceCancelDial(msg: VoiceCancelDial) {
+    val cd = new CancelDialRequestInVoiceConfMessage(msg.meetingID, "", msg.uuid)
+    service.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, cd.toJson())
+  }
+
+  private def handleVoiceDialing(msg: VoiceDialing2) {
+    val ccs = new ChannelCallStateInVoiceConfMessage(msg.meetingID, "UNKNOWN-VOICE-CONF", msg.uuid, msg.callState, msg.requesterID)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, ccs.toJson())
+  }
+
+  private def handleVoiceHangingUp(msg: VoiceHangingUp2) {
+    val ch = new ChannelHangupInVoiceConfMessage(msg.meetingID, "UNKNOWN-VOICE-CONF", msg.uuid, msg.callState, msg.hangupCause, msg.requesterID)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, ch.toJson())
   }
 
   private def handleGetWhiteboardShapesReply(msg: GetWhiteboardShapesReply) {

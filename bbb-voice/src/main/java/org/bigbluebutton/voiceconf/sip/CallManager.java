@@ -23,22 +23,57 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CallManager {
-
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
+	private final Map<String, String> videoStreams = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
-		return calls.put(ca.getCallId(), ca);
+		return calls.put(ca.getUserId(), ca);
 	}
 	
-	public CallAgent remove(String id) {
-		return calls.remove(id);
+	public CallAgent remove(String userId) {
+		if(userId != null) {
+	        return calls.remove(userId);
+		}else return null;
+
+	}
+
+	public String addVideoStream(String userId, String stream) {
+		return videoStreams.put(userId, stream);
+	}
+
+	public String removeVideoStream(String userId) {
+		String uid = userId;
+		return videoStreams.remove(uid);
+	}
+
+	public CallAgent removeByUserId(String userId) {
+	    //kept for compatibility
+		return calls.remove(userId);
 	}
 	
-	public CallAgent get(String id) {
-		return calls.get(id);
+	public CallAgent get(String userId) {
+	    return calls.get(userId);
 	}
-	
+
+    /**
+     * Return the global CallAgent of the given conference.
+     * @param voiceconf
+     * @return
+     */
+    public CallAgent getGlobalCallAgent(String voiceconf){
+        return get(GlobalCall.LISTENONLY_USERID_PREFIX+voiceconf);
+    }
+
+	public String getVideoStream(String userId) {
+		String uid = userId;
+		return videoStreams.get(uid);
+	}
+
 	public Collection<CallAgent> getAll() {
 		return calls.values();
+	}
+
+	public Map<String, String> getAllSavedVideoStreams() {
+		return videoStreams;
 	}
 }

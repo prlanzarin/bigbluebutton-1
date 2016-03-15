@@ -46,6 +46,9 @@ public class SipPeerProfile {
     /** User's name (used to build the contact_url if not explitely defined) */
     public String username = null;
 
+     /** User's ID (build from username ) */
+    public String userID = null;
+
     /** User's realm. */
     public String realm = null;
 
@@ -132,7 +135,7 @@ public class SipPeerProfile {
     public boolean audio = true;
 
     /** Whether using video */
-    public boolean video = false;
+    public boolean video = true;
 
     /** Whether playing in receive only mode */
     public boolean recvOnly = false;
@@ -241,9 +244,11 @@ public class SipPeerProfile {
     	SipPeerProfile userProfile = new SipPeerProfile();
     	
     	userProfile.audioPort = source.audioPort;
+        userProfile.videoPort = source.videoPort;
            	
         String fromURL = "\"" + source.username + "\" <sip:" + source.username + "@" + source.realm + ">";
     	userProfile.username = source.username;
+        userProfile.userID = source.userID;
         userProfile.passwd = source.passwd;
         userProfile.realm = source.realm;
         userProfile.fromUrl = fromURL;

@@ -1,5 +1,5 @@
 
-var userID, callerIdName=null, conferenceVoiceBridge, userAgent=null, userMicMedia, userWebcamMedia, currentSession=null, callTimeout, callActive, callICEConnected, iceConnectedTimeout, callFailCounter, callPurposefullyEnded, uaConnected, transferTimeout, iceGatheringTimeout;
+var userID, callerIdName=null, conferenceVoiceBridge, userAgent=null, userMicMedia, userWebcamMedia, currentSession=null, callTimeout, callActive, callICEConnected, iceConnectedTimeout, callFailCounter, callPurposefullyEnded, uaConnected, transferTimeout, iceGatheringTimeout, sipServerHost;
 var inEchoTest = true;
 
 function webRTCCallback(message) {
@@ -14,7 +14,8 @@ function webRTCCallback(message) {
 			BBB.webRTCCallEnded(inEchoTest);
 			break;
 		case 'started':
-			BBB.webRTCCallStarted(inEchoTest);
+			saveRemoteVideoPortInCurrentSession();
+			BBB.webRTCCallStarted(inEchoTest, currentSession.remoteVideoPort, currentSession.localVideoPort);
 			break;
 		case 'connecting':
 			BBB.webRTCCallConnecting(inEchoTest);
@@ -503,6 +504,25 @@ function make_call(username, voiceBridge, server, callback, recall, isListenOnly
 	});
 }
 
+function saveRemoteVideoPortInCurrentSession() {
+	//var remoteSdp = currentSession.mediaHandler.peerConnection.remoteDescription.sdp;
+	var remoteSdp = currentSession.videoRemoteDescription;
+	if (typeof remoteSdp != 'undefined') {
+		console.log("Current WebRTC session's remote video SDP");
+		console.log(remoteSdp);
+
+		//video params
+		var remoteVideoPort = remoteSdp.match(/m=video\ \d+/g)[0].split(" ")[1];
+		currentSession.remoteVideoPort = remoteVideoPort;
+	} else {
+		currentSession.remoteVideoPort = 0;
+	}
+
+	if (currentSession.remoteVideoPort == 0) {
+		console.log("Remote video port is zero, make sure you've enabled the video codecs in your remote endpoint");
+	}
+}
+
 function webrtc_hangup(callback) {
 	callPurposefullyEnded = true;
 
@@ -519,4 +539,9 @@ function isWebRTCAvailable() {
 
 function getCallStatus() {
 	return currentSession;
+}
+
+function storeSipParams(sip_server_host){
+    console.log("Storing SIP params needed for webRTCCallManager. [sipServerHost = "+ sip_server_host +"]");
+	sipServerHost = sip_server_host;
 }

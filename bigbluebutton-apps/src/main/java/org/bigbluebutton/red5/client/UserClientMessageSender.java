@@ -26,6 +26,9 @@ import org.bigbluebutton.common.messages.UserVoiceTalkingMessage;
 import org.bigbluebutton.common.messages.ValidateAuthTokenReplyMessage;
 import org.bigbluebutton.common.messages.ValidateAuthTokenTimeoutMessage;
 import org.bigbluebutton.common.messages.UserEjectedFromMeetingMessage;
+import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage;
+import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage;
+import org.bigbluebutton.common.messages.SipVideoUpdatedInVoiceConfMessage;
 import org.bigbluebutton.red5.client.messaging.BroadcastClientMessage;
 import org.bigbluebutton.red5.client.messaging.ConnectionInvokerService;
 import org.bigbluebutton.red5.client.messaging.DirectClientMessage;
@@ -48,7 +51,6 @@ public class UserClientMessageSender {
   public void handleUsersMessage(String message) {
     JsonParser parser = new JsonParser();
     JsonObject obj = (JsonObject) parser.parse(message);
-    
     if (obj.has("header") && obj.has("payload")) {
       JsonObject header = (JsonObject) obj.get("header");
 
@@ -168,6 +170,24 @@ public class UserClientMessageSender {
             break;
           case UserEjectedFromMeetingMessage.USER_EJECTED_FROM_MEETING:
             processUserEjectedFromMeetingMessage(message);
+            break;
+          case SipVideoUpdatedInVoiceConfMessage.SIP_VIDEO_UPDATED_IN_VOICE_CONF:
+            SipVideoUpdatedInVoiceConfMessage svu = SipVideoUpdatedInVoiceConfMessage.fromJson(message);
+            if (svu != null) {
+              processSipVideoUpdatedInVoiceConfMessage(svu);
+            }
+            break;
+          case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
+            ChannelCallStateInVoiceConfMessage ccs = ChannelCallStateInVoiceConfMessage.fromJson(message);
+            if (ccs != null) {
+              processChannelCallStateInVoiceConfMessage(ccs);
+            }
+            break;
+          case ChannelHangupInVoiceConfMessage.CHANNEL_HANGUP_IN_VOICE_CONF:
+            ChannelHangupInVoiceConfMessage ch = ChannelHangupInVoiceConfMessage.fromJson(message);
+            if (ch != null) {
+              processChannelHangupInVoiceConfMessage(ch);
+            }
             break;
         }
       }
@@ -470,6 +490,56 @@ public class UserClientMessageSender {
     message.put("msg", gson.toJson(args));
 
     DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.requesterId, "getUsersReply", message);
+    service.sendMessage(m);
+  }
+
+  private void processSipVideoUpdatedInVoiceConfMessage(SipVideoUpdatedInVoiceConfMessage msg) {
+
+    Map<String, Object> args = new HashMap<String, Object>();
+    args.put("voiceConf", msg.voiceConfId);
+    args.put("isSipVideoPresent", (Boolean) msg.isSipVideoPresent);
+    args.put("sipVideoStreamName", msg.sipVideoStreamName);
+    args.put("talkerUserId", msg.talkerUserId);
+    args.put("width", msg.width);
+    args.put("height", msg.height);
+
+    Map<String, Object> message = new HashMap<String, Object>();
+    Gson gson = new Gson();
+    message.put("msg", gson.toJson(args));
+
+    BroadcastClientMessage m = new BroadcastClientMessage(msg.meetingId, "sipVideoUpdate", message);
+    service.sendMessage(m);
+  }
+
+  private void processChannelCallStateInVoiceConfMessage(ChannelCallStateInVoiceConfMessage msg) {
+
+    Map<String, Object> args = new HashMap<String, Object>();
+    args.put("userId", msg.userId);
+    args.put("uuid", msg.uniqueId);
+    args.put("state", msg.callState);
+
+    Map<String, Object> message = new HashMap<String, Object>();
+    Gson gson = new Gson();
+    message.put("msg", gson.toJson(args));
+
+    DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.userId, "dialing", message);
+    service.sendMessage(m);
+  }
+
+  private void processChannelHangupInVoiceConfMessage(ChannelHangupInVoiceConfMessage msg) {
+
+    Map<String, Object> args = new HashMap<String, Object>();
+    args.put("userId", msg.userId);
+    args.put("uuid", msg.uniqueId);
+    args.put("state", msg.callState);
+    args.put("hangupCause", msg.hangupCause);
+
+    Map<String, Object> message = new HashMap<String, Object>();
+    Gson gson = new Gson();
+    message.put("msg", gson.toJson(args));
+
+
+    DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.userId, "hangingUp", message);
     service.sendMessage(m);
   }
 }

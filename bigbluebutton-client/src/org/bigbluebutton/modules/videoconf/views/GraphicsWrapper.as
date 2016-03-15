@@ -24,6 +24,8 @@ package org.bigbluebutton.modules.videoconf.views
         private var priorityMode:Boolean = false;
         private var priorityItem:DisplayObject = null;
         private var _minContentAspectRatio:Number=4/3;
+        private var globalVideoStreamName: String;
+        private var globalVideoGraphic: UserGraphicHolder;
 
         public function GraphicsWrapper() {
             percentWidth = percentHeight = 100;
@@ -233,6 +235,16 @@ package org.bigbluebutton.modules.videoconf.views
             }
         }
 
+        public function updateVideoDimensions(userId:String, w:Number, h:Number):void {
+          trace("[GraphicsWrapper::updateVideoDimensions] Setting [" + w + "x" + h + "] as the new resolution for " + userId);
+          for (var i:int = 0; i < numChildren; ++i) {
+              var item:UserGraphicHolder = getChildAt(i) as UserGraphicHolder;
+              if (item.userId == userId)
+                  item.updateVideoDimensions(w,h);
+          }
+        }
+
+
         public function addAvatarFor(userId:String):void {
             if (! UsersUtil.hasUser(userId)) return;
 
@@ -248,13 +260,35 @@ package org.bigbluebutton.modules.videoconf.views
             super.addChild(graphic);
         }
 
+        private function hasVideo(userId:String):Boolean {
+            for (var i:int = 0; i < numChildren; ++i) {
+                var item:UserGraphicHolder = getChildAt(i) as UserGraphicHolder;
+
+                if (item.userId == "FreeSWITCH video" && item.userId == userId) {
+                    trace("FreeSWITCH video is already being played ");
+                    return true;
+                }
+
+                if (item.user && item.user.userID == userId && item.visibleComponent is UserVideo) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private function addVideoForHelper(userId:String, connection:NetConnection, streamName:String):void {
 			LOGGER.debug("[GraphicsWrapper:addVideoForHelper] streamName {0}", [streamName]);
             var graphic:UserGraphicHolder = new UserGraphicHolder();
             graphic.userId = userId;
             graphic.streamName = streamName;
             graphic.addEventListener(FlexEvent.CREATION_COMPLETE, function(event:FlexEvent):void {
-                graphic.loadVideo(_options, connection, streamName);
+                if (isSpeakerVideo(userId)){
+                    graphic.loadVideo(_options, connection, globalVideoStreamName); //load the last received global stream
+                    globalVideoGraphic = graphic;
+                }
+                else{
+                    graphic.loadVideo(_options, connection, streamName);
+                }
                 onChildAdd(event);
             });
             graphic.addEventListener(MouseEvent.CLICK, onVBoxClick);
@@ -274,6 +308,29 @@ package org.bigbluebutton.modules.videoconf.views
                     addVideoForHelper(user.userID, connection, streamName);
                 }
             }
+        }
+
+        public function addVideoForVideoconferenceStream(userId:String, connection:NetConnection, streamName:String):void {
+            if(isSpeakerVideo(userId)){
+                globalVideoStreamName=streamName;
+                trace("updating globalVideoStream = "+globalVideoStreamName);
+            }
+
+            if (hasVideo(userId)) {
+                return;
+            }
+
+            addVideoForHelper(userId,connection,streamName);
+        }
+
+        public function updateSpeakerVideo(connection:NetConnection, streamName:String):void{
+            // check if video window is already open
+            if (globalVideoGraphic != null) {
+                globalVideoGraphic.updateVideo(_options, connection, globalVideoStreamName, streamName); //load the last received global stream
+            }
+
+            trace("updating globalVideoStream = "+streamName+ " oldStreamName = "+globalVideoStreamName);
+            globalVideoStreamName=streamName;
         }
 
         private function addCameraForHelper(userId:String, camIndex:int, videoProfile:VideoProfile):void {
@@ -414,6 +471,10 @@ package org.bigbluebutton.modules.videoconf.views
                 var item:UserGraphicHolder = getChildAt(0) as UserGraphicHolder;
                 removeChildHelper(item);
             }
+        }
+
+        public function isSpeakerVideo(userId:String): Boolean{
+            return userId == "FreeSWITCH video";
         }
     }
 }

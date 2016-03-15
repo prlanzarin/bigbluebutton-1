@@ -42,7 +42,8 @@ public class Util {
 		if (vu.has(Constants.TALKING) && vu.has(Constants.LOCKED)
 				&& vu.has(Constants.MUTED) && vu.has(Constants.JOINED)
 				&& vu.has(Constants.CALLERNAME) && vu.has(Constants.CALLERNUM)
-				&& vu.has(Constants.WEB_USERID) && vu.has(Constants.USER_ID)){
+				&& vu.has(Constants.WEB_USERID) && vu.has(Constants.USER_ID)
+				&& vu.has(Constants.HAS_VIDEO) && vu.has(Constants.HAS_FLOOR)){
 				
 			Map<String, Object> vuMap = new HashMap<String, Object>();
 			Boolean talking = vu.get(Constants.TALKING).getAsBoolean();
@@ -53,6 +54,8 @@ public class Util {
 			String callernum = vu.get(Constants.CALLERNUM).getAsString();
 			String webUserId = vu.get(Constants.WEB_USERID).getAsString();
 			String voiceUserId = vu.get(Constants.USER_ID).getAsString();
+			String hasVideo = vu.get(Constants.HAS_VIDEO).getAsString();
+			String hasFloor = vu.get(Constants.HAS_FLOOR).getAsString();
 
 			vuMap.put("talking", talking);
 			vuMap.put("locked", voiceLocked);
@@ -62,6 +65,8 @@ public class Util {
 			vuMap.put("callerNum", callernum);
 			vuMap.put("webUserId", webUserId);
 			vuMap.put("userId", voiceUserId);
+			vuMap.put("hasVideo", hasVideo);
+			vuMap.put("hasFloor", hasFloor);
 			
 			return vuMap;
 		}

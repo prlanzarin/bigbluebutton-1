@@ -230,7 +230,63 @@ package org.bigbluebutton.modules.users.services
         }
       ); 
     }
+
+    public function dial(options:Array, params:Array):void {
+      LOGGER.debug("Sending dial");
+      var message:Object = new Object();
+      message["options"] = options;
+      message["params"] = params;
+
+      var _nc:ConnectionManager = BBB.initConnectionManager();
+      _nc.sendMessage(
+        "voice.dial",// Remote function name
+        function(result:String):void { // On successful result
+          LOGGER.debug(result);
+        },
+        function(status:String):void { // status - On error occurred
+          LOGGER.error(status);
+        },
+        message
+      ); //_netConnection.call
+    }
+
+    public function cancelDial(uuid:String):void {
+      LOGGER.debug("Sending cancel dial uuid " + uuid);
+      var message:Object = new Object();
+      message["uuid"] = uuid;
+
+      var _nc:ConnectionManager = BBB.initConnectionManager();
+      _nc.sendMessage(
+        "voice.cancelDial",// Remote function name
+        function(result:String):void { // On successful result
+          LOGGER.debug(result);
+        },
+        function(status:String):void { // status - On error occurred
+          LOGGER.error(status);
+        },
+        message
+      ); //_netConnection.call
+    }
     
+    public function sendDtmf(uuid:String,dtmfDigit:String):void{
+        LOGGER.debug("Sending sendDtmf. uuid=[" + uuid + "], dtmfDigit=[" + dtmfDigit + "]");
+        var message:Object = new Object();
+        message["uuid"] = uuid;
+        message["dtmfDigit"] = dtmfDigit;
+
+        var _nc:ConnectionManager = BBB.initConnectionManager();
+        _nc.sendMessage(
+          "voice.sendDtmf",
+          function(result:String):void { // On successful result
+            LOGGER.debug(result);
+          },
+          function(status:String):void { // status - On error occurred
+            LOGGER.error(status);
+          },
+          message
+        );
+    }
+
     public function getRoomLockState():void{
       var message:Object = new Object();
       

@@ -59,14 +59,26 @@ public interface IBigBlueButtonInGW {
 	void ejectUserFromVoice(String meetingID, String userId, String ejectedBy);
 	void ejectUserFromMeeting(String meetingId, String userId, String ejectedBy);
 	void voiceUserJoined(String voiceConfId, String voiceUserId, String userId, String callerIdName, 
-								String callerIdNum, Boolean muted, Boolean talking);
+								String callerIdNum, Boolean muted, Boolean talking, Boolean hasVideo, Boolean hasFloor);
 	void voiceUserLeft(String meetingId, String userId);
 	void voiceUserLocked(String meetingId, String userId, Boolean locked);
 	void voiceUserMuted(String meetingId, String userId, Boolean muted);
 	void voiceUserTalking(String meetingId, String userId, Boolean talking);
 	void voiceRecording(String meetingId, String recordingFile, 
 			            String timestamp, Boolean recording);
-	
+	void sipVideoPaused(String meetingId);
+	void sipVideoResumed(String meetingId);
+	void activeTalkerChanged(String meetingId, String userId);
+
+	void voiceOutboundDialRequest(String meetingID, String requesterID, Map<String, String> options, Map<String, String> params);
+	void voiceCancelDialRequest(String meetingID, String requesterID, String uuid);
+	void voiceSendDtmfRequest(String meetingID, String requesterID, String uuid, String dtmfDigit);
+	void voiceDialing(String meetingID, String userId, String uuid, String callState);
+	void voiceHangingUp(String meetingID, String userId, String uuid, String callState, String hangupCause);
+	void setNewGlobalVideoStreamName(String meetingId, String globalVideoStreamName);
+	void updateSipVideoStatus(String meetingId, String width, String height);
+    void requestUpdateVideoStatus(String meetingId);
+
 	// Presentation
 	void clear(String meetingID);
 	void removePresentation(String meetingID, String presentationID);
@@ -110,5 +122,6 @@ public interface IBigBlueButtonInGW {
 	void undoWhiteboard(String meetingID, String requesterID, String whiteboardId);
 	void enableWhiteboard(String meetingID, String requesterID, Boolean enable);
 	void isWhiteboardEnabled(String meetingID, String requesterID, String replyTo);
+
 	
 }

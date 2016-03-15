@@ -50,7 +50,7 @@ package org.bigbluebutton.modules.users.services
 	private static const LOGGER:ILogger = getClassLogger(MessageReceiver);      
        
     private var dispatcher:Dispatcher;
-    private var _conference:Conference;
+    private static var _conference:Conference;
     private static var globalDispatcher:Dispatcher = new Dispatcher();
     
     public function MessageReceiver() {
@@ -132,6 +132,15 @@ package org.bigbluebutton.modules.users.services
 		case "userEjectedFromMeeting":
 		 handleUserEjectedFromMeeting(message);
 		 break;
+        case "sipVideoUpdate":
+          handleSipVideoUpdate(message);
+          break;
+        case "dialing":
+          handleDialing(message);
+          break;
+        case "hangingUp":
+          handleHangingUp(message);
+          break;
       }
     }  
     
@@ -210,6 +219,40 @@ package org.bigbluebutton.modules.users.services
       MeetingModel.getInstance().meetingMuted = map.meetingMuted;
       
       UserManager.getInstance().getConference().applyLockSettings();
+      if(map.global_video_stream_name){
+          _conference.globalVideoStreamName = map.global_video_stream_name;
+          LOGGER.debug("*** handleMeetingState: globalVideoStreamName set to: "+ _conference.globalVideoStreamName);
+      }
+    }
+
+    private function handleDialing(msg:Object):void {
+      LOGGER.debug("*** handleDialing " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+      var userid:String = map.userId;
+      var uuid:String = map.uuid;
+      var state:String = map.state;
+
+      var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.DIALING);
+      event.userid = userid;
+      event.uuid = uuid;
+      event.dialState = state;
+      globalDispatcher.dispatchEvent(event);
+    }
+
+    private function handleHangingUp(msg:Object):void {
+      LOGGER.debug("*** handleHangingUp " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+      var userid:String = map.userId;
+      var uuid:String = map.uuid;
+      var state:String = map.state;
+      var hangupCause:String = map.hangupCause;
+
+      var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.HANGINGUP);
+      event.userid = userid;
+      event.uuid = uuid;
+      event.dialState = state;
+      event.dialHangupCause = hangupCause;
+      globalDispatcher.dispatchEvent(event);
     }
     
     private function handleGetRecordingStatusReply(msg: Object):void {     
@@ -538,15 +581,22 @@ package org.bigbluebutton.modules.users.services
       user.isLeavingFlag = false;
       user.listenOnly = joinedUser.listenOnly;
       user.userLocked = joinedUser.locked;
+      user.phoneUser = joinedUser.phoneUser;
 	  
 	  LOGGER.info("User joined = " + JSON.stringify(user));
 	  
       UserManager.getInstance().getConference().addUser(user);
       
       if (joinedUser.hasStream) {
-        var streams:Array = joinedUser.webcamStream;
-        for each(var stream:String in streams) {
-          UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
+
+        if(joinedUser.phoneUser)
+            user.hasStream = joinedUser.hasStream;
+
+        else {
+           var streams:Array = joinedUser.webcamStream.split("|");
+           for each(var stream:String in streams) {
+              UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
+           }
         }
       }
 
@@ -576,6 +626,51 @@ package org.bigbluebutton.modules.users.services
         
         dispatcher.dispatchEvent(e);
       }		
+    }
+
+    private function handleSipVideoUpdate(msg: Object):void {
+      LOGGER.debug("*** handleSipVideoUpdate " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+
+      _conference.isSipVideoPresent=map.isSipVideoPresent;
+      _conference.globalVideoStreamName=map.sipVideoStreamName;
+      if (_conference.globalVideoStreamName)
+        _conference.isSipVideoPresent = true; //non-empty streams are played anyways (e.g videoconf-logo's one)
+      _conference.globalVideoStreamWidth=map.width;
+      _conference.globalVideoStreamHeight=map.height;
+      sipVideoUpdate();
+    }
+
+    public function sipVideoUpdate():void{
+        var videoPaused:BBBEvent;
+        var videoResumed:BBBEvent;
+
+        if(_conference.isSipVideoPresent) {
+            if(_conference.globalVideoStreamName) {
+                LOGGER.debug("SipVideoUpdate: Dispatching Resumed Video Event");
+
+                videoResumed = new BBBEvent(BBBEvent.FREESWITCH_VIDEO_RESUMED);
+                videoResumed.payload.globalVideoStreamName = _conference.globalVideoStreamName;
+                videoResumed.payload.globalVideoStreamWidth = _conference.globalVideoStreamWidth;
+                videoResumed.payload.globalVideoStreamHeight = _conference.globalVideoStreamHeight;
+                globalDispatcher.dispatchEvent(videoResumed);
+            }
+            else {
+                LOGGER.debug("SipVideoUpdate: Couldn't dispatch Resumed Video Event: There's no globalVideoStreamName yet. Dispatching Paused Video Event");
+                videoPaused= new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
+                globalDispatcher.dispatchEvent(videoPaused);
+            }
+        }
+        else {
+            LOGGER.debug("SipVideoUpdate: Dispatching Paused Video Event");
+            videoPaused= new BBBEvent(BBBEvent.FREESWITCH_VIDEO_PAUSED);
+            globalDispatcher.dispatchEvent(videoPaused);
+        }
+    }
+
+    public function videoModuleReady():void {
+       LOGGER.debug("Videomodule is ready: Firing sipVideoUpdate()");
+       sipVideoUpdate();
     }
   }
 }

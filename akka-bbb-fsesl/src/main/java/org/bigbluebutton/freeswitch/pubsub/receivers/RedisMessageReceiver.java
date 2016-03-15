@@ -7,6 +7,8 @@ import org.bigbluebutton.common.messages.GetUsersFromVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.MuteUserInVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.StartRecordingVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.StopRecordingVoiceConfRequestMessage;
+import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage;
+import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage;
 import org.bigbluebutton.freeswitch.voice.freeswitch.FreeswitchApplication;
 
 import com.google.gson.JsonObject;
@@ -53,6 +55,12 @@ public class RedisMessageReceiver {
 					  case StopRecordingVoiceConfRequestMessage.STOP_RECORD_VOICE_CONF_REQUEST:
 						  processStopRecordingVoiceConfRequestMessage(message);
 					  break;
+					  case OutboundDialRequestInVoiceConfMessage.OUTBOUND_DIAL_REQUEST_IN_VOICE_CONF:
+						processOutboundDialRequestInVoiceConfMessage(message);
+					  break;
+					  case CancelDialRequestInVoiceConfMessage.CANCEL_DIAL_REQUEST_IN_VOICE_CONF:
+						processCancelDialRequestInVoiceConfMessage(message);
+					  break;
 					}
 				}
 			}
@@ -87,5 +95,15 @@ public class RedisMessageReceiver {
 	private void processStopRecordingVoiceConfRequestMessage(String json) {
 		StopRecordingVoiceConfRequestMessage msg = StopRecordingVoiceConfRequestMessage.fromJson(json);
 		fsApp.stopRecording(msg.voiceConfId, msg.meetingId, msg.recordStream);
+	}
+
+	private void processOutboundDialRequestInVoiceConfMessage(String json) {
+		OutboundDialRequestInVoiceConfMessage msg = OutboundDialRequestInVoiceConfMessage.fromJson(json);
+		fsApp.dial(msg.voiceConfId, msg.userId, msg.options, msg.params);
+	}
+
+	private void processCancelDialRequestInVoiceConfMessage(String json) {
+		CancelDialRequestInVoiceConfMessage msg = CancelDialRequestInVoiceConfMessage.fromJson(json);
+		fsApp.cancelDial(msg.meetingId, msg.uniqueId);
 	}
 }

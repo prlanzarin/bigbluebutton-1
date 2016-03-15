@@ -128,7 +128,11 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
             }else if (qName.equalsIgnoreCase("talking")) {
                 tempFlags.setTalking(tempVal);
             }
-        }else if (qName.equalsIgnoreCase("id")) {
+        } else if(qName.equalsIgnoreCase("has_video")) {
+             tempFlags.setHasVideo(tempVal);
+         } else if(qName.equalsIgnoreCase("has_floor")) {
+              tempFlags.setHasFloor(tempVal);
+        } else if (qName.equalsIgnoreCase("id")) {
             try {
                 tempMember.setId(Integer.parseInt(tempVal));
             } catch(NumberFormatException nfe) {
@@ -138,6 +142,8 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
             tempMember.setUUID(tempVal);
         }else if (qName.equalsIgnoreCase("caller_id_name")) {
             tempMember.setCallerIdName(tempVal);
+        }else if (qName.equalsIgnoreCase("network_addr")) {
+            tempMember.setCallerNetworkAddress(tempVal);
         }else if (qName.equalsIgnoreCase("caller_id_number")) {
             tempMember.setCallerId(tempVal);
         }else if (qName.equalsIgnoreCase("join_time")) {

@@ -56,23 +56,36 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<property name="sipPort" value="${bbb.sip.app.port}" />
 		<property name="username" value="${sip.server.username}" />
 		<property name="password" value="${sip.server.password}" />
+
 		<property name="startAudioPort" value="${startAudioPort}" />
 		<property name="stopAudioPort" value="${stopAudioPort}" />
+		<property name="startVideoPort" value="${startVideoPort}" />
+		<property name="stopVideoPort" value="${stopVideoPort}" />
+
 		<property name="sipPeerManager" ref="sipPeerManager"/>
 		<property name="clientConnectionManager" ref="clientConnectionManager"/>
+		<property name="messagingService" ref="messagingService"/>
+		<property name="sipVideoEnabled" value="${bbb.sip.app.enable-sip-video}" />
 	</bean>
 
     <bean id="voiceconf.service" class="org.bigbluebutton.voiceconf.red5.Service">
+        <property name="clientConnectionManager" ref="clientConnectionManager"/>
         <property name="sipPeerManager" ref="sipPeerManager"/>
     </bean>
     	
 	<bean id="sipPeerManager" class="org.bigbluebutton.voiceconf.sip.SipPeerManager">
 		<property name="sipStackDebugLevel" value="${sipStackDebugLevel}"/>
 		<property name="sipRemotePort" value="${freeswitch.port}"/>
-		<property name="messagingService" ref="messagingService"/>
 		
 	</bean>
-	
+
+	<bean id="GlobalCall" class="org.bigbluebutton.voiceconf.sip.GlobalCall">
+		<property name="sipVideoResolution" value="${bbb.sip.app.sip-video-resolution}" />
+		<property name="videoConfLogo" value="${bbb.sip.app.video-conf-logo}" />
+		<property name="ffmpegPath" value="${bbb.sip.app.ffmpeg-path}" />
+		<property name="enableUserVideoSubtitle" value="${bbb.sip.app.enable-user-video-subtitle}" />
+	</bean>
+
 	<bean id="clientConnectionManager" class="org.bigbluebutton.voiceconf.red5.ClientConnectionManager"/>
 
   <import resource="bbb-redis-pool.xml"/>

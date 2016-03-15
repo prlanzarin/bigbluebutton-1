@@ -105,7 +105,9 @@ case class VoiceUser(
   locked: Boolean,
   muted: Boolean,
   talking: Boolean,
-  listenOnly: Boolean)
+  listenOnly: Boolean,
+  hasVideo: Boolean,
+  hasFloor: Boolean)
 
 case class MeetingConfig(name: String,
   id: MeetingID,

@@ -30,6 +30,7 @@ package org.bigbluebutton.modules.videoconf.views
     protected var _video:VideoWithWarnings = null;
     protected var _videoProfile:VideoProfile;
     protected var _dispatcher:Dispatcher = new Dispatcher();
+    protected var _isGlobalVideo:Boolean = false;
 
     public function UserVideo() {
       super();
@@ -68,6 +69,10 @@ package org.bigbluebutton.modules.videoconf.views
     public static function getVideoProfile(stream:String):VideoProfile {
       LOGGER.debug("Parsing stream name [{0}]", [stream]);
       var pattern:RegExp = new RegExp("([A-Za-z0-9]+)-([A-Za-z0-9_]+)-\\d+", "");
+      if (isGlobalStream(stream)){
+          trace("This is a global stream. Using default video profile...");
+          return BBB.defaultVideoProfile;
+      }
       if (pattern.test(stream)) {
         LOGGER.debug("The stream name is well formatted");
         LOGGER.debug("Video profile resolution is [{0}]", [pattern.exec(stream)[1]]);
@@ -96,13 +101,13 @@ package org.bigbluebutton.modules.videoconf.views
     public function shutdown():void {
       if (!_shuttingDown) {
         _shuttingDown = true;
-        if (_ns) {
+        if (_ns && !isGlobalVideo) {
           stopViewing();
           _ns.close();
           _ns = null;
         }
 
-        if (_video.cameraState()) {
+        if (_video.cameraState() && !isGlobalVideo) {
             stopPublishing();
         }
 
@@ -144,7 +149,7 @@ package org.bigbluebutton.modules.videoconf.views
       _ns.receiveVideo(true);
       _ns.receiveAudio(false);
       
-      _videoProfile = UserVideo.getVideoProfile(streamName);
+      _videoProfile = getVideoProfile(streamName);
       LOGGER.debug("Remote video profile: {0}", [_videoProfile.toString()]);
       if (_videoProfile == null) {
         throw("Invalid video profile");
@@ -167,8 +172,30 @@ package org.bigbluebutton.modules.videoconf.views
       
       _ns.play(streamName);
 
-      user.addViewingStream(streamName);
+      if (user != null) {
+        user.addViewingStream(streamName);
+      }
       invalidateDisplayList();
+    }
+
+    public function updateView(connection:NetConnection, oldStreamName:String, streamName:String):void {
+        if (_ns != null){
+            if (!streamName){
+                LOGGER.debug("Can't update view with the new streamName. Stream Name is empty!");
+            }else{
+                LOGGER.debug("Updating view with the new streamName=["+streamName+"]");
+                shutdown();
+                _shuttingDown = false;
+                if (user != null) {
+                    user.removeViewingStream(oldStreamName);
+                }else{
+                    LOGGER.debug("Error: no user associated with the stream: +"+streamName);
+                }
+                view(connection, streamName);
+            }
+        }else{
+            LOGGER.debug("Can't update view with the new streamName=["+streamName+"] , current NetStream is null");
+        }
     }
 
     private function onNetStatus(e:NetStatusEvent):void{
@@ -212,6 +239,20 @@ package org.bigbluebutton.modules.videoconf.views
 
      public function get streamName():String {
       return _streamName;
+    }
+
+    public function get isGlobalVideo():Boolean{
+      return _isGlobalVideo;
+    }
+
+    public static function isGlobalStream(streamName: String):Boolean{
+      var globalStreamPattern:RegExp = new RegExp("(sip_|video_conf_)\\d+_\\d+", "");
+      LOGGER.debug(" ISGLOBALSTREAM ( "+streamName+" )***"+ globalStreamPattern.test(streamName));
+      return globalStreamPattern.test(streamName);
+    }
+
+    public function set isGlobalVideo(flag:Boolean):void{
+      _isGlobalVideo = flag;
     }
   }
 }

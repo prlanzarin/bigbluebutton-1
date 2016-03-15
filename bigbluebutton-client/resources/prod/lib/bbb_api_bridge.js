@@ -420,10 +420,10 @@
      *
      */
      
-    BBB.webRTCCallStarted = function(inEchoTest) {
+    BBB.webRTCCallStarted = function(inEchoTest, remoteVideoPort, localVideoPort) {
       var swfObj = getSwfObj();
       if (swfObj) {
-        swfObj.webRTCCallStarted(inEchoTest);
+        swfObj.webRTCCallStarted(inEchoTest, remoteVideoPort, localVideoPort);
       }
     }
     

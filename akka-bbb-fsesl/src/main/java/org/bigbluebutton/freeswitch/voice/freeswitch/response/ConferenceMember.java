@@ -29,6 +29,7 @@ public class ConferenceMember {
     protected ConferenceMemberFlags flags;
     protected String uuid;
     protected String callerIdName;
+    protected String callerNetworkAddress;
     protected String callerId;
     protected Integer joinTime;
     protected Integer lastTalking;
@@ -46,7 +47,27 @@ public class ConferenceMember {
     }
 
     public String getCallerIdName() {
-        return callerIdName;
+        return getValidCallerIdName(callerIdName,callerNetworkAddress);
+    }
+
+    public static String getValidCallerIdName(String callerIdName, String callerNetworkAddress) {
+        /*
+         * If Freeswitch sends 'unknown' as the callerIdName, it means something is wrong with the caller's sip user name
+         * (probably the sip phone that made the call has the sip user name empty or misconfigured)
+         * In this case, we set the ip address as the callerIdName.
+         */
+        String validCallerIdName = callerIdName;
+        if (isUnknownCaller(callerIdName) && callerNetworkAddress != null && !callerNetworkAddress.isEmpty())
+            validCallerIdName = callerNetworkAddress;
+        return validCallerIdName;
+    }
+
+    public static boolean isUnknownCaller(String callerIdName) {
+        return callerIdName.equals("unknown") || callerIdName.matches("ip\\$\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+");
+    }
+
+    public String getCallerNetworkAddress() {
+        return callerNetworkAddress;
     }
 
     public boolean getMuted() {
@@ -55,6 +76,14 @@ public class ConferenceMember {
 
     public boolean getSpeaking() {
         return flags.getIsSpeaking();
+    }
+
+    public boolean getHasVideo() {
+        return flags.getHasVideo();
+    }
+
+    public boolean getHasFloor() {
+        return flags.getHasFloor();
     }
 
     public void setFlags(ConferenceMemberFlags flags) {
@@ -71,6 +100,10 @@ public class ConferenceMember {
 
     public void setCallerIdName(String tempVal) {
         this.callerIdName = tempVal;
+    }
+
+    public void setCallerNetworkAddress(String tempVal) {
+        this.callerNetworkAddress = tempVal;
     }
 
     public void setCallerId(String tempVal) {

@@ -35,6 +35,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
+import org.bigbluebutton.freeswitch.voice.events.VideoFloorChangedEvent;
 
 public class GetAllUsersCommand extends FreeswitchCommand {
 
@@ -48,6 +49,8 @@ public class GetAllUsersCommand extends FreeswitchCommand {
     }
 
     private static final Pattern CALLERNAME_PATTERN = Pattern.compile("(.*)-bbbID-(.*)$");
+    private static final Pattern GLOBALCALL_NAME_PATTERN = Pattern.compile("(GLOBAL_CALL)_(.*)$");
+
     
     public void handleResponse(EslMessage response, ConferenceEventListener eventListener) {
 
@@ -92,6 +95,9 @@ public class GetAllUsersCommand extends FreeswitchCommand {
                 String callerIdName = member.getCallerIdName();
                 String voiceUserId = callerIdName;
                 
+                Matcher gcpMatcher = GLOBALCALL_NAME_PATTERN.matcher(callerIdName);
+                if (gcpMatcher.matches()) continue;
+
         		Matcher matcher = CALLERNAME_PATTERN.matcher(callerIdName);
         		if (matcher.matches()) {			
         			voiceUserId = matcher.group(1).trim();
@@ -99,7 +105,7 @@ public class GetAllUsersCommand extends FreeswitchCommand {
         		} 
         		
                 pj = new VoiceUserJoinedEvent(voiceUserId, member.getId().toString(), confXML.getConferenceRoom(),
-                		callerId, callerIdName, member.getMuted(), member.getSpeaking());
+                               callerId, callerIdName, member.getMuted(), member.getSpeaking(), member.getHasVideo(), member.getHasFloor());
                 eventListener.handleConferenceEvent(pj);
             }
 

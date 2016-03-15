@@ -37,6 +37,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.model.users.events.KickUserEvent;
 			import org.bigbluebutton.main.model.users.events.RoleChangeEvent;
 			import org.bigbluebutton.main.model.users.events.UsersConnectionEvent;
+			import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
 		]]>
 	</mx:Script>
 	
@@ -108,6 +109,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     <MethodInvoker generator="{UserService}" method="muteAllUsersExceptPresenter" arguments="{event}" />
   </EventHandlers>
   
+  <EventHandlers type="{VoiceConfEvent.DIAL}" >
+    <MethodInvoker generator="{UserService}" method="dial" arguments="{event}" />
+  </EventHandlers>
+
+  <EventHandlers type="{VoiceConfEvent.CANCEL_DIAL}" >
+    <MethodInvoker generator="{UserService}" method="cancelDial" arguments="{event}" />
+  </EventHandlers>
+
+  <EventHandlers type="{VoiceConfEvent.SEND_DTMF}" >
+    <MethodInvoker generator="{UserService}" method="sendDtmf" arguments="{event}" />
+  </EventHandlers>
+
   <!-- Lock Events -->
   <EventHandlers type="{LockControlEvent.LOCK_ALL}" >
     <MethodInvoker generator="{UserService}" method="lockAllUsers" arguments="{event}" />
@@ -135,5 +148,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   
   <EventHandlers type="{RoleChangeEvent.ASSIGN_PRESENTER}">
     <MethodInvoker generator="{UserService}" method="assignPresenter" arguments="{event}" />
+  </EventHandlers>
+
+  <EventHandlers type="{VideoModuleBridgeEvent.VIDEO_MODULE_READY}">
+    <MethodInvoker generator="{UserService}" method="videoModuleReady" arguments="{event}" />
   </EventHandlers>
 </EventMap>

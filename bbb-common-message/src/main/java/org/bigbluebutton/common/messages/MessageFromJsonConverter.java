@@ -35,6 +35,12 @@ public class MessageFromJsonConverter {
 					return UserDisconnectedFromGlobalAudio.fromJson(message);
 				  case GetAllMeetingsRequest.GET_ALL_MEETINGS_REQUEST_EVENT:
 					return new GetAllMeetingsRequest("the_string_is_not_used_anywhere");
+                  case GlobalVideoStreamCreatedMessage.GLOBAL_VIDEO_STREAM_CREATED:
+                    return processGlobalVideoStreamCreatedMessage(payload);
+                  case UpdateSipVideoStatusMessage.UPDATE_SIP_VIDEO_STATUS:
+                    return processUpdateSipVideoStatusMessage(payload);
+                  case RequestUpdateVideoStatusMessage.REQUEST_UPDATE_VIDEO_STATUS:
+                    return processRequestUpdateVideoStatusMessage(payload);
 				}
 			}
 		}
@@ -84,5 +90,23 @@ public class MessageFromJsonConverter {
 		String id = payload.get(Constants.KEEP_ALIVE_ID).getAsString();		
 		return new KeepAliveMessage(id);
 	}
+
+    private static IBigBlueButtonMessage processGlobalVideoStreamCreatedMessage(JsonObject payload) {
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        String videoStreamName = payload.get(Constants.VIDEO_STREAM_NAME).getAsString();
+        return new GlobalVideoStreamCreatedMessage(meetingId, videoStreamName);
+    }
+
+    private static IBigBlueButtonMessage processUpdateSipVideoStatusMessage(JsonObject payload) {
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        String width = payload.get(Constants.WIDTH_RATIO).getAsString();
+        String height = payload.get(Constants.HEIGHT_RATIO).getAsString();
+        return new UpdateSipVideoStatusMessage(meetingId, width, height);
+    }
+
+	private static IBigBlueButtonMessage processRequestUpdateVideoStatusMessage(JsonObject payload) {
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        return new RequestUpdateVideoStatusMessage(meetingId);
+    }
 
 }

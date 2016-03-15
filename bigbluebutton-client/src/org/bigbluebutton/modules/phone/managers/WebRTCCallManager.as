@@ -26,6 +26,7 @@ package org.bigbluebutton.modules.phone.managers
   import org.bigbluebutton.modules.phone.events.WebRTCEchoTestEvent;
   import org.bigbluebutton.modules.phone.events.WebRTCEchoTestStartedEvent;
   import org.bigbluebutton.modules.phone.events.WebRTCJoinedVoiceConferenceEvent;
+  import org.bigbluebutton.modules.phone.events.RequestedSipParamsEvent;
   import org.bigbluebutton.modules.phone.models.Constants;
   import org.bigbluebutton.modules.phone.models.WebRTCModel;
   import org.bigbluebutton.util.i18n.ResourceUtil;
@@ -307,6 +308,12 @@ package org.bigbluebutton.modules.phone.managers
       });
       popUpDelayTimer.start();
       dispatcher.dispatchEvent(new ClientStatusEvent(ClientStatusEvent.FAIL_MESSAGE_EVENT, title, error));
+    }
+
+    public function handleRequestedSipParamsEvent(event:RequestedSipParamsEvent):void {
+        var sipServerHost:String = event.sipServerHost;
+        LOGGER.debug("Received SIP params from server [sipServerHost = " + sipServerHost + "]");
+        ExternalInterface.call("storeSipParams",sipServerHost);
     }
   }
 }

@@ -41,10 +41,11 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
 		return connId;
 	}
 	
-    public void onJoinConferenceSuccess(String publishName, String playName, String codec) {
-    	log.debug("Notify client that {} [{}] has joined the conference.", username, userid);
+    public void onJoinConferenceSuccess(String userSenderAudioStream, String userReceiverAudioStream, String audioCodec) {
+        log.debug("Notify client that {} [{}] has joined the conference. Audio Streams: {}, {} ", username, userid,userSenderAudioStream,userReceiverAudioStream);
         if (connection.isConnected()) {
-            connection.invoke("successfullyJoinedVoiceConferenceCallback", new Object[] {publishName, playName, codec});
+            connection.invoke("successfullyJoinedVoiceConferenceCallback",
+                    new Object[] {userSenderAudioStream, userReceiverAudioStream, audioCodec});
         }
     }
 
@@ -59,6 +60,20 @@ private static Logger log = Red5LoggerFactory.getLogger(ClientConnection.class, 
     	log.debug("Notify client that {} [{}] left the conference.", username, userid);
         if (connection.isConnected()) {
             connection.invoke("disconnectedFromJoinVoiceConferenceCallback", new Object[] {"onUaCallClosed"});
+        }
+    }
+
+    public void destroyedGlobalCall() {
+        log.debug("Notify client {} that the Global Call has been destroyed.", username);
+        if (connection.isConnected()) {
+            connection.invoke("destroyedGlobalCallCallback", new Object[] {"onUaCallClosed"});
+        }
+    }
+
+    public void successfullyRequestedSipParams(String sipServerHost) {
+        log.debug("Notify client {} about the SIP params [sipServerHost = {}].", username,sipServerHost);
+        if (connection.isConnected()) {
+            connection.invoke("successfullyRequestedSipParams", new Object[] {sipServerHost});
         }
     }
 }

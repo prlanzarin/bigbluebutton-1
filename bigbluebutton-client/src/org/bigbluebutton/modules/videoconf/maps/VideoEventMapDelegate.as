@@ -43,6 +43,7 @@ package org.bigbluebutton.modules.videoconf.maps
   import org.bigbluebutton.main.model.users.events.BroadcastStartedEvent;
   import org.bigbluebutton.main.model.users.events.BroadcastStoppedEvent;
   import org.bigbluebutton.main.model.users.events.StreamStoppedEvent;
+  import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
   import org.bigbluebutton.modules.videoconf.business.VideoProxy;
   import org.bigbluebutton.modules.videoconf.events.ClosePublishWindowEvent;
   import org.bigbluebutton.modules.videoconf.events.ConnectedEvent;
@@ -65,6 +66,11 @@ package org.bigbluebutton.modules.videoconf.maps
 
     private var button:ToolbarPopupButton = new ToolbarPopupButton();
     private var proxy:VideoProxy;
+    private var globalVideoUserId:String = "FreeSWITCH video";
+    private var globalVideoStreamName:String;
+    private var globalVideoRunning:Boolean = false;
+    private var currentSpeakerVideoStreamWidth:String; //get this from usergraphics
+    private var currentSpeakerVideoStreamHeight:String;
 
     private var _dispatcher:IEventDispatcher;
     private var _ready:Boolean = false;
@@ -259,6 +265,11 @@ package org.bigbluebutton.modules.videoconf.maps
       _graphics.addCameraFor(userID, camIndex, videoProfile);
     }
 
+    public function closeFreeswitchVideo():void {
+      /* TODO: fix this hard-coded userId. Maybe we could replace it by a hash. */
+      _graphics.removeGraphicsFor(globalVideoUserId);
+    }
+
     private function hasWindow(userID:String):Boolean {
       return _graphics.hasGraphicsFor(userID);
     }
@@ -286,7 +297,8 @@ package org.bigbluebutton.modules.videoconf.maps
       if (bbbUser.hasStream) {
         closeAllAvatarWindows(userID);
       }
-      _graphics.addVideoFor(userID, proxy.connection);
+      if (!bbbUser.phoneUser)
+        _graphics.addVideoFor(userID, proxy.connection);
     }
 
     public function connectToVideoApp():void {
@@ -456,6 +468,7 @@ package org.bigbluebutton.modules.videoconf.maps
       }
       
       openWebcamWindows();
+      videoModuleReady();
     }
 
     public function handleCameraSetting(event:BBBEvent):void {
@@ -504,6 +517,73 @@ package org.bigbluebutton.modules.videoconf.maps
         LOGGER.debug("VideoEventMapDelegate::handleStoppedViewingWebcamEvent [{0}] Opening avatar for user [{1}]", [me, event.webcamUserID]);
         openAvatarWindowFor(event.webcamUserID);
       }
+    }
+
+    public function resumeFreeswitchVideo(event:BBBEvent):void {
+       var streamName:String = event.payload.globalVideoStreamName;
+       var width:String = event.payload.globalVideoStreamWidth;
+       var height:String = event.payload.globalVideoStreamHeight;
+
+       LOGGER.debug("VideoEventMapDelegate:: Resuming "+globalVideoUserId+"...");
+
+      if(!proxy.connection.connected) {
+        LOGGER.debug("Not opening freeswitch window because the video connection is not ready yet.");
+        return;
+      }
+
+      if(!streamName){
+        LOGGER.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Not opening the window, because there's not a stream name.");
+        return;
+      }
+
+
+      if(hasSpeakerWindow()){
+        if((streamName == globalVideoStreamName)) {
+          LOGGER.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream name received is already being played.");
+        }else{
+            LOGGER.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: stream changed but window still is open, closing and reopening it...");
+            globalVideoStreamName = streamName;
+            updateFreeswitchWindow();
+        }
+
+        if (speakerVideoResolutionChanged(width, height)){
+          LOGGER.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: updating speaker window resolution");
+          updateSpeakerWindowResolution(width,height);
+        }
+      }else{
+        globalVideoStreamName = streamName;
+        startFreeswitchWindow();
+      }
+    }
+
+    public function speakerVideoResolutionChanged(width:String , height: String): Boolean{
+      return (width) && (height) && ((currentSpeakerVideoStreamWidth != width) || (currentSpeakerVideoStreamHeight != height));
+    }
+
+    public function hasSpeakerWindow():Boolean {
+      return hasWindow(globalVideoUserId);
+    }
+
+    public function updateSpeakerWindowResolution(width: String, height: String):void{
+      LOGGER.debug("VideoEventMapDelegate:: Speaker's window resolution changed:" + currentSpeakerVideoStreamWidth + "x" + currentSpeakerVideoStreamHeight+ " -> " + width + "x"+ height);
+      currentSpeakerVideoStreamWidth = width;
+      currentSpeakerVideoStreamHeight = height;
+      _graphics.updateVideoDimensions(globalVideoUserId, Number(currentSpeakerVideoStreamWidth), Number(currentSpeakerVideoStreamHeight));
+    }
+
+    public function startFreeswitchWindow():void {
+      LOGGER.debug("VideoEventMapDelegate:: resumeFreeswitchVideo:: Starting Freeswitch window for stream: " + globalVideoStreamName);
+      _graphics.addVideoForVideoconferenceStream(globalVideoUserId, proxy.connection, globalVideoStreamName);
+    }
+
+    public function updateFreeswitchWindow():void {
+      LOGGER.debug("VideoEventMapDelegate:: updateFreeswitchWindow:: Updating Freeswitch window with new stream: " + globalVideoStreamName);
+      _graphics.updateSpeakerVideo(proxy.connection, globalVideoStreamName);
+    }
+
+    public function videoModuleReady():void {
+      var videoModuleReady:VideoModuleBridgeEvent = new VideoModuleBridgeEvent(VideoModuleBridgeEvent.VIDEO_MODULE_READY);
+      _dispatcher.dispatchEvent(videoModuleReady);
     }
   }
 }

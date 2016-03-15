@@ -25,36 +25,45 @@ import org.zoolu.sdp.MediaField;
 import org.zoolu.sdp.SessionDescriptor;
 import org.zoolu.tools.Parser;
 
+
 public class SessionDescriptorUtil {
-	public static int getLocalAudioPort(SessionDescriptor localSdp) {
-        int localAudioPort = 0;
+    public static final String SDP_MEDIA_AUDIO = "audio";
+    public static final String SDP_MEDIA_VIDEO = "video";
+
+	public static int getLocalMediaPort(SessionDescriptor localSdp, String mediaName) {
+        int localMediaPort = 0;
         
         for (Enumeration e = localSdp.getMediaDescriptors().elements(); e.hasMoreElements();) {
             MediaField media = ((MediaDescriptor) e.nextElement()).getMedia();
-            if (media.getMedia().equals("audio")) {
-                localAudioPort = media.getPort();
+
+            if (media.getMedia().equals(mediaName)) {
+                localMediaPort = media.getPort();
             }
         }
         
-        return localAudioPort;
+        return localMediaPort;
     }
     
-	public static int getRemoteAudioPort(SessionDescriptor remoteSdp) {
-    	int remoteAudioPort = 0;
+	public static int getRemoteMediaPort(SessionDescriptor remoteSdp, String mediaName) {
+        int remoteMediaPort = 0;
 
         for (Enumeration e = remoteSdp.getMediaDescriptors().elements(); e.hasMoreElements();) {
             MediaDescriptor descriptor = (MediaDescriptor) e.nextElement();
             MediaField media = descriptor.getMedia();
 
-            if (media.getMedia().equals("audio")) {
-                remoteAudioPort = media.getPort();
+            if (media.getMedia().equals(mediaName)) {
+                remoteMediaPort = media.getPort();
             }
         }
         
-        return remoteAudioPort;
+        return remoteMediaPort;
     }
 	
 	public static String getRemoteMediaAddress(SessionDescriptor remoteSdp) {
 		return (new Parser(remoteSdp.getConnection().toString())).skipString().skipString().getString();
 	}
+
+    public static String getLocalVideoSDP(SessionDescriptor localSdp){
+        return new SessionDescriptor(localSdp).removeMediaDescriptor(SDP_MEDIA_AUDIO).toString(); //clone and remove audio descriptor
+    }
 }

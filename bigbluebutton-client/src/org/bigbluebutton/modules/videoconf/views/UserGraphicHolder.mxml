@@ -115,13 +115,36 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             }
 
             public function loadVideo(options:VideoConfOptions, connection:NetConnection, streamName:String):void {
-                video.user = _user;
+                if(!UserVideo.isGlobalStream(streamName)){
+                    video.user = _user;
+                }else{
+                    //create a new user for global video stream. We don't add it to UserUtil
+                    _user = new BBBUser();
+                    _user.name = ResourceUtil.getInstance().getString('bbb.video.freeSWITCH.title');
+                    _user.me = false;
+                    _user.userID = "FreeSWITCH video";
+                    video.user = _user;
+                    video.isGlobalVideo = true;
+                    closeBtn.visible = false;
+                }
                 video.options = options;
                 video.view(connection, streamName);
 
                 videoVisibility = true;
                 setUserProperties();
             }
+
+            public function updateVideo(options:VideoConfOptions, connection:NetConnection, oldStreamName:String, streamName:String):void{
+                video.options = options;
+                video.updateView(connection, oldStreamName, streamName);
+                setUserProperties();
+            }
+
+            public function updateVideoDimensions(w:Number, h:Number):void {
+                trace("[UserGraphicHolder:updateVideoDimensions] Updating video resolution to " + w + "x" + h);
+                video.updateVideoDimensions(w,h);
+            }
+
 
             private function setUserProperties():void {
                 _username = user.name;

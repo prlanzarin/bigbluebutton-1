@@ -9,8 +9,8 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
 
 public class MessageReceiver {
-	private static Logger log = Red5LoggerFactory.getLogger(MessageReceiver.class, "bigbluebutton");
 	
+	private static Logger log = Red5LoggerFactory.getLogger(MessageReceiver.class, "sip");
 	private ReceivedMessageHandler handler;
 	
 	private JedisPool redisPool;
@@ -31,7 +31,7 @@ public class MessageReceiver {
 			Runnable messageReceiver = new Runnable() {
 			    public void run() {
 			    	if (receiveMessage) {
-			    		jedis.psubscribe(new PubSubListener(), MessagingConstants.TO_BBB_APPS_PATTERN); 
+						jedis.psubscribe(new PubSubListener(), MessagingConstants.TO_BBB_VOICE_CHANNEL);
 			    	}
 			    }
 			};

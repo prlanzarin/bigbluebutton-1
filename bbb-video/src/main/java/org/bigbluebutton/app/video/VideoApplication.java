@@ -60,11 +60,28 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
     @Override
 	public boolean appConnect(IConnection conn, Object[] params) {
 		log.info("BBB Video appConnect"); 		
+		String remoteAddress = Red5.getConnectionLocal().getRemoteAddress();
+		int  remotePort = Red5.getConnectionLocal().getRemotePort();
+		if (params.length == 0) {
+			params = new Object[2];
+			params[0] = "unknown-meetingid";
+			params[1] = "unknown-userid";
+		}
+
+		String meetingId = ((String) params[0]).toString();
+		String userId = ((String) params[1]).toString();
+
+		log.info("BBB Video appConnect. RemoteHost={}, RemotePort={} meetingId={} userId={} ",remoteAddress,remotePort,meetingId,userId);
 		return super.appConnect(conn, params);
 	}
 
   @Override
 	public boolean roomConnect(IConnection conn, Object[] params) {
+		if (params.length == 0) {
+			params = new Object[2];
+			params[0] = "unknown-meetingid";
+			params[1] = "unknown-userid";
+		}
 		log.info("BBB Video roomConnect"); 
   	String meetingId = ((String) params[0]).toString();
   	String userId = ((String) params[1]).toString();

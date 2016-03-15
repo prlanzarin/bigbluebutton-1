@@ -193,4 +193,9 @@ class UsersModel {
   def isVoiceRecording: Boolean = {
     recordingVoice
   }
+
+  def getPhoneUsersSendingVideo(): Array[UserVO] = {
+    uservos.values filter (u => (u.phoneUser == true && u.hasStream == true)) toArray
+  }
+
 }

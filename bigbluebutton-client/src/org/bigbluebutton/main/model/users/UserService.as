@@ -47,6 +47,7 @@ package org.bigbluebutton.main.model.users
 	import org.bigbluebutton.main.model.users.events.UsersConnectionEvent;
 	import org.bigbluebutton.modules.users.services.MessageReceiver;
 	import org.bigbluebutton.modules.users.services.MessageSender;
+	import org.bigbluebutton.modules.users.events.VideoModuleBridgeEvent;
 
 	public class UserService {
 		private static const LOGGER:ILogger = getClassLogger(UserService);      
@@ -236,6 +237,18 @@ package org.bigbluebutton.main.model.users
       sender.ejectUser(command.userid);			
     }	
     
+    public function dial(command:VoiceConfEvent):void {
+      sender.dial(command.dialOptions, command.dialParams);
+    }
+
+    public function cancelDial(command:VoiceConfEvent):void {
+      sender.cancelDial(command.uuid);
+    }
+
+    public function sendDtmf(command:VoiceConfEvent):void {
+        sender.sendDtmf(command.uuid,command.dtmfDigit);
+    }
+
     //Lock events
     public function lockAllUsers(command:LockControlEvent):void {
       sender.setAllUsersLock(true);			
@@ -260,6 +273,10 @@ package org.bigbluebutton.main.model.users
     
     public function saveLockSettings(command:LockControlEvent):void {	
       sender.saveLockSettings(command.payload);			
+    }
+
+    public function videoModuleReady(event:VideoModuleBridgeEvent):void {
+      msgReceiver.videoModuleReady();
     }
 	}
 }

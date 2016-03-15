@@ -58,6 +58,11 @@ case class UserVoiceTalking(meetingID: String, recorded: Boolean, confNum: Strin
 case class EjectVoiceUser(meetingID: String, recorded: Boolean, requesterID: String, userId: String, voiceConfId: String, voiceUserId: String) extends IOutMessage
 case class UserJoinedVoice(meetingID: String, recorded: Boolean, confNum: String, user: UserVO) extends IOutMessage
 case class UserLeftVoice(meetingID: String, recorded: Boolean, confNum: String, user: UserVO) extends IOutMessage
+case class VoiceOutboundDial(meetingID: String, recorded: Boolean, voiceConfId: String, requesterID: String, options: Map[String, String], params: Map[String, String]) extends IOutMessage
+case class VoiceCancelDial(meetingID: String, recorded: Boolean, uuid: String) extends IOutMessage
+case class VoiceSendDtmf(meetingID: String, recorded: Boolean, uuid: String, dtmfDigit: String) extends IOutMessage
+case class VoiceDialing2(meetingID: String, recorded: Boolean, requesterID: String, uuid: String, callState: String) extends IOutMessage
+case class VoiceHangingUp2(meetingID: String, recorded: Boolean, requesterID: String, uuid: String, callState: String, hangupCause: String) extends IOutMessage
 
 // Voice
 case class IsMeetingMutedReply(meetingID: String, recorded: Boolean, requesterID: String, meetingMuted: Boolean) extends IOutMessage
@@ -65,6 +70,8 @@ case class StartRecording(meetingID: String, recorded: Boolean, requesterID: Str
 case class StartRecordingVoiceConf(meetingID: String, recorded: Boolean, voiceConfId: String) extends IOutMessage
 case class StopRecordingVoiceConf(meetingID: String, recorded: Boolean, voiceConfId: String, recordedStream: String) extends IOutMessage
 case class StopRecording(meetingID: String, recorded: Boolean, requesterID: String) extends IOutMessage
+case class SipVideoUpdated(meetingID: String, recorded: Boolean, voiceBridge: String, isSipVideoPresent: Boolean, sipVideoStreamName: String, talkerUserId: String, width: String, height: String) extends IOutMessage
+case class SipPhoneUpdated(meetingID: String, recorded: Boolean, voiceBridge: String, isSipPhonePresent: Boolean) extends IOutMessage
 
 // Chat
 case class GetChatHistoryReply(meetingID: String, recorded: Boolean, requesterID: String,

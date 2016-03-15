@@ -1,7 +1,7 @@
 /**
 * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
 * 
-* Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+* Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
 *
 * This program is free software; you can redistribute it and/or modify it under the
 * terms of the GNU Lesser General Public License as published by the Free Software
@@ -18,28 +18,48 @@
 */
 package org.bigbluebutton.voiceconf.sip;
 
-public class AudioConferenceProvider {
+public class ConferenceProvider {
 	private final String host;
 	private final int sipPort;
 	private final int startAudioPort;
 	private final int stopAudioPort;
-	private int curAvailablePort;
+	private final int startVideoPort;
+	private final int stopVideoPort;
+
+	private int curAvailableAudioPort;
+	private int curAvailableVideoPort;
 	
-	public AudioConferenceProvider(String host, int sipPort, int startAudioPort, int stopAudioPort) {
+	public ConferenceProvider(String host, int sipPort, int startAudioPort, int stopAudioPort, int startVideoPort, int stopVideoPort) {
 		this.host = host;
 		this.sipPort = sipPort;
+
 		this.startAudioPort = startAudioPort;
 		this.stopAudioPort = stopAudioPort;
-		curAvailablePort = startAudioPort;
+		this.startVideoPort = startVideoPort;
+		this.stopVideoPort = stopVideoPort;
+
+		curAvailableAudioPort = startAudioPort;
+		curAvailableVideoPort = startVideoPort;
 	}
 	
 	public int getFreeAudioPort() {
     	synchronized(this) {
-        	int availablePort = curAvailablePort;
-        	curAvailablePort++;
-    		if (curAvailablePort > stopAudioPort) curAvailablePort = startAudioPort;    
+            int availablePort = curAvailableAudioPort;
+            curAvailableAudioPort++;
+            if (curAvailableAudioPort > stopAudioPort) curAvailableAudioPort = startAudioPort; 
+
     		return availablePort;
     	}
+    }
+
+	public int getFreeVideoPort() {
+        synchronized(this) {
+            int availablePort = curAvailableVideoPort;
+            curAvailableVideoPort++;
+            if (curAvailableVideoPort > stopVideoPort) curAvailableVideoPort = startVideoPort;  
+
+            return availablePort;
+        }
     }
 	
 	public String getHost() {
@@ -52,5 +72,13 @@ public class AudioConferenceProvider {
 	
 	public int getStopAudioPort() {
 		return stopAudioPort;
+	}
+
+	public int getStartVideoPort() {
+		return startVideoPort;
+	}
+
+	public int getStopVideoPort() {
+		return stopVideoPort;
 	}
 }

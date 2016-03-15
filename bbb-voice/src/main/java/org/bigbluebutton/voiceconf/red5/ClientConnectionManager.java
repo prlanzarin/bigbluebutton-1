@@ -44,10 +44,10 @@ public class ClientConnectionManager {
 		}
 	}
 	
-	public void joinConferenceSuccess(String clientId, String usertalkStream, String userListenStream, String codec) {
+	public void joinConferenceSuccess(String clientId, String userSenderAudioStream, String userReceiverAudioStream, String audioCodec) {
 		ClientConnection cc = clients.get(clientId);
 		if (cc != null) {
-			cc.onJoinConferenceSuccess(usertalkStream, userListenStream, codec);
+			cc.onJoinConferenceSuccess(userSenderAudioStream, userReceiverAudioStream, audioCodec);
 		} else {
 			log.warn("Can't find client {} to inform user that she has joined the conference.", clientId);
 		}
@@ -70,4 +70,22 @@ public class ClientConnectionManager {
 			log.warn("Can't find client {} to inform user that she has left the conference.", clientId);
 		}
 	}
+
+    public void destroyedGlobalCall(String clientId) {
+        ClientConnection cc = clients.get(clientId);
+        if (cc != null) {
+            cc.destroyedGlobalCall();
+        } else {
+            log.warn("Can't find client {} to inform user that the Global Call has been destroyed.", clientId);
+        }
+    }
+
+    public void successfullyRequestedSipParams(String clientId, String sipServerHost){
+        ClientConnection cc = clients.get(clientId);
+        if (cc != null) {
+            cc.successfullyRequestedSipParams(sipServerHost);
+        } else {
+            log.warn("Can't find client {} to inform user about requested SIP params.", clientId);
+        }
+    }
 }

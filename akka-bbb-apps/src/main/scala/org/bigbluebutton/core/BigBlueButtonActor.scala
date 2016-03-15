@@ -47,6 +47,11 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
     case msg: UserMutedInVoiceConfMessage => handleUserMutedInVoiceConfMessage(msg)
     case msg: UserTalkingInVoiceConfMessage => handleUserTalkingInVoiceConfMessage(msg)
     case msg: VoiceConfRecordingStartedMessage => handleVoiceConfRecordingStartedMessage(msg)
+    case msg: VoiceDialing => handleVoiceDialing(msg)
+    case msg: VoiceHangingUp => handleVoiceHangingUp(msg)
+    case msg: SipVideoResumed => handleSipVideoResumed(msg)
+    case msg: SipVideoPaused => handleSipVideoPaused(msg)
+    case msg: ActiveTalkerChanged => handleActiveTalkerChanged(msg)
     case msg: InMessage => handleMeetingMessage(msg)
     case _ => // do nothing
   }
@@ -90,7 +95,36 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
     findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
       m.actorRef ! msg
     }
+  }
 
+  private def handleVoiceDialing(msg: VoiceDialing) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleVoiceHangingUp(msg: VoiceHangingUp) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleSipVideoResumed(msg: SipVideoResumed) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleSipVideoPaused(msg: SipVideoPaused) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleActiveTalkerChanged(msg: ActiveTalkerChanged) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
   }
 
   private def handleValidateAuthToken(msg: ValidateAuthToken) {

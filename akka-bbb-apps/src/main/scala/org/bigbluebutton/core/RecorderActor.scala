@@ -29,6 +29,12 @@ import org.bigbluebutton.core.recorders.events.ParticipantEndAndKickAllRecordEve
 import org.bigbluebutton.core.recorders.events.UndoShapeWhiteboardRecordEvent
 import org.bigbluebutton.core.recorders.events.ClearPageWhiteboardRecordEvent
 import org.bigbluebutton.core.recorders.events.AddShapeWhiteboardRecordEvent
+import org.bigbluebutton.core.recorders.events.SipVideoUpdatedRecordEvent
+import org.bigbluebutton.core.recorders.events.SipPhoneUpdatedRecordEvent
+import org.bigbluebutton.core.recorders.events.VoiceDialingRecordEvent
+import org.bigbluebutton.core.recorders.events.VoiceHangingUpRecordEvent
+import org.bigbluebutton.core.recorders.events.VoiceOutboundDialRecordEvent
+import org.bigbluebutton.core.recorders.events.VoiceCancelDialRecordEvent
 import org.bigbluebutton.core.service.whiteboard.WhiteboardKeyUtil
 import org.bigbluebutton.core.recorders.events.ModifyTextWhiteboardRecordEvent
 import scala.collection.immutable.StringOps
@@ -58,6 +64,12 @@ class RecorderActor(val meetingId: String, val recorder: RecorderApplication)
     case msg: UserVoiceTalking => handleUserVoiceTalking(msg)
     case msg: UserJoinedVoice => handleUserJoinedVoice(msg)
     case msg: UserLeftVoice => handleUserLeftVoice(msg)
+    case msg: SipVideoUpdated => handleSipVideoUpdated(msg)
+    case msg: SipPhoneUpdated => handleSipPhoneUpdated(msg)
+    case msg: VoiceDialing2 => handleVoiceDialing(msg)
+    case msg: VoiceHangingUp2 => handleVoiceHangingUp(msg)
+    case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
+    case msg: VoiceCancelDial => handleVoiceCancelDial(msg)
     case msg: RecordingStatusChanged => handleRecordingStatusChanged(msg)
     case msg: UserChangedEmojiStatus => handleChangedUserEmojiStatus(msg)
     case msg: UserSharedWebcam => handleUserSharedWebcam(msg)
@@ -269,6 +281,75 @@ class RecorderActor(val meetingId: String, val recorder: RecorderApplication)
       evt.setBridge(msg.confNum);
       evt.setParticipant(msg.user.voiceUser.userId);
       recorder.record(msg.meetingID, evt);
+    }
+  }
+
+  private def handleSipVideoUpdated(msg: SipVideoUpdated) {
+    if (msg.recorded) {
+      val ev = new SipVideoUpdatedRecordEvent();
+      ev.setTimestamp(TimestampGenerator.generateTimestamp);
+      ev.setMeetingId(msg.meetingID);
+      ev.setSipVideoPresent(msg.isSipVideoPresent.toString());
+      ev.setSipVideoStreamName(msg.sipVideoStreamName.toString());
+      ev.setActiveTalker(msg.talkerUserId);
+      recorder.record(msg.meetingID, ev);
+    }
+  }
+
+  private def handleSipPhoneUpdated(msg: SipPhoneUpdated) {
+    if (msg.recorded) {
+      val ev = new SipPhoneUpdatedRecordEvent();
+      ev.setTimestamp(TimestampGenerator.generateTimestamp);
+      ev.setMeetingId(msg.meetingID);
+      ev.setBridge(msg.voiceBridge);
+      ev.setSipPhonePresent(msg.isSipPhonePresent.toString());
+      recorder.record(msg.meetingID, ev);
+    }
+  }
+
+  private def handleVoiceDialing(msg: VoiceDialing2) {
+    if (msg.recorded) {
+      val ev = new VoiceDialingRecordEvent();
+      ev.setTimestamp(TimestampGenerator.generateTimestamp);
+      ev.setMeetingId(msg.meetingID);
+      ev.setRequesterId(msg.requesterID.toString());
+      ev.setUniqueId(msg.uuid.toString());
+      ev.setCallState(msg.callState.toString());
+      recorder.record(msg.meetingID, ev);
+    }
+  }
+
+  private def handleVoiceHangingUp(msg: VoiceHangingUp2) {
+    if (msg.recorded) {
+      val ev = new VoiceHangingUpRecordEvent();
+      ev.setTimestamp(TimestampGenerator.generateTimestamp);
+      ev.setMeetingId(msg.meetingID);
+      ev.setRequesterId(msg.requesterID.toString());
+      ev.setUniqueId(msg.uuid.toString());
+      ev.setCallState(msg.callState.toString());
+      ev.setHangupCause(msg.hangupCause.toString())
+      recorder.record(msg.meetingID, ev);
+    }
+  }
+
+  private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
+    if (msg.recorded) {
+      val ev = new VoiceOutboundDialRecordEvent();
+      ev.setTimestamp(TimestampGenerator.generateTimestamp);
+      ev.setMeetingId(msg.meetingID);
+      ev.setRequesterId(msg.requesterID.toString());
+      ev.setOptions(msg.options.toString());
+      ev.setParams(msg.params.toString());
+      recorder.record(msg.meetingID, ev);
+    }
+  }
+
+  private def handleVoiceCancelDial(msg: VoiceCancelDial) {
+    if (msg.recorded) {
+      val ev = new VoiceCancelDialRecordEvent();
+      ev.setTimestamp(TimestampGenerator.generateTimestamp);
+      ev.setMeetingId(msg.meetingID);
+      ev.setUniqueId(msg.uuid);
     }
   }
 

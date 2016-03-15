@@ -416,10 +416,10 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
   }
 
   def voiceUserJoined(voiceConfId: String, voiceUserId: String, userId: String, callerIdName: String,
-    callerIdNum: String, muted: java.lang.Boolean, talking: java.lang.Boolean) {
+    callerIdNum: String, muted: java.lang.Boolean, talking: java.lang.Boolean, hasVideo: java.lang.Boolean, hasFloor: java.lang.Boolean) {
 
     bbbActor ! new UserJoinedVoiceConfMessage(voiceConfId, voiceUserId, userId, userId, callerIdName,
-      callerIdNum, muted, talking, false /*hardcode listenOnly to false as the message for listenOnly is ConnectedToGlobalAudio*/ )
+      callerIdNum, muted, talking, false /*hardcode listenOnly to false as the message for listenOnly is ConnectedToGlobalAudio*/ , hasVideo, hasFloor)
 
   }
 
@@ -441,6 +441,50 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
 
   def voiceRecording(voiceConfId: String, recordingFile: String, timestamp: String, recording: java.lang.Boolean) {
     bbbActor ! new VoiceConfRecordingStartedMessage(voiceConfId, recordingFile, recording, timestamp)
+  }
+
+  def sipVideoPaused(voiceConfId: String) {
+    bbbActor ! new SipVideoPaused(voiceConfId)
+  }
+
+  def sipVideoResumed(voiceConfId: String) {
+    bbbActor ! new SipVideoResumed(voiceConfId)
+  }
+
+  def activeTalkerChanged(voiceConfId: String, voiceUserId: String) {
+    bbbActor ! new ActiveTalkerChanged(voiceConfId, voiceUserId)
+  }
+
+  def voiceOutboundDialRequest(meetingId: String, userId: String, options: java.util.Map[String, String], params: java.util.Map[String, String]) {
+    bbbActor ! new VoiceOutboundDialRequest(meetingId, userId, mapAsScalaMap(options).toMap, mapAsScalaMap(params).toMap)
+  }
+
+  def voiceCancelDialRequest(meetingId: String, userId: String, uuid: String) {
+    bbbActor ! new VoiceCancelDialRequest(meetingId, userId, uuid)
+  }
+
+  def voiceSendDtmfRequest(meetingId: String, userId: String, uuid: String, dtmfDigit: String) {
+    bbbActor ! new VoiceSendDtmfRequest(meetingId, userId, uuid, dtmfDigit)
+  }
+
+  def voiceDialing(voiceConfId: String, userId: String, uuid: String, callState: String) {
+    bbbActor ! new VoiceDialing(voiceConfId, userId, uuid, callState)
+  }
+
+  def voiceHangingUp(voiceConfId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
+    bbbActor ! new VoiceHangingUp(voiceConfId, userId, uuid, callState, hangupCause)
+  }
+
+  def setNewGlobalVideoStreamName(meetingId: String, videoStreamName: String) {
+    bbbActor ! new NewGlobalVideoStreamName(meetingId, videoStreamName)
+  }
+
+  def updateSipVideoStatus(meetingId: String, width: String, height: String) {
+    bbbActor ! new UpdateSipVideoStatus(meetingId, width, height)
+  }
+
+  def requestUpdateVideoStatus(meetingId: String) {
+    bbbActor ! new RequestUpdateVideoStatus(meetingId)
   }
 
   // Polling

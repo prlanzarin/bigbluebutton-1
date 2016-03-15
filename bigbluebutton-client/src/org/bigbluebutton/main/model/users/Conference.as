@@ -38,6 +38,11 @@ package org.bigbluebutton.main.model.users {
 	  public var voiceBridge:String;
 	  public var dialNumber:String;
 	  [Bindable] public var record:Boolean;
+    public var globalVideoStreamName:String;
+    public var isSipVideoPresent:Boolean;
+    public var globalVideoStreamWidth:String;
+    public var globalVideoStreamHeight:String;
+
     
 	  private static const LOGGER:ILogger = getClassLogger(Conference);
     

@@ -125,4 +125,7 @@ public class Constants {
   public static final String PERM_LOCK_ON_JOIN               = "lockOnJoin";
   public static final String PERM_LOCK_ON_JOIN_CONFIG        = "lockOnJoinConfigurable";
   public static final String ENABLED                         = "enabled";
+  public static final String VIDEO_STREAM_NAME               = "video_stream_name";
+  public static final String HAS_VIDEO                       = "has_video";
+  public static final String HAS_FLOOR                       = "has_floor";
 }

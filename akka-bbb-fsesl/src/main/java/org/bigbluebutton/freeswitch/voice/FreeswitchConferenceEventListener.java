@@ -23,8 +23,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.bigbluebutton.freeswitch.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.freeswitch.voice.events.ChannelHangupCompleteEvent;
 
 import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
+import org.bigbluebutton.freeswitch.voice.events.VideoFloorChangedEvent;
+import org.bigbluebutton.freeswitch.voice.events.VideoPausedEvent;
+import org.bigbluebutton.freeswitch.voice.events.VideoResumedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceConferenceEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceStartRecordingEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserJoinedEvent;
@@ -61,7 +66,7 @@ public class FreeswitchConferenceEventListener implements ConferenceEventListene
 				System.out.println("************** FreeswitchConferenceEventListener received voiceUserJoined ");
 				VoiceUserJoinedEvent evt = (VoiceUserJoinedEvent) event;
 				vcs.userJoinedVoiceConf(evt.getRoom(), evt.getVoiceUserId(), evt.getUserId(), evt.getCallerIdName(), 
-						evt.getCallerIdNum(), evt.getMuted(), evt.getSpeaking());
+						evt.getCallerIdNum(), evt.getMuted(), evt.getSpeaking(), evt.getHasVideo(), evt.getHasFloor());
 				} else if (event instanceof VoiceUserLeftEvent) {
 					System.out.println("************** FreeswitchConferenceEventListener received VoiceUserLeftEvent ");
 					VoiceUserLeftEvent evt = (VoiceUserLeftEvent) event;
@@ -78,7 +83,27 @@ public class FreeswitchConferenceEventListener implements ConferenceEventListene
 					VoiceStartRecordingEvent evt = (VoiceStartRecordingEvent) event;
 					System.out.println("************** FreeswitchConferenceEventListener VoiceStartRecordingEvent recording=[" + evt.startRecord() + "]");
 					vcs.voiceConfRecordingStarted(evt.getRoom(), evt.getRecordingFilename(), evt.startRecord(), evt.getTimestamp());
-				} 				
+				} else if (event instanceof VideoPausedEvent) {
+                    VideoPausedEvent evt = (VideoPausedEvent) event;
+                    System.out.println("************** FreeswitchConferenceEventListener VideoPausedEvent ");
+                    vcs.videoPausedInVoiceConf(evt.getRoom());
+                } else if (event instanceof VideoResumedEvent) {
+                    VideoResumedEvent evt = (VideoResumedEvent) event;
+                    System.out.println("************** FreeswitchConferenceEventListener VideoResumedEvent ");
+                    vcs.videoResumedInVoiceConf(evt.getRoom());
+                } else if (event instanceof VideoFloorChangedEvent) {
+                    VideoFloorChangedEvent evt = (VideoFloorChangedEvent) event;
+                    System.out.println("************** FreeswitchConferenceEventListener VideoFloorHolderChangedEvent");
+                    vcs.activeTalkerChangedInVoiceConf(evt.getRoom(), evt.getFloorHolderVoiceUserId());
+                } else if (event instanceof ChannelCallStateEvent) {
+                    ChannelCallStateEvent evt = (ChannelCallStateEvent) event;
+                    System.out.println("************** FreeswitchConferenceEventListener ChannelCallStateEvent ");
+                    vcs.channelCallStateInVoiceConf(evt.getRoom(), evt.getUniqueId(), evt.getCallState(), evt.getParticipant());
+                } else if (event instanceof ChannelHangupCompleteEvent) {
+                    ChannelHangupCompleteEvent evt = (ChannelHangupCompleteEvent) event;
+                    System.out.println("************** FreeswitchConferenceEventListener ChannelHangupCompleteEvent ");
+                    vcs.channelHangupInVoiceConf(evt.getRoom(), evt.getUniqueId(), evt.getCallState(), evt.getHangupCause(), evt.getParticipant());
+                }
 			}
 		};
 		

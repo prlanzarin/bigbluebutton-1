@@ -33,6 +33,8 @@ object UsersMessageToJsonConverter {
     vuser += "locked" -> user.voiceUser.locked
     vuser += "muted" -> user.voiceUser.muted
     vuser += "talking" -> user.voiceUser.talking
+    vuser += "has_video" -> user.voiceUser.hasVideo
+    vuser += "has_floor" -> user.voiceUser.hasFloor
 
     wuser.put("voiceUser", mapAsJavaMap(vuser))
 
@@ -427,6 +429,70 @@ object UsersMessageToJsonConverter {
     payload.put(Constants.LISTEN_ONLY, msg.listenOnly)
 
     val header = Util.buildHeader(MessageNames.USER_LISTEN_ONLY, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceDialingToJson(msg: VoiceDialing2): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.USER_ID, msg.requesterID);
+    payload.put(Constants.UUID, msg.uuid);
+    payload.put(Constants.STATE, msg.callState);
+
+    val header = Util.buildHeader(MessageNames.VOICE_DIALING, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceHangingUpToJson(msg: VoiceHangingUp2): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.USER_ID, msg.requesterID);
+    payload.put(Constants.UUID, msg.uuid);
+    payload.put(Constants.STATE, msg.callState);
+    payload.put(Constants.CAUSE, msg.hangupCause);
+
+    val header = Util.buildHeader(MessageNames.VOICE_HANGING_UP, None)
+    Util.buildJson(header, payload)
+  }
+
+  def sipVideoUpdatedToJson(msg: SipVideoUpdated): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.VOICE_CONF, msg.voiceBridge)
+    payload.put(Constants.IS_SIP_VIDEO_PRESENT, msg.isSipVideoPresent: java.lang.Boolean)
+    payload.put(Constants.SIP_VIDEO_STREAM_NAME, msg.sipVideoStreamName)
+    payload.put(Constants.TALKER_USER_ID, msg.talkerUserId)
+    payload.put(Constants.WIDTH_RATIO, msg.width)
+    payload.put(Constants.HEIGHT_RATIO, msg.height)
+
+    val header = Util.buildHeader(MessageNames.SIP_VIDEO_UPDATE, None)
+    Util.buildJson(header, payload)
+  }
+
+  def sipPhoneUpdatedToJson(msg: SipPhoneUpdated): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.VOICE_CONF, msg.voiceBridge)
+    payload.put(Constants.IS_SIP_PHONE_PRESENT, msg.isSipPhonePresent)
+
+    val header = Util.buildHeader(MessageNames.SIP_PHONE_UPDATE, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceOutboundDialToJson(msg: VoiceOutboundDial): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.OPTIONS, msg.options)
+    payload.put(Constants.PARAMS, msg.params)
+
+    val header = Util.buildHeader(MessageNames.VOICE_OUTBOUND_DIAL, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceCancelDialToJson(msg: VoiceCancelDial): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.UUID, msg.uuid)
+
+    val header = Util.buildHeader(MessageNames.VOICE_CANCEL_DIAL, None)
     Util.buildJson(header, payload)
   }
 }
