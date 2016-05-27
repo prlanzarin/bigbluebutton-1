@@ -9,6 +9,7 @@ import org.bigbluebutton.common.messages.StartRecordingVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.StopRecordingVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage;
 import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage;
+import org.bigbluebutton.common.messages.SendDtmfRequestInVoiceConfMessage;
 import org.bigbluebutton.freeswitch.voice.freeswitch.FreeswitchApplication;
 
 import com.google.gson.JsonObject;
@@ -61,6 +62,10 @@ public class RedisMessageReceiver {
 					  case CancelDialRequestInVoiceConfMessage.CANCEL_DIAL_REQUEST_IN_VOICE_CONF:
 						processCancelDialRequestInVoiceConfMessage(message);
 					  break;
+					  case SendDtmfRequestInVoiceConfMessage.SEND_DTMF_REQUEST_IN_VOICE_CONF:
+						processSendDtmfRequestInVoiceConfMessage(message);
+					  break;
+
 					}
 				}
 			}
@@ -105,5 +110,10 @@ public class RedisMessageReceiver {
 	private void processCancelDialRequestInVoiceConfMessage(String json) {
 		CancelDialRequestInVoiceConfMessage msg = CancelDialRequestInVoiceConfMessage.fromJson(json);
 		fsApp.cancelDial(msg.meetingId, msg.uniqueId);
+	}
+
+	private void processSendDtmfRequestInVoiceConfMessage(String json) {
+		SendDtmfRequestInVoiceConfMessage msg = SendDtmfRequestInVoiceConfMessage.fromJson(json);
+		fsApp.sendDtmf(msg.meetingId, msg.uniqueId, msg.dtmfDigit);
 	}
 }
