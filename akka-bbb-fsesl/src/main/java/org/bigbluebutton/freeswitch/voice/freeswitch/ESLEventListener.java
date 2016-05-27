@@ -148,6 +148,12 @@ public class ESLEventListener implements IEslEventListener {
 
         String callerIdName = this.getValidCallerIdNameFromConferenceEvent(event);
         System.out.println("User left voice conference, user=[" + callerIdName + "], conf=[" + confName + "], memberId=[" + memberId.toString() + "]");
+        Matcher gcpMatcher = GLOBALCALL_NAME_PATTERN.matcher(callerIdName);
+        if (gcpMatcher.matches()) {
+            System.out.println("GLOBAL CALL DISCONNECTED [" + callerIdName + "]");
+            return;
+        }
+
 
         VoiceUserLeftEvent pl = new VoiceUserLeftEvent(memberId.toString(), confName);
         conferenceEventListener.handleConferenceEvent(pl);

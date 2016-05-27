@@ -97,41 +97,6 @@ public final class SipPeerManager {
         }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
     }
 
-    public void setBbbToFreeswitchVideoStream(String peerId, String userId, String videoStreamName) throws PeerNotFoundException {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.setBbbToFreeswitchVideoStream(userId, videoStreamName);
-        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    }
-    
-    public void stopBbbToFreeswitchVideoStream(String peerId, String userId)throws PeerNotFoundException {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.stopBbbToFreeswitchVideoStream(userId);
-        }else throw new PeerNotFoundException("Can't find sip peer " + peerId);
-    }
-
-    public void startFreeswitchToBbbGlobalVideoStream(String peerId, String userId, Boolean videoPresent) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.startFreeswitchToBbbGlobalVideoStream(userId, videoPresent);
-        }else log.debug("Can't find sip peer " + peerId);
-    }
-
-    public void startFreeswitchToBbbGlobalVideoProbe(String peerId, String userId, Boolean videoPresent) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.startFreeswitchToBbbGlobalVideoProbe(userId, videoPresent);
-        }else log.debug("Can't find sip peer " + peerId);
-    }
-
-    public void stopFreeswitchToBbbGlobalVideoStream(String peerId,String userId) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.stopFreeswitchToBbbGlobalVideoStream(userId);
-        }else log.debug("Can't find sip peer " + peerId);
-    }
-
     public void webRTCCall(String peerId, String clientId, String userId, String username, String destination, String meetingId, String remoteVideoPort, String localVideoPort, String serverIp) throws PeerNotFoundException {
         SipPeer sipUser = sipPeers.get(peerId);
         if (sipUser != null) {
@@ -195,19 +160,5 @@ public final class SipPeerManager {
 	
 	public void setMessagingService(IMessagingService service) {
 		messagingService = service;
-	}
-
-	public void startCurrentFloorVideo(String peerId, String voiceBridge, String userId, Boolean videoPresent,String meetingId) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-			sipUser.startCurrentFloorVideo(voiceBridge,userId,videoPresent,meetingId);
-        }
-	}
-
-	public void stopCurrentFloorVideo(String peerId, String voiceBridge, String meetingId) {
-        SipPeer sipUser = sipPeers.get(peerId);
-        if (sipUser != null) {
-            sipUser.stopCurrentFloorVideo(voiceBridge,meetingId);
-        }
 	}
 }

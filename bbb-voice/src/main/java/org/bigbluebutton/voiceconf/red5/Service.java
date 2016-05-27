@@ -101,7 +101,6 @@ public class Service {
         try{
             if (sipPeerManager != null) {
                 sipPeerManager.webRTCCall(peerId, clientId, userid, username, destination, meetingId, remoteVideoPort,localVideoPort,serverIp);
-                sipPeerManager.setBbbToFreeswitchVideoStream(peerId, userid, "");
             }
             else log.debug("There's no SipPeerManager to handle this webRTC Video Call. Aborting... ");
         } catch (PeerNotFoundException e) {
@@ -115,61 +114,6 @@ public class Service {
         //webrtc's user agent needs this information to define it's video description of sdp
         log.debug("Client requested SIP params. Sending it [sipServerHost = {}",GlobalCall.getSipServerHost());
         clientConnectionManager.successfullyRequestedSipParams(getClientId(),GlobalCall.getSipServerHost());
-    }
-
-    public void updateVideoStatus(String meetingId, String voiceBridge, String floorHolder, Boolean videoPresent) {
-        log.debug("updateVideoStatus [meetingId={},voiceBridge={}, floorHolder={}, isVideoPresent={}]", meetingId, voiceBridge, floorHolder, videoPresent);
-        handleGlobalVideoStatus(voiceBridge,floorHolder,videoPresent,meetingId);
-        handleUserVideoStatus(voiceBridge,floorHolder,videoPresent,meetingId);
-    }
-
-    private void handleGlobalVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent,String meetingId) {
-        log.debug("handling global video status: voiceBridge={}, floorHolder={}, videoPresent={}",voiceBridge,floorHolder,videoPresent);
-        String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
-
-            if (GlobalCall.isGlobalVideoAbleToRun(voiceBridge,floorHolder)){
-                sipPeerManager.startFreeswitchToBbbGlobalVideoStream(peerId, globalUserId,videoPresent);
-            }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
-
-            if(GlobalCall.shouldProbeGlobalVideo(voiceBridge, floorHolder,videoPresent)) {
-                sipPeerManager.startFreeswitchToBbbGlobalVideoProbe(peerId, globalUserId,videoPresent);
-            }
-    }
-
-    private void handleUserVideoStatus(String voiceBridge, String floorHolder, Boolean videoPresent,String meetingId){
-        log.debug("handling user video status: voiceBridge={}, floorHolder={}, videoPresent={}",voiceBridge,floorHolder,videoPresent);
-            //start current user video
-            if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
-                sipPeerManager.startCurrentFloorVideo(peerId, voiceBridge,floorHolder,videoPresent,meetingId);
-            }else log.debug("Global video transcoder won't start because there's no need to (check previous log message)");
-    }
-
-    public void userSharedWebcam(String userId, String streamName){
-        log.debug("userSharedWebcam [userId={}, streamName={}]",userId, streamName);
-
-        if(isVideoStream(streamName) && (!userId.equals(""))){
-            try {
-                sipPeerManager.setBbbToFreeswitchVideoStream(peerId, userId, streamName);
-            } catch (PeerNotFoundException e) {
-                log.error("PeerNotFound {}", peerId);
-            }
-        }
-        else{
-            log.debug("Error when getting user's info");
-        }
-    }
-
-    public void userUnsharedWebcam(String userId, String streamName){
-        log.debug("userUnsharedWebcam [userId={}] [streamName={}]",userId,streamName);
-        if (!userId.isEmpty() && !streamName.isEmpty()) {
-            try {
-                sipPeerManager.stopBbbToFreeswitchVideoStream(peerId, userId);
-            } catch (PeerNotFoundException e) {
-              log.error("PeerNotFound {}", peerId);
-            }
-        }else {
-            log.debug("Error when getting user's info");
-        }
     }
 
 	private String getClientId() {
@@ -211,20 +155,4 @@ public class Service {
         clientConnectionManager = ccm;
     }
 
-    public void updateSipPhoneStatus(String voiceBridge, Boolean sipPhonePresent, String meetingId) {
-        log.debug("updateSipPhoneStatus [voiceBridge={}, isSipPhonePresent={}, meetingId={}]", voiceBridge, sipPhonePresent,meetingId);
-        GlobalCall.setSipPhonePresent(voiceBridge, sipPhonePresent);
-
-        if(GlobalCall.isUserVideoAbleToRun(voiceBridge)) {
-            log.debug("sip-video is able to run, starting video floor transcoder");
-            sipPeerManager.startCurrentFloorVideo(peerId, voiceBridge,GlobalCall.getFloorHolderUserId(voiceBridge), false,meetingId);
-            //we won't start the global video stream here, cause it will be initiated in the next sip video update event
-        } else {
-            log.debug("No more sip phones in the conference. Stopping video transcoders");
-            sipPeerManager.stopCurrentFloorVideo(peerId, voiceBridge,meetingId);
-            log.debug("Now stopping the global transcoder");
-            String globalUserId = GlobalCall.LISTENONLY_USERID_PREFIX + voiceBridge;
-            sipPeerManager.stopFreeswitchToBbbGlobalVideoStream(peerId, globalUserId);
-        }
-    }
 }

@@ -116,6 +116,7 @@ case class SipVideoResumed(voiceConfId: String)
 case class ActiveTalkerChanged(voiceConfId: String, voiceUserId: String)
 case class NewGlobalVideoStreamName(meetingID: String, globalVideoStreamName: String) extends InMessage
 case class UpdateSipVideoStatus(meetingID: String, width: String, height: String) extends InMessage
+case class UpdateCallAgent(meetingID: String, userId: String, localIpAddress: String, localVideoPort: String, remoteVideoPort: String, sipHost: String) extends InMessage
 case class RequestUpdateVideoStatus(meetingID: String) extends InMessage
 
 // Whiteboard
@@ -126,3 +127,10 @@ case class UndoWhiteboardRequest(meetingID: String, requesterID: String, whitebo
 case class EnableWhiteboardRequest(meetingID: String, requesterID: String, enable: Boolean) extends InMessage
 case class IsWhiteboardEnabledRequest(meetingID: String, requesterID: String, replyTo: String) extends InMessage
 case class GetAllMeetingsRequest(meetingID: String /** Not used. Just to satisfy trait **/ ) extends InMessage
+
+//Transcode
+case class StartTranscoderReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+case class UpdateTranscoderReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+case class StopTranscoderReply(meetingID: String, transcoderId: String) extends InMessage
+case class TranscoderStatusUpdate(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+case class StartProbingReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage

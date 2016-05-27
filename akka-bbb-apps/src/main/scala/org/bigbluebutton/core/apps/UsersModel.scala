@@ -23,6 +23,7 @@ class UsersModel {
   private var locked = false
   private var meetingMuted = false
   private var recordingVoice = false
+  private var GLOBAL_CALL_NAME_PREFIX = "GLOBAL_CALL_"
 
   private var currentPresenter = new Presenter("system", "system", "system")
 
@@ -194,8 +195,43 @@ class UsersModel {
     recordingVoice
   }
 
+  def isGlobalCallAgent(callername: String): Boolean = {
+    Option(callername) match {
+      case Some(c) => c.startsWith(GLOBAL_CALL_NAME_PREFIX)
+      case None => false
+    }
+  }
+
   def getPhoneUsersSendingVideo(): Array[UserVO] = {
     uservos.values filter (u => (u.phoneUser == true && u.hasStream == true)) toArray
+  }
+
+  def activeTalkerChangedInWebconference(oldActiveTalkerUserId: String, newActiveTalkerUserId: String): Boolean = {
+    val changed: Boolean = getUser(oldActiveTalkerUserId) match {
+      case Some(ou) =>
+        getUser(newActiveTalkerUserId) match {
+          case Some(nu) => ou.phoneUser ^ nu.phoneUser
+          case _ => ou.phoneUser ^ newActiveTalkerUserId.startsWith(GLOBAL_CALL_NAME_PREFIX)
+        }
+
+      case _ =>
+        getUser(newActiveTalkerUserId) match {
+          case Some(nu) => oldActiveTalkerUserId.startsWith(GLOBAL_CALL_NAME_PREFIX) ^ newActiveTalkerUserId.startsWith(GLOBAL_CALL_NAME_PREFIX)
+          case _ => false
+        }
+    }
+    return changed
+  }
+
+  def getUserMainWebcamStream(userId: String): String = {
+    getUser(userId) match {
+      case Some(u) =>
+        Option(u.webcamStreams) match {
+          case Some(streams) => streams.head
+          case None => ""
+        }
+      case None => ""
+    }
   }
 
 }

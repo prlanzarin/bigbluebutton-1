@@ -1,17 +1,13 @@
-package org.bigbluebutton.voiceconf.sip;
+package org.bigbluebutton.transcode.core.processmonitor;
 
 import java.io.InputStream;
-
-import org.slf4j.Logger;
-import org.red5.logging.Red5LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bigbluebutton.transcode.core.ffmpeg.FFmpegConstants;
 
 public class ProcessMonitor {
-    private static Logger log = Red5LoggerFactory.getLogger(ProcessMonitor.class, "sip");
 
     private String[] command;
     private Process process;
@@ -67,19 +63,19 @@ public class ProcessMonitor {
 
     private void notifyProcessMonitorObserverOnFinishedUnsuccessfully() {
         if(observer != null){
-            log.debug("Notifying ProcessMonitorObserver that process finished unsuccessfully");
+            //log.debug("Notifying ProcessMonitorObserver that process finished unsuccessfully");
             observer.handleProcessFinishedUnsuccessfully(this.name,inputStreamMonitorOutput);
         }else {
-            log.debug("Cannot notify ProcessMonitorObserver that process finished unsuccessfully: ProcessMonitorObserver null");
+            //log.debug("Cannot notify ProcessMonitorObserver that process finished unsuccessfully: ProcessMonitorObserver null");
         }
     }
 
     private void notifyProcessMonitorObserverOnFinished() {
         if(observer != null){
-            log.debug("Notifying ProcessMonitorObserver that {} successfully finished",this.name);
+            //log.debug("Notifying ProcessMonitorObserver that {} successfully finished",this.name);
             observer.handleProcessFinishedWithSuccess(this.name,inputStreamMonitorOutput);
         }else {
-            log.debug("Cannot notify ProcessMonitorObserver that {} finished: ProcessMonitorObserver null",this.name);
+            //log.debug("Cannot notify ProcessMonitorObserver that {} finished: ProcessMonitorObserver null",this.name);
         }
     }
 
@@ -88,12 +84,12 @@ public class ProcessMonitor {
             this.thread = new Thread( new Runnable(){
                 public void run(){
                     try {
-                        log.debug("Creating thread to execute {}",name);
+                        System.out.println("  > Creating thread to execute " + name);
                         process = Runtime.getRuntime().exec(command);
-                        log.debug("Executing (pid={}): {}",getPid(),getCommandString());
+                        System.out.println("  > Executing " + name + "( pid=" + getPid() + " ):\n  " + getCommandString());
 
                         if(status == Status.CLOSED_BY_USER) {
-                            log.debug("ProcessMonitor closed by user. Closing {} it immediatelly",name);
+                            System.out.println("  > ProcessMonitor closed by user. Closing " + name + " it immediatelly");
                             forceDestroy();
                             return;
                         }
@@ -110,31 +106,31 @@ public class ProcessMonitor {
                         process.waitFor();
                     }
                     catch(SecurityException se) {
-                        log.debug("Security Exception");
+                        System.out.println("Security Exception");
                     }
                     catch(IOException ioe) {
-                        log.debug("IO Exception");
+                        System.out.println("IO Exception");
                     }
                     catch(NullPointerException npe) {
-                        log.debug("NullPointer Exception");
+                        System.out.println("NullPointer Exception");
                     }
                     catch(IllegalArgumentException iae) {
-                        log.debug("IllegalArgument Exception");
+                        System.out.println("IllegalArgument Exception");
                     }
                     catch(InterruptedException ie) {
-                        log.debug("Interrupted Exception");
+                        System.out.println("Interrupted Exception");
                     }
 
                     int ret = process.exitValue();
 
                     if (FFmpegConstants.acceptableExitCode(ret) || errorStreamMonitor.acceptableExitStatus()){
-                        log.debug("Exiting thread that executes {}. Exit value: {}, Exit status (from stdout): {} ",name,ret, errorStreamMonitor.getExitStatus());
+                        //log.debug("Exiting thread that executes {}. Exit value: {}, Exit status (from stdout): {} ",name,ret, errorStreamMonitor.getExitStatus());
                         storeProcessOutputs(inputStreamMonitor.getOutput(), errorStreamMonitor.getOutput());
                         clearData();
                         notifyProcessMonitorObserverOnFinished();
                     }
                     else{
-                        log.debug("Exiting thread that executes {}. Exit value: {}, Exit status (from stdout): {}",name,ret,errorStreamMonitor.getExitStatus());
+                        //log.debug("Exiting thread that executes {}. Exit value: {}, Exit status (from stdout): {}",name,ret,errorStreamMonitor.getExitStatus());
                         storeProcessOutputs(inputStreamMonitor.getOutput(), errorStreamMonitor.getOutput());
                         clearData();
                         notifyProcessMonitorObserverOnFinishedUnsuccessfully();
@@ -143,8 +139,9 @@ public class ProcessMonitor {
             });
             status = Status.RUNNING;
             this.thread.start();
-        }else
-            log.debug("Can't start a new process monitor: It is already running.");
+        }else{
+            //log.debug("Can't start a new process monitor: It is already running.");
+        }
     }
 
     public synchronized void restart(){
@@ -178,7 +175,7 @@ public class ProcessMonitor {
     private void closeProcess(){
         if(this.process != null) {
             status = Status.CLOSED_BY_USER;
-            log.debug("Closing {} process",this.name);
+            //log.debug("Closing {} process",this.name);
             this.process.destroy();
             this.process = null;
         }
@@ -193,14 +190,15 @@ public class ProcessMonitor {
         if (this.thread != null){
             status = Status.CLOSED_BY_USER;
             clearData();
-            log.debug("ProcessMonitor successfully finished");
-        }else
-            log.debug("Can't destroy this process monitor: There's no process running.");
+            //log.debug("ProcessMonitor successfully finished");
+        }else{
+            //log.debug("Can't destroy this process monitor: There's no process running.");
+        }
     }
 
     public void setProcessMonitorObserver(ProcessMonitorObserver observer){
         if (observer==null){
-            log.debug("Cannot assign observer: ProcessMonitorObserver null");
+            //log.debug("Cannot assign observer: ProcessMonitorObserver null");
         }else this.observer = observer;
     }
 
@@ -215,7 +213,7 @@ public class ProcessMonitor {
             return pid;
         } catch (IllegalArgumentException | IllegalAccessException
                 | NoSuchFieldException | SecurityException e) {
-            log.debug("Error when obtaining {} PID",this.name);
+            //log.debug("Error when obtaining {} PID",this.name);
             return -1;
         }
     }
@@ -226,18 +224,18 @@ public class ProcessMonitor {
         try {
             int pid = getPid();
             if (pid < 0){
-                log.debug("Process doesn't exist. Not destroying it...");
+                //log.debug("Process doesn't exist. Not destroying it...");
                 return;
             }else {
                 Runtime.getRuntime().exec("kill -9 "+ getPid());
-                clearData();
             }
         } catch (IOException e) {
-            log.debug("Failed to force-kill {} process",this.name);
+            //log.debug("Failed to force-kill {} process",this.name);
             e.printStackTrace();
         }
-        }else
-            log.debug("Can't force-destroy this process monitor: There's no process running.");
+        }else{
+            //log.debug("Can't force-destroy this process monitor: There's no process running.");
+        }
     }
 
     public boolean isFFmpegProcess(){

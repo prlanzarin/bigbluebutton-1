@@ -63,6 +63,8 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleNewGlobalVideoStreamName(msg)
     case msg: UpdateSipVideoStatus =>
       handleUpdateSipVideoStatus(msg)
+    case msg: UpdateCallAgent =>
+      handleUpdateCallAgent(msg)
     case msg: RequestUpdateVideoStatus =>
       handleRequestUpdateVideoStatus(msg)
     case msg: ActiveTalkerChanged =>
@@ -191,6 +193,16 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleGetPollRequest(msg)
     case msg: GetCurrentPollRequest =>
       handleGetCurrentPollRequest(msg)
+    case msg: StartTranscoderReply =>
+      handleStartTranscoderReply(msg)
+    case msg: UpdateTranscoderReply =>
+      handleUpdateTranscoderReply(msg)
+    case msg: StopTranscoderReply =>
+      handleStopTranscoderReply(msg)
+    case msg: TranscoderStatusUpdate =>
+      handleTranscoderStatusUpdate(msg)
+    case msg: StartProbingReply =>
+      handleStartProbingReply(msg)
 
     case msg: EndMeeting => handleEndMeeting(msg)
     case StopMeetingActor => //exit

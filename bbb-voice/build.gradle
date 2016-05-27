@@ -14,6 +14,7 @@ task resolveDeps(type: Copy) {
 
 repositories {
   mavenCentral()
+  mavenLocal()
   add(new org.apache.ivy.plugins.resolver.ChainResolver()) {
     name = 'remote'
     returnFirst = true

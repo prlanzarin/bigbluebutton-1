@@ -1,4 +1,4 @@
-package org.bigbluebutton.voiceconf.sip;
+package org.bigbluebutton.transcode.core.ffmpeg;
 
 import java.util.ArrayList;
 import java.util.List;

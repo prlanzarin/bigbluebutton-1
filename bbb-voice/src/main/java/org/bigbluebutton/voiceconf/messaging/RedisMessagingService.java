@@ -9,6 +9,7 @@ import org.bigbluebutton.voiceconf.messaging.messages.UpdateSipVideoStatus;
 import org.bigbluebutton.voiceconf.messaging.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.voiceconf.messaging.messages.UserDisconnectedFromGlobalAudio;
 import org.red5.logging.Red5LoggerFactory;
+import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
 import org.slf4j.Logger;
 
 public class RedisMessagingService implements IMessagingService {
@@ -50,28 +51,9 @@ public class RedisMessagingService implements IMessagingService {
 	}
 
 	@Override
-	public void globalVideoStreamCreated(String meetingId, String videoStreamName) {
-		String json = new GlobalVideoStreamCreated(meetingId, videoStreamName).toJson();
-		log.debug("Sending GlobalVideoStreamCreated message to bbb-apps. MeetingID = {}, StreamName = {}",meetingId,videoStreamName);
-		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
-	}
-
-	@Override
-	public void updateSipVideoStatus(String meetingId, String width,String height) {
-		String json = new UpdateSipVideoStatus(meetingId, width,height).toJson();
-		log.debug("Sending SipVideoStatus message to bbb-apps...");
-		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
-	}
-
-	/**
-	* Request bigbluebutton-apps to send an UpdateVideoStatus message.
-	* @param  meetingId
-	* @param  voiceConf
-	*/
-	@Override
-	public void requestUpdateVideoStatus(String meetingId, String voiceConf){
-		String json = new RequestUpdateVideoStatus(meetingId, voiceConf).toJson();
-		log.debug("Sending RequestUpdateVideoStatus message to bbb-apps...");
+	public void updateCallAgent(String meetingId, String userId, String localIpAddress, String localVideoPort, String remoteVideoPort, String sipHost){
+		String json = new UpdateCallAgentMessage(meetingId, userId, localIpAddress, localVideoPort, remoteVideoPort, sipHost).toJson();
+		log.debug("Sending UpdateCallAgent message to bbb-apps...");
 		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
 	}
 

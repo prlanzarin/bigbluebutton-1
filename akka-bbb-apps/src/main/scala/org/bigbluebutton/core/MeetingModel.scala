@@ -22,10 +22,17 @@ class MeetingModel {
   private var _globalVideoStreamName = ""
   private var _globalVideoStreamWidth = ""
   private var _globalVideoStreamHeight = ""
+  private var _globalCallCallername = ""
+  private var _globalCallLocalIpAddress = ""
+  private var _globalCallLocalVideoPort = ""
+  private var _globalCallRemoteVideoPort = ""
+  private var _sipHost = ""
 
   val TIMER_INTERVAL = 30000
   private var hasLastWebUserLeft = false
   private var lastWebUserLeftOnTimestamp: Long = 0
+  private var VIDEOCONFERENCE_STREAM_NAME = "sip_"
+  val VIDEOCONFERENCE_LOGO_PREFIX = "video_conf_"
 
   private var voiceRecordingFilename: String = ""
 
@@ -143,6 +150,10 @@ class MeetingModel {
     _talkerUserId
   }
 
+  def isTalker(userId: String): Boolean = {
+    _talkerUserId == userId
+  }
+
   def setGlobalVideoStreamName(streamName: String) {
     _globalVideoStreamName = streamName
   }
@@ -165,5 +176,52 @@ class MeetingModel {
 
   def globalVideoStreamHeight(): String = {
     _globalVideoStreamHeight
+  }
+
+  def setGlobalCallCallername(callername: String) {
+    _globalCallCallername = callername
+  }
+
+  def globalCallCallername(): String = {
+    _globalCallCallername
+  }
+
+  def setGlobalCallLocalIpAddress(localIpAddress: String) {
+    _globalCallLocalIpAddress = localIpAddress
+  }
+
+  def globalCallLocalIpAddress(): String = {
+    _globalCallLocalIpAddress
+  }
+
+  def setGlobalCallLocalVideoPort(localVideoPort: String) {
+    _globalCallLocalVideoPort = localVideoPort
+  }
+
+  def globalCallLocalVideoPort(): String = {
+    _globalCallLocalVideoPort
+  }
+
+  def setGlobalCallRemoteVideoPort(remoteVideoPort: String) {
+    _globalCallRemoteVideoPort = remoteVideoPort
+  }
+
+  def globalCallRemoteVideoPort(): String = {
+    _globalCallRemoteVideoPort
+  }
+
+  def setSipHost(sipHost: String) {
+    _sipHost = sipHost
+  }
+
+  def sipHost(): String = {
+    _sipHost
+  }
+
+  def isVideoconferenceStream(streamName: String): Boolean = {
+    Option(streamName) match {
+      case Some(s) => s.startsWith(VIDEOCONFERENCE_STREAM_NAME)
+      case None => false
+    }
   }
 }

@@ -17,6 +17,7 @@ import org.bigbluebutton.common.messages.RegisterUserMessage;
 import org.bigbluebutton.common.messages.RequestUpdateVideoStatusMessage;
 import org.bigbluebutton.common.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.common.messages.UserDisconnectedFromGlobalAudio;
+import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
 import org.bigbluebutton.common.messages.UpdateSipVideoStatusMessage;
 import org.bigbluebutton.common.messages.ValidateAuthTokenMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
@@ -110,6 +111,10 @@ public class MeetingMessageReceiver implements MessageHandler {
 				} else if (msg instanceof RequestUpdateVideoStatusMessage){
 					  RequestUpdateVideoStatusMessage requestUpdateVideoStatus = (RequestUpdateVideoStatusMessage) msg;
 					  bbbGW.requestUpdateVideoStatus(requestUpdateVideoStatus.meetingId);
+				}
+				else if (msg instanceof UpdateCallAgentMessage) {
+					  UpdateCallAgentMessage updateCallAgentMessage = (UpdateCallAgentMessage) msg;
+					  bbbGW.updateCallAgent(updateCallAgentMessage.meetingId, updateCallAgentMessage.userId, updateCallAgentMessage.localIpAddress, updateCallAgentMessage.localVideoPort, updateCallAgentMessage.remoteVideoPort, updateCallAgentMessage.sipHost);
 				}
                 else {
                     System.out.println("Unknown message: [" + message + "]");

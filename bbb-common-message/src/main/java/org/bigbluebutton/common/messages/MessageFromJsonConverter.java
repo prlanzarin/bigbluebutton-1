@@ -39,6 +39,8 @@ public class MessageFromJsonConverter {
                     return processGlobalVideoStreamCreatedMessage(payload);
                   case UpdateSipVideoStatusMessage.UPDATE_SIP_VIDEO_STATUS:
                     return processUpdateSipVideoStatusMessage(payload);
+                  case UpdateCallAgentMessage.UPDATE_CALL_AGENT:
+                    return processUpdateCallAgentMessage(payload);
                   case RequestUpdateVideoStatusMessage.REQUEST_UPDATE_VIDEO_STATUS:
                     return processRequestUpdateVideoStatusMessage(payload);
 				}
@@ -102,6 +104,16 @@ public class MessageFromJsonConverter {
         String width = payload.get(Constants.WIDTH_RATIO).getAsString();
         String height = payload.get(Constants.HEIGHT_RATIO).getAsString();
         return new UpdateSipVideoStatusMessage(meetingId, width, height);
+    }
+
+    private static IBigBlueButtonMessage processUpdateCallAgentMessage(JsonObject payload) {
+        String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+        String userId = payload.get(Constants.USER_ID).getAsString();
+        String localIpAddress = payload.get(Constants.LOCAL_IP_ADDRESS).getAsString();
+        String localVideoPort = payload.get(Constants.LOCAL_VIDEO_PORT).getAsString();
+        String remoteVideoPort = payload.get(Constants.REMOTE_VIDEO_PORT).getAsString();
+        String sipHost = payload.get(Constants.SIP_HOST).getAsString();
+        return new UpdateCallAgentMessage(meetingId, userId, localIpAddress, localVideoPort, remoteVideoPort, sipHost);
     }
 
 	private static IBigBlueButtonMessage processRequestUpdateVideoStatusMessage(JsonObject payload) {

@@ -25,6 +25,11 @@ import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage;
 import org.bigbluebutton.common.messages.SendDtmfRequestInVoiceConfMessage;
 import org.bigbluebutton.common.messages.SetRecordingStatusRequestMessage;
 import org.bigbluebutton.common.messages.SetUserStatusRequestMessage;
+import org.bigbluebutton.common.messages.StartTranscoderReplyMessage;
+import org.bigbluebutton.common.messages.StartProbingReplyMessage;
+import org.bigbluebutton.common.messages.UpdateTranscoderReplyMessage;
+import org.bigbluebutton.common.messages.StopTranscoderReplyMessage;
+import org.bigbluebutton.common.messages.TranscoderStatusUpdateMessage;
 import org.bigbluebutton.common.messages.UserJoinedVoiceConfMessage;
 import org.bigbluebutton.common.messages.UserLeavingMessage;
 import org.bigbluebutton.common.messages.UserLeftVoiceConfMessage;
@@ -180,6 +185,33 @@ public class UsersMessageReceiver implements MessageHandler{
 					  case ChannelHangupInVoiceConfMessage.CHANNEL_HANGUP_IN_VOICE_CONF:
 						  processChannelHangupInVoiceConfMessage(message);
 						  break;
+					}
+				}
+			}
+		} else if (channel.equalsIgnoreCase(MessagingConstants.FROM_BBB_TRANSCODE_SYSTEM_CHAN)) {
+			JsonParser parser = new JsonParser();
+			JsonObject obj = (JsonObject) parser.parse(message);
+			if (obj.has("header") && obj.has("payload")) {
+				JsonObject header = (JsonObject) obj.get("header");
+
+				if (header.has("name")) {
+					String messageName = header.get("name").getAsString();
+					switch (messageName) {
+						case StartTranscoderReplyMessage.START_TRANSCODER_REPLY:
+							processStartTranscoderReplyMessage(message);
+							break;
+						case UpdateTranscoderReplyMessage.UPDATE_TRANSCODER_REPLY:
+							processUpdateTranscoderReplyMessage(message);
+							break;
+						case StopTranscoderReplyMessage.STOP_TRANSCODER_REPLY:
+							processStopTranscoderReplyMessage(message);
+							break;
+						case TranscoderStatusUpdateMessage.TRANSCODER_STATUS_UPDATE:
+							processTranscoderStatusUpdateMessage(message);
+							break;
+						case StartProbingReplyMessage.START_PROBING_REPLY:
+							processStartProbingReplyMessage(message);
+							break;
 					}
 				}
 			}
@@ -428,6 +460,41 @@ public class UsersMessageReceiver implements MessageHandler{
 		ChannelHangupInVoiceConfMessage msg = ChannelHangupInVoiceConfMessage.fromJson(message);
 		if (msg != null) {
 			bbbInGW.voiceHangingUp(msg.voiceConfId, msg.userId, msg.uniqueId, msg.callState, msg.hangupCause);
+		}
+	}
+
+	private void processStartTranscoderReplyMessage(String message) {
+		StartTranscoderReplyMessage msg = StartTranscoderReplyMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.startTranscoderReply(msg.meetingId, msg.transcoderId, msg.params);
+		}
+	}
+
+	private void processUpdateTranscoderReplyMessage(String message) {
+		UpdateTranscoderReplyMessage msg = UpdateTranscoderReplyMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.updateTranscoderReply(msg.meetingId, msg.transcoderId, msg.params);
+		}
+	}
+
+	private void processStopTranscoderReplyMessage(String message) {
+		StopTranscoderReplyMessage msg = StopTranscoderReplyMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.stopTranscoderReply(msg.meetingId, msg.transcoderId);
+		}
+	}
+
+	private void processTranscoderStatusUpdateMessage(String message) {
+		TranscoderStatusUpdateMessage msg = TranscoderStatusUpdateMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.transcoderStatusUpdate(msg.meetingId, msg.transcoderId, msg.params);
+		}
+	}
+
+	private void processStartProbingReplyMessage(String message) {
+		StartProbingReplyMessage msg = StartProbingReplyMessage.fromJson(message);
+		if (msg != null){
+			bbbInGW.startProbingReply(msg.meetingId, msg.transcoderId, msg.params);
 		}
 	}
 }

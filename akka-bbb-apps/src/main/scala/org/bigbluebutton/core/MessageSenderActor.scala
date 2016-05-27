@@ -30,6 +30,9 @@ import org.bigbluebutton.core.pubsub.senders.WhiteboardMessageToJsonConverter
 import org.bigbluebutton.common.converters.ToJsonEncoder
 import org.bigbluebutton.common.messages.SipVideoUpdatedInVoiceConfMessage
 import org.bigbluebutton.common.messages.SipPhoneUpdatedInVoiceConfMessage
+import org.bigbluebutton.common.messages.StartTranscoderRequestMessage
+import org.bigbluebutton.common.messages.UpdateTranscoderRequestMessage
+import org.bigbluebutton.common.messages.StopTranscoderRequestMessage
 import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage
 import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage
 import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
@@ -113,6 +116,9 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: UserListeningOnly => handleUserListeningOnly(msg)
     case msg: SipVideoUpdated => handleSipVideoUpdated(msg)
     case msg: SipPhoneUpdated => handleSipPhoneUpdated(msg)
+    case msg: StartTranscoderRequest => handleStartTranscoderRequest(msg)
+    case msg: UpdateTranscoderRequest => handleUpdateTranscoderRequest(msg)
+    case msg: StopTranscoderRequest => handleStopTranscoderRequest(msg)
     case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
     case msg: VoiceCancelDial => handleVoiceCancelDial(msg)
     case msg: VoiceDialing2 => handleVoiceDialing(msg)
@@ -643,8 +649,23 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   }
 
   private def handleSipPhoneUpdated(msg: SipPhoneUpdated) {
-    val svu = new SipPhoneUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipPhonePresent)
-    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, svu.toJson())
+    val spu = new SipPhoneUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipPhonePresent)
+    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, spu.toJson())
+  }
+
+  private def handleStartTranscoderRequest(msg: StartTranscoderRequest) {
+    val str = new StartTranscoderRequestMessage(msg.meetingID, msg.transcoderId, mapAsJavaMap(msg.params))
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
+  }
+
+  private def handleUpdateTranscoderRequest(msg: UpdateTranscoderRequest) {
+    val str = new UpdateTranscoderRequestMessage(msg.meetingID, msg.transcoderId, mapAsJavaMap(msg.params))
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
+  }
+
+  private def handleStopTranscoderRequest(msg: StopTranscoderRequest) {
+    val str = new StopTranscoderRequestMessage(msg.meetingID, msg.transcoderId)
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
   }
 
   private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {

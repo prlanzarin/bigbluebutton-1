@@ -1,16 +1,13 @@
-package org.bigbluebutton.voiceconf.sip;
+package org.bigbluebutton.transcode.core.processmonitor;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import org.slf4j.Logger;
-import org.red5.logging.Red5LoggerFactory;
-
 import java.io.IOException;
+import org.bigbluebutton.transcode.core.ffmpeg.FFmpegConstants;
 
 public class ProcessStream {
-    private static Logger log = Red5LoggerFactory.getLogger(ProcessStream.class, "sip");
     private InputStream stream;
     private Thread thread;
     private String type;
@@ -34,7 +31,7 @@ public class ProcessStream {
                     BufferedReader ibr = new BufferedReader(isr);
                     output = "";
                     while ((line = ibr.readLine()) != null) {
-                        //log.debug("[{}]"+line,type);
+                        ////log.debug("[{}]"+line,type);
                         updateCurrentStatusFromOutput(line);
                         output+=line+"\n";
                     }
@@ -42,7 +39,7 @@ public class ProcessStream {
                     close();
                 }
                 catch(IOException ioe) {
-                    log.debug("Finishing process stream [type={}] because there's no more data to be read",type);
+                    //log.debug("Finishing process stream [type={}] because there's no more data to be read",type);
                     close();
                 }
             }
@@ -53,13 +50,13 @@ public class ProcessStream {
     protected void close() {
         try {
             if(this.stream != null) {
-                //log.debug("Closing process stream");
+                ////log.debug("Closing process stream");
                 this.stream.close();
                 this.stream = null;
             }
         }
         catch(IOException ioe) {
-            log.debug("IOException");
+            //log.debug("IOException");
         }
     }
 
@@ -76,7 +73,7 @@ public class ProcessStream {
     private void updateCurrentStatusFromOutput(String outputLine){
         if (outputLine != null){
             if (outputLine.contains(FFmpegConstants.FFMPEG_EXIT_WITH_NO_INPUT_OUTPUT)){
-                //log.debug("FFmpeg exited with no input status.");
+                ////log.debug("FFmpeg exited with no input status.");
                 exitStatus = FFmpegConstants.EXIT_WITH_NO_INPUT_STATUS;
             }
             /*else if outputLine.contains(FFmpegConstants....)

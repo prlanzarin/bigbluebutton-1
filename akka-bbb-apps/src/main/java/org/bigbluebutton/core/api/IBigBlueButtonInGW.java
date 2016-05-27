@@ -77,6 +77,7 @@ public interface IBigBlueButtonInGW {
 	void voiceHangingUp(String meetingID, String userId, String uuid, String callState, String hangupCause);
 	void setNewGlobalVideoStreamName(String meetingId, String globalVideoStreamName);
 	void updateSipVideoStatus(String meetingId, String width, String height);
+	void updateCallAgent(String meetingId, String userId, String localIpAddress, String localVideoPort, String remoteVideoPort, String sipHost);
     void requestUpdateVideoStatus(String meetingId);
 
 	// Presentation
@@ -123,5 +124,11 @@ public interface IBigBlueButtonInGW {
 	void enableWhiteboard(String meetingID, String requesterID, Boolean enable);
 	void isWhiteboardEnabled(String meetingID, String requesterID, String replyTo);
 
+	//Transcode
+	void startTranscoderReply(String meetingId, String transcoderId, Map<String,String> params);
+	void updateTranscoderReply(String meetingId, String transcoderId, Map<String,String> params);
+	void stopTranscoderReply(String meetingId, String transcoderId);
+	void transcoderStatusUpdate(String meetingId, String transcoderId, Map<String,String> params);
+	void startProbingReply(String meetingId, String transcoderId, Map<String,String> params);
 	
 }

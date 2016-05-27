@@ -1,4 +1,4 @@
-package org.bigbluebutton.voiceconf.sip;
+package org.bigbluebutton.transcode.core.ffmpeg;
 
 public class FFmpegConstants {
 
@@ -17,6 +17,13 @@ public class FFmpegConstants {
 
     //output constants (obtained from verbose stderr/out)
     public static String FFMPEG_EXIT_WITH_NO_INPUT_OUTPUT = "Connection timed out";
+    public static String WIDTH = "width";
+    public static String HEIGHT = "height";
+
+    //Codecs
+    public static final String CODEC_ID_H264 = "96" ;
+    public static final String CODEC_NAME_H264 = "H264" ;
+    public static final String SAMPLE_RATE_H264 = "90000" ;
 
     public static boolean acceptableExitCode(int code){
         int i;

@@ -1,4 +1,4 @@
-package org.bigbluebutton.voiceconf.red5.media.transcoder;
+package org.bigbluebutton.transcode.core;
 
 import java.util.Map;
 

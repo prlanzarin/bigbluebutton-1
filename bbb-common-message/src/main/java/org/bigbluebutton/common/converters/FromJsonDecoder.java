@@ -32,7 +32,6 @@ public class FromJsonDecoder {
 					StartCustomPollRequestMessage msg = gson.fromJson(message, StartCustomPollRequestMessage.class);
 					return msg;
 				} else {
-					System.out.println("Unknown message name=[" + messageName + "]");
 					return null;
 				}
 			}

@@ -137,6 +137,11 @@ case class WhiteboardEnabledEvent(meetingID: String, recorded: Boolean, requeste
 case class IsWhiteboardEnabledReply(meetingID: String, recorded: Boolean, requesterID: String, enabled: Boolean, replyTo: String) extends IOutMessage
 case class GetAllMeetingsReply(meetings: Array[MeetingInfo]) extends IOutMessage
 
+//Transcode
+case class StartTranscoderRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
+case class UpdateTranscoderRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
+case class StopTranscoderRequest(meetingID: String, transcoderId: String) extends IOutMessage
+case class StartProbingRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
 // Value Objects
 case class MeetingVO(id: String, recorded: Boolean)
 

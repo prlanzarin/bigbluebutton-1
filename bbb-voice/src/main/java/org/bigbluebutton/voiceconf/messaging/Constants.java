@@ -94,4 +94,8 @@ public class Constants {
   public static final String SIP_PHONE_UPDATE                = "sip_phone_updated_in_voice_conf_message";
   public static final String IS_SIP_PHONE_PRESENT            = "is_sip_phone_present";
   public static final String VOICE_CONF_ID                   = "voice_conf_id";
+  public static final String LOCAL_VIDEO_PORT                = "local_video_port";
+  public static final String REMOTE_VIDEO_PORT               = "remote_video_port";
+  public static final String SIP_HOST                        = "sip_host";
+
 }

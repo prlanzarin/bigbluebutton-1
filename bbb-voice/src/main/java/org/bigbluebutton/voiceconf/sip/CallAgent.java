@@ -1,7 +1,7 @@
 /**
 * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
 *
-* Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+* Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
 *
 * This program is free software; you can redistribute it and/or modify it under the
 * terms of the GNU Lesser General Public License as published by the Free Software
@@ -51,10 +51,8 @@ import java.util.regex.Matcher;
 import java.net.URLDecoder;
 import java.io.UnsupportedEncodingException;
 
-import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoder;
-import org.bigbluebutton.voiceconf.red5.media.transcoder.VideoTranscoderObserver;
 
-public class CallAgent extends CallListenerAdapter implements CallStreamObserver, VideoTranscoderObserver{
+public class CallAgent extends CallListenerAdapter implements CallStreamObserver{
     private static Logger log = Red5LoggerFactory.getLogger(CallAgent.class, "sip");
 
     private final SipPeerProfile userProfile;
@@ -87,7 +85,6 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     private String destinationPrefix;
 
-    private VideoTranscoder videoTranscoder = null;
 
     private enum CallState {
         UA_IDLE(0), UA_INCOMING_CALL(1), UA_OUTGOING_CALL(2), UA_ONCALL(3);
@@ -194,6 +191,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return videoPort;
     }
 
+    /**
+     *  Return the local IP address used for the SipUserAgent
+     *  This is the same IP address used in SDP to set origin of the media
+     */
+    private String getClientRtpIp(){
+        return this.clientRtpIp;
+    }
+
     private void setupCallerDisplayName(String callerName, String destination) {
         destinationPrefix = destination;
         String fromURL = "\"" + callerName + "\" <sip:" + destination + "@" + portProvider.getHost() + ">";
@@ -215,7 +220,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             notifyListenersOfOnCallClosed();
         } else {
             closeAudioStream();
-            stopVideoTranscoder();
+            //stopVideoTranscoder();
             if (call != null) call.hangup();
         }
         callState = CallState.UA_IDLE;
@@ -318,7 +323,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     }
 
-    private synchronized boolean beginGlobalVideoTranscoding() {
+    private synchronized boolean beginGlobalVideoTranscoding() {/*
         if (videoTranscoder == null){
             try {
                 if(!prepareGlobalVideoTranscoder()) {
@@ -342,9 +347,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }else
             log.debug("No need to start User's Video Transcoder [uid={}], it is already running.",getUserId());
             return false;
+            */
+            return false;
     }
 
     private boolean prepareGlobalVideoTranscoder(){
+        /*
         if(!checkVideoPorts()) {
             log.debug("Cannot prepare global video transcoder: ports are invalid");
             return false;
@@ -353,10 +361,12 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
         String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
         GlobalCall.createSDPVideoFile(getDestination(), sdpVideo);
+        */
         return true;
     }
 
     private boolean checkVideoPorts() {
+        /*
         log.debug("Checking ports..");
 
         if(localVideoPort == null || localVideoPort.isEmpty()) {
@@ -377,13 +387,14 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
          if(remoteVideoPort.equals("0")) {
             log.debug("***remoteVideoPort is 0. Did you set any video codecs in Freeswitch (vars.xml) ?");
             return false;
-         }
+         }*/
 
          return true;
 
     }
 
     private synchronized boolean startGlobalVideoTranscoder(){
+        /*
         if (videoTranscoder == null){
             videoTranscoder = new VideoTranscoder(VideoTranscoder.Type.TRANSCODE_RTP_TO_RTMP,
                                                   GlobalCall.getSdpVideoPath(getDestination()),
@@ -404,6 +415,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }else
             log.debug("No need to start Global Video Transcoder [uid={}], it is already running.",getUserId());
             return false;
+            */
+            return true;
     }
 
    public void startBbbToFreeswitchAudioStream(IBroadcastStream broadcastStream, IScope scope) {
@@ -425,6 +438,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     }
 
     public void startBbbToFreeswitchVideoStream(){
+        /*
         if (!GlobalCall.isUserVideoAbleToRun(getDestination())){
             log.debug("User's video transcoder won't start because there's no need to (check previous log message)");
             return;
@@ -444,15 +458,19 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
              startBbbToFreeswitchWebRTCVideoStream(type);
         else
             startBbbToFreeswitchFlashVideoStream(type);
+
+            */
     }
 
     public void stopBbbToFreeswitchVideoStream(){
+        /*
         if (isWebRTC())
             stopBbbToFreeswitchWebRTCVideoStream();
        else
            stopBbbToFreeswitchFlashVideoStream();
+           */
     }
-
+/*
     private void startBbbToFreeswitchFlashVideoStream(VideoTranscoder.Type type) {
         //start flash video transcoder
         try {
@@ -494,19 +512,21 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
     private void stopBbbToFreeswitchWebRTCVideoStream(){
         stopVideoTranscoder();
     }
-
+*/
     public boolean startFreeswitchToBbbVideoStream(){
-       return beginGlobalVideoTranscoding();
+       //return beginGlobalVideoTranscoding();
+        //Send message to akka-transcode
+        return false;
     }
 
     public void startFreeswitchToBbbVideoProbe(){
-      if(videoTranscoder != null){
+      /*if(videoTranscoder != null){
           videoTranscoder.probeVideoStream();
-      }
+      }*/
     }
 
     public void stopFreeswitchToBbbGlobalVideoStream(){
-        stopVideoTranscoder();
+        //stopVideoTranscoder();
     }
 
     private void closeAudioStream() {
@@ -519,11 +539,8 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
     }
 
+/*
     private synchronized void stopVideoTranscoder(){
-      /*
-       * closes videoTranscoder
-       */
-
         if(videoTranscoder != null) {
             log.debug("Shutting down the video transcoder...");
             setVideoRunning(false);
@@ -542,7 +559,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
             log.debug("No need to stop Video Transcoder [uid={}], it already stopped.",getUserId());
         }
     }
-
+*/
     public void connectToGlobalStream(String clientId, String userId, String callerIdName, String voiceConf) throws GlobalCallNotFoundException {
         _destination = voiceConf;
         GlobalCall.addUser(clientId, callerIdName,userId, _destination);
@@ -601,6 +618,15 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
 
     }
 
+    /*
+     * Update's call agent info in server.
+     * This information will be used to start/stop user's transcoder in akka-bbb-transcode
+     *
+     */
+    public void updateCallAgentInfo() {
+        if (messagingService != null)
+            messagingService.updateCallAgent(getMeetingId(), getUserId(), getClientRtpIp(), getLocalVideoPort(), getRemoteVideoPort(), getServerIp());
+    }
 
     /** Callback function called when arriving a 2xx (call accepted)
      *  The user has managed to join the conference.
@@ -618,7 +644,11 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         }
 
         createStreams();
-        callAgentObserver.handleCallAccepted(getUserId(),getDestination(),getMeetingId());
+        //callAgentObserver.handleCallAccepted(getUserId(),getDestination(),getMeetingId());
+        SessionDescriptor localSdp = new SessionDescriptor(call.getLocalSessionDescriptor());
+        String sdpVideo = SessionDescriptorUtil.getLocalVideoSDP(localSdp);
+        log.debug("VIDEO SDP = {}",sdpVideo);
+        updateCallAgentInfo();
     }
 
     /** Callback function called when arriving an ACK method (call confirmed) */
@@ -742,7 +772,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
         closeAudioStream();
-        stopVideoTranscoder();
+        //stopVideoTranscoder();
         notifyCallAgentObserverOnCallAgentClosed();
 
         // Reset local sdp for next call.
@@ -763,7 +793,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         notifyListenersOfOnCallClosed();
         callState = CallState.UA_IDLE;
         closeAudioStream();
-        stopVideoTranscoder();
+        //stopVideoTranscoder();
 
     }
 
@@ -888,14 +918,15 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
         return this._videoStreamName;
     }
 
-    @Override
+    /*@Override
     public void handleTranscodingFinishedUnsuccessfully() {
         if(isGlobalStream()){
             restartGlobalTranscoder();
         }else restartUserTranscoder();
-    }
+    }*/
 
     public synchronized void restartGlobalTranscoder(){
+        /*
         if (videoTranscoder != null){
             //update global's video stream name every time the transcoder is restarted
             setVideoStreamName(GlobalCall.GLOBAL_VIDEO_STREAM_NAME_PREFIX + getDestination() + "_"+System.currentTimeMillis());
@@ -906,18 +937,21 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
                 log.debug("Global Video Transcoder not restarted. Current floor = {}",GlobalCall.getFloorHolderUserId(getDestination()));
         }else
             log.debug("Global Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
+        */
     }
 
     public synchronized void restartUserTranscoder(){
+        /*
         if (videoTranscoder != null){
             videoTranscoder.restart("");
         }else
             log.debug("User's Video Transcoder won't restart because global call already finished [uid={}]",getUserId());
+        */
     }
+    /*
     @Override
     public void handleTranscodingFinishedWithSuccess() {
         //called by ProcessMonitor when successfully finished
-
         if(isGlobalStream()){
             stopVideoTranscoder();
             log.debug("(******* GLOBAL TRANSCODER ******) [uid={}] finished with success .",getUserId());
@@ -943,7 +977,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
           log.debug("Could not send updateSipVideoStatus: Probe result is null.");
         }
     }
-
+    */
 	public void setLocalVideoPort(String localVideoPort){
 		this.localVideoPort = localVideoPort;
 	}
