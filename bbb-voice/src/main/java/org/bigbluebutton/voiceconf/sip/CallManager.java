@@ -1,7 +1,7 @@
 /**
 * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
 * 
-* Copyright (c) 2012 BigBlueButton Inc. and by respective authors (see below).
+* Copyright (c) 2016 BigBlueButton Inc. and by respective authors (see below).
 *
 * This program is free software; you can redistribute it and/or modify it under the
 * terms of the GNU Lesser General Public License as published by the Free Software
@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CallManager {
 	private final Map<String, CallAgent> calls = new ConcurrentHashMap<String, CallAgent>();
-	private final Map<String, String> videoStreams = new ConcurrentHashMap<String, String>();
 	
 	public CallAgent add(CallAgent ca) {
 		return calls.put(ca.getUserId(), ca);
@@ -35,15 +34,6 @@ public class CallManager {
 	        return calls.remove(userId);
 		}else return null;
 
-	}
-
-	public String addVideoStream(String userId, String stream) {
-		return videoStreams.put(userId, stream);
-	}
-
-	public String removeVideoStream(String userId) {
-		String uid = userId;
-		return videoStreams.remove(uid);
 	}
 
 	public CallAgent removeByUserId(String userId) {
@@ -64,16 +54,8 @@ public class CallManager {
         return get(GlobalCall.LISTENONLY_USERID_PREFIX+voiceconf);
     }
 
-	public String getVideoStream(String userId) {
-		String uid = userId;
-		return videoStreams.get(uid);
-	}
 
 	public Collection<CallAgent> getAll() {
 		return calls.values();
-	}
-
-	public Map<String, String> getAllSavedVideoStreams() {
-		return videoStreams;
 	}
 }

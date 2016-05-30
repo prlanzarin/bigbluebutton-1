@@ -7,18 +7,15 @@ import org.bigbluebutton.common.messages.CreateMeetingMessage;
 import org.bigbluebutton.common.messages.DestroyMeetingMessage;
 import org.bigbluebutton.common.messages.EndMeetingMessage;
 import org.bigbluebutton.common.messages.GetAllMeetingsRequest;
-import org.bigbluebutton.common.messages.GlobalVideoStreamCreatedMessage;
 import org.bigbluebutton.common.messages.IBigBlueButtonMessage;
 import org.bigbluebutton.common.messages.KeepAliveMessage;
 import org.bigbluebutton.common.messages.MessageFromJsonConverter;
 import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.PubSubPingMessage;
 import org.bigbluebutton.common.messages.RegisterUserMessage;
-import org.bigbluebutton.common.messages.RequestUpdateVideoStatusMessage;
 import org.bigbluebutton.common.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.common.messages.UserDisconnectedFromGlobalAudio;
 import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
-import org.bigbluebutton.common.messages.UpdateSipVideoStatusMessage;
 import org.bigbluebutton.common.messages.ValidateAuthTokenMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 import org.slf4j.Logger;
@@ -32,8 +29,6 @@ public class MeetingMessageReceiver implements MessageHandler {
 	private static final Logger LOG = LoggerFactory.getLogger(MeetingMessageReceiver.class);
 	
 	private IBigBlueButtonInGW bbbGW;
-
-	private String globalVideoStreamName = "";
 	
 	public MeetingMessageReceiver(IBigBlueButtonInGW bbbGW) {
 		this.bbbGW = bbbGW;
@@ -99,18 +94,6 @@ public class MeetingMessageReceiver implements MessageHandler {
 				else if (msg instanceof GetAllMeetingsRequest) {
 					GetAllMeetingsRequest emm = (GetAllMeetingsRequest) msg;
 					bbbGW.getAllMeetings("no_need_of_a_meeting_id");
-				}
-				else if (msg instanceof GlobalVideoStreamCreatedMessage){
-					  GlobalVideoStreamCreatedMessage streamCreatedMessage = (GlobalVideoStreamCreatedMessage) msg;
-					  bbbGW.setNewGlobalVideoStreamName(streamCreatedMessage.meetingId, streamCreatedMessage.videoStreamName);
-				}
-				else if (msg instanceof UpdateSipVideoStatusMessage) {
-					  UpdateSipVideoStatusMessage udpateSipVideoStatus = (UpdateSipVideoStatusMessage) msg;
-					  bbbGW.updateSipVideoStatus(udpateSipVideoStatus.meetingId, udpateSipVideoStatus.width , udpateSipVideoStatus.height);
-
-				} else if (msg instanceof RequestUpdateVideoStatusMessage){
-					  RequestUpdateVideoStatusMessage requestUpdateVideoStatus = (RequestUpdateVideoStatusMessage) msg;
-					  bbbGW.requestUpdateVideoStatus(requestUpdateVideoStatus.meetingId);
 				}
 				else if (msg instanceof UpdateCallAgentMessage) {
 					  UpdateCallAgentMessage updateCallAgentMessage = (UpdateCallAgentMessage) msg;

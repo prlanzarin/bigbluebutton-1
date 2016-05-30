@@ -30,7 +30,6 @@ import org.bigbluebutton.core.recorders.events.UndoShapeWhiteboardRecordEvent
 import org.bigbluebutton.core.recorders.events.ClearPageWhiteboardRecordEvent
 import org.bigbluebutton.core.recorders.events.AddShapeWhiteboardRecordEvent
 import org.bigbluebutton.core.recorders.events.SipVideoUpdatedRecordEvent
-import org.bigbluebutton.core.recorders.events.SipPhoneUpdatedRecordEvent
 import org.bigbluebutton.core.recorders.events.VoiceDialingRecordEvent
 import org.bigbluebutton.core.recorders.events.VoiceHangingUpRecordEvent
 import org.bigbluebutton.core.recorders.events.VoiceOutboundDialRecordEvent
@@ -65,7 +64,6 @@ class RecorderActor(val meetingId: String, val recorder: RecorderApplication)
     case msg: UserJoinedVoice => handleUserJoinedVoice(msg)
     case msg: UserLeftVoice => handleUserLeftVoice(msg)
     case msg: SipVideoUpdated => handleSipVideoUpdated(msg)
-    case msg: SipPhoneUpdated => handleSipPhoneUpdated(msg)
     case msg: VoiceDialing2 => handleVoiceDialing(msg)
     case msg: VoiceHangingUp2 => handleVoiceHangingUp(msg)
     case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
@@ -292,17 +290,6 @@ class RecorderActor(val meetingId: String, val recorder: RecorderApplication)
       ev.setSipVideoPresent(msg.isSipVideoPresent.toString());
       ev.setSipVideoStreamName(msg.sipVideoStreamName.toString());
       ev.setActiveTalker(msg.talkerUserId);
-      recorder.record(msg.meetingID, ev);
-    }
-  }
-
-  private def handleSipPhoneUpdated(msg: SipPhoneUpdated) {
-    if (msg.recorded) {
-      val ev = new SipPhoneUpdatedRecordEvent();
-      ev.setTimestamp(TimestampGenerator.generateTimestamp);
-      ev.setMeetingId(msg.meetingID);
-      ev.setBridge(msg.voiceBridge);
-      ev.setSipPhonePresent(msg.isSipPhonePresent.toString());
       recorder.record(msg.meetingID, ev);
     }
   }

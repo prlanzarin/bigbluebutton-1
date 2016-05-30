@@ -71,7 +71,6 @@ case class StartRecordingVoiceConf(meetingID: String, recorded: Boolean, voiceCo
 case class StopRecordingVoiceConf(meetingID: String, recorded: Boolean, voiceConfId: String, recordedStream: String) extends IOutMessage
 case class StopRecording(meetingID: String, recorded: Boolean, requesterID: String) extends IOutMessage
 case class SipVideoUpdated(meetingID: String, recorded: Boolean, voiceBridge: String, isSipVideoPresent: Boolean, sipVideoStreamName: String, talkerUserId: String, width: String, height: String) extends IOutMessage
-case class SipPhoneUpdated(meetingID: String, recorded: Boolean, voiceBridge: String, isSipPhonePresent: Boolean) extends IOutMessage
 
 // Chat
 case class GetChatHistoryReply(meetingID: String, recorded: Boolean, requesterID: String,

@@ -85,14 +85,6 @@ public class Constants {
   public static final String X_PERCENT                       = "x_percent";
   public static final String Y_PERCENT                       = "y_percent";
   public static final String KEEP_ALIVE_ID                   = "keep_alive_id"; 
-  public static final String SIP_VIDEO_UPDATE                = "sip_video_updated_in_voice_conf_message";
-  public static final String TALKER_USER_ID                  = "talker_user_id";
-  public static final String IS_SIP_VIDEO_PRESENT            = "is_sip_video_present";
-  public static final String VIDEO_STREAM_NAME               = "video_stream_name";
-  public static final String USER_SHARED_WEBCAM              = "user_shared_webcam_message";
-  public static final String USER_UNSHARED_WEBCAM            = "user_unshared_webcam_message";
-  public static final String SIP_PHONE_UPDATE                = "sip_phone_updated_in_voice_conf_message";
-  public static final String IS_SIP_PHONE_PRESENT            = "is_sip_phone_present";
   public static final String VOICE_CONF_ID                   = "voice_conf_id";
   public static final String LOCAL_VIDEO_PORT                = "local_video_port";
   public static final String REMOTE_VIDEO_PORT               = "remote_video_port";

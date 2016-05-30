@@ -475,20 +475,8 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
     bbbActor ! new VoiceHangingUp(voiceConfId, userId, uuid, callState, hangupCause)
   }
 
-  def setNewGlobalVideoStreamName(meetingId: String, videoStreamName: String) {
-    bbbActor ! new NewGlobalVideoStreamName(meetingId, videoStreamName)
-  }
-
-  def updateSipVideoStatus(meetingId: String, width: String, height: String) {
-    bbbActor ! new UpdateSipVideoStatus(meetingId, width, height)
-  }
-
   def updateCallAgent(meetingId: String, userId: String, localIpAddress: String, localVideoPort: String, remoteVideoPort: String, sipHost: String) {
     bbbActor ! new UpdateCallAgent(meetingId, userId, localIpAddress, localVideoPort, remoteVideoPort, sipHost)
-  }
-
-  def requestUpdateVideoStatus(meetingId: String) {
-    bbbActor ! new RequestUpdateVideoStatus(meetingId)
   }
 
   // Polling

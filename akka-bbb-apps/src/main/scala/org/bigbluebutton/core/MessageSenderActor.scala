@@ -29,7 +29,6 @@ import org.bigbluebutton.common.messages.LockLayoutMessage
 import org.bigbluebutton.core.pubsub.senders.WhiteboardMessageToJsonConverter
 import org.bigbluebutton.common.converters.ToJsonEncoder
 import org.bigbluebutton.common.messages.SipVideoUpdatedInVoiceConfMessage
-import org.bigbluebutton.common.messages.SipPhoneUpdatedInVoiceConfMessage
 import org.bigbluebutton.common.messages.StartTranscoderRequestMessage
 import org.bigbluebutton.common.messages.UpdateTranscoderRequestMessage
 import org.bigbluebutton.common.messages.StopTranscoderRequestMessage
@@ -115,7 +114,6 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: IsMeetingMutedReply => handleIsMeetingMutedReply(msg)
     case msg: UserListeningOnly => handleUserListeningOnly(msg)
     case msg: SipVideoUpdated => handleSipVideoUpdated(msg)
-    case msg: SipPhoneUpdated => handleSipPhoneUpdated(msg)
     case msg: StartTranscoderRequest => handleStartTranscoderRequest(msg)
     case msg: UpdateTranscoderRequest => handleUpdateTranscoderRequest(msg)
     case msg: StopTranscoderRequest => handleStopTranscoderRequest(msg)
@@ -545,13 +543,11 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleUserSharedWebcam(msg: UserSharedWebcam) {
     val json = UsersMessageToJsonConverter.userSharedWebcamToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
-    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, json)
   }
 
   private def handleUserUnsharedWebcam(msg: UserUnsharedWebcam) {
     val json = UsersMessageToJsonConverter.userUnsharedWebcamToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
-    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, json)
   }
 
   private def handleGetUsersReply(msg: GetUsersReply) {
@@ -645,12 +641,6 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleSipVideoUpdated(msg: SipVideoUpdated) {
     val svu = new SipVideoUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipVideoPresent, msg.sipVideoStreamName, msg.talkerUserId, msg.width, msg.height)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, svu.toJson())
-    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, svu.toJson())
-  }
-
-  private def handleSipPhoneUpdated(msg: SipPhoneUpdated) {
-    val spu = new SipPhoneUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipPhonePresent)
-    service.send(MessagingConstants.TO_BBB_VOICE_CHANNEL, spu.toJson())
   }
 
   private def handleStartTranscoderRequest(msg: StartTranscoderRequest) {

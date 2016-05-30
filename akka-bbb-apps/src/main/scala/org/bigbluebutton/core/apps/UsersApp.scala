@@ -586,7 +586,6 @@ trait UsersApp {
       meetingModel.setSipPhonePresent(false)
       meetingModel.setGlobalVideoStreamName("")
       stopAllTranscoders()
-      //outGW.send(new SipPhoneUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipPhonePresent()))
       outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
     }
     log.info("Is there any phoneUser sending video in this meeting? " + meetingModel.isSipPhonePresent())

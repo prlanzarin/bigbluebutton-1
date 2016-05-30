@@ -114,10 +114,7 @@ case class VoiceHangingUp(voiceConfId: String, requesterID: String, uuid: String
 case class SipVideoPaused(voiceConfId: String)
 case class SipVideoResumed(voiceConfId: String)
 case class ActiveTalkerChanged(voiceConfId: String, voiceUserId: String)
-case class NewGlobalVideoStreamName(meetingID: String, globalVideoStreamName: String) extends InMessage
-case class UpdateSipVideoStatus(meetingID: String, width: String, height: String) extends InMessage
 case class UpdateCallAgent(meetingID: String, userId: String, localIpAddress: String, localVideoPort: String, remoteVideoPort: String, sipHost: String) extends InMessage
-case class RequestUpdateVideoStatus(meetingID: String) extends InMessage
 
 // Whiteboard
 case class SendWhiteboardAnnotationRequest(meetingID: String, requesterID: String, annotation: AnnotationVO) extends InMessage

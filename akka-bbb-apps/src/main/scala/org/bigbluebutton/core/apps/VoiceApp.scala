@@ -10,27 +10,6 @@ trait VoiceApp {
 
   val outGW: OutMessageGateway
 
-  def handleNewGlobalVideoStreamName(msg: NewGlobalVideoStreamName) {
-    meetingModel.setGlobalVideoStreamName(msg.globalVideoStreamName)
-    log.debug("New video stream name is set: Sending SipVideoUpdated event " +
-      "(isSipVideoPresent=" + meetingModel.isSipVideoPresent() + ") " +
-      "(globalVideoStreamName=" + meetingModel.globalVideoStreamName() + ")")
-
-    outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
-  }
-
-  def handleUpdateSipVideoStatus(msg: UpdateSipVideoStatus) {
-    meetingModel.setGlobalVideoStreamWidth(msg.width)
-    meetingModel.setGlobalVideoStreamHeight(msg.height)
-    log.debug("Global Video stream Status Updated: Sending SipVideoUpdated event " +
-      "(isSipVideoPresent=" + meetingModel.isSipVideoPresent() + ") " +
-      "(globalVideoStreamName=" + meetingModel.globalVideoStreamName() + ")" +
-      "(width:" + meetingModel.globalVideoStreamWidth() + ")" +
-      "(height:" + meetingModel.globalVideoStreamHeight() + ")")
-
-    outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
-  }
-
   def handleUpdateCallAgent(msg: UpdateCallAgent) {
     if (usersModel.isGlobalCallAgent(msg.userId)) {
       meetingModel.setGlobalCallCallername(msg.userId)
@@ -77,15 +56,6 @@ trait VoiceApp {
       }
     }
 
-  }
-
-  def handleRequestUpdateVideoStatus(msg: RequestUpdateVideoStatus) {
-    log.debug("SipVideoUpdate requested. Sending it " +
-      "(globalVideoStreamName=" + meetingModel.globalVideoStreamName() + ")" +
-      "(currentFloorHolder=" + meetingModel.talkerUserId() + ")" +
-      "(isSipVideoPresent=" + meetingModel.isSipVideoPresent() + ")")
-
-    outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
   }
 
   def handleVoiceOutboundDialRequest(msg: VoiceOutboundDialRequest) {

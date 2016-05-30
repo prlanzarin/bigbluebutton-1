@@ -21,7 +21,6 @@ package org.bigbluebutton.voiceconf.sip;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
 import org.zoolu.sip.provider.*;
 import org.zoolu.net.SocketAddress;
 import org.slf4j.Logger;
@@ -188,15 +187,9 @@ public class SipPeer implements SipRegisterAgentListener, CallAgentObserver {
 
     public void startBbbToFreeswitchAudioStream(String clientId, String userId, IBroadcastStream broadcastStream, IScope scope) {
         CallAgent ca = callManager.get(userId);
-        String videoStream = callManager.getVideoStream(userId);
         log.debug("Starting Audio Stream for the user ["+userId+"]");
         if (ca != null) {
             ca.startBbbToFreeswitchAudioStream(broadcastStream, scope);
-            if (videoStream != null){
-                log.debug(" There's a VideoStream for this audio call, starting it ");
-                ca.setVideoStreamName(videoStream);
-                ca.startBbbToFreeswitchVideoStream();
-            }else log.debug("There's no videostream for this flash audio call yet.");
         }
     }
     

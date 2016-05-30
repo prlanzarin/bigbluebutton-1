@@ -25,7 +25,6 @@ import org.zoolu.sdp.MediaField;
 import org.zoolu.sdp.SessionDescriptor;
 import org.zoolu.tools.Parser;
 
-
 public class SessionDescriptorUtil {
     public static final String SDP_MEDIA_AUDIO = "audio";
     public static final String SDP_MEDIA_VIDEO = "video";

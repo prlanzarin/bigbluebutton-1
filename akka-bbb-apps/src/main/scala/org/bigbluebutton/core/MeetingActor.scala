@@ -29,7 +29,6 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
   val pollModel = new PollModel()
   val wbModel = new WhiteboardModel()
   val presModel = new PresentationModel()
-  //val sipVideoModel = new SipVideoModel()
 
   import context.dispatcher
   context.system.scheduler.schedule(2 seconds, 30 seconds, self, "MonitorNumberOfWebUsers")
@@ -59,14 +58,8 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleSipVideoPaused(msg)
     case msg: SipVideoResumed =>
       handleSipVideoResumed(msg)
-    case msg: NewGlobalVideoStreamName =>
-      handleNewGlobalVideoStreamName(msg)
-    case msg: UpdateSipVideoStatus =>
-      handleUpdateSipVideoStatus(msg)
     case msg: UpdateCallAgent =>
       handleUpdateCallAgent(msg)
-    case msg: RequestUpdateVideoStatus =>
-      handleRequestUpdateVideoStatus(msg)
     case msg: ActiveTalkerChanged =>
       handleActiveTalkerChanged(msg)
     case msg: VoiceOutboundDialRequest =>

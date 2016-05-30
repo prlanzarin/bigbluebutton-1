@@ -3,13 +3,10 @@ package org.bigbluebutton.voiceconf.messaging;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bigbluebutton.voiceconf.messaging.messages.GlobalVideoStreamCreated;
-import org.bigbluebutton.voiceconf.messaging.messages.RequestUpdateVideoStatus;
-import org.bigbluebutton.voiceconf.messaging.messages.UpdateSipVideoStatus;
 import org.bigbluebutton.voiceconf.messaging.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.voiceconf.messaging.messages.UserDisconnectedFromGlobalAudio;
-import org.red5.logging.Red5LoggerFactory;
 import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
+import org.red5.logging.Red5LoggerFactory;
 import org.slf4j.Logger;
 
 public class RedisMessagingService implements IMessagingService {

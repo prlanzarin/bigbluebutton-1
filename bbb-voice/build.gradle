@@ -97,8 +97,9 @@ dependencies {
 	compile "redis.clients:jedis:2.1.0"
 	providedCompile 'commons-pool:commons-pool:1.5.6'
 	compile 'com.google.code.gson:gson:1.7.1'
-  
 
+  //common messages
+  compile 'org.bigbluebutton:bbb-common-message:0.0.16'
 }
 
 test {

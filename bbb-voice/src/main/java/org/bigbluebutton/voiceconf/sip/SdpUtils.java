@@ -60,8 +60,6 @@ public class SdpUtils {
 
         return sipAudioCodec;
     }
-
-
     
     
     /**
