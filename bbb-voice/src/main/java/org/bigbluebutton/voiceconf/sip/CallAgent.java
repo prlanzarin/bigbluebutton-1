@@ -396,7 +396,7 @@ public class CallAgent extends CallListenerAdapter implements CallStreamObserver
      *
      */
     public void updateCallAgentInfo() {
-        if (messagingService != null)
+        if ((messagingService != null) && (GlobalCall.isSipVideoEnabled()))
             messagingService.updateCallAgent(getMeetingId(), getUserId(), getClientRtpIp(), getLocalVideoPort(), getRemoteVideoPort(), getServerIp());
     }
 

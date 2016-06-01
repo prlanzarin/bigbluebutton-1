@@ -266,7 +266,7 @@ trait UsersApp {
       outGW.send(new DisconnectUser(mProps.meetingID, msg.userId))
 
       outGW.send(new UserLeft(msg.meetingID, mProps.recorded, user))
-      sendSipPhoneLeft()
+      sipPhoneLeft()
     }
   }
 
@@ -574,14 +574,14 @@ trait UsersApp {
           val userLeaving = usersModel.removeUser(user.userID)
           userLeaving foreach (u => outGW.send(new UserLeft(mProps.meetingID, mProps.recorded, u)))
         }
-        sendSipPhoneLeft()
+        sipPhoneLeft()
       }
 
       stopRecordingVoiceConference()
     }
   }
 
-  def sendSipPhoneLeft() {
+  def sipPhoneLeft() {
     if (usersModel.getPhoneUsersSendingVideo.isEmpty) {
       meetingModel.setSipPhonePresent(false)
       meetingModel.setGlobalVideoStreamName("")

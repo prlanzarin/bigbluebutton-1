@@ -479,13 +479,6 @@
       startCall(true);
     }
 
-    public function handleFlashLeftVoiceConference():void {
-      if (isConnected()) {
-        streamManager.stopStreams();
-        connectionManager.disconnect(true);
-      }
-    }
-
     public function handleReconnectSIPSucceededEvent():void {
       if (state != ON_LISTEN_ONLY_STREAM) {
         var e:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.EJECT_USER);

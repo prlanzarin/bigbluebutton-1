@@ -113,7 +113,7 @@ trait VoiceApp {
   }
 
   def handleTranscoding() {
-    if (meetingModel.isSipPhonePresent()) {
+    if (meetingModel.isSipPhonePresent() && meetingModel.isSipVideoEnabled()) {
       startTranscoder(meetingModel.talkerUserId())
     } else {
       stopAllTranscoders()

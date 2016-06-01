@@ -218,6 +218,10 @@ class MeetingModel {
     _sipHost
   }
 
+  def isSipVideoEnabled(): Boolean = {
+    !globalCallCallername.isEmpty() && !globalCallLocalIpAddress.isEmpty() && !globalCallLocalVideoPort.isEmpty() && !globalCallRemoteVideoPort.isEmpty() && !sipHost.isEmpty()
+  }
+
   def isVideoconferenceStream(streamName: String): Boolean = {
     Option(streamName) match {
       case Some(s) => s.startsWith(VIDEOCONFERENCE_STREAM_NAME)
