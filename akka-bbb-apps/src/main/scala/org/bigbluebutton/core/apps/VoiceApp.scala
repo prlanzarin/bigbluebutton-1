@@ -27,7 +27,7 @@ trait VoiceApp {
         params += MessagesConstants.LOCAL_IP_ADDRESS -> meetingModel.globalCallLocalIpAddress()
         params += MessagesConstants.LOCAL_VIDEO_PORT -> meetingModel.globalCallLocalVideoPort()
         params += MessagesConstants.REMOTE_VIDEO_PORT -> meetingModel.globalCallRemoteVideoPort()
-        params += MessagesConstants.SIP_HOST -> meetingModel.sipHost()
+        params += MessagesConstants.DESTINATION_IP_ADDRESS -> meetingModel.sipHost()
         log.debug("Global CallAgent [{}] restarted. Updating transcoder (Sending UpdateTranscoderRequest message)", mProps.voiceBridge)
         outGW.send(new UpdateTranscoderRequest(mProps.meetingID, meetingModel.globalCallCallername, params))
       }
@@ -47,7 +47,7 @@ trait VoiceApp {
             params += MessagesConstants.LOCAL_IP_ADDRESS -> nu.sipInfo.localIpAddress
             params += MessagesConstants.LOCAL_VIDEO_PORT -> nu.sipInfo.localVideoPort
             params += MessagesConstants.REMOTE_VIDEO_PORT -> nu.sipInfo.remoteVideoPort
-            params += MessagesConstants.SIP_HOST -> nu.sipInfo.sipHost
+            params += MessagesConstants.DESTINATION_IP_ADDRESS -> nu.sipInfo.sipHost
             log.debug("User [{}] restarted call agent. Updating transcoder (Sending UpdateTranscoderRequest message)", msg.userId)
             outGW.send(new UpdateTranscoderRequest(mProps.meetingID, u.userID, params))
           }
@@ -138,7 +138,7 @@ trait VoiceApp {
         params += MessagesConstants.LOCAL_IP_ADDRESS -> user.sipInfo.localIpAddress
         params += MessagesConstants.LOCAL_VIDEO_PORT -> user.sipInfo.localVideoPort
         params += MessagesConstants.REMOTE_VIDEO_PORT -> user.sipInfo.remoteVideoPort
-        params += MessagesConstants.SIP_HOST -> user.sipInfo.sipHost
+        params += MessagesConstants.DESTINATION_IP_ADDRESS -> user.sipInfo.sipHost
 
         params += MessagesConstants.MEETING_ID -> mProps.meetingID
         params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
@@ -158,7 +158,7 @@ trait VoiceApp {
         params += MessagesConstants.LOCAL_IP_ADDRESS -> meetingModel.globalCallLocalIpAddress()
         params += MessagesConstants.LOCAL_VIDEO_PORT -> meetingModel.globalCallLocalVideoPort()
         params += MessagesConstants.REMOTE_VIDEO_PORT -> meetingModel.globalCallRemoteVideoPort()
-        params += MessagesConstants.SIP_HOST -> meetingModel.sipHost()
+        params += MessagesConstants.DESTINATION_IP_ADDRESS -> meetingModel.sipHost()
         params += MessagesConstants.MEETING_ID -> mProps.meetingID
         params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
         params += MessagesConstants.CALLERNAME -> meetingModel.globalCallCallername
