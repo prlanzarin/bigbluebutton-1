@@ -234,4 +234,16 @@ class UsersModel {
     }
   }
 
+  def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {
+    Option(params) match {
+      case Some(map) =>
+        map.get(key) match {
+          case Some("") => None
+          case Some(s) => Option(s)
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
 }

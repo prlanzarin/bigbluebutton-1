@@ -279,23 +279,11 @@ trait VoiceApp {
 
   private def updateVideoConferenceStreamName(params: Map[String, String]) {
     if (meetingModel.isSipPhonePresent()) {
-      Option(params) match {
-        case Some(map) =>
-          params foreach { param =>
-            Option(param._1) match {
-              case Some(output) =>
-                if (!output.isEmpty && (output == MessagesConstants.OUTPUT)) { //no output for user's transcoders
-                  val videoconferenceStreamName = param._2
-                  if (!videoconferenceStreamName.trim.equals("")) {
-                    System.out.println("Updating videoconferenceStreamName to: " + videoconferenceStreamName)
-                    meetingModel.setGlobalVideoStreamName(videoconferenceStreamName)
-                    outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
-                  }
-                }
-              case _ => //
-            }
-          }
-
+      usersModel.getTranscoderParam(MessagesConstants.OUTPUT, params) match {
+        case Some(videoconferenceStreamName) =>
+          System.out.println("Updating videoconferenceStreamName to: " + videoconferenceStreamName)
+          meetingModel.setGlobalVideoStreamName(videoconferenceStreamName)
+          outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
         case _ => System.out.println("Can't update videoconference stream, unknown parameters")
       }
     }

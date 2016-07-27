@@ -593,7 +593,7 @@ package org.bigbluebutton.modules.users.services
             user.hasStream = joinedUser.hasStream;
 
         else {
-           var streams:Array = joinedUser.webcamStream.split("|");
+           var streams:Array = joinedUser.webcamStream;
            for each(var stream:String in streams) {
               UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
            }
