@@ -582,6 +582,7 @@ package org.bigbluebutton.modules.users.services
       user.listenOnly = joinedUser.listenOnly;
       user.userLocked = joinedUser.locked;
       user.phoneUser = joinedUser.phoneUser;
+      user.mediaSourceUser = joinedUser.mediaSourceUser;
 	  
 	  LOGGER.info("User joined = " + JSON.stringify(user));
 	  
@@ -589,7 +590,7 @@ package org.bigbluebutton.modules.users.services
       
       if (joinedUser.hasStream) {
 
-        if(joinedUser.phoneUser)
+        if(joinedUser.phoneUser && !joinedUser.mediaSourceUser)
             user.hasStream = joinedUser.hasStream;
 
         else {

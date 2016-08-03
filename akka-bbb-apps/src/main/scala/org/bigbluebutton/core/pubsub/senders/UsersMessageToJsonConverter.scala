@@ -22,6 +22,7 @@ object UsersMessageToJsonConverter {
     wuser += "locked" -> user.locked
     wuser += "webcam_stream" -> user.webcamStreams.toArray
     wuser += "phone_user" -> user.phoneUser
+    wuser += "media_source_user" -> user.mediaSourceUser
     wuser += "listenOnly" -> user.listenOnly
 
     val vuser = new scala.collection.mutable.HashMap[String, Any]

@@ -52,6 +52,8 @@ import org.bigbluebutton.api.messaging.messages.MeetingEnded;
 import org.bigbluebutton.api.messaging.messages.MeetingStarted;
 import org.bigbluebutton.api.messaging.messages.RegisterUser;
 import org.bigbluebutton.api.messaging.messages.RemoveExpiredMeetings;
+import org.bigbluebutton.api.messaging.messages.StartMediaSource;
+import org.bigbluebutton.api.messaging.messages.StopMediaSource;
 import org.bigbluebutton.api.messaging.messages.UserJoined;
 import org.bigbluebutton.api.messaging.messages.UserJoinedVoice;
 import org.bigbluebutton.api.messaging.messages.UserLeft;
@@ -462,6 +464,14 @@ public class MeetingService implements MessageListener {
         handle(new EndMeeting(meetingId));
     }
 
+    public void startMediaSource(String meetingId, String mediaSourceId, String mediaSourceUri) {
+        handle(new StartMediaSource(meetingId, mediaSourceId, mediaSourceUri));
+    }
+
+    public void stopMediaSource(String meetingId, String mediaSourceId) {
+        handle(new StopMediaSource(meetingId, mediaSourceId));
+    }
+
     private void processEndMeeting(EndMeeting message) {
         messagingService.endMeeting(message.meetingId);
 
@@ -475,6 +485,14 @@ public class MeetingService implements MessageListener {
                 removeUserSessions(m.getInternalId());
             }
         }
+    }
+
+    public void processStartMediaSource(StartMediaSource message) {
+        messagingService.startMediaSource(message.meetingId, message.mediaSourceId, message.mediaSourceUri);
+    }
+
+    public void processStopMediaSource(StopMediaSource message) {
+        messagingService.stopMediaSource(message.meetingId, message.mediaSourceId);
     }
 
     public void addUserCustomData(String meetingId, String userID,
@@ -747,6 +765,10 @@ public class MeetingService implements MessageListener {
                     processEndMeeting((EndMeeting) message);
                 } else if (message instanceof RegisterUser) {
                     processRegisterUser((RegisterUser) message);
+                } else if (message instanceof StartMediaSource) {
+                    processStartMediaSource((StartMediaSource) message);
+                } else if (message instanceof StopMediaSource) {
+                    processStopMediaSource((StopMediaSource) message);
                 }
             }
         };

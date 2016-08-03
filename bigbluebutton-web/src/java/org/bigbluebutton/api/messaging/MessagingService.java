@@ -37,4 +37,6 @@ public interface MessagingService {
 	List<Map<String,String>> listSubscriptions(String meetingId);
 	void registerUser(String meetingID, String internalUserId, String fullname, String role, String externUserID, String authToken);
 	void sendKeepAlive(String system, Long timestamp);
+	void startMediaSource(String meetingID, String mediaSourceId, String mediaSourceUri);
+	void stopMediaSource(String meetingID, String mediaSourceId);
 }

@@ -237,7 +237,10 @@ trait VoiceApp {
       + "meetingID = " + msg.meetingID + "\n"
       + "transcoderId = " + msg.transcoderId + "\n\n")
 
-    updateVideoConferenceStreamName(msg.params)
+    usersModel.getMediaSourceUser(msg.transcoderId) match {
+      case Some(user) => userSharedKurentoRtpStream(user, msg.params)
+      case _ => updateVideoConferenceStreamName(msg.params)
+    }
   }
 
   def handleUpdateTranscoderReply(msg: UpdateTranscoderReply) {

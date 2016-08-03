@@ -7,6 +7,8 @@ import org.bigbluebutton.api.messaging.converters.messages.DestroyMeetingMessage
 import org.bigbluebutton.api.messaging.converters.messages.EndMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.KeepAliveMessage;
 import org.bigbluebutton.api.messaging.converters.messages.RegisterUserMessage;
+import org.bigbluebutton.api.messaging.converters.messages.StartMediaSourceMessage;
+import org.bigbluebutton.api.messaging.converters.messages.StopMediaSourceMessage;
 
 public class MessageToJson {
 
@@ -67,5 +69,23 @@ public class MessageToJson {
 		return MessageBuilder.buildJson(header, payload);				
 	}	
 	
+	public static String startMediaSourceToJson(StartMediaSourceMessage msg) {
+		HashMap<String, Object> payload = new HashMap<String, Object>();
+		payload.put(Constants.MEETING_ID, msg.meetingId);
+		payload.put(Constants.MEDIA_SOURCE_ID, msg.mediaSourceId);
+		payload.put(Constants.MEDIA_SOURCE_URI, msg.mediaSourceUri);
+
+		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(StartMediaSourceMessage.START_MEDIA_SOURCE_REQUEST, StartMediaSourceMessage.VERSION, null);
+		return MessageBuilder.buildJson(header, payload);
+	}
+
+	public static String stopMediaSourceToJson(StopMediaSourceMessage msg) {
+		HashMap<String, Object> payload = new HashMap<String, Object>();
+		payload.put(Constants.MEETING_ID, msg.meetingId);
+		payload.put(Constants.MEDIA_SOURCE_ID, msg.mediaSourceId);
+
+		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(StopMediaSourceMessage.STOP_MEDIA_SOURCE_REQUEST, StopMediaSourceMessage.VERSION, null);
+		return MessageBuilder.buildJson(header, payload);
+	}
 	
 }

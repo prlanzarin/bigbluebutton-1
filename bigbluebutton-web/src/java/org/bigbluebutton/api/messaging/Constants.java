@@ -92,4 +92,6 @@ public class Constants {
   public static final String VIEWER_PASS                     = "viewer_pass";
   public static final String CREATE_TIME                     = "create_time";
   public static final String CREATE_DATE                     = "create_date";
+  public static final String MEDIA_SOURCE_ID                 = "media_source_id";
+  public static final String MEDIA_SOURCE_URI                = "media_source_uri";
 }

@@ -1927,6 +1927,388 @@ class ApiController {
         }
     }
 
+    /**********************************************
+     * START MEDIA SOURCE API
+     *********************************************/
+    def startMediaSource = {
+        String API_CALL = 'startMediaSource'
+        log.debug CONTROLLER_NAME + "#${API_CALL}"
+        ApiErrors errors = new ApiErrors()
+
+        // BEGIN - backward compatibility
+        if (StringUtils.isEmpty(params.checksum)) {
+            invalid("checksumError", "You did not pass the checksum security check")
+            return
+        }
+
+        //checking for an empty mediaSourceId or for a mediaSourceId containing whitespaces only
+        if(!StringUtils.isEmpty(params.mediaSourceId)) {
+            params.mediaSourceId = StringUtils.strip(params.mediaSourceId);
+            if (StringUtils.isEmpty(params.mediaSourceId)) {
+                invalid("missingParamMediaSourceId", "You must specify a mediaSourceId.");
+                return
+            }
+        } else {
+            invalid("missingParamName", "You must specify a mediaSourceId.");
+            return
+        }
+
+        if(!StringUtils.isEmpty(params.meetingID)) {
+            params.meetingID = StringUtils.strip(params.meetingID);
+            if (StringUtils.isEmpty(params.meetingID)) {
+                invalid("missingParamMeetingID", "You must specify a meeting ID for the meeting.");
+                return
+            }
+        } else {
+            invalid("missingParamMeetingID", "You must specify a meeting ID for the meeting.");
+            return
+        }
+
+        if (StringUtils.isEmpty(params.password)) {
+            invalid("invalidPassword","You either did not supply a password or the password supplied is neither the attendee or moderator password for this conference.");
+            return
+        }
+
+        if (!paramsProcessorUtil.isChecksumSame(API_CALL, params.checksum, request.getQueryString())) {
+            invalid("checksumError", "You did not pass the checksum security check")
+            return
+        }
+
+        // END - backward compatibility
+
+        // Do we have a checksum? If none, complain.
+        if (StringUtils.isEmpty(params.checksum)) {
+            errors.missingParamError("checksum");
+        }
+
+        // Do we have a mediaSourceId? If none, complain.
+        if(!StringUtils.isEmpty(params.mediaSourceId)) {
+            params.mediaSourceId = StringUtils.strip(params.mediaSourceId);
+            if (StringUtils.isEmpty(params.mediaSourceId)) {
+                errors.missingParamError("mediaSourceId");
+            }
+        } else {
+            errors.missingParamError("mediaSourceId");
+        }
+        String mediaSourceId = params.mediaSourceId
+
+        // Do we have a mediaSourceUri? If none, complain.
+        if(!StringUtils.isEmpty(params.mediaSourceUri)) {
+            params.mediaSourceUri = StringUtils.strip(params.mediaSourceUri);
+            if (StringUtils.isEmpty(params.mediaSourceUri)) {
+                errors.missingParamError("mediaSourceUri");
+            }
+        } else {
+            errors.missingParamError("mediaSourceUri");
+        }
+
+        String mediaSourceUri = params.mediaSourceUri
+
+        // Do we have a meeting id? If none, complain.
+        if(!StringUtils.isEmpty(params.meetingID)) {
+            params.meetingID = StringUtils.strip(params.meetingID);
+            if (StringUtils.isEmpty(params.meetingID)) {
+                errors.missingParamError("meetingID");
+            }
+        }
+        else {
+            errors.missingParamError("meetingID");
+        }
+        String externalMeetingId = params.meetingID
+
+        // Do we have a password? If not, complain.
+        String attPW = params.password
+        if (StringUtils.isEmpty(attPW)) {
+            errors.missingParamError("password");
+        }
+
+        if (errors.hasErrors()) {
+            respondWithErrors(errors)
+            return
+        }
+
+        // Do we agree on the checksum? If not, complain.
+        if (! paramsProcessorUtil.isChecksumSame(API_CALL, params.checksum, request.getQueryString())) {
+            errors.checksumError()
+            respondWithErrors(errors)
+            return
+        }
+
+        // Everything is good so far. Translate the external meeting id to an internal meeting id. If
+        // we can't find the meeting, complain.
+        String internalMeetingId = paramsProcessorUtil.convertToInternalMeetingId(externalMeetingId);
+        log.info("Retrieving meeting ${internalMeetingId}")
+        Meeting meeting = meetingService.getMeeting(internalMeetingId);
+        if (meeting == null) {
+            // BEGIN - backward compatibility
+            invalid("invalidMeetingIdentifier", "The meeting ID that you supplied did not match any existing meetings");
+            return;
+            // END - backward compatibility
+
+            errors.invalidMeetingIdError();
+            respondWithErrors(errors)
+            return;
+        }
+
+        // the createTime mismatch with meeting's createTime, complain
+        // In the future, the createTime param will be required
+        if (params.createTime != null) {
+            long createTime = 0;
+            try{
+                createTime=Long.parseLong(params.createTime);
+            } catch(Exception e){
+                log.warn("could not parse createTime param");
+                createTime = -1;
+            }
+            if(createTime != meeting.getCreateTime()) {
+                errors.mismatchCreateTimeParam();
+                respondWithErrors(errors);
+                return;
+            }
+        }
+
+        // Is this user joining a meeting that has been ended. If so, complain.
+        if (meeting.isForciblyEnded()) {
+            // BEGIN - backward compatibility
+            invalid("meetingForciblyEnded", "You can not re-join a meeting that has already been forcibly ended.  However, once the meeting is removed from memory (according to the timeout configured on this server, you will be able to once again create a meeting with the same meeting ID");
+            return;
+            // END - backward compatibility
+
+            errors.meetingForciblyEndedError();
+            respondWithErrors(errors)
+            return;
+        }
+
+        // Now determine if this user is a moderator or a viewer.
+        String role = null;
+        if (meeting.getModeratorPassword().equals(attPW)) {
+            role = ROLE_MODERATOR;
+        } else if (meeting.getViewerPassword().equals(attPW)) {
+            role = ROLE_ATTENDEE;
+        }
+
+        if (role == null) {
+            // BEGIN - backward compatibility
+            invalid("invalidPassword","You either did not supply a password or the password supplied is neither the attendee or moderator password for this conference.");
+            return
+            // END - backward compatibility
+
+            errors.invalidPasswordError()
+            respondWithErrors(errors)
+            return;
+        }
+
+        //Start Media Source
+        meetingService.startMediaSource(meeting.getInternalId(),mediaSourceId,mediaSourceUri)
+
+        log.info("Media Source started successfully. Sending XML response.");
+        response.addHeader("Cache-Control", "no-cache")
+        withFormat {
+            xml {
+                render(contentType:"text/xml") {
+                    response() {
+                        returncode(RESP_CODE_SUCCESS)
+                        messageKey("startedMediaSourceSuccessfully")
+                        message("Media Source started successfully")
+                        //user_id(us.internalUserId)
+                        //auth_token(us.authToken)
+                    }
+                }
+            }
+        }
+    }
+
+    /**********************************************
+     * STOP MEDIA SOURCE API
+     *********************************************/
+    def stopMediaSource = {
+        String API_CALL = 'stopMediaSource'
+        log.debug CONTROLLER_NAME + "#${API_CALL}"
+        ApiErrors errors = new ApiErrors()
+
+        // BEGIN - backward compatibility
+        if (StringUtils.isEmpty(params.checksum)) {
+            invalid("checksumError", "You did not pass the checksum security check")
+            return
+        }
+
+        //checking for an empty mediaSourceId or for a mediaSourceId containing whitespaces only
+        if(!StringUtils.isEmpty(params.mediaSourceId)) {
+            params.mediaSourceId = StringUtils.strip(params.mediaSourceId);
+            if (StringUtils.isEmpty(params.mediaSourceId)) {
+                invalid("missingParamMediaSourceId", "You must specify a mediaSourceId.");
+                return
+            }
+        } else {
+            invalid("missingParamName", "You must specify a mediaSourceId.");
+            return
+        }
+
+        if(!StringUtils.isEmpty(params.meetingID)) {
+            params.meetingID = StringUtils.strip(params.meetingID);
+            if (StringUtils.isEmpty(params.meetingID)) {
+                invalid("missingParamMeetingID", "You must specify a meeting ID for the meeting.");
+                return
+            }
+        } else {
+            invalid("missingParamMeetingID", "You must specify a meeting ID for the meeting.");
+            return
+        }
+
+        if (StringUtils.isEmpty(params.password)) {
+            invalid("invalidPassword","You either did not supply a password or the password supplied is neither the attendee or moderator password for this conference.");
+            return
+        }
+
+        if (!paramsProcessorUtil.isChecksumSame(API_CALL, params.checksum, request.getQueryString())) {
+            invalid("checksumError", "You did not pass the checksum security check")
+            return
+        }
+
+        // END - backward compatibility
+
+        // Do we have a checksum? If none, complain.
+        if (StringUtils.isEmpty(params.checksum)) {
+            errors.missingParamError("checksum");
+        }
+
+        // Do we have a mediaSourceId? If none, complain.
+        if(!StringUtils.isEmpty(params.mediaSourceId)) {
+            params.mediaSourceId = StringUtils.strip(params.mediaSourceId);
+            if (StringUtils.isEmpty(params.mediaSourceId)) {
+                errors.missingParamError("mediaSourceId");
+            }
+        } else {
+            errors.missingParamError("mediaSourceId");
+        }
+        String mediaSourceId = params.mediaSourceId
+
+        // Do we have a mediaSourceUri? If none, complain.
+        if(!StringUtils.isEmpty(params.mediaSourceUri)) {
+            params.mediaSourceUri = StringUtils.strip(params.mediaSourceUri);
+            if (StringUtils.isEmpty(params.mediaSourceUri)) {
+                errors.missingParamError("mediaSourceUri");
+            }
+        } else {
+            errors.missingParamError("mediaSourceUri");
+        }
+
+        String mediaSourceUri = params.mediaSourceUri
+
+        // Do we have a meeting id? If none, complain.
+        if(!StringUtils.isEmpty(params.meetingID)) {
+            params.meetingID = StringUtils.strip(params.meetingID);
+            if (StringUtils.isEmpty(params.meetingID)) {
+                errors.missingParamError("meetingID");
+            }
+        }
+        else {
+            errors.missingParamError("meetingID");
+        }
+        String externalMeetingId = params.meetingID
+
+        // Do we have a password? If not, complain.
+        String attPW = params.password
+        if (StringUtils.isEmpty(attPW)) {
+            errors.missingParamError("password");
+        }
+
+        if (errors.hasErrors()) {
+            respondWithErrors(errors)
+            return
+        }
+
+        // Do we agree on the checksum? If not, complain.
+        if (! paramsProcessorUtil.isChecksumSame(API_CALL, params.checksum, request.getQueryString())) {
+            errors.checksumError()
+            respondWithErrors(errors)
+            return
+        }
+
+        // Everything is good so far. Translate the external meeting id to an internal meeting id. If
+        // we can't find the meeting, complain.
+        String internalMeetingId = paramsProcessorUtil.convertToInternalMeetingId(externalMeetingId);
+        log.info("Retrieving meeting ${internalMeetingId}")
+        Meeting meeting = meetingService.getMeeting(internalMeetingId);
+        if (meeting == null) {
+            // BEGIN - backward compatibility
+            invalid("invalidMeetingIdentifier", "The meeting ID that you supplied did not match any existing meetings");
+            return;
+            // END - backward compatibility
+
+            errors.invalidMeetingIdError();
+            respondWithErrors(errors)
+            return;
+        }
+
+        // the createTime mismatch with meeting's createTime, complain
+        // In the future, the createTime param will be required
+        if (params.createTime != null) {
+            long createTime = 0;
+            try{
+                createTime=Long.parseLong(params.createTime);
+            } catch(Exception e){
+                log.warn("could not parse createTime param");
+                createTime = -1;
+            }
+            if(createTime != meeting.getCreateTime()) {
+                errors.mismatchCreateTimeParam();
+                respondWithErrors(errors);
+                return;
+            }
+        }
+
+        // Is this user joining a meeting that has been ended. If so, complain.
+        if (meeting.isForciblyEnded()) {
+            // BEGIN - backward compatibility
+            invalid("meetingForciblyEnded", "You can not re-join a meeting that has already been forcibly ended.  However, once the meeting is removed from memory (according to the timeout configured on this server, you will be able to once again create a meeting with the same meeting ID");
+            return;
+            // END - backward compatibility
+
+            errors.meetingForciblyEndedError();
+            respondWithErrors(errors)
+            return;
+        }
+
+        // Now determine if this user is a moderator or a viewer.
+        String role = null;
+        if (meeting.getModeratorPassword().equals(attPW)) {
+            role = ROLE_MODERATOR;
+        } else if (meeting.getViewerPassword().equals(attPW)) {
+            role = ROLE_ATTENDEE;
+        }
+
+        if (role == null) {
+            // BEGIN - backward compatibility
+            invalid("invalidPassword","You either did not supply a password or the password supplied is neither the attendee or moderator password for this conference.");
+            return
+            // END - backward compatibility
+
+            errors.invalidPasswordError()
+            respondWithErrors(errors)
+            return;
+        }
+
+        //Stop Media Source
+        meetingService.stopMediaSource(meeting.getInternalId(),mediaSourceId)
+
+        log.info("Media Source Stopped successfully. Sending XML response.");
+        response.addHeader("Cache-Control", "no-cache")
+        withFormat {
+            xml {
+                render(contentType:"text/xml") {
+                    response() {
+                        returncode(RESP_CODE_SUCCESS)
+                        messageKey("stoppedMediaSourceSuccessfully")
+                        message("Media Source stopped successfully")
+                        //user_id(us.internalUserId)
+                        //auth_token(us.authToken)
+                    }
+                }
+            }
+        }
+    }
+
     def uploadDocuments(conf) {
         log.debug("ApiController#uploadDocuments(${conf.getInternalId()})");
 

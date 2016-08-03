@@ -33,6 +33,7 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
 
   private var meetings = new collection.immutable.HashMap[String, RunningMeeting]
   private val outGW = new OutMessageGateway("bbbActorOutGW", recorderApp, messageSender)
+  private var _kurentoToken = "unknown_kurento_token"
 
   def receive = {
     case msg: CreateMeeting => handleCreateMeeting(msg)
@@ -52,6 +53,7 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
     case msg: SipVideoResumed => handleSipVideoResumed(msg)
     case msg: SipVideoPaused => handleSipVideoPaused(msg)
     case msg: ActiveTalkerChanged => handleActiveTalkerChanged(msg)
+    case msg: UpdateKurentoToken => handleUpdateKurentoToken(msg)
     case msg: InMessage => handleMeetingMessage(msg)
     case _ => // do nothing
   }
@@ -125,6 +127,11 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
     findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
       m.actorRef ! msg
     }
+  }
+
+  private def handleUpdateKurentoToken(msg: UpdateKurentoToken) {
+    _kurentoToken = msg.token
+    System.out.println("Kurento token updated successfully, new token: " + msg.token)
   }
 
   private def handleValidateAuthToken(msg: ValidateAuthToken) {
@@ -215,7 +222,8 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
       case None => {
         log.info("Create meeting request. meetingId={}", msg.mProps.meetingID)
         val moutGW = new OutMessageGateway("meetingOutGW-" + msg.meetingID, recorderApp, messageSender)
-        var m = RunningMeeting(msg.mProps, moutGW)
+        val mProps = msg.mProps.copy(kurentoToken = _kurentoToken)
+        var m = RunningMeeting(mProps, moutGW)
 
         meetings += m.mProps.meetingID -> m
         outGW.send(new MeetingCreated(m.mProps.meetingID, m.mProps.externalMeetingID, m.mProps.recorded, m.mProps.meetingName,

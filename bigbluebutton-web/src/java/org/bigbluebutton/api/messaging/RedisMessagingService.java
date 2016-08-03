@@ -34,6 +34,8 @@ import org.bigbluebutton.api.messaging.converters.messages.CreateMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.DestroyMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.EndMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.KeepAliveMessage;
+import org.bigbluebutton.api.messaging.converters.messages.StartMediaSourceMessage;
+import org.bigbluebutton.api.messaging.converters.messages.StopMediaSourceMessage;
 import org.bigbluebutton.api.messaging.converters.messages.RegisterUserMessage;
 import org.bigbluebutton.common.converters.ToJsonEncoder;
 import org.bigbluebutton.common.messages.MessageHeader;
@@ -94,6 +96,20 @@ public class RedisMessagingService implements MessagingService {
 		String json = MessageToJson.endMeetingMessageToJson(msg);
 		log.info("Sending end meeting message to bbb-apps:[{}]", json);
 		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);	
+	}
+
+	public void startMediaSource(String meetingId, String mediaSourceId, String mediaSourceUri) {
+		StartMediaSourceMessage msg = new StartMediaSourceMessage(meetingId,mediaSourceId,mediaSourceUri);
+		String json = MessageToJson.startMediaSourceToJson(msg);
+		log.info("Sending start media source message to bbb-apps:[{}]", json);
+		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
+	}
+
+	public void stopMediaSource(String meetingId, String mediaSourceId) {
+		StopMediaSourceMessage msg = new StopMediaSourceMessage(meetingId,mediaSourceId);
+		String json = MessageToJson.stopMediaSourceToJson(msg);
+		log.info("Sending stop media source message to bbb-apps:[{}]", json);
+		sender.send(MessagingConstants.TO_MEETING_CHANNEL, json);
 	}
 
   public void sendKeepAlive(String system, Long timestamp) {

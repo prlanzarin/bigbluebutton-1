@@ -8,7 +8,7 @@ import org.bigbluebutton.core.api._
 import java.util.concurrent.TimeUnit
 import org.bigbluebutton.core.util._
 import scala.concurrent.duration._
-import org.bigbluebutton.core.apps.{ PollApp, UsersApp, PresentationApp, LayoutApp, ChatApp, WhiteboardApp, VoiceApp }
+import org.bigbluebutton.core.apps.{ PollApp, UsersApp, PresentationApp, LayoutApp, ChatApp, WhiteboardApp, VoiceApp, KurentoApp }
 import org.bigbluebutton.core.apps.{ ChatModel, LayoutModel, UsersModel, PollModel, WhiteboardModel, VoiceModel }
 import org.bigbluebutton.core.apps.PresentationModel
 
@@ -20,7 +20,7 @@ object MeetingActor {
 class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
     extends Actor with UsersApp with PresentationApp
     with LayoutApp with ChatApp with WhiteboardApp with PollApp with VoiceApp
-    with ActorLogging {
+    with KurentoApp with ActorLogging {
 
   val chatModel = new ChatModel()
   val layoutModel = new LayoutModel()
@@ -196,6 +196,14 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleTranscoderStatusUpdate(msg)
     case msg: StartProbingReply =>
       handleStartProbingReply(msg)
+    case msg: StartMediaSource =>
+      handleStartMediaSource(msg)
+    case msg: StopMediaSource =>
+      handleStopMediaSource(msg)
+    case msg: StartKurentoRtpReply =>
+      handleStartKurentoRtpReply(msg)
+    case msg: StopKurentoRtpReply =>
+      handleStopKurentoRtpReply(msg)
 
     case msg: EndMeeting => handleEndMeeting(msg)
     case StopMeetingActor => //exit

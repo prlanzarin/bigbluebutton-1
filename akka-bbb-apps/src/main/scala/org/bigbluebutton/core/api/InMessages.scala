@@ -17,6 +17,9 @@ case class DestroyMeeting(meetingID: String) extends InMessage
 case class StartMeeting(meetingID: String) extends InMessage
 case class EndMeeting(meetingID: String) extends InMessage
 case class LockSetting(meetingID: String, locked: Boolean, settings: Map[String, Boolean]) extends InMessage
+case class StartMediaSource(meetingID: String, mediaSourceId: String, mediaSourceUri: String) extends InMessage
+case class StopMediaSource(meetingID: String, mediaSourceId: String) extends InMessage
+case class UpdateKurentoToken(token: String)
 
 // Lock
 case class LockUser(meetingID: String, userId: String, lock: Boolean) extends InMessage
@@ -131,3 +134,7 @@ case class UpdateTranscoderReply(meetingID: String, transcoderId: String, params
 case class StopTranscoderReply(meetingID: String, transcoderId: String) extends InMessage
 case class TranscoderStatusUpdate(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
 case class StartProbingReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+
+//Kurento
+case class StartKurentoRtpReply(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage
+case class StopKurentoRtpReply(meetingID: String, kurentoEndpointId: String) extends InMessage

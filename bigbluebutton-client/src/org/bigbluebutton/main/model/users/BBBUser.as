@@ -48,6 +48,7 @@ package org.bigbluebutton.main.model.users
 		[Bindable] public var name:String;
 		[Bindable] public var talking:Boolean = false;
 		[Bindable] public var phoneUser:Boolean = false;
+		[Bindable] public var mediaSourceUser:Boolean = false;
         [Bindable] public var listenOnly:Boolean = false;
 
         //used only when this user is a phone user
@@ -62,7 +63,7 @@ package org.bigbluebutton.main.model.users
     
 		[Bindable]
 		public function get hasStream():Boolean {
-			if(phoneUser)
+			if(phoneUser && !mediaSourceUser)
 			   return hasVideo;
 			else
 			   return streamNames.length > 0;
@@ -353,6 +354,7 @@ package org.bigbluebutton.main.model.users
 			n.customdata = user.customdata;
 			n.media = user.media;
 			n.phoneUser = user.phoneUser;
+			n.mediaSourceUser = user.mediaSourceUser;
 			n.hasVideo = user.hasVideo;
 			n.talking = user.talking;
 			n.userStatus = user.userStatus;

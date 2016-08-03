@@ -18,7 +18,10 @@ public interface IBigBlueButtonInGW {
 	void destroyMeeting(String meetingID);
 	void getAllMeetings(String meetingID);
 	void lockSettings(String meetingID, Boolean locked, Map<String, Boolean> lockSettigs);
-	
+	void startMediaSource(String meetingID, String mediaSourceId, String mediaSourceUri);
+	void stopMediaSource(String meetingID, String mediaSourceId);
+	void updateKurentoToken(String token);
+
 	// Polling
 	void votePoll(String meetingId, String userId, String pollId, Integer questionId, Integer answerId);
 	void startPoll(String meetingId, String requesterId, String pollId, String pollType);
@@ -127,5 +130,8 @@ public interface IBigBlueButtonInGW {
 	void stopTranscoderReply(String meetingId, String transcoderId);
 	void transcoderStatusUpdate(String meetingId, String transcoderId, Map<String,String> params);
 	void startProbingReply(String meetingId, String transcoderId, Map<String,String> params);
-	
+
+	//Kurento
+	void startKurentoRtpReply(String meetingId, String kurentoEndpointId, Map<String,String> params);
+	void stopKurentoRtpReply(String meetingId, String kurentoEndpointId);
 }

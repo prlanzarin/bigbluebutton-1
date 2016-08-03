@@ -72,6 +72,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
     private String localVideoPort;
     private String remoteVideoPort;
     private String sdpPath;
+    private String codec;
     private VideoTranscoderObserver observer;
     private String globalVideoWidth = "640";// get this from properties (Stored in FFmpegUtils)
     private String globalVideoHeight = "480";// get this from properties
@@ -131,6 +132,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
+                    this.codec = params.get(Constants.CODEC);
                     break;
 
                 case Constants.TRANSCODE_RTMP_TO_RTP:
@@ -250,7 +252,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 }
 
                 //Create SDP FILE
-                sdpPath = FFmpegUtils.createSDPVideoFile(callername, sourceIp, localVideoPort, FFmpegConstants.CODEC_NAME_H264, FFmpegConstants.CODEC_ID_H264, FFmpegConstants.SAMPLE_RATE_H264, voiceBridge);
+                sdpPath = FFmpegUtils.createSDPVideoFile(callername, sourceIp, localVideoPort, FFmpegConstants.CODEC_NAME_H264, FFmpegConstants.CODEC_ID_H264, FFmpegConstants.SAMPLE_RATE_H264, Constants.COPY.equals(this.codec)?callername:voiceBridge);
                 input = sdpPath;
 
                 //Generate video stream name
@@ -262,6 +264,16 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(input);
+                if (Constants.COPY.equals(this.codec)) {
+                    ffmpeg.setLoglevel("verbose");
+                    ffmpeg.setOutput(outputLive);
+                    ffmpeg.addRtmpOutputConnectionParameter(meetingId);
+                    ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
+                    ffmpeg.setCodec("copy");
+                    ffmpeg.setFormat("flv");
+                    command = ffmpeg.getFFmpegCommand(true);
+                    break;
+                }
                 ffmpeg.setFormat("flv");
                 ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
@@ -684,7 +696,9 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
     public String generateVideoStreamName(Type type){
         switch(type){
             case TRANSCODE_RTP_TO_RTMP:
-                return FFmpegUtils.GLOBAL_VIDEO_STREAM_NAME_PREFIX + voiceBridge + "_" + System.currentTimeMillis();
+                return Constants.COPY.equals(this.codec) ?
+                callername + "_" + System.currentTimeMillis()
+                :FFmpegUtils.GLOBAL_VIDEO_STREAM_NAME_PREFIX + voiceBridge + "_" + System.currentTimeMillis();
             case TRANSCODE_FILE_TO_RTMP:
                 return FFmpegUtils.VIDEOCONF_LOGO_STREAM_NAME_PREFIX + voiceBridge + "_" + System.currentTimeMillis();
             default:

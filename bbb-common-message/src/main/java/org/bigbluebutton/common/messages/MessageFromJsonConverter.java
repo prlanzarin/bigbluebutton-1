@@ -37,6 +37,10 @@ public class MessageFromJsonConverter {
 					return new GetAllMeetingsRequest("the_string_is_not_used_anywhere");
                   case UpdateCallAgentMessage.UPDATE_CALL_AGENT:
                     return processUpdateCallAgentMessage(payload);
+				  case StartMediaSourceMessage.START_MEDIA_SOURCE_REQUEST:
+					return processStartMediaSourceMessage(payload);
+				  case StopMediaSourceMessage.STOP_MEDIA_SOURCE_REQUEST:
+					return processStopMediaSourceMessage(payload);
 				}
 			}
 		}
@@ -96,5 +100,18 @@ public class MessageFromJsonConverter {
         String sipHost = payload.get(Constants.SIP_HOST).getAsString();
         return new UpdateCallAgentMessage(meetingId, userId, localIpAddress, localVideoPort, remoteVideoPort, sipHost);
     }
+
+	private static IBigBlueButtonMessage processStartMediaSourceMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		String mediaSourceId = payload.get(Constants.MEDIA_SOURCE_ID).getAsString();
+		String mediaSourceUri = payload.get(Constants.MEDIA_SOURCE_URI).getAsString();
+		return new StartMediaSourceMessage(meetingId, mediaSourceId, mediaSourceUri);
+	}
+
+	private static IBigBlueButtonMessage processStopMediaSourceMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		String mediaSourceId = payload.get(Constants.MEDIA_SOURCE_ID).getAsString();
+		return new StopMediaSourceMessage(meetingId, mediaSourceId);
+	}
 
 }

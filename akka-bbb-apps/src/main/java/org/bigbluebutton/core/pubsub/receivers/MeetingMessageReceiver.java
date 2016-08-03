@@ -13,6 +13,8 @@ import org.bigbluebutton.common.messages.MessageFromJsonConverter;
 import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.PubSubPingMessage;
 import org.bigbluebutton.common.messages.RegisterUserMessage;
+import org.bigbluebutton.common.messages.StartMediaSourceMessage;
+import org.bigbluebutton.common.messages.StopMediaSourceMessage;
 import org.bigbluebutton.common.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.common.messages.UserDisconnectedFromGlobalAudio;
 import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
@@ -98,6 +100,14 @@ public class MeetingMessageReceiver implements MessageHandler {
 				else if (msg instanceof UpdateCallAgentMessage) {
 					  UpdateCallAgentMessage updateCallAgentMessage = (UpdateCallAgentMessage) msg;
 					  bbbGW.updateCallAgent(updateCallAgentMessage.meetingId, updateCallAgentMessage.userId, updateCallAgentMessage.localIpAddress, updateCallAgentMessage.localVideoPort, updateCallAgentMessage.remoteVideoPort, updateCallAgentMessage.sipHost);
+				}
+				else if (msg instanceof StartMediaSourceMessage) {
+					StartMediaSourceMessage startMediaSourceMessage = (StartMediaSourceMessage) msg;
+					bbbGW.startMediaSource(startMediaSourceMessage.meetingId, startMediaSourceMessage.mediaSourceId, startMediaSourceMessage.mediaSourceUri);
+				}
+				else if (msg instanceof StopMediaSourceMessage) {
+					StopMediaSourceMessage stopMediaSourceMessage = (StopMediaSourceMessage) msg;
+					bbbGW.stopMediaSource(stopMediaSourceMessage.meetingId, stopMediaSourceMessage.mediaSourceId);
 				}
                 else {
                     System.out.println("Unknown message: [" + message + "]");

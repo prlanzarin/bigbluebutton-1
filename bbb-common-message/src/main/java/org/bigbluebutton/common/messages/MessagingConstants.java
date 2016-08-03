@@ -58,6 +58,12 @@ public class MessagingConstants {
 	public static final String FROM_BBB_TRANSCODE_PATTERN = FROM_BBB_TRANSCODE_CHANNEL + ":*";
 	public static final String FROM_BBB_TRANSCODE_SYSTEM_CHAN = FROM_BBB_TRANSCODE_CHANNEL + ":system";
 
+	public static final String TO_KURENTO_CHANNEL = "bigbluebutton:to-kurento";
+	public static final String TO_KURENTO_PATTERN = TO_KURENTO_CHANNEL + ":*";
+	public static final String TO_KURENTO_SYSTEM_CHAN = TO_KURENTO_CHANNEL + ":system";
+	public static final String FROM_KURENTO_CHANNEL = "bigbluebutton:from-kurento";
+	public static final String FROM_KURENTO_PATTERN = FROM_KURENTO_CHANNEL + ":*";
+	public static final String FROM_KURENTO_SYSTEM_CHAN = FROM_KURENTO_CHANNEL + ":system";
 	
 	public static final String DESTROY_MEETING_REQUEST_EVENT = "DestroyMeetingRequestEvent";
 	public static final String CREATE_MEETING_REQUEST_EVENT = "CreateMeetingRequestEvent";	

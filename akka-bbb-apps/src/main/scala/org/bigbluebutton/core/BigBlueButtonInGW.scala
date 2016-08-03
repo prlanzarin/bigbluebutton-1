@@ -41,7 +41,7 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
 
     val mProps = new MeetingProperties(meetingID, externalMeetingID, meetingName, record,
       voiceBridge, duration, autoStartRecording, allowStartStopRecording,
-      moderatorPass, viewerPass, createTime, createDate)
+      moderatorPass, viewerPass, createTime, createDate, "unknown_kurento_token")
     bbbActor ! new CreateMeeting(meetingID, mProps)
   }
 
@@ -72,6 +72,14 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
 
   def endAllMeetings() {
 
+  }
+
+  def startMediaSource(meetingId: String, mediaSourceId: String, mediaSourceUri: String) {
+    bbbActor ! new StartMediaSource(meetingId, mediaSourceId, mediaSourceUri)
+  }
+
+  def stopMediaSource(meetingId: String, mediaSourceId: String) {
+    bbbActor ! new StopMediaSource(meetingId, mediaSourceId)
   }
 
   /**
@@ -526,4 +534,21 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
     bbbActor ! new StartProbingReply(meetingId, transcoderId, mapAsScalaMap(params).toMap)
   }
 
+  /**
+   * *******************************************************************
+   * Message Interface for kurento
+   * *****************************************************************
+   */
+
+  def startKurentoRtpReply(meetingId: String, kurentoEndpointId: String, params: java.util.Map[String, String]) {
+    bbbActor ! new StartKurentoRtpReply(meetingId, kurentoEndpointId, mapAsScalaMap(params).toMap)
+  }
+
+  def stopKurentoRtpReply(meetingId: String, kurentoEndpointId: String) {
+    bbbActor ! new StopKurentoRtpReply(meetingId, kurentoEndpointId)
+  }
+
+  def updateKurentoToken(token: String) {
+    bbbActor ! new UpdateKurentoToken(token)
+  }
 }

@@ -36,6 +36,8 @@ import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage
 import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage
 import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
 import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
+import org.bigbluebutton.common.messages.StartKurentoRtpRequestMessage
+import org.bigbluebutton.common.messages.StopKurentoRtpRequestMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -130,6 +132,8 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: UndoWhiteboardEvent => handleUndoWhiteboardEvent(msg)
     case msg: WhiteboardEnabledEvent => handleWhiteboardEnabledEvent(msg)
     case msg: IsWhiteboardEnabledReply => handleIsWhiteboardEnabledReply(msg)
+    case msg: StartKurentoRtpRequest => handleStartKurentoRtpRequest(msg)
+    case msg: StopKurentoRtpRequest => handleStopKurentoRtpRequest(msg)
     case _ => // do nothing
   }
 
@@ -676,6 +680,17 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleVoiceHangingUp(msg: VoiceHangingUp2) {
     val ch = new ChannelHangupInVoiceConfMessage(msg.meetingID, "UNKNOWN-VOICE-CONF", msg.uuid, msg.callState, msg.hangupCause, msg.requesterID)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, ch.toJson())
+  }
+
+  private def handleStartKurentoRtpRequest(msg: StartKurentoRtpRequest) {
+    val skrr = new StartKurentoRtpRequestMessage(msg.meetingID, msg.kurentoEndpointId, msg.params)
+    System.out.println("handleStartKurentoRtpRequest: " + skrr.toJson());
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, skrr.toJson())
+  }
+
+  private def handleStopKurentoRtpRequest(msg: StopKurentoRtpRequest) {
+    val skrr = new StopKurentoRtpRequestMessage(msg.meetingID, msg.kurentoEndpointId)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, skrr.toJson())
   }
 
   private def handleGetWhiteboardShapesReply(msg: GetWhiteboardShapesReply) {

@@ -367,7 +367,7 @@ trait UsersApp {
       val uvo = new UserVO(msg.userID, ru.externId, ru.name,
         ru.role, emojiStatus = "none", presenter = false,
         hasStream = false, locked = getInitialLockStatus(ru.role),
-        webcamStreams = new ListSet[String](), phoneUser = false, vu,
+        webcamStreams = new ListSet[String](), phoneUser = false, mediaSourceUser = false, vu,
         listenOnly = vu.listenOnly, joinedWeb = true, si)
 
       usersModel.addUser(uvo)
@@ -441,6 +441,8 @@ trait UsersApp {
         /**
          * If user is not joined listenOnly then user is joined calling through phone or webrtc.
          */
+        val msu = usersModel.isMediaSourceUser(msg.callerIdNum, mProps.kurentoToken)
+        //val msu = usersModel.isMediaSourceUser(msg.callerIdName)
         val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, msg.callerIdNum,
           joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, listenOnly = msg.listenOnly, msg.hasVideo, msg.hasFloor)
 
@@ -451,18 +453,18 @@ trait UsersApp {
          */
         val uvo = new UserVO(webUserId, msg.externUserId, msg.callerIdName,
           Role.VIEWER, emojiStatus = "none", presenter = false,
-          hasStream = msg.hasVideo, locked = getInitialLockStatus(Role.VIEWER),
+          hasStream = msg.hasVideo || msu, locked = getInitialLockStatus(Role.VIEWER),
           webcamStreams = new ListSet[String](),
-          phoneUser = !msg.listenOnly, vu, listenOnly = msg.listenOnly, joinedWeb = false, si)
+          phoneUser = !msg.listenOnly, mediaSourceUser = msu, vu, listenOnly = msg.listenOnly, joinedWeb = false, si)
 
         usersModel.addUser(uvo)
 
-        log.info("User joined from phone.  meetingId=" + mProps.meetingID + " userId=" + uvo.userID + " user=" + uvo)
+        log.info("User joined from phone.  meetingId=" + mProps.meetingID + " userId=" + uvo.userID + " isMediaSourceUser= " + msu + " user=" + uvo)
 
         outGW.send(new UserJoined(mProps.meetingID, mProps.recorded, uvo))
         outGW.send(new UserJoinedVoice(mProps.meetingID, mProps.recorded, mProps.voiceBridge, uvo))
         if (uvo.hasStream) {
-          meetingModel.setSipPhonePresent(true)
+          meetingModel.setSipPhonePresent(!msu) // mediaSourceUser is a sip-phone but doesnt trigger sip-video mechanism
           handleTranscoding()
         }
         outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))

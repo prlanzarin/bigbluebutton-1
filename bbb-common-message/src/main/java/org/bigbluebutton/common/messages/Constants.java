@@ -74,6 +74,7 @@ public class Constants {
   public static final String HAS_STREAM                      = "has_stream";
   public static final String WEBCAM_STREAM                   = "webcam_stream";
   public static final String PHONE_USER                      = "phone_user"; 
+  public static final String MEDIA_SOURCE_USER               = "media_source_user";
   public static final String PERMISSIONS                     = "permissions";
   public static final String VALID                           = "valid";
   public static final String CHAT_HISTORY                    = "chat_history";
@@ -132,6 +133,7 @@ public class Constants {
   public static final String LOCAL_VIDEO_PORT                = "local_video_port";
   public static final String REMOTE_VIDEO_PORT               = "remote_video_port";
   public static final String DESTINATION_IP_ADDRESS          = "destination_ip_address";
+  public static final String DESTINATION_VIDEO_PORT          = "destination_video_port";
   public static final String SIP_HOST                        = "sip_host";
   public static final String TRANSCODER_TYPE                 = "transcoder_type";
   public static final String INPUT                           = "input";
@@ -141,4 +143,8 @@ public class Constants {
   public static final String TRANSCODE_FILE_TO_RTP           = "transcode_file_to_rtp";
   public static final String TRANSCODE_FILE_TO_RTMP          = "transcode_file_to_rtmp";
   public static final String PROBE_RTMP                      = "probe_rtmp";
+  public static final String CODEC                           = "codec";
+  public static final String COPY                            = "copy";
+  public static final String MEDIA_SOURCE_ID                 = "media_source_id";
+  public static final String MEDIA_SOURCE_URI                = "media_source_uri";
 }

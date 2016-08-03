@@ -98,6 +98,7 @@ case class UserVO(
   locked: Boolean,
   webcamStreams: Set[String],
   phoneUser: Boolean,
+  mediaSourceUser: Boolean,
   voiceUser: VoiceUser,
   listenOnly: Boolean,
   joinedWeb: Boolean,

@@ -297,7 +297,7 @@ package org.bigbluebutton.modules.videoconf.maps
       if (bbbUser.hasStream) {
         closeAllAvatarWindows(userID);
       }
-      if (!bbbUser.phoneUser)
+      if (!bbbUser.phoneUser || bbbUser.mediaSourceUser)
         _graphics.addVideoFor(userID, proxy.connection);
     }
 

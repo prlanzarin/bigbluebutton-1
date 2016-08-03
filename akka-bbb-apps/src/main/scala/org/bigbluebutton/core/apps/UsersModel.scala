@@ -96,6 +96,10 @@ class UsersModel {
     uservos.values toArray
   }
 
+  def getMediaSourceUser(name: String): Option[UserVO] = {
+    uservos.values find (u => u.name == name)
+  }
+
   def numModerators(): Int = {
     getModerators.length
   }
@@ -203,7 +207,7 @@ class UsersModel {
   }
 
   def getPhoneUsersSendingVideo(): Array[UserVO] = {
-    uservos.values filter (u => (u.phoneUser == true && u.hasStream == true)) toArray
+    uservos.values filter (u => (u.phoneUser == true && u.hasStream == true && !u.mediaSourceUser)) toArray
   }
 
   def activeTalkerChangedInWebconference(oldActiveTalkerUserId: String, newActiveTalkerUserId: String): Boolean = {
@@ -246,4 +250,12 @@ class UsersModel {
     }
   }
 
+  def isMediaSourceUser(callerIdNum: String, kurentoToken: String): Boolean = {
+    System.out.println("isMediaSourceUser ? callerIdNum = " + callerIdNum + " , kurentoToken = " + kurentoToken)
+    Option(callerIdNum) match {
+      case Some("") => false
+      case Some(c) => c.contains(kurentoToken)
+      case None => false
+    }
+  }
 }
