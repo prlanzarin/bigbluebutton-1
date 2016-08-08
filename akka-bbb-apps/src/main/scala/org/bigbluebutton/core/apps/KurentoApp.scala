@@ -15,6 +15,7 @@ trait KurentoApp {
     System.out.println("StartMediaSource. [meetingId = " + msg.meetingID + " , mediaSourceId = " + msg.mediaSourceId + " , mediaSourceUri = " + msg.mediaSourceUri + "]")
 
     var params = new scala.collection.mutable.HashMap[String, String]
+    params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
     params += MessagesConstants.INPUT -> msg.mediaSourceUri
     //Each media uses RTP protocol to send it's data to BBB
     outGW.send(new StartKurentoRtpRequest(msg.meetingID, msg.mediaSourceId, params))
