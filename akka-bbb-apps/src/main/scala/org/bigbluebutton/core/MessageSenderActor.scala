@@ -38,6 +38,7 @@ import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
 import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
 import org.bigbluebutton.common.messages.StartKurentoRtpRequestMessage
 import org.bigbluebutton.common.messages.StopKurentoRtpRequestMessage
+import org.bigbluebutton.common.messages.StopAllMediaSourcesMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -134,6 +135,7 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: IsWhiteboardEnabledReply => handleIsWhiteboardEnabledReply(msg)
     case msg: StartKurentoRtpRequest => handleStartKurentoRtpRequest(msg)
     case msg: StopKurentoRtpRequest => handleStopKurentoRtpRequest(msg)
+    case msg: StopAllMediaSources => handleStopAllMediaSources(msg)
     case _ => // do nothing
   }
 
@@ -684,13 +686,17 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
 
   private def handleStartKurentoRtpRequest(msg: StartKurentoRtpRequest) {
     val skrr = new StartKurentoRtpRequestMessage(msg.meetingID, msg.kurentoEndpointId, msg.params)
-    System.out.println("handleStartKurentoRtpRequest: " + skrr.toJson());
     service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, skrr.toJson())
   }
 
   private def handleStopKurentoRtpRequest(msg: StopKurentoRtpRequest) {
     val skrr = new StopKurentoRtpRequestMessage(msg.meetingID, msg.kurentoEndpointId)
     service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, skrr.toJson())
+  }
+
+  private def handleStopAllMediaSources(msg: StopAllMediaSources) {
+    val sams = new StopAllMediaSourcesMessage(msg.meetingID)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, sams.toJson())
   }
 
   private def handleGetWhiteboardShapesReply(msg: GetWhiteboardShapesReply) {
