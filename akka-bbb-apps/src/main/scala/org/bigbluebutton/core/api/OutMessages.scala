@@ -140,6 +140,7 @@ case class GetAllMeetingsReply(meetings: Array[MeetingInfo]) extends IOutMessage
 case class StartTranscoderRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
 case class UpdateTranscoderRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
 case class StopTranscoderRequest(meetingID: String, transcoderId: String) extends IOutMessage
+case class StopMeetingTranscoders(meetingID: String) extends IOutMessage
 case class StartProbingRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
 
 //Kurento

@@ -39,6 +39,7 @@ import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
 import org.bigbluebutton.common.messages.StartKurentoRtpRequestMessage
 import org.bigbluebutton.common.messages.StopKurentoRtpRequestMessage
 import org.bigbluebutton.common.messages.StopAllMediaSourcesMessage
+import org.bigbluebutton.common.messages.StopMeetingTranscodersMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -120,6 +121,7 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: StartTranscoderRequest => handleStartTranscoderRequest(msg)
     case msg: UpdateTranscoderRequest => handleUpdateTranscoderRequest(msg)
     case msg: StopTranscoderRequest => handleStopTranscoderRequest(msg)
+    case msg: StopMeetingTranscoders => handleStopMeetingTranscoders(msg)
     case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
     case msg: VoiceCancelDial => handleVoiceCancelDial(msg)
     case msg: VoiceDialing2 => handleVoiceDialing(msg)
@@ -662,6 +664,11 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleStopTranscoderRequest(msg: StopTranscoderRequest) {
     val str = new StopTranscoderRequestMessage(msg.meetingID, msg.transcoderId)
     service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
+  }
+
+  private def handleStopMeetingTranscoders(msg: StopMeetingTranscoders) {
+    val smt = new StopMeetingTranscodersMessage(msg.meetingID)
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, smt.toJson())
   }
 
   private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
