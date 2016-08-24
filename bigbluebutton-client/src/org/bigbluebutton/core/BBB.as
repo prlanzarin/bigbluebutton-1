@@ -73,6 +73,10 @@ package org.bigbluebutton.core
 			return initVideoProfileManager().defaultVideoProfile;
 		}
 		
+		public static function get mediaSourceVideoProfile():VideoProfile {
+			return initVideoProfileManager().mediaSourceVideoProfile;
+		}
+
 		public static function get fallbackVideoProfile():VideoProfile {
 			return initVideoProfileManager().fallbackVideoProfile;
 		}

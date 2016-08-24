@@ -83,6 +83,10 @@ package org.bigbluebutton.core.managers
             return null;
         }
 
+        public function get mediaSourceVideoProfile(): VideoProfile {
+            return getVideoProfileById('wide');
+        }
+
         public function get defaultVideoProfile():VideoProfile {
             for each (var profile:VideoProfile in _profiles) {
                 if (profile.defaultProfile) {
