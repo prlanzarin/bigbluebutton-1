@@ -12,7 +12,7 @@ case class PubSubPing(system: String, timestamp: Long)
 case class IsMeetingActorAliveMessage(meetingId: String)
 case class KeepAliveMessage(aliveID: String)
 case class CreateMeeting(meetingID: String, mProps: MeetingProperties) extends InMessage
-case class InitializeMeeting(meetingID: String, recorded: Boolean) extends InMessage
+case class InitializeMeeting(meetingID: String, recorded: Boolean, kurentoToken: String) extends InMessage
 case class DestroyMeeting(meetingID: String) extends InMessage
 case class StartMeeting(meetingID: String) extends InMessage
 case class EndMeeting(meetingID: String) extends InMessage

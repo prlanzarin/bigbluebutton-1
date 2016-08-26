@@ -63,6 +63,10 @@ trait KurentoApp {
     }
   }
 
+  def handleUpdateKurentoToken(msg: UpdateKurentoToken) {
+    meetingModel.setKurentoToken(msg.token)
+  }
+
   def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {
     Option(params) match {
       case Some(map) => map.get(key)

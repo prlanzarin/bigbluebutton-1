@@ -441,7 +441,7 @@ trait UsersApp {
         /**
          * If user is not joined listenOnly then user is joined calling through phone or webrtc.
          */
-        val msu = usersModel.isMediaSourceUser(msg.callerIdNum, mProps.kurentoToken)
+        val msu = usersModel.isMediaSourceUser(msg.callerIdNum, meetingModel.kurentoToken)
         //val msu = usersModel.isMediaSourceUser(msg.callerIdName)
         val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, msg.callerIdNum,
           joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, listenOnly = msg.listenOnly, msg.hasVideo, msg.hasFloor)

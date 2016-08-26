@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 case object StopMeetingActor
 case class MeetingProperties(meetingID: String, externalMeetingID: String, meetingName: String, recorded: Boolean,
   voiceBridge: String, duration: Long, autoStartRecording: Boolean, allowStartStopRecording: Boolean,
-  moderatorPass: String, viewerPass: String, createTime: Long, createDate: String, kurentoToken: String)
+  moderatorPass: String, viewerPass: String, createTime: Long, createDate: String, startKurentoToken: String)
 
 class MeetingModel {
   private var audioSettingsInited = false
@@ -27,6 +27,7 @@ class MeetingModel {
   private var _globalCallLocalVideoPort = ""
   private var _globalCallRemoteVideoPort = ""
   private var _sipHost = ""
+  private var _kurentoToken = ""
 
   val TIMER_INTERVAL = 30000
   private var hasLastWebUserLeft = false
@@ -227,5 +228,13 @@ class MeetingModel {
       case Some(s) => s.startsWith(VIDEOCONFERENCE_STREAM_NAME)
       case None => false
     }
+  }
+
+  def setKurentoToken(token: String) {
+    _kurentoToken = token
+  }
+
+  def kurentoToken(): String = {
+    _kurentoToken
   }
 }

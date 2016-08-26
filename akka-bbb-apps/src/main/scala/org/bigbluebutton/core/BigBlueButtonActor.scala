@@ -33,7 +33,7 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
 
   private var meetings = new collection.immutable.HashMap[String, RunningMeeting]
   private val outGW = new OutMessageGateway("bbbActorOutGW", recorderApp, messageSender)
-  private var _kurentoToken = "unknown_kurento_token"
+  private var kurentoToken = "unknown_kurento_token"
 
   def receive = {
     case msg: CreateMeeting => handleCreateMeeting(msg)
@@ -130,8 +130,11 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
   }
 
   private def handleUpdateKurentoToken(msg: UpdateKurentoToken) {
-    _kurentoToken = msg.token
+    kurentoToken = msg.token
     System.out.println("Kurento token updated successfully, new token: " + msg.token)
+    meetings.values foreach { m =>
+      m.actorRef ! msg
+    }
   }
 
   private def handleValidateAuthToken(msg: ValidateAuthToken) {
@@ -224,15 +227,14 @@ class BigBlueButtonActor(val system: ActorSystem, recorderApp: RecorderApplicati
       case None => {
         log.info("Create meeting request. meetingId={}", msg.mProps.meetingID)
         val moutGW = new OutMessageGateway("meetingOutGW-" + msg.meetingID, recorderApp, messageSender)
-        val mProps = msg.mProps.copy(kurentoToken = _kurentoToken)
-        var m = RunningMeeting(mProps, moutGW)
+        var m = RunningMeeting(msg.mProps, moutGW)
 
         meetings += m.mProps.meetingID -> m
         outGW.send(new MeetingCreated(m.mProps.meetingID, m.mProps.externalMeetingID, m.mProps.recorded, m.mProps.meetingName,
           m.mProps.voiceBridge, msg.mProps.duration, msg.mProps.moderatorPass,
           msg.mProps.viewerPass, msg.mProps.createTime, msg.mProps.createDate))
 
-        m.actorRef ! new InitializeMeeting(m.mProps.meetingID, m.mProps.recorded)
+        m.actorRef ! new InitializeMeeting(m.mProps.meetingID, m.mProps.recorded, kurentoToken)
         m.actorRef ! "StartTimer"
       }
       case Some(m) => {
