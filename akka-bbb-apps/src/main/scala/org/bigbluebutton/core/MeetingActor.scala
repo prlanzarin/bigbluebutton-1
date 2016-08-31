@@ -200,6 +200,8 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleStartMediaSource(msg)
     case msg: StopMediaSource =>
       handleStopMediaSource(msg)
+    case msg: AllMediaSourcesStopped =>
+      handleAllMediaSourcesStopped(msg)
     case msg: StartKurentoRtpReply =>
       handleStartKurentoRtpReply(msg)
     case msg: StopKurentoRtpReply =>

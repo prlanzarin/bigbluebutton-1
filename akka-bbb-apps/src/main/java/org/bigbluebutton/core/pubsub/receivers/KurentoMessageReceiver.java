@@ -2,6 +2,7 @@
 package org.bigbluebutton.core.pubsub.receivers;
 
 import org.bigbluebutton.common.messages.MessagingConstants;
+import org.bigbluebutton.common.messages.AllMediaSourcesStoppedMessage;
 import org.bigbluebutton.common.messages.StartKurentoRtpReplyMessage;
 import org.bigbluebutton.common.messages.StopKurentoRtpReplyMessage;
 import org.bigbluebutton.common.messages.UpdateKurentoTokenMessage;
@@ -37,19 +38,29 @@ public class KurentoMessageReceiver implements MessageHandler{
 						case UpdateKurentoTokenMessage.UPDATE_KURENTO_TOKEN:
 							processUpdateKurentoTokenMessage(message);
 							break;
+						case AllMediaSourcesStoppedMessage.ALL_MEDIA_SOURCES_STOPPED:
+							processAllMediaSourcesStoppedMessage(message);
+							break;
 					}
 				}
 			}
 		}
 	}
 
+	private void processAllMediaSourcesStoppedMessage(String message) {
+		AllMediaSourcesStoppedMessage msg = AllMediaSourcesStoppedMessage.fromJson(message);
+		if (msg != null) {
+			System.out.println("Message AllMediaSourcesStoppedMessage is not null");
+			bbbInGW.allMediaSourcesStopped(msg.meetingId);
+		} else {
+			System.out.println("AllMediaSourcesStoppedMessage is NULL");
+		}
+	}
+
 	private void processStartKurentoRtpReplyMessage(String message) {
 		StartKurentoRtpReplyMessage msg = StartKurentoRtpReplyMessage.fromJson(message);
 		if (msg != null){
-			System.out.println("KURENTO START IS NOT NULL");
 			bbbInGW.startKurentoRtpReply(msg.meetingId, msg.kurentoEndpointId, msg.params);
-		} else {
-			System.out.println("KURENTO START IS NULL DUH");
 		}
 	}
 

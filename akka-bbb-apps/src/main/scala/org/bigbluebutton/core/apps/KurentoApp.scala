@@ -67,6 +67,13 @@ trait KurentoApp {
     meetingModel.setKurentoToken(msg.token)
   }
 
+  def handleAllMediaSourcesStopped(msg: AllMediaSourcesStopped) {
+    System.out.println("KurentoApp - Received AllMediaSourcesStopped");
+    usersModel.getMediaSourceUsers() foreach {
+      u => outGW.send(new StopTranscoderRequest(mProps.meetingID, u.voiceUser.callerName))
+    }
+  }
+
   def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {
     Option(params) match {
       case Some(map) => map.get(key)

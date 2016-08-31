@@ -136,5 +136,6 @@ case class TranscoderStatusUpdate(meetingID: String, transcoderId: String, param
 case class StartProbingReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
 
 //Kurento
+case class AllMediaSourcesStopped(meetingID: String) extends InMessage
 case class StartKurentoRtpReply(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage
 case class StopKurentoRtpReply(meetingID: String, kurentoEndpointId: String) extends InMessage

@@ -96,6 +96,10 @@ class UsersModel {
     uservos.values toArray
   }
 
+  def getMediaSourceUsers(): Array[UserVO] = {
+    uservos.values filter (u => u.mediaSourceUser) toArray
+  }
+
   def getMediaSourceUser(name: String): Option[UserVO] = {
     uservos.values find (u => u.name == name)
   }

@@ -540,6 +540,10 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
    * *****************************************************************
    */
 
+  def allMediaSourcesStopped(meetingId: String) {
+    bbbActor ! new AllMediaSourcesStopped(meetingId)
+  }
+
   def startKurentoRtpReply(meetingId: String, kurentoEndpointId: String, params: java.util.Map[String, String]) {
     bbbActor ! new StartKurentoRtpReply(meetingId, kurentoEndpointId, mapAsScalaMap(params).toMap)
   }
