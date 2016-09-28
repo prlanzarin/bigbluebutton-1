@@ -206,6 +206,8 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleStartKurentoRtpReply(msg)
     case msg: StopKurentoRtpReply =>
       handleStopKurentoRtpReply(msg)
+    case msg: UpdateKurentoRtp =>
+      handleUpdateKurentoRtp(msg)
     case msg: UpdateKurentoToken =>
       handleUpdateKurentoToken(msg)
 

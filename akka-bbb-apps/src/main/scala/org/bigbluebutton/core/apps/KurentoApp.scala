@@ -50,6 +50,19 @@ trait KurentoApp {
     //}
   }
 
+  def handleUpdateKurentoRtp(msg: UpdateKurentoRtp) {
+    System.out.println("UpdateKurentoRtp. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
+    var params = new scala.collection.mutable.HashMap[String, String]
+    msg.params foreach {
+      e => params += e
+    }
+    params += MessagesConstants.CALLERNAME -> msg.kurentoEndpointId
+    params += MessagesConstants.LOCAL_IP_ADDRESS -> msg.params(MessagesConstants.DESTINATION_IP_ADDRESS)
+    params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
+    params -= MessagesConstants.DESTINATION_VIDEO_PORT
+    outGW.send(new UpdateTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
+  }
+
   def userSharedKurentoRtpStream(user: UserVO, params: Map[String, String]) {
     getTranscoderParam(MessagesConstants.OUTPUT, params) match {
       case Some(streamName) =>

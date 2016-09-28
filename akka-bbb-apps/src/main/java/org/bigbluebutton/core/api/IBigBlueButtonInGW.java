@@ -135,4 +135,5 @@ public interface IBigBlueButtonInGW {
 	void allMediaSourcesStopped(String meetingId);
 	void startKurentoRtpReply(String meetingId, String kurentoEndpointId, Map<String,String> params);
 	void stopKurentoRtpReply(String meetingId, String kurentoEndpointId);
+	void updateKurentoRtp(String meetingId, String kurentoEndpointId, Map<String,String> params);
 }

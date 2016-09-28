@@ -5,6 +5,7 @@ import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.AllMediaSourcesStoppedMessage;
 import org.bigbluebutton.common.messages.StartKurentoRtpReplyMessage;
 import org.bigbluebutton.common.messages.StopKurentoRtpReplyMessage;
+import org.bigbluebutton.common.messages.UpdateKurentoRtpMessage;
 import org.bigbluebutton.common.messages.UpdateKurentoTokenMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 
@@ -34,6 +35,9 @@ public class KurentoMessageReceiver implements MessageHandler{
 							break;
 						case StopKurentoRtpReplyMessage.STOP_KURENTO_RTP_REPLY:
 							processStopKurentoRtpReplyMessage(message);
+							break;
+						case UpdateKurentoRtpMessage.UPDATE_KURENTO_RTP:
+							processUpdateKurentoRtpMessage(message);
 							break;
 						case UpdateKurentoTokenMessage.UPDATE_KURENTO_TOKEN:
 							processUpdateKurentoTokenMessage(message);
@@ -68,6 +72,13 @@ public class KurentoMessageReceiver implements MessageHandler{
 		StopKurentoRtpReplyMessage msg = StopKurentoRtpReplyMessage.fromJson(message);
 		if (msg != null){
 			bbbInGW.stopKurentoRtpReply(msg.meetingId, msg.kurentoEndpointId);
+		}
+	}
+
+	private void processUpdateKurentoRtpMessage(String message) {
+		UpdateKurentoRtpMessage msg = UpdateKurentoRtpMessage.fromJson(message);
+		if (msg != null){
+			bbbInGW.updateKurentoRtp(msg.meetingId, msg.kurentoEndpointId, msg.params);
 		}
 	}
 

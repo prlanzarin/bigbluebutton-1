@@ -248,8 +248,12 @@ trait VoiceApp {
       + "meetingID = " + msg.meetingID + "\n"
       + "transcoderId = " + msg.transcoderId + "\n\n")
 
-    if (!usersModel.activeTalkerChangedInWebconference(meetingModel.talkerUserId(), msg.transcoderId)) { //make sure this transcoder is the current talker
-      updateVideoConferenceStreamName(msg.params)
+    usersModel.getMediaSourceUser(msg.transcoderId) match {
+      case Some(user) => userSharedKurentoRtpStream(user, msg.params)
+      case _ =>
+        if (!usersModel.activeTalkerChangedInWebconference(meetingModel.talkerUserId(), msg.transcoderId)) { //make sure this transcoder is the current talker
+          updateVideoConferenceStreamName(msg.params)
+        }
     }
   }
 
