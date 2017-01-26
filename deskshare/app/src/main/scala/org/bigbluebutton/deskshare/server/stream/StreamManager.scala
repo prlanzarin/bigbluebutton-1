@@ -21,8 +21,11 @@ package org.bigbluebutton.deskshare.server.stream
 import org.bigbluebutton.deskshare.server.red5.DeskshareApplication
 import org.red5.server.api.scope.IScope
 import org.red5.server.api.so.ISharedObject
+import org.red5.server.api.stream.IBroadcastStream
 
+import java.io.{PrintWriter, StringWriter}
 import java.util.ArrayList
+import java.util.concurrent.TimeUnit
 
 import scala.actors.Actor
 import scala.actors.Actor._
@@ -47,7 +50,16 @@ class StreamManager(record:Boolean, recordingService:RecordingService) extends A
   	private case class RemoveStream(room: String)
 
 	private val streams = new HashMap[String, DeskshareStream]
- 
+	private val rtmpStreams = new HashMap[String, IBroadcastStream]
+
+	override def exceptionHandler() = {
+	  case e: Exception => {
+	    val sw:StringWriter = new StringWriter()
+	    sw.write("An exception has been thrown on StreamManager, exception message [" + e.getMessage() + "] (full stacktrace below)\n")
+	    e.printStackTrace(new PrintWriter(sw))
+	    log.error(sw.toString())
+	  }
+	}
 
 	def act() = {
 	  loop {
@@ -95,7 +107,31 @@ class StreamManager(record:Boolean, recordingService:RecordingService) extends A
 	  }
 	}
  
+	def stopRtmpStream(room: String) {
+		getRtmpStream(room) match {
+			case Some(stream) => {
+				log.info("Stopped RTMP stream for room [ %s ]", room)
+				closeRtmpStream(stream)
+				destroyStream(room)
+				removeRtmpStream(room)
+			}
+			case None => {
+				log.info("Tried to stop, but could not find deskshare stream for room [ %s ]", room)
+			}
+		}
+	}
+
   	def destroyStream(room: String) {
+		streams.get(room) match {
+			case Some(stream) => {
+				if (hasRtmpStream(room) && record) {
+					stream.getRecorder().sendRecordStoppedEvent()
+					log.info("Stopped RTMP stream recording for room [ %s ]", room)
+				}
+				stream.destroyStream()
+			}
+			case None => log.info("Tried to destroy, but could not find deskshare stream for room [ %s ]", room)
+		}
   		this ! new RemoveStream(room)
   	}  	
    
@@ -107,5 +143,55 @@ class StreamManager(record:Boolean, recordingService:RecordingService) extends A
 	override def exit(reason : AnyRef) : Nothing = {
 	  log.warning("StreamManager: **** Exiting Actor with reason %s")
 	  super.exit(reason)
+	}
+
+	def createRtmpStream(stream: IBroadcastStream, width: Int, height: Int) {
+		var room:String = stream.getPublishedName()
+		var deskshareStream = new DeskshareStream(app, room, width, height, record, recordingService.getRecorderFor(room))
+		this ! new AddStream(room, deskshareStream)
+		if (record) {
+			recordRtmpStream(deskshareStream, stream)
+		}
+	}
+
+	def closeRtmpStream(stream: IBroadcastStream) {
+		stream.close()
+		log.info("Closed RTMP stream for room [ %s ]", stream.getPublishedName())
+	}
+
+	def getRtmpStream(room: String): Option[IBroadcastStream] = {
+		rtmpStreams.get(room)
+	}
+
+	def hasRtmpStream(room: String): Boolean = {
+		rtmpStreams.contains(room)
+	}
+
+	def addRtmpStream(stream: IBroadcastStream) {
+		var room:String = stream.getPublishedName()
+		rtmpStreams += room -> stream
+		log.info("Added RTMP stream for room [ %s ]", room)
+	}
+
+	def removeRtmpStream(room: String) {
+		rtmpStreams -= room
+		log.info("Removed RTMP stream for room [ %s ]", room)
+	}
+
+	private def recordRtmpStream(deskshareStream: DeskshareStream, stream: IBroadcastStream) {
+		var room:String = stream.getPublishedName()
+		var fileName:String = deskshareStream.getRecorder().getFileName()
+
+		try {
+			stream.saveAs(fileName, false)
+			deskshareStream.getRecorder().sendRecordStartedEvent()
+			log.info("Recording RTMP stream for room [ %s ]", room)
+		} catch {
+			case e: java.lang.Exception =>
+				log.error(e.toString())
+				e.printStackTrace
+				deskshareStream.getRecorder().sendRecordErrorEvent("Cannot record to recording output.");
+			case _ => log.error("ERROR while recording RTMP stream for room [ %s ]", room)
+		}
 	}
 }

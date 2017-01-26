@@ -19,6 +19,8 @@
 package org.bigbluebutton.deskshare.server.red5
 
 import org.red5.server.api.{IContext, IConnection}
+import org.red5.server.api.stream.IBroadcastStream
+import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.so.SharedObjectService
 import org.red5.server.api.so.{ISharedObject, ISharedObjectService}
 import org.red5.server.stream.IProviderService
@@ -65,7 +67,6 @@ class DeskshareApplication(streamManager: StreamManager, deskShareServer: DeskSh
 	
 	override def appConnect(conn: IConnection, params: Array[Object]): Boolean = {
 		logger.debug("deskShare appConnect to scope " + conn.getScope().getContextPath());
-		var meetingId = params(0).asInstanceOf[String]
 		super.appConnect(conn, params);
 	}
 	
@@ -207,5 +208,67 @@ class DeskshareApplication(streamManager: StreamManager, deskShareServer: DeskSh
 		}
     
 	   return Some(broadcastStream)
+	}
+
+	def destroyScreenVideoBroadcastStream(name: String):Boolean = {
+		logger.debug("DeskshareApplication: Destroying ScreenVideoBroadcastStream")
+		getRoomSharedObject(appScope, name) match {
+			case None => logger.error("Failed to get shared object for room %s", name)
+			case Some(deskSO) => {
+				logger.debug("DeskshareApplication: Destroying Broadcast Stream for room [ %s ]", name)
+				return destroyBroadcastStream(name, appScope)
+			}
+		}
+		return false
+	}
+
+	private def destroyBroadcastStream(name:String, roomScope:IScope):Boolean = {
+		if (name == null || roomScope == null) {
+			logger.error("DeskshareApplication: Cannot destroy broadcast stream. Invalid parameter")
+			return false
+		}
+
+		// There is a NPE going on Red5-1.0.6-RELEASE unregisterBroadcastStream method
+		// so we need to make sure the broadcast scope is availabe.
+		// If we eventually change to newer versions of Red5 this workaround may be unnecessary
+		val broadcastScope:IBroadcastScope = roomScope.getBroadcastScope(name)
+		if (broadcastScope == null) {
+			logger.debug("DeskshareApplication: Aborting unregister broadcast stream. No broadcast scope available")
+			return false
+		}
+
+		val context: IContext  = roomScope.getContext()
+
+		logger.debug("DeskshareApplication: Getting provider service for room [ %s ]", name)
+		val providerService: IProviderService  = context.getBean(IProviderService.BEAN_NAME).asInstanceOf[IProviderService]
+
+		logger.debug("DeskshareApplication: Unregistering broadcast stream for room [ %s ]", name)
+		if (providerService.unregisterBroadcastStream(roomScope, name)) {
+			// Do nothing. Successfully unregistered a live broadcast stream
+		} else {
+			logger.error("DeskshareApplication: Could not unregister broadcast stream")
+			return false
+		}
+
+		return true
+	}
+
+	override def streamBroadcastStart(stream:IBroadcastStream) {
+		var room:String = stream.getPublishedName()
+		// TODO do not hardcode the stream resolution
+		streamManager.createRtmpStream(stream, 1024, 576)
+		streamManager.addRtmpStream(stream)
+		super.streamBroadcastStart(stream)
+		logger.info("Started broadcasting RTMP stream for room [ %s ]", room)
+	}
+
+	override def streamBroadcastClose(stream:IBroadcastStream) {
+		var room:String = stream.getPublishedName()
+		if (streamManager.hasRtmpStream(room)) {
+			streamManager.destroyStream(room)
+			streamManager.removeRtmpStream(room)
+		}
+		super.streamBroadcastClose(stream)
+		logger.info("Closed broadcasting RTMP stream for room [ %s ]", room)
 	}
 }

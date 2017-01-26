@@ -73,6 +73,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
     private String remoteVideoPort;
     private String sdpPath;
     private String codec;
+    private String streamType;
     private VideoTranscoderObserver observer;
     private String globalVideoWidth = "640";// get this from properties (Stored in FFmpegUtils)
     private String globalVideoHeight = "480";// get this from properties
@@ -144,6 +145,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
                     this.videoStreamName = params.get(Constants.INPUT);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
 
                 case Constants.TRANSCODE_FILE_TO_RTP:
@@ -214,9 +216,15 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     return false;
                 }
 
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
+                                + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        input = "rtmp://" + sourceIp + "/deskShare/" + meetingId + " live=1";
+                }
 
-                input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
-                        + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
                 outputLive = "rtp://" + destinationIp + ":" + remoteVideoPort + "?localport=" + localVideoPort;
                 output = "";
 

@@ -48,14 +48,16 @@ public class FileRecorder implements Recorder {
 
 	private FileOutputStream fo;
 	private ScreenVideoFlvEncoder svf = new ScreenVideoFlvEncoder();
-	private String flvFilename = "/tmp/screenvideostream.flv";
+	private String fileName = "screenvideostream";
+	private String flvFilename = "/tmp/" + fileName + ".flv";
 	private final String session;
 	
 	private final RecordStatusListeners listeners = new RecordStatusListeners();
 	
 	public FileRecorder(String name, String recordingPath) {
 		session = name;
-		flvFilename = recordingPath + "/" + name + "-" + genTimestamp() + ".flv";
+		fileName = name + "-" + genTimestamp();
+		flvFilename = recordingPath + "/" + fileName + ".flv";
 	}
 	
   private Long genTimestamp() {
@@ -84,14 +86,10 @@ public class FileRecorder implements Recorder {
 			fo.write(svf.encodeHeader());
 		} catch (FileNotFoundException e1) {
 			log.error(StackTraceUtil.getStackTrace(e1));
-			RecordErrorEvent event = new RecordErrorEvent(session);
-			event.setReason("Failed to create recording output.");
-			listeners.notifyListeners(event);
+			sendRecordErrorEvent("Failed to create recording output.");
 		} catch (IOException e) {
 			log.error(StackTraceUtil.getStackTrace(e));
-			RecordErrorEvent event = new RecordErrorEvent(session);
-			event.setReason("Cannot record to recording output.");
-			listeners.notifyListeners(event);
+			sendRecordErrorEvent("Cannot record to recording output.");
 		}
 		
 		sendCapturedScreen = true;
@@ -104,17 +102,13 @@ public class FileRecorder implements Recorder {
 						recordFrameToFile(frame);
 					} catch (InterruptedException e) {
 						log.error("InterruptedExeption while taking event.");
-						RecordErrorEvent event = new RecordErrorEvent(session);
-						event.setReason("Cannot record to recording output.");
-						listeners.notifyListeners(event);
+						sendRecordErrorEvent("Cannot record to recording output.");
 					}
 				}
 			}
 		};
 		exec.execute(capturedScreenSender);
-		RecordStartedEvent event = new RecordStartedEvent(session);
-		event.setFile(flvFilename);
-		listeners.notifyListeners(event);
+		sendRecordStartedEvent();
 	}
 
 	private void recordFrameToFile(IoBuffer frame) {	
@@ -124,14 +118,10 @@ public class FileRecorder implements Recorder {
 			listeners.notifyListeners(event);
 		} catch (IOException e) {
 			log.error(StackTraceUtil.getStackTrace(e));
-			RecordErrorEvent event = new RecordErrorEvent(session);
-			event.setReason("Cannot record to recording output.");
-			listeners.notifyListeners(event);
+			sendRecordErrorEvent("Cannot record to recording output.");
 		} catch (FlvEncodeException e) {
 			log.error(StackTraceUtil.getStackTrace(e));
-			RecordErrorEvent event = new RecordErrorEvent(session);
-			event.setReason("Cannot record to recording output.");
-			listeners.notifyListeners(event);
+			sendRecordErrorEvent("Cannot record to recording output.");
 		}		
 	}
 	
@@ -142,12 +132,30 @@ public class FileRecorder implements Recorder {
 			svf = null;
 		} catch (IOException e) {
 			log.error(StackTraceUtil.getStackTrace(e));
-			RecordErrorEvent event = new RecordErrorEvent(session);
-			event.setReason("Cannot record to recording output.");
-			listeners.notifyListeners(event);
+			sendRecordErrorEvent("Cannot record to recording output.");
 		}
+		sendRecordStoppedEvent();
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void sendRecordStartedEvent() {
+		RecordStartedEvent event = new RecordStartedEvent(session);
+		event.setFile(flvFilename);
+		listeners.notifyListeners(event);
+	}
+
+	public void sendRecordStoppedEvent() {
 		RecordStoppedEvent event = new RecordStoppedEvent(session);
 		event.setFile(flvFilename);
+		listeners.notifyListeners(event);
+	}
+
+	public void sendRecordErrorEvent(String reason) {
+		RecordErrorEvent event = new RecordErrorEvent(session);
+		event.setReason(reason);
 		listeners.notifyListeners(event);
 	}
 }

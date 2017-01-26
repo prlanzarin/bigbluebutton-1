@@ -39,6 +39,7 @@ trait KurentoApp {
     params += MessagesConstants.LOCAL_IP_ADDRESS -> msg.params(MessagesConstants.DESTINATION_IP_ADDRESS)
     params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
     params -= MessagesConstants.DESTINATION_VIDEO_PORT
+    params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
     outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
     //}
   }
@@ -85,6 +86,20 @@ trait KurentoApp {
     usersModel.getMediaSourceUsers() foreach {
       u => outGW.send(new StopTranscoderRequest(mProps.meetingID, u.voiceUser.callerName))
     }
+  }
+
+  def handleStartDeskshareRtpReply(msg: StartDeskshareRtpReply) {
+    System.out.println("StartDeskshareRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
+    var params = new scala.collection.mutable.HashMap[String, String]
+    msg.params foreach {
+      e => params += e
+    }
+    params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
+    params += MessagesConstants.CODEC -> MessagesConstants.COPY
+    params += MessagesConstants.CALLERNAME -> msg.kurentoEndpointId
+    params += MessagesConstants.INPUT -> mProps.meetingID
+    params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_DESKSHARE
+    outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
   }
 
   def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {

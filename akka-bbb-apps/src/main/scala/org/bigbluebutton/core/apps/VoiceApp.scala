@@ -130,6 +130,7 @@ trait VoiceApp {
         if (user.hasStream) {
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
           params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(user.userID)
+          params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
         } else {
           //if user has no video , send videoconf logo to FS
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
@@ -208,6 +209,7 @@ trait VoiceApp {
       val params = new scala.collection.mutable.HashMap[String, String]
       params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
       params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
+      params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
       log.debug("User [{}] shared webcam, updating his transcoder", userId)
       outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
     }
@@ -221,6 +223,7 @@ trait VoiceApp {
           if (user.hasStream) {
             params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
             params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(user.userID)
+            params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
           } else {
             params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
           }

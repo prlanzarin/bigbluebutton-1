@@ -29,6 +29,7 @@ import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.stream.IProviderService
 import org.red5.server.net.rtmp.message.Constants;
 import org.apache.mina.core.buffer.IoBuffer
+import java.io.{PrintWriter, StringWriter}
 import java.util.ArrayList
 import scala.actors.Actor
 import scala.actors.Actor._
@@ -41,6 +42,15 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 	private var dsClient:RtmpClientAdapter = null
 		
 	var startTimestamp: Long = System.currentTimeMillis()
+
+	override def exceptionHandler() = {
+	  case e: Exception => {
+	    val sw:StringWriter = new StringWriter()
+	    sw.write("An exception has been thrown on DeskshareStream, exception message [" + e.getMessage() + "] (full stacktrace below)\n")
+	    e.printStackTrace(new PrintWriter(sw))
+	    log.error(sw.toString())
+	  }
+	}
  
 	def act() = {
 	  loop {
@@ -71,6 +81,10 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 	   } 
 	   return false
 	}
+
+	def destroyStream():Boolean = {
+		return app.destroyScreenVideoBroadcastStream(name)
+	}
  
 	private def stopStream() = {
 		log.debug("DeskShareStream: Stopping stream %s", name)
@@ -78,7 +92,7 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 		if (record) {
 	  		recorder.stop()
 	  	}
-		dsClient.sendDeskshareStreamStopped(new ArrayList[Object]())
+		dsClient.sendDeskshareStreamStopped(name)
 		broadcastStream.stop()
 	    broadcastStream.close()	  
 	    exit()
@@ -89,7 +103,7 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 	  if (record) {
 	  	recorder.start()
 	  }
-   	  dsClient.sendDeskshareStreamStarted(width, height)
+   	  dsClient.sendDeskshareStreamStarted(name, width, height)
 	}
 	
 	private def updateStreamMouseLocation(ml: UpdateStreamMouseLocation) = {
@@ -131,5 +145,9 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 	override def exit(reason : AnyRef) : Nothing = {
 	  log.warning("DeskShareStream: **** Exiting Actor %s for room %s", reason, name)
 	  super.exit(reason)
+	}
+
+	def getRecorder(): Recorder = {
+		recorder
 	}
 }

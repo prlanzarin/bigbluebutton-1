@@ -71,4 +71,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     <constructor-arg index="1" value="${redis.port}"/>
     <constructor-arg index="2" value="${redis.keyExpiry}"/>
   </bean>
+  <bean id="streamFilenameGenerator" class="org.bigbluebutton.deskshare.server.util.FilenameGenerator">
+    <property name="recordPath" value="${recordingDirectory}"/>
+    <property name="absolutePath" value="true"/>
+  </bean>
 </beans>

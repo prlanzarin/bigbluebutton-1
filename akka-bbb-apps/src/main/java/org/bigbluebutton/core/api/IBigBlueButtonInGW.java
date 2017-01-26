@@ -136,4 +136,5 @@ public interface IBigBlueButtonInGW {
 	void startKurentoRtpReply(String meetingId, String kurentoEndpointId, Map<String,String> params);
 	void stopKurentoRtpReply(String meetingId, String kurentoEndpointId);
 	void updateKurentoRtp(String meetingId, String kurentoEndpointId, Map<String,String> params);
+	void startDeskshareRtpReply(String meetingId, String kurentoEndpointId, Map<String,String> params);
 }

@@ -7,6 +7,7 @@ import org.bigbluebutton.common.messages.StartKurentoRtpReplyMessage;
 import org.bigbluebutton.common.messages.StopKurentoRtpReplyMessage;
 import org.bigbluebutton.common.messages.UpdateKurentoRtpMessage;
 import org.bigbluebutton.common.messages.UpdateKurentoTokenMessage;
+import org.bigbluebutton.common.messages.StartDeskshareRtpReplyMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 
 import com.google.gson.JsonParser;
@@ -44,6 +45,9 @@ public class KurentoMessageReceiver implements MessageHandler{
 							break;
 						case AllMediaSourcesStoppedMessage.ALL_MEDIA_SOURCES_STOPPED:
 							processAllMediaSourcesStoppedMessage(message);
+							break;
+						case StartDeskshareRtpReplyMessage.START_DESKSHARE_RTP_REPLY:
+							processStartDeskshareRtpReplyMessage(message);
 							break;
 					}
 				}
@@ -86,6 +90,13 @@ public class KurentoMessageReceiver implements MessageHandler{
 		UpdateKurentoTokenMessage msg = UpdateKurentoTokenMessage.fromJson(message);
 		if (msg != null){
 			bbbInGW.updateKurentoToken(msg.kurentoToken);
+		}
+	}
+
+	private void processStartDeskshareRtpReplyMessage(String message) {
+		StartDeskshareRtpReplyMessage msg = StartDeskshareRtpReplyMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.startDeskshareRtpReply(msg.meetingId, msg.kurentoEndpointId, msg.params);
 		}
 	}
 }

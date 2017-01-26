@@ -29,25 +29,43 @@ import org.bigbluebutton.deskshare.server.recorder.event.RecordStartedEvent;
 import org.bigbluebutton.deskshare.server.recorder.event.RecordStoppedEvent;
 import org.bigbluebutton.deskshare.server.recorder.event.RecordUpdateEvent;
 import org.red5.server.api.so.ISharedObject;
+import org.bigbluebutton.common.messages.Constants;
+import org.bigbluebutton.common.messages.MessagingConstants;
+import org.bigbluebutton.common.messages.StartDeskshareRtpRequestMessage;
+import org.bigbluebutton.common.messages.StopDeskshareRtpRequestMessage;
+import org.bigbluebutton.common.messages.StopTranscoderRequestMessage;
+import redis.clients.jedis.Jedis;
 
 public class RtmpClientAdapter implements DeskshareClient, RecordStatusListener {
 
 	private final ISharedObject so;
 	private long lastUpdate = 0;
+	private String redisHost;
+	private int redisPort;
+	private Jedis jedis;
 	
 	public RtmpClientAdapter(ISharedObject so) {
 		this.so = so;
+		redisHost = "127.0.0.1";
+		redisPort = 6379;
+		jedis = new Jedis(redisHost, redisPort);
 	}
 	
-	public void sendDeskshareStreamStopped(ArrayList<Object> msg) {
+	public void sendDeskshareStreamStopped(String room) {
+		ArrayList<Object> msg = new ArrayList<Object>();
 		so.sendMessage("deskshareStreamStopped" , msg);
+
+		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StopDeskshareRtpRequestMessage(room).toJson());
+		jedis.publish(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, new StopTranscoderRequestMessage(room, Constants.DESKSHARE).toJson());
 	}
 	
-	public void sendDeskshareStreamStarted(int width, int height) {
+	public void sendDeskshareStreamStarted(String room, int width, int height) {
 		ArrayList<Object> msg = new ArrayList<Object>();
 		msg.add(new Integer(width));
 		msg.add(new Integer(height));
 		so.sendMessage("appletStarted" , msg);
+
+		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StartDeskshareRtpRequestMessage(room).toJson());
 	}
 	
 	public void sendMouseLocation(Point mouseLoc) {
