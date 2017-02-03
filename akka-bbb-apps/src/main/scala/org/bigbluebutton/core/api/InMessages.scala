@@ -138,6 +138,6 @@ case class StartProbingReply(meetingID: String, transcoderId: String, params: Ma
 //Kurento
 case class AllMediaSourcesStopped(meetingID: String) extends InMessage
 case class StartKurentoRtpReply(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage
+case class StartKurentoRtspReply(meetingID: String, params: Map[String, String]) extends InMessage
 case class StopKurentoRtpReply(meetingID: String, kurentoEndpointId: String) extends InMessage
 case class UpdateKurentoRtp(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage
-case class StartDeskshareRtpReply(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage

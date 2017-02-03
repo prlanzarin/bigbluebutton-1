@@ -140,6 +140,7 @@ public class Constants {
   public static final String OUTPUT                          = "output";
   public static final String TRANSCODE_RTP_TO_RTMP           = "transcode_rtp_to_rtmp";
   public static final String TRANSCODE_RTMP_TO_RTP           = "transcode_rtmp_to_rtp";
+  public static final String TRANSCODE_RTMP_TO_RTSP          = "transcode_rtmp_to_rtsp";
   public static final String TRANSCODE_FILE_TO_RTP           = "transcode_file_to_rtp";
   public static final String TRANSCODE_FILE_TO_RTMP          = "transcode_file_to_rtmp";
   public static final String PROBE_RTMP                      = "probe_rtmp";

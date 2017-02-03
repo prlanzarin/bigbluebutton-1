@@ -39,7 +39,7 @@ import org.bigbluebutton.transcode.api.TranscodingFinishedUnsuccessfully;
 
 public class VideoTranscoder extends UntypedActor implements ProcessMonitorObserver {
 
-    public static enum Type{TRANSCODE_RTP_TO_RTMP, TRANSCODE_RTMP_TO_RTP,TRANSCODE_FILE_TO_RTP, TRANSCODE_FILE_TO_RTMP, PROBE_RTMP};
+    public static enum Type{TRANSCODE_RTP_TO_RTMP, TRANSCODE_RTMP_TO_RTP, TRANSCODE_RTMP_TO_RTSP, TRANSCODE_FILE_TO_RTP, TRANSCODE_FILE_TO_RTMP, PROBE_RTMP};
     public static enum Status{RUNNING, STOPPED, UPDATING}
     public static final String VIDEO_CONF_LOGO_PATH = FFmpegUtils.videoconfLogoPath;
     public static final String FFMPEG_PATH = FFmpegUtils.ffmpegPath;
@@ -145,8 +145,16 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
                     this.videoStreamName = params.get(Constants.INPUT);
-                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
+
+                case Constants.TRANSCODE_RTMP_TO_RTSP:
+                    this.type = Type.TRANSCODE_RTMP_TO_RTSP;
+                    this.sourceIp = params.get(Constants.LOCAL_IP_ADDRESS);
+                    this.remoteVideoPort = params.get(Constants.REMOTE_VIDEO_PORT);
+                    this.destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
+                    this.voiceBridge = params.get(Constants.VOICE_CONF);
+                    this.videoStreamName = params.get(Constants.INPUT);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
 
                 case Constants.TRANSCODE_FILE_TO_RTP:
                     this.type = Type.TRANSCODE_FILE_TO_RTP;
@@ -216,15 +224,8 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     return false;
                 }
 
-                switch(streamType) {
-                    case Constants.STREAM_TYPE_VIDEO:
-                        input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
-                                + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
-                        break;
-                    case Constants.STREAM_TYPE_DESKSHARE:
-                        input = "rtmp://" + sourceIp + "/deskShare/" + meetingId + " live=1";
-                }
-
+                input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
+                        + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
                 outputLive = "rtp://" + destinationIp + ":" + remoteVideoPort + "?localport=" + localVideoPort;
                 output = "";
 
@@ -243,6 +244,49 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
                 ffmpeg.setProfile("baseline");
                 ffmpeg.setFormat("rtp");
+                ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
+                ffmpeg.setLoglevel("verbose");
+                ffmpeg.setOutput(outputLive);
+                ffmpeg.setAnalyzeDuration("1000"); // 1ms
+                ffmpeg.setProbeSize("32"); // 1ms
+                System.out.println("Preparing FFmpeg process monitor");
+                command = ffmpeg.getFFmpegCommand(true);
+                break;
+
+            case TRANSCODE_RTMP_TO_RTSP:
+
+                if (!areRtmpToRtspParametersValid()) {
+                    System.out.println("  > ***TRANSCODER WILL NOT START: Rtmp to Rtsp Parameters are invalid");
+                    return false;
+                }
+
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
+                                + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        input = "rtmp://" + sourceIp + "/deskShare/" + meetingId + " live=1";
+                }
+
+                outputLive = "rtsp://" + destinationIp + ":" + remoteVideoPort + "/live/" + transcoderId + "/" + meetingId;
+                output = "";
+
+                ffmpeg = new FFmpegCommand();
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
+                ffmpeg.setInput(input);
+                ffmpeg.addRtmpInputConnectionParameter(meetingId);
+                ffmpeg.addRtmpInputConnectionParameter("transcoder-"+transcoderId);
+                ffmpeg.setFrameRate(15);
+                ffmpeg.setBufSize(1024);
+                ffmpeg.setGop(1); //MCU compatibility
+                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setMaxRate(1024);
+                ffmpeg.setSliceMode("dyn");
+                ffmpeg.setMaxNalSize("1024");
+                ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
+                ffmpeg.setProfile("baseline");
+                ffmpeg.setFormat("rtsp");
                 ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
                 ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
@@ -613,6 +657,32 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
         }
 
         return areVideoPortsValid();
+    }
+
+    public boolean areRtmpToRtspParametersValid() {
+        //log.debug("Checking Rtmp to Rtp Transcoder Parameters...");
+
+        if(meetingId == null || meetingId.isEmpty()) {
+           //log.debug("meetingId is null or empty");
+           return false;
+        }
+
+        if(videoStreamName == null || videoStreamName.isEmpty()) {
+           //log.debug("videoStreamName is null or empty");
+           return false;
+        }
+
+        if(remoteVideoPort == null || remoteVideoPort.isEmpty()) {
+           //log.debug("remoteVideoPort is null or empty");
+           return false;
+        }
+
+        if(remoteVideoPort.equals("0")) {
+           //log.debug("remoteVideoPort is 0");
+           return false;
+        }
+
+        return true;
     }
 
     public boolean areRtpToRtmpParametersValid() {

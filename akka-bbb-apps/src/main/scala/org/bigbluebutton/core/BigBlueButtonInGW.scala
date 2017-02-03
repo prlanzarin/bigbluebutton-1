@@ -560,7 +560,7 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
     bbbActor ! new UpdateKurentoToken(token)
   }
 
-  def startDeskshareRtpReply(meetingId: String, kurentoEndpointId: String, params: java.util.Map[String, String]) {
-    bbbActor ! new StartDeskshareRtpReply(meetingId, kurentoEndpointId, mapAsScalaMap(params).toMap)
+  def startKurentoRtspReply(meetingId: String, params: java.util.Map[String, String]) {
+    bbbActor ! new StartKurentoRtspReply(meetingId, mapAsScalaMap(params).toMap)
   }
 }
