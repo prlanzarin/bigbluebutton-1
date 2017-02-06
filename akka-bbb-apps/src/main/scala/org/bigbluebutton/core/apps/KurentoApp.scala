@@ -95,9 +95,7 @@ trait KurentoApp {
     }
     params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTSP
     params += MessagesConstants.CODEC -> MessagesConstants.COPY
-    params += MessagesConstants.INPUT -> mProps.meetingID
-    params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_DESKSHARE
-    outGW.send(new StartTranscoderRequest(mProps.meetingID, MessagesConstants.DESKSHARE, params))
+    outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
   }
 
   def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {
