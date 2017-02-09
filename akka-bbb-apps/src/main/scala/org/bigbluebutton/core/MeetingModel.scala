@@ -18,6 +18,7 @@ class MeetingModel {
   private var meetingMuted = false
   private var _isSipVideoPresent = false
   private var _isSipPhonePresent = false
+  private var _isDesksharePresent = false
   private var _talkerUserId = ""
   private var _globalVideoStreamName = ""
   private var _globalVideoStreamWidth = ""
@@ -141,6 +142,14 @@ class MeetingModel {
 
   def isSipPhonePresent(): Boolean = {
     _isSipPhonePresent
+  }
+
+  def setDesksharePresent(value: Boolean) = {
+    _isDesksharePresent = value
+  }
+
+  def isDesksharePresent(): Boolean = {
+    _isDesksharePresent
   }
 
   def setTalkerUserId(userId: String) {

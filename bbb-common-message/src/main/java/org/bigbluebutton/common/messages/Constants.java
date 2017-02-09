@@ -149,6 +149,7 @@ public class Constants {
   public static final String MEDIA_SOURCE_ID                 = "media_source_id";
   public static final String MEDIA_SOURCE_URI                = "media_source_uri";
   public static final String DESKSHARE                       = "deskShare";
+  public static final String DESKSHARE_PRESENT               = "deskshare_present";
   public static final String STREAM_TYPE                     = "stream_type";
   public static final String STREAM_TYPE_VIDEO               = "stream_type_video";
   public static final String STREAM_TYPE_DESKSHARE           = "stream_type_deskshare";

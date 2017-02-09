@@ -7,6 +7,7 @@ import org.bigbluebutton.core.MeetingActor
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListSet
 import org.bigbluebutton.core.OutMessageGateway
+import org.bigbluebutton.common.messages.{ Constants => MessagesConstants }
 
 trait UsersApp {
   this: MeetingActor =>
@@ -467,6 +468,19 @@ trait UsersApp {
           meetingModel.setSipPhonePresent(!msu) // mediaSourceUser is a sip-phone but doesnt trigger sip-video mechanism
           handleTranscoding()
         }
+
+        /**
+         * If a SIP phone user is joining via Kurento Apps, signal it to start
+         */
+        if (msu) {
+          var params = new scala.collection.mutable.HashMap[String, String]
+          params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
+          params += MessagesConstants.INPUT -> uvo.userID
+          //Each media uses RTP protocol to send it's data to BBB
+          log.info("Sending a new KurentoRtpRequest = " + params.toString() + " for caller " + uvo.userID + " at endpoint " + msg.callerIdNum)
+          outGW.send(new StartKurentoRtpRequest(mProps.meetingID, uvo.userID, params))
+        }
+
         outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
 
         if (meetingModel.isMeetingMuted()) {

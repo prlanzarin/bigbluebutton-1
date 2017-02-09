@@ -21,6 +21,8 @@ public interface IBigBlueButtonInGW {
 	void startMediaSource(String meetingID, String mediaSourceId, String mediaSourceUri);
 	void stopMediaSource(String meetingID, String mediaSourceId);
 	void updateKurentoToken(String token);
+	void setMeetingDesksharePresent(String meetingID, Boolean desksharePresent);
+	void getDeskshareStatusRequest(String meetingID);
 
 	// Polling
 	void votePoll(String meetingId, String userId, String pollId, Integer questionId, Integer answerId);

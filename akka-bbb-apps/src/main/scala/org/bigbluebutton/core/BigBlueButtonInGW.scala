@@ -82,6 +82,14 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
     bbbActor ! new StopMediaSource(meetingId, mediaSourceId)
   }
 
+  def setMeetingDesksharePresent(meetingID: String, desksharePresent: java.lang.Boolean) {
+    bbbActor ! new SetMeetingDesksharePresent(meetingID, desksharePresent)
+  }
+
+  def getDeskshareStatusRequest(meetingID: String) {
+    bbbActor ! new GetDeskshareStatusRequest(meetingID)
+  }
+
   /**
    * ***********************************************************
    * Message Interface for Users

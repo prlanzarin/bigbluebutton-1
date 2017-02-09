@@ -19,6 +19,8 @@ import org.bigbluebutton.common.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.common.messages.UserDisconnectedFromGlobalAudio;
 import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
 import org.bigbluebutton.common.messages.ValidateAuthTokenMessage;
+import org.bigbluebutton.common.messages.SetMeetingDesksharePresentMessage;
+import org.bigbluebutton.common.messages.GetDeskshareStatusRequestMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,6 +111,14 @@ public class MeetingMessageReceiver implements MessageHandler {
 					StopMediaSourceMessage stopMediaSourceMessage = (StopMediaSourceMessage) msg;
 					bbbGW.stopMediaSource(stopMediaSourceMessage.meetingId, stopMediaSourceMessage.mediaSourceId);
 				}
+                else if (msg instanceof SetMeetingDesksharePresentMessage) {
+                	SetMeetingDesksharePresentMessage setMeetingDesksharePresentMessage = (SetMeetingDesksharePresentMessage) msg;
+                	bbbGW.setMeetingDesksharePresent(setMeetingDesksharePresentMessage.meetingId, setMeetingDesksharePresentMessage.desksharePresent);
+                }
+                else if (msg instanceof GetDeskshareStatusRequestMessage) {
+                	GetDeskshareStatusRequestMessage getDeskshareStatusRequestMessage = (GetDeskshareStatusRequestMessage) msg;
+                	bbbGW.getDeskshareStatusRequest(getDeskshareStatusRequestMessage.meetingId);
+                }
                 else {
                     System.out.println("Unknown message: [" + message + "]");
                 }

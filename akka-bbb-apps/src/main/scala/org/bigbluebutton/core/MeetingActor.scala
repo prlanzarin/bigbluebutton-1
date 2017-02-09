@@ -210,6 +210,10 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleUpdateKurentoRtp(msg)
     case msg: UpdateKurentoToken =>
       handleUpdateKurentoToken(msg)
+    case msg: SetMeetingDesksharePresent =>
+      handleSetMeetingDesksharePresent(msg)
+    case msg: GetDeskshareStatusRequest =>
+      handleGetDeskshareStatusRequest(msg)
     case msg: StartKurentoRtspReply =>
       handleStartKurentoRtspReply(msg)
 
@@ -324,6 +328,14 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
 
   private def handleGetRecordingStatus(msg: GetRecordingStatus) {
     outGW.send(new GetRecordingStatusReply(mProps.meetingID, mProps.recorded, msg.userId, meetingModel.isRecording().booleanValue()))
+  }
+
+  private def handleSetMeetingDesksharePresent(msg: SetMeetingDesksharePresent) {
+    meetingModel.setDesksharePresent(msg.desksharePresent)
+  }
+
+  private def handleGetDeskshareStatusRequest(msg: GetDeskshareStatusRequest) {
+    outGW.send(new GetDeskshareStatusReply(mProps.meetingID, meetingModel.isDesksharePresent()))
   }
 
   def lockLayout(lock: Boolean) {

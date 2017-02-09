@@ -35,6 +35,7 @@ import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.StartKurentoRtspRequestMessage;
 import org.bigbluebutton.common.messages.StopKurentoRtspRequestMessage;
 import org.bigbluebutton.common.messages.StopTranscoderRequestMessage;
+import org.bigbluebutton.common.messages.SetMeetingDesksharePresentMessage;
 import redis.clients.jedis.Jedis;
 
 public class RtmpClientAdapter implements DeskshareClient, RecordStatusListener {
@@ -62,6 +63,7 @@ public class RtmpClientAdapter implements DeskshareClient, RecordStatusListener 
 		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StopKurentoRtspRequestMessage(room, params).toJson());
 
 		jedis.publish(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, new StopTranscoderRequestMessage(room, Constants.DESKSHARE).toJson());
+		jedis.publish(MessagingConstants.TO_MEETING_CHANNEL, new SetMeetingDesksharePresentMessage(room, false).toJson());
 	}
 	
 	public void sendDeskshareStreamStarted(String room, int width, int height) {
@@ -75,6 +77,7 @@ public class RtmpClientAdapter implements DeskshareClient, RecordStatusListener 
 		params.put(Constants.STREAM_TYPE, Constants.STREAM_TYPE_DESKSHARE);
 
 		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StartKurentoRtspRequestMessage(room, params).toJson());
+		jedis.publish(MessagingConstants.TO_MEETING_CHANNEL, new SetMeetingDesksharePresentMessage(room, true).toJson());
 	}
 	
 	public void sendMouseLocation(Point mouseLoc) {

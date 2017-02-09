@@ -41,6 +41,10 @@ public class MessageFromJsonConverter {
 					return processStartMediaSourceMessage(payload);
 				  case StopMediaSourceMessage.STOP_MEDIA_SOURCE_REQUEST:
 					return processStopMediaSourceMessage(payload);
+				  case SetMeetingDesksharePresentMessage.SET_MEETING_DESKSHARE_PRESENT:
+				  	return processSetMeetingDesksharePresentMessage(payload);
+				  case GetDeskshareStatusRequestMessage.GET_DESKSHARE_STATUS_REQUEST:
+				  	return processGetDeskshareStatusRequestMessage(payload);
 				}
 			}
 		}
@@ -114,4 +118,15 @@ public class MessageFromJsonConverter {
 		return new StopMediaSourceMessage(meetingId, mediaSourceId);
 	}
 
+	private static IBigBlueButtonMessage processSetMeetingDesksharePresentMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		Boolean desksharePresent = payload.get(Constants.DESKSHARE_PRESENT).getAsBoolean();
+		return new SetMeetingDesksharePresentMessage(meetingId, desksharePresent);
+	}
+
+
+	private static IBigBlueButtonMessage processGetDeskshareStatusRequestMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		return new GetDeskshareStatusRequestMessage(meetingId);
+	} 
 }

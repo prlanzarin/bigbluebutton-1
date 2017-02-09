@@ -40,6 +40,7 @@ import org.bigbluebutton.common.messages.StartKurentoRtpRequestMessage
 import org.bigbluebutton.common.messages.StopKurentoRtpRequestMessage
 import org.bigbluebutton.common.messages.StopAllMediaSourcesMessage
 import org.bigbluebutton.common.messages.StopMeetingTranscodersMessage
+import org.bigbluebutton.common.messages.GetDeskshareStatusReplyMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -135,6 +136,7 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: UndoWhiteboardEvent => handleUndoWhiteboardEvent(msg)
     case msg: WhiteboardEnabledEvent => handleWhiteboardEnabledEvent(msg)
     case msg: IsWhiteboardEnabledReply => handleIsWhiteboardEnabledReply(msg)
+    case msg: GetDeskshareStatusReply => handleGetDeskshareStatusReply(msg)
     case msg: StartKurentoRtpRequest => handleStartKurentoRtpRequest(msg)
     case msg: StopKurentoRtpRequest => handleStopKurentoRtpRequest(msg)
     case msg: StopAllMediaSources => handleStopAllMediaSources(msg)
@@ -734,5 +736,10 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleIsWhiteboardEnabledReply(msg: IsWhiteboardEnabledReply) {
     val json = WhiteboardMessageToJsonConverter.isWhiteboardEnabledReplyToJson(msg)
     service.send(MessagingConstants.FROM_WHITEBOARD_CHANNEL, json)
+  }
+
+  private def handleGetDeskshareStatusReply(msg: GetDeskshareStatusReply) {
+    val gdsr = new GetDeskshareStatusReplyMessage(msg.meetingID, msg.desksharePresent)
+    service.send(MessagingConstants.FROM_MEETING_CHANNEL, gdsr.toJson())
   }
 }

@@ -20,6 +20,8 @@ case class LockSetting(meetingID: String, locked: Boolean, settings: Map[String,
 case class StartMediaSource(meetingID: String, mediaSourceId: String, mediaSourceUri: String) extends InMessage
 case class StopMediaSource(meetingID: String, mediaSourceId: String) extends InMessage
 case class UpdateKurentoToken(token: String)
+case class SetMeetingDesksharePresent(meetingID: String, desksharePresent: Boolean) extends InMessage
+case class GetDeskshareStatusRequest(meetingID: String) extends InMessage
 
 // Lock
 case class LockUser(meetingID: String, userId: String, lock: Boolean) extends InMessage

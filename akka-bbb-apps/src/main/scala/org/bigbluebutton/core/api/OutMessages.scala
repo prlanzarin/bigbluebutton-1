@@ -27,6 +27,7 @@ case class DisconnectUser(meetingID: String, userId: String) extends IOutMessage
 case class KeepAliveMessageReply(aliveID: String) extends IOutMessage
 case class PubSubPong(system: String, timestamp: Long) extends IOutMessage
 case object IsAliveMessage extends IOutMessage
+case class GetDeskshareStatusReply(meetingID: String, desksharePresent: Boolean) extends IOutMessage
 
 // Permissions
 case class PermissionsSettingInitialized(meetingID: String, permissions: Permissions, applyTo: Array[UserVO]) extends IOutMessage
