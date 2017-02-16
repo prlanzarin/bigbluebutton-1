@@ -32,8 +32,8 @@ import org.bigbluebutton.deskshare.server.recorder.event.RecordUpdateEvent;
 import org.red5.server.api.so.ISharedObject;
 import org.bigbluebutton.common.messages.Constants;
 import org.bigbluebutton.common.messages.MessagingConstants;
-import org.bigbluebutton.common.messages.StartKurentoRtspRequestMessage;
-import org.bigbluebutton.common.messages.StopKurentoRtspRequestMessage;
+import org.bigbluebutton.common.messages.StartKurentoSendRtpRequestMessage;
+import org.bigbluebutton.common.messages.StopKurentoSendRtpRequestMessage;
 import org.bigbluebutton.common.messages.StopTranscoderRequestMessage;
 import org.bigbluebutton.common.messages.SetMeetingDesksharePresentMessage;
 import redis.clients.jedis.Jedis;
@@ -60,7 +60,7 @@ public class RtmpClientAdapter implements DeskshareClient, RecordStatusListener 
 		HashMap<String,String> params = new HashMap<String,String>();
 		params.put(Constants.INPUT, Constants.DESKSHARE);
 		params.put(Constants.STREAM_TYPE, Constants.STREAM_TYPE_DESKSHARE);
-		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StopKurentoRtspRequestMessage(room, params).toJson());
+		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StopKurentoSendRtpRequestMessage(room, params).toJson());
 
 		jedis.publish(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, new StopTranscoderRequestMessage(room, Constants.DESKSHARE).toJson());
 		jedis.publish(MessagingConstants.TO_MEETING_CHANNEL, new SetMeetingDesksharePresentMessage(room, false).toJson());
@@ -76,7 +76,7 @@ public class RtmpClientAdapter implements DeskshareClient, RecordStatusListener 
 		params.put(Constants.INPUT, Constants.DESKSHARE);
 		params.put(Constants.STREAM_TYPE, Constants.STREAM_TYPE_DESKSHARE);
 
-		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StartKurentoRtspRequestMessage(room, params).toJson());
+		jedis.publish(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, new StartKurentoSendRtpRequestMessage(room, params).toJson());
 		jedis.publish(MessagingConstants.TO_MEETING_CHANNEL, new SetMeetingDesksharePresentMessage(room, true).toJson());
 	}
 	

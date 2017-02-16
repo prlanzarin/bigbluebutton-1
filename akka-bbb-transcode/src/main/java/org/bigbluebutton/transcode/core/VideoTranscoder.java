@@ -145,6 +145,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
                     this.videoStreamName = params.get(Constants.INPUT);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
 
                 case Constants.TRANSCODE_RTMP_TO_RTSP:
@@ -224,8 +225,15 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     return false;
                 }
 
-                input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
-                        + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
+                                + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        input = "rtmp://" + sourceIp + "/deskShare/" + meetingId + " live=1";
+                }
+
                 outputLive = "rtp://" + destinationIp + ":" + remoteVideoPort + "?localport=" + localVideoPort;
                 output = "";
 

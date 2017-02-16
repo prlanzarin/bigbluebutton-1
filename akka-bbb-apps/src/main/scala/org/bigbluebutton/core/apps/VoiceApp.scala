@@ -130,6 +130,7 @@ trait VoiceApp {
         if (user.hasStream) {
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
           params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(user.userID)
+          params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
         } else {
           //if user has no video , send videoconf logo to FS
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
@@ -221,6 +222,7 @@ trait VoiceApp {
           if (user.hasStream) {
             params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
             params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(user.userID)
+            params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
           } else {
             params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
           }

@@ -214,8 +214,8 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleSetMeetingDesksharePresent(msg)
     case msg: GetDeskshareStatusRequest =>
       handleGetDeskshareStatusRequest(msg)
-    case msg: StartKurentoRtspReply =>
-      handleStartKurentoRtspReply(msg)
+    case msg: StartKurentoSendRtpReply =>
+      handleStartKurentoSendRtpReply(msg)
 
     case msg: EndMeeting => handleEndMeeting(msg)
     case StopMeetingActor => //exit

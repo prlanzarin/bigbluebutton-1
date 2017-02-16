@@ -4,7 +4,7 @@ package org.bigbluebutton.core.pubsub.receivers;
 import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.AllMediaSourcesStoppedMessage;
 import org.bigbluebutton.common.messages.StartKurentoRtpReplyMessage;
-import org.bigbluebutton.common.messages.StartKurentoRtspReplyMessage;
+import org.bigbluebutton.common.messages.StartKurentoSendRtpReplyMessage;
 import org.bigbluebutton.common.messages.StopKurentoRtpReplyMessage;
 import org.bigbluebutton.common.messages.UpdateKurentoRtpMessage;
 import org.bigbluebutton.common.messages.UpdateKurentoTokenMessage;
@@ -46,8 +46,8 @@ public class KurentoMessageReceiver implements MessageHandler{
 						case AllMediaSourcesStoppedMessage.ALL_MEDIA_SOURCES_STOPPED:
 							processAllMediaSourcesStoppedMessage(message);
 							break;
-						case StartKurentoRtspReplyMessage.START_KURENTO_RTSP_REPLY:
-							processStartKurentoRtspReplyMessage(message);
+						case StartKurentoSendRtpReplyMessage.START_KURENTO_SEND_RTP_REPLY:
+							processStartKurentoSendRtpReplyMessage(message);
 							break;
 					}
 				}
@@ -93,10 +93,10 @@ public class KurentoMessageReceiver implements MessageHandler{
 		}
 	}
 
-	private void processStartKurentoRtspReplyMessage(String message) {
-		StartKurentoRtspReplyMessage msg = StartKurentoRtspReplyMessage.fromJson(message);
+	private void processStartKurentoSendRtpReplyMessage(String message) {
+		StartKurentoSendRtpReplyMessage msg = StartKurentoSendRtpReplyMessage.fromJson(message);
 		if (msg != null) {
-			bbbInGW.startKurentoRtspReply(msg.meetingId, msg.params);
+			bbbInGW.startKurentoSendRtpReply(msg.meetingId, msg.params);
 		}
 	}
 }

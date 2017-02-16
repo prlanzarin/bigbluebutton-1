@@ -59,6 +59,7 @@ trait KurentoApp {
     params += MessagesConstants.CALLERNAME -> msg.kurentoEndpointId
     params += MessagesConstants.LOCAL_IP_ADDRESS -> msg.params(MessagesConstants.DESTINATION_IP_ADDRESS)
     params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
+    params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
     params -= MessagesConstants.DESTINATION_VIDEO_PORT
     outGW.send(new UpdateTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
   }
@@ -87,13 +88,13 @@ trait KurentoApp {
     }
   }
 
-  def handleStartKurentoRtspReply(msg: StartKurentoRtspReply) {
-    System.out.println("StartKurentoRtspReply. [meetingId = " + msg.meetingID + "]")
+  def handleStartKurentoSendRtpReply(msg: StartKurentoSendRtpReply) {
+    System.out.println("StartKurentoSendRtpReply. [meetingId = " + msg.meetingID + "]")
     var params = new scala.collection.mutable.HashMap[String, String]
     msg.params foreach {
       e => params += e
     }
-    params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTSP
+    params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
     params += MessagesConstants.CODEC -> MessagesConstants.COPY
     outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
   }
