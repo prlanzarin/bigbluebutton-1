@@ -134,6 +134,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
                     this.codec = params.get(Constants.CODEC);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
 
                 case Constants.TRANSCODE_RTMP_TO_RTP:
@@ -316,11 +317,18 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 sdpPath = FFmpegUtils.createSDPVideoFile(callername, sourceIp, localVideoPort, FFmpegConstants.CODEC_NAME_H264, FFmpegConstants.CODEC_ID_H264, FFmpegConstants.SAMPLE_RATE_H264, Constants.COPY.equals(this.codec)?callername:voiceBridge);
                 input = sdpPath;
 
-                //Generate video stream name
-                videoStreamName = generateVideoStreamName(type);
-                outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
-                        + videoStreamName+" live=1";
-                output = videoStreamName;
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        //Generate video stream name
+                        videoStreamName = generateVideoStreamName(type);
+                        outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
+                                + videoStreamName+" live=1";
+                        output = videoStreamName;
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        outputLive = "rtmp://" + destinationIp + "/deskShare/" + meetingId + " live=1";
+                        output = Constants.DESKSHARE;
+                }
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);

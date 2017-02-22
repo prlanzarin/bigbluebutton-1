@@ -12,6 +12,7 @@ import org.bigbluebutton.common.messages.MeetingMutedMessage;
 import org.bigbluebutton.common.messages.MeetingStateMessage;
 import org.bigbluebutton.common.messages.NewPermissionsSettingMessage;
 import org.bigbluebutton.common.messages.UserLockedMessage;
+import org.bigbluebutton.common.messages.StartDeskshareViewingMessage;
 import org.bigbluebutton.red5.client.messaging.BroadcastClientMessage;
 import org.bigbluebutton.red5.client.messaging.ConnectionInvokerService;
 import org.bigbluebutton.red5.client.messaging.DirectClientMessage;
@@ -86,6 +87,12 @@ public class MeetingClientMessageSender {
 					  UserLockedMessage ulm = UserLockedMessage.fromJson(message);
 					  if (ulm != null) {
 						  processUserLockedMessage(ulm);
+					  }
+					  break;
+				  case StartDeskshareViewingMessage.START_DESKSHARE_VIEWING:
+					  StartDeskshareViewingMessage sdvm = StartDeskshareViewingMessage.fromJson(message);
+					  if (sdvm != null) {
+						  processStartDeskshareViewingMessage(sdvm);
 					  }
 					  break;
 				}
@@ -183,6 +190,20 @@ public class MeetingClientMessageSender {
 		message.put("msg", gson.toJson(args));
 	  	    		  	    
 	  	BroadcastClientMessage m = new BroadcastClientMessage(msg.meetingId, "userLocked", message);
+		service.sendMessage(m);
+	}
+
+	private void processStartDeskshareViewingMessage(StartDeskshareViewingMessage msg) {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("meetingID", msg.meetingId);
+		args.put("videoWidth", msg.videoWidth);
+		args.put("videoHeight", msg.videoHeight);
+
+		Map<String, Object> message = new HashMap<String, Object>();
+		Gson gson = new Gson();
+		message.put("msg", gson.toJson(args));
+
+		BroadcastClientMessage m = new BroadcastClientMessage(msg.meetingId, "startDeskshareViewing", message);
 		service.sendMessage(m);
 	}
 }
