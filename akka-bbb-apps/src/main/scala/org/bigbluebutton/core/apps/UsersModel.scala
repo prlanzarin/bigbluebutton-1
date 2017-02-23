@@ -100,8 +100,8 @@ class UsersModel {
     uservos.values filter (u => u.mediaSourceUser) toArray
   }
 
-  def getMediaSourceUser(name: String): Option[UserVO] = {
-    uservos.values find (u => u.name == name)
+  def getMediaSourceUser(userID: String): Option[UserVO] = {
+    uservos.values find (u => u.userID == userID)
   }
 
   def numModerators(): Int = {

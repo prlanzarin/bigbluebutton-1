@@ -42,6 +42,7 @@ import org.bigbluebutton.common.messages.StopAllMediaSourcesMessage
 import org.bigbluebutton.common.messages.StopMeetingTranscodersMessage
 import org.bigbluebutton.common.messages.GetDeskshareStatusReplyMessage
 import org.bigbluebutton.common.messages.StartDeskshareViewingMessage
+import org.bigbluebutton.common.messages.StartKurentoSendRtpRequestMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -142,6 +143,7 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: StartKurentoRtpRequest => handleStartKurentoRtpRequest(msg)
     case msg: StopKurentoRtpRequest => handleStopKurentoRtpRequest(msg)
     case msg: StopAllMediaSources => handleStopAllMediaSources(msg)
+    case msg: StartKurentoSendRtpRequest => handleStartKurentoSendRtpRequest(msg)
     case _ => // do nothing
   }
 
@@ -748,5 +750,10 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleStartDeskshareViewing(msg: StartDeskshareViewing) {
     val sdv = new StartDeskshareViewingMessage(msg.meetingID, msg.videoWidth, msg.videoHeight)
     service.send(MessagingConstants.FROM_MEETING_CHANNEL, sdv.toJson())
+  }
+
+  private def handleStartKurentoSendRtpRequest(msg: StartKurentoSendRtpRequest) {
+    val sksrr = new StartKurentoSendRtpRequestMessage(msg.meetingID, msg.params)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, sksrr.toJson())
   }
 }

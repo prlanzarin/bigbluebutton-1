@@ -54,6 +54,7 @@ class TranscodingActor(val system: ActorSystem, messageSender: RedisPublisher)
       case None => {
         val vt = context.actorOf(VideoTranscoder.props(self, msg.meetingId, msg.transcoderId, msg.params))
         transcodersModel.addTranscoder(msg.meetingId, msg.transcoderId, vt)
+        log.info("    > New transcoder : {} for vt {}", msg.toString(), vt.toString())
         vt ! new StartVideoTranscoderRequest()
       }
     }

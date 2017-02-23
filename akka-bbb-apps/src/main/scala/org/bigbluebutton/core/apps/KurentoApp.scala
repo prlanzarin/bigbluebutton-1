@@ -27,27 +27,27 @@ trait KurentoApp {
   }
 
   def handleStartKurentoRtpReply(msg: StartKurentoRtpReply) {
-    //if (usersModel.hasUser(msg.kurentoEndpointId)) {
-    System.out.println("StartKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
-    var params = new scala.collection.mutable.HashMap[String, String]
-    msg.params foreach {
-      e => params += e
+    if (usersModel.hasUser(msg.kurentoEndpointId)) {
+      System.out.println("StartKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
+      var params = new scala.collection.mutable.HashMap[String, String]
+      msg.params foreach {
+        e => params += e
+      }
+      params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTP_TO_RTMP
+      params += MessagesConstants.CODEC -> MessagesConstants.COPY
+      params += MessagesConstants.CALLERNAME -> msg.kurentoEndpointId
+      params += MessagesConstants.LOCAL_IP_ADDRESS -> msg.params(MessagesConstants.DESTINATION_IP_ADDRESS)
+      params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
+      params -= MessagesConstants.DESTINATION_VIDEO_PORT
+      outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
     }
-    params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTP_TO_RTMP
-    params += MessagesConstants.CODEC -> MessagesConstants.COPY
-    params += MessagesConstants.CALLERNAME -> msg.kurentoEndpointId
-    params += MessagesConstants.LOCAL_IP_ADDRESS -> msg.params(MessagesConstants.DESTINATION_IP_ADDRESS)
-    params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
-    params -= MessagesConstants.DESTINATION_VIDEO_PORT
-    outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
-    //}
   }
 
   def handleStopKurentoRtpReply(msg: StopKurentoRtpReply) {
-    //if (usersModel.hasUser(msg.kurentoEndpointId)) {
-    System.out.println("StopKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
-    outGW.send(new StopTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId))
-    //}
+    if (usersModel.hasUser(msg.kurentoEndpointId)) {
+      System.out.println("StopKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
+      outGW.send(new StopTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId))
+    }
   }
 
   def handleUpdateKurentoRtp(msg: UpdateKurentoRtp) {
@@ -65,6 +65,7 @@ trait KurentoApp {
   }
 
   def userSharedKurentoRtpStream(user: UserVO, params: Map[String, String]) {
+    System.out.println("USER SHARED KURENTO RTP STREAM");
     getTranscoderParam(MessagesConstants.OUTPUT, params) match {
       case Some(streamName) =>
         System.out.println("Updating Kurento RTP stream to: " + streamName + " , userId = " + user.userID)

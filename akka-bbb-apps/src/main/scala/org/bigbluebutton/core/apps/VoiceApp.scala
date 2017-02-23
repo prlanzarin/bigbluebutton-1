@@ -113,8 +113,19 @@ trait VoiceApp {
   }
 
   def handleTranscoding() {
-    if (meetingModel.isSipPhonePresent() && meetingModel.isSipVideoEnabled()) {
-      startTranscoder(meetingModel.talkerUserId())
+    //log.info("Handling transcoding isDesksharePresent " + meetingModel.isDesksharePresent()  +
+    //  " hasMediaSourceUsers " + usersModel.getPhoneUsersSendingVideo().isEmpty)
+    if (!meetingModel.isDesksharePresent() && usersModel.getPhoneUsersSendingVideo().isEmpty) {
+      usersModel.getCurrentPresenter match {
+        case Some(curPres) =>
+          log.info("Starting video poll for presenter " + curPres.userID)
+          val params = new scala.collection.mutable.HashMap[String, String]
+          params += MessagesConstants.INPUT -> curPres.userID
+          params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
+          outGW.send(new StartKurentoSendRtpRequest(mProps.meetingID, params))
+        case None => // do nothing
+          log.info("No presenter found!");
+      }
     } else {
       stopAllTranscoders()
     }
@@ -123,7 +134,7 @@ trait VoiceApp {
   private def startTranscoder(userId: String) {
     usersModel.getUser(userId) foreach { user =>
       if (!user.phoneUser) {
-
+        log.info("Starting transcoder for WEB USER")
         //User's RTP transcoder
         val params = new scala.collection.mutable.HashMap[String, String]
 
@@ -131,8 +142,10 @@ trait VoiceApp {
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
           params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(user.userID)
           params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
+          log.info("Starting VIDEO transcoder for WEB USER")
         } else {
           //if user has no video , send videoconf logo to FS
+          log.info("Starting FILE transcoder for WEB USER")
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
         }
 
@@ -153,6 +166,7 @@ trait VoiceApp {
         outGW.send(new StartTranscoderRequest(mProps.meetingID, meetingModel.VIDEOCONFERENCE_LOGO_PREFIX + mProps.voiceBridge, params_logo))
 
       } else {
+        log.info("Starting GLOBAL transcoder")
         //start global transcoder
         val params = new scala.collection.mutable.HashMap[String, String]
         params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTP_TO_RTMP
@@ -205,12 +219,17 @@ trait VoiceApp {
   }
 
   def handleUserShareWebcamTranscoder(userId: String) {
-    if (meetingModel.isTalker(userId)) {
-      val params = new scala.collection.mutable.HashMap[String, String]
-      params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
-      params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
-      log.debug("User [{}] shared webcam, updating his transcoder", userId)
-      outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
+    getUser(userId) match {
+      case Some(user) => {
+        if (user.presenter) {
+          val params = new scala.collection.mutable.HashMap[String, String]
+          params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
+          params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
+          log.debug("User [{}] shared webcam, updating his transcoder for params [{}] with meetingID [{}]", userId, params.toString(), mProps.meetingID)
+          outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
+        }
+      }
+      case None => {}
     }
   }
 
@@ -239,6 +258,7 @@ trait VoiceApp {
       + "meetingID = " + msg.meetingID + "\n"
       + "transcoderId = " + msg.transcoderId + "\n\n")
 
+    //usersModel.getUser(msg.transcoderId) match {
     usersModel.getMediaSourceUser(msg.transcoderId) match {
       case Some(user) => userSharedKurentoRtpStream(user, msg.params)
       case _ => updateVideoConferenceStreamName(msg.params)
@@ -287,6 +307,7 @@ trait VoiceApp {
   }
 
   private def updateVideoConferenceStreamName(params: Map[String, String]) {
+    //FIXME isSipPhonePresent
     if (meetingModel.isSipPhonePresent()) {
       usersModel.getTranscoderParam(MessagesConstants.OUTPUT, params) match {
         case Some(videoconferenceStreamName) =>

@@ -443,8 +443,15 @@ trait UsersApp {
          * If user is not joined listenOnly then user is joined calling through phone or webrtc.
          */
         val msu = usersModel.isMediaSourceUser(msg.callerIdNum, meetingModel.kurentoToken)
-        //val msu = usersModel.isMediaSourceUser(msg.callerIdName)
-        val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, msg.callerIdNum,
+        val callerIdNum = if (msu) {
+          msg.callerIdNum.split(meetingModel.kurentoToken)(0)
+        } else {
+          msg.callerIdNum
+        }
+
+        log.info("CALLER ID NUM " + callerIdNum + " CALLER ID NAME " + msg.callerIdName + " VOICE USER ID " + msg.voiceUserId + " WEB USER ID " + webUserId);
+
+        val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, callerIdNum,
           joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, listenOnly = msg.listenOnly, msg.hasVideo, msg.hasFloor)
 
         val si = new SipInfo("", "", "", "")
@@ -475,9 +482,9 @@ trait UsersApp {
         if (msu) {
           var params = new scala.collection.mutable.HashMap[String, String]
           params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
-          params += MessagesConstants.INPUT -> uvo.userID
+          params += MessagesConstants.INPUT -> callerIdNum
           //Each media uses RTP protocol to send it's data to BBB
-          log.info("Sending a new KurentoRtpRequest = " + params.toString() + " for caller " + uvo.userID + " at endpoint " + msg.callerIdNum)
+          log.info("Sending a new KurentoRtpRequest = " + params.toString() + " for caller " + uvo.userID + " at endpoint " + callerIdNum)
           outGW.send(new StartKurentoRtpRequest(mProps.meetingID, uvo.userID, params))
         }
 
