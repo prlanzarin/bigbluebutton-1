@@ -40,6 +40,10 @@ trait KurentoApp {
     params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
     params -= MessagesConstants.DESTINATION_VIDEO_PORT
     outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
+
+    if (msg.params(MessagesConstants.STREAM_TYPE) == MessagesConstants.STREAM_TYPE_DESKSHARE) {
+      outGW.send(new StartDeskshareViewing(mProps.meetingID, 640, 480))
+    }
     //}
   }
 
