@@ -710,6 +710,10 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
            return false;
         }
 
+        if (streamType == null || streamType.isEmpty()) {
+            return false;
+        }
+
         return isSdpPathValid();
     }
 
