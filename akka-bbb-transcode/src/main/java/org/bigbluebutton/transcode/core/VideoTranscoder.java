@@ -99,6 +99,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
             stop();
         } else if (msg instanceof UpdateVideoTranscoderRequest) {
             UpdateVideoTranscoderRequest uvtr = (UpdateVideoTranscoderRequest) msg;
+            System.out.println("Update System Transcoder request params " + uvtr.getParams());
             update(uvtr.getParams());
         } else if (msg instanceof DestroyVideoTranscoderRequest) {
             destroyTranscoder();
@@ -176,6 +177,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
 
                 case Constants.PROBE_RTMP:
@@ -221,6 +223,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
         switch(type){
             case TRANSCODE_RTMP_TO_RTP:
 
+                System.out.println("  > *** STREAM TYPE " + streamType);
                 if(!areRtmpToRtpParametersValid()) {
                     System.out.println("  > ***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
                     return false;
@@ -481,6 +484,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     String localVideoPort = params.get(Constants.LOCAL_VIDEO_PORT);
                     String remoteVideoPort = params.get(Constants.REMOTE_VIDEO_PORT);
                     String destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
+                    String streamType = params.get(Constants.STREAM_TYPE);
 
                     setType(transcoderType);
                     setVideoStreamName(input);
@@ -488,6 +492,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     setLocalVideoPort(localVideoPort);
                     setRemoteVideoPort(remoteVideoPort);
                     setDestinationIp(destinationIp);
+                    setStreamType(streamType);
 
                     status = Status.UPDATING; //mark update status
                     stopTranscoder();
@@ -844,6 +849,10 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
         }
     }
 
+    public void setStreamType(String streamType) {
+      if(streamType != null)
+        this.streamType = streamType;
+    }
     public void setSourceIp(String sourceIp) {
         if (sourceIp != null) this.sourceIp = sourceIp;
     }

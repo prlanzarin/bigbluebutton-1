@@ -27,8 +27,9 @@ trait KurentoApp {
   }
 
   def handleStartKurentoRtpReply(msg: StartKurentoRtpReply) {
+    System.out.println("StartKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
     if (usersModel.hasUser(msg.kurentoEndpointId)) {
-      System.out.println("StartKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
+      log.info("User found, starting transcoder on RtpReply")
       var params = new scala.collection.mutable.HashMap[String, String]
       msg.params foreach {
         e => params += e
@@ -39,7 +40,7 @@ trait KurentoApp {
       params += MessagesConstants.LOCAL_IP_ADDRESS -> msg.params(MessagesConstants.DESTINATION_IP_ADDRESS)
       params += MessagesConstants.LOCAL_VIDEO_PORT -> msg.params(MessagesConstants.DESTINATION_VIDEO_PORT)
       params -= MessagesConstants.DESTINATION_VIDEO_PORT
-      outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId, params))
+      outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
 
       if (msg.params(MessagesConstants.STREAM_TYPE) == MessagesConstants.STREAM_TYPE_DESKSHARE) {
         outGW.send(new StartDeskshareViewing(mProps.meetingID, 640, 480))
@@ -99,9 +100,15 @@ trait KurentoApp {
     msg.params foreach {
       e => params += e
     }
-    params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
+
     params += MessagesConstants.CODEC -> MessagesConstants.COPY
-    outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
+    params += MessagesConstants.STREAM_TYPE -> msg.params(MessagesConstants.STREAM_TYPE)
+    if (msg.params(MessagesConstants.STREAM_TYPE) == MessagesConstants.STREAM_TYPE_DESKSHARE) {
+      params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
+      outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
+    } else {
+      startKurentoTranscoder(msg.params(MessagesConstants.INPUT), params)
+    }
   }
 
   def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {
