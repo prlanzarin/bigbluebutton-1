@@ -268,6 +268,7 @@ trait UsersApp {
 
       outGW.send(new UserLeft(msg.meetingID, mProps.recorded, user))
       sipPhoneLeft()
+      mediaSourceUserLeft(msg.userId);
     }
   }
 
@@ -614,6 +615,10 @@ trait UsersApp {
     log.info("Is there any phoneUser sending video in this meeting? " + meetingModel.isSipPhonePresent())
   }
 
+  def mediaSourceUserLeft(userId: String) {
+    outGW.send(new StopKurentoRtpRequest(mProps.meetingID, userId))
+  }
+
   def handleUserMutedInVoiceConfMessage(msg: UserMutedInVoiceConfMessage) {
     usersModel.getUserWithVoiceUserId(msg.voiceUserId) foreach { user =>
       val talking: Boolean = if (msg.muted) false else user.voiceUser.talking
@@ -651,6 +656,7 @@ trait UsersApp {
         case Some(curPres) => {
           usersModel.unbecomePresenter(curPres.userID)
           outGW.send(new UserStatusChange(mProps.meetingID, mProps.recorded, curPres.userID, "presenter", false: java.lang.Boolean))
+          stopKurentoTranscoder(curPres.userID)
         }
         case None => // do nothing
       }
@@ -661,6 +667,7 @@ trait UsersApp {
           usersModel.setCurrentPresenterInfo(new Presenter(newPresenterID, newPresenterName, assignedBy))
           outGW.send(new PresenterAssigned(mProps.meetingID, mProps.recorded, new Presenter(newPresenterID, newPresenterName, assignedBy)))
           outGW.send(new UserStatusChange(mProps.meetingID, mProps.recorded, newPresenterID, "presenter", true: java.lang.Boolean))
+          handleTranscoding()
         }
         case None => // do nothing
       }

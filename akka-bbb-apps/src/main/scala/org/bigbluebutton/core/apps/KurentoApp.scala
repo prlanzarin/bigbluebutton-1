@@ -77,7 +77,7 @@ trait KurentoApp {
 
         val streams = user.webcamStreams + streamName
         val uvo = user.copy(hasStream = true, webcamStreams = streams, mediaSourceUser = true)
-        usersModel.addUser(uvo) // TODO: THIS IS NOT BEING ADDED,
+        usersModel.addUser(uvo)
         outGW.send(new UserSharedWebcam(mProps.meetingID, mProps.recorded, user.userID, streamName))
       case _ => System.out.println("Can't update Kurento RTP stream: invalid stream")
     }

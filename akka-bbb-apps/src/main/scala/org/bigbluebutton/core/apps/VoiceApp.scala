@@ -138,27 +138,36 @@ trait VoiceApp {
         log.info("Starting transcoder for WEB USER")
         //User's RTP transcoder
 
-        if (user.hasStream) {
+        if (user.hasStream && user.presenter) {
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
-          log.info("Starting VIDEO transcoder for WEB USER")
-        } else {
-          //if user has no video , send videoconf logo to FS
-          log.info("Starting FILE transcoder for WEB USER")
-          params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
+          params -= MessagesConstants.INPUT
+          params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
+          log.info("Starting VIDEO transcoder for WEB USER with params " + params)
+          outGW.send(new StartTranscoderRequest(mProps.meetingID, user.userID, params))
         }
-
-        outGW.send(new StartTranscoderRequest(mProps.meetingID, user.userID, params))
-
-      } else {
-        log.info("Starting GLOBAL transcoder")
-        //start global transcoder
-        val params = new scala.collection.mutable.HashMap[String, String]
-        params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTP_TO_RTMP
-        params += MessagesConstants.MEETING_ID -> mProps.meetingID
-        params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
-        params += MessagesConstants.CALLERNAME -> meetingModel.globalCallCallername
-        outGW.send(new StartTranscoderRequest(mProps.meetingID, meetingModel.globalCallCallername, params))
+        //else {
+        //  //if user has no video , send videoconf logo to FS
+        //  log.info("Starting FILE transcoder for WEB USER")
+        //  params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
+        //  outGW.send(new StartTranscoderRequest(mProps.meetingID, user.userID, params))
+        //}
       }
+    }
+  }
+
+  def stopKurentoTranscoder(userId: String) {
+    getUser(userId) match {
+      case Some(user) => {
+        if (user.mediaSourceUser || user.presenter) {
+          //also stops videoconf logo
+          outGW.send(new StopTranscoderRequest(mProps.meetingID, userId))
+          outGW.send(new StopTranscoderRequest(mProps.meetingID, meetingModel.VIDEOCONFERENCE_LOGO_PREFIX + mProps.voiceBridge))
+        } else {
+          //we dont't stop global transcoder, but let it die for timeout
+          //outGW.send(new StopTranscoderRequest(mProps.meetingID, meetingModel.globalCallCallername))
+        }
+      }
+      case None => {}
     }
   }
 
@@ -258,6 +267,7 @@ trait VoiceApp {
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
           params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
           log.debug("User [{}] shared webcam, updating his transcoder for params [{}] with meetingID [{}]", userId, params.toString(), mProps.meetingID)
+          handleTranscoding()
           outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
         }
       }
@@ -279,6 +289,7 @@ trait VoiceApp {
             params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
           }
           log.debug("User [{}] unshared webcam, updating his transcoder", userId)
+          stopKurentoTranscoder(userId);
           outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
         }
       }
@@ -291,9 +302,10 @@ trait VoiceApp {
       + "meetingID = " + msg.meetingID + "\n"
       + "transcoderId = " + msg.transcoderId + "\n\n")
 
-    //usersModel.getUser(msg.transcoderId) match {
-    usersModel.getMediaSourceUser(msg.transcoderId) match {
-      case Some(user) => userSharedKurentoRtpStream(user, msg.params)
+    usersModel.getUser(msg.transcoderId) match {
+      case Some(user) => if (user.mediaSourceUser) {
+        userSharedKurentoRtpStream(user, msg.params)
+      }
       case _ => updateVideoConferenceStreamName(msg.params)
     }
   }
@@ -304,7 +316,9 @@ trait VoiceApp {
       + "transcoderId = " + msg.transcoderId + "\n\n")
 
     usersModel.getMediaSourceUser(msg.transcoderId) match {
-      case Some(user) => userSharedKurentoRtpStream(user, msg.params)
+      case Some(user) => if (user.mediaSourceUser) {
+        userSharedKurentoRtpStream(user, msg.params)
+      }
       case _ =>
         if (!usersModel.activeTalkerChangedInWebconference(meetingModel.talkerUserId(), msg.transcoderId)) { //make sure this transcoder is the current talker
           updateVideoConferenceStreamName(msg.params)
