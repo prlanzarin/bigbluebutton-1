@@ -27,8 +27,7 @@ package org.bigbluebutton.modules.deskshare.managers
 	import org.bigbluebutton.main.events.MadePresenterEvent;
 	import org.bigbluebutton.modules.deskshare.model.DeskshareOptions;
 	import org.bigbluebutton.modules.deskshare.services.DeskshareService;
-	import org.bigbluebutton.modules.deskshare.services.MessageReceiver;
-
+			
 	public class DeskshareManager {		
 		private static const LOGGER:ILogger = getClassLogger(DeskshareManager);
 
@@ -37,13 +36,11 @@ package org.bigbluebutton.modules.deskshare.managers
 		private var toolbarButtonManager:ToolbarButtonManager;
 		private var module:DeskShareModule;
 		private var service:DeskshareService;
-		private var receiver:MessageReceiver;
 		private var globalDispatcher:Dispatcher;
 		private var sharing:Boolean = false;
 		
 		public function DeskshareManager() {
 			service = new DeskshareService();
-			receiver = new MessageReceiver();
 			globalDispatcher = new Dispatcher();
 			publishWindowManager = new PublishWindowManager(service);
 			viewWindowManager = new ViewerWindowManager(service);	
