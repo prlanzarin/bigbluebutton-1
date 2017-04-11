@@ -86,9 +86,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private var resizer:SmartWindowResizer = new SmartWindowResizer();
 			
 			[Bindable] private var dsOptions:DeskshareOptions;
+			protected var _netStreamCallbacks:Object = new Object();
 									
 			private function init():void{
 				dsOptions = new DeskshareOptions();
+				_netStreamCallbacks.onMetaData = onMetaData;
 			}
 									
 			private function onCreationComplete():void{
@@ -178,7 +180,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				ns = new NetStream(connection);
 				ns.addEventListener( NetStatusEvent.NET_STATUS, onNetStatus );
 				ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
-				ns.client = this;
+				ns.client = _netStreamCallbacks;
 				ns.bufferTime = 0;
 				ns.receiveVideo(true);
 				ns.receiveAudio(false);
@@ -194,6 +196,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
        
 				videoHolder.addChild(video);
 				onResizeEvent();
+			}
+
+			private function onMetaData(info:Object):void {
+				if (info.hasOwnProperty("width") && info.hasOwnProperty("height")) {
+					video.width = info.width;
+					video.height = info.height;
+					onResizeEvent();
+				}
 			}
 			
 			public function stopViewing():void {

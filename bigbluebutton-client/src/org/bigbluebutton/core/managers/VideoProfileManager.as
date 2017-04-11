@@ -84,7 +84,7 @@ package org.bigbluebutton.core.managers
         }
 
         public function get mediaSourceVideoProfile(): VideoProfile {
-            return getVideoProfileById('wide');
+            return getVideoProfileById('high');
         }
 
         public function get defaultVideoProfile():VideoProfile {

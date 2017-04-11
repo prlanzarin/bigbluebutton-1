@@ -25,6 +25,7 @@ package org.bigbluebutton.modules.deskshare.services
 	import org.as3commons.logging.api.ILogger;
 	import org.as3commons.logging.api.getClassLogger;
 	import org.bigbluebutton.modules.deskshare.services.red5.Connection;
+	import org.bigbluebutton.modules.deskshare.services.MessageReceiver;
 	
 	/**
 	 * The DeskShareProxy communicates with the Red5 deskShare server application 
@@ -39,13 +40,14 @@ package org.bigbluebutton.modules.deskshare.services
 
 		private var module:DeskShareModule;
 		private var dispatcher:Dispatcher;
-		
+		private var receiver:MessageReceiver;
 
 		private var uri:String;
 		private var room:String;
     
 		public function DeskshareService() {
 			this.dispatcher = new Dispatcher();			
+			receiver = new MessageReceiver();
 		}
 		
 		public function handleStartModuleEvent(module:DeskShareModule):void {
