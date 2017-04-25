@@ -145,26 +145,24 @@ public class ConnectionManager  {
     }
 	
     public void dial(DialCommand dc) {
-        String uuid = createUuid();
-        if (uuid == null) {
-            System.out.println("UUID is null, aborting dial");
+        String uri = dc.getParamUri();
+        if (uri == null) {
+            System.out.println("URI is null, aborting dial");
             return;
         }
 
-        System.out.println("Sending async dial command with uuid" + uuid);
-
-        dc.setOriginationUuid(uuid);
+        System.out.println("Sending async dial command with URI" + uri);
 
         DialReferenceValuePair value = new DialReferenceValuePair(dc.getRoom(),
             dc.getParticipant());
 
-        eslEventListener.addDialReference(uuid, value);
+        eslEventListener.addDialReference(uri, value);
 
-        Client c = manager.getESLClient();
-        if (c.canSend()) {
-            String job = c.sendAsyncApiCommand(dc.getCommand(), dc.getCommandArgs());
-            System.out.println("DialCommand job uuid: "+ job);
-        }
+        //Client c = manager.getESLClient();
+        //if (c.canSend()) {
+        //    String job = c.sendAsyncApiCommand(dc.getCommand(), dc.getCommandArgs());
+        //    System.out.println("DialCommand job uuid: "+ job);
+        //}
     }
 
     public void cancelDial(CancelDialCommand cdc) {

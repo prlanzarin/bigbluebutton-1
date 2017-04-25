@@ -49,10 +49,8 @@ trait KurentoApp {
   }
 
   def handleStopKurentoRtpReply(msg: StopKurentoRtpReply) {
-    if (usersModel.hasUser(msg.kurentoEndpointId)) {
-      System.out.println("StopKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
-      outGW.send(new StopTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId))
-    }
+    System.out.println("StopKurentoRtpReply. [meetingId = " + msg.meetingID + " , kurentoEndpointId = " + msg.kurentoEndpointId + "]")
+    outGW.send(new StopTranscoderRequest(mProps.meetingID, msg.kurentoEndpointId))
   }
 
   def handleUpdateKurentoRtp(msg: UpdateKurentoRtp) {

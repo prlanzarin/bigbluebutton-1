@@ -354,7 +354,6 @@ trait VoiceApp {
   }
 
   private def updateVideoConferenceStreamName(params: Map[String, String]) {
-    //FIXME isSipPhonePresent
     if (meetingModel.isSipPhonePresent()) {
       usersModel.getTranscoderParam(MessagesConstants.OUTPUT, params) match {
         case Some(videoconferenceStreamName) =>

@@ -679,7 +679,7 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
 
   private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
     val odr = new OutboundDialRequestInVoiceConfMessage(msg.meetingID, msg.voiceConfId, msg.requesterID, msg.options, msg.params)
-    service.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, odr.toJson())
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, odr.toJson())
   }
 
   private def handleVoiceCancelDial(msg: VoiceCancelDial) {

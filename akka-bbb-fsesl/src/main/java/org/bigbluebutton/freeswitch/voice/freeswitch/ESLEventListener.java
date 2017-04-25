@@ -56,6 +56,7 @@ public class ESLEventListener implements IEslEventListener {
     @Override
     public void backgroundJobResultReceived(EslEvent event) {
         System.out.println( "Background job result received [" + event + "]");
+        String uri = this.getCallerIdFromEvent(event);
 
         String arg = event.getEventHeaders().get("Job-Command-Arg");
         if (arg != null) {
@@ -75,7 +76,7 @@ public class ESLEventListener implements IEslEventListener {
                         return;
                     }
 
-                    DialReferenceValuePair ref = removeDialReference(uuid);
+                    DialReferenceValuePair ref = removeDialReference(uri);
                     if (ref == null) {
                         return;
                     }
@@ -301,16 +302,21 @@ public class ESLEventListener implements IEslEventListener {
             String originalCallState = this.getOrigChannelCallStateFromEvent(event);
             String origCallerIdName = this.getOrigCallerIdNameFromEvent(event);
             String channelName = this.getCallerChannelNameFromEvent(event);
+            String uri = this.getCallerIdFromEvent(event);
 
-            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], CallState [" + callState + "]");
 
-            DialReferenceValuePair ref = getDialReferenceValue(uniqueId);
+            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], URI [" + uri + "], CallState [" + callState + "]");
+
+            DialReferenceValuePair ref = getDialReferenceValue(uri);
             if (ref == null) {
+                System.out.println("There was no dial reference, aborting...");
                 return;
             }
 
             String room = ref.getRoom();
             String participant = ref.getParticipant();
+
+            System.out.println("There was a dial reference for uuid [" + uniqueId + "], URI [" + uri + "], room [" + room + "], participant [" + participant + "]");
 
             ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, callState,
                                                     room, participant);
@@ -323,10 +329,12 @@ public class ESLEventListener implements IEslEventListener {
             String hangupCause = getHangupCauseFromEvent(event);
             String origCallerIdName = getOrigCallerIdNameFromEvent(event);
             String channelName = getCallerChannelNameFromEvent(event);
+            String uri = this.getCallerIdFromEvent(event);
 
-            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], CallState [" + callState + "],  HangupCause [" + hangupCause + "]");
-            DialReferenceValuePair ref = removeDialReference(uniqueId);
+            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], URI [" + uri + "], CallState [" + callState + "],  HangupCause [" + hangupCause + "]");
+            DialReferenceValuePair ref = removeDialReference(uri);
             if (ref == null) {
+                System.out.println("There was no dial reference, aborting...");
                 return;
             }
 
@@ -340,25 +348,25 @@ public class ESLEventListener implements IEslEventListener {
         }
     }
 
-    public void addDialReference(String uuid, DialReferenceValuePair value) {
-        System.out.println("Adding dial reference: [" + uuid + "] -> [" + value.getRoom() + "], [" + value.getParticipant() + "]");
-        if (!outboundDialReferences.containsKey(uuid)) {
-            outboundDialReferences.put(uuid, value);
+    public void addDialReference(String uri, DialReferenceValuePair value) {
+        System.out.println("Adding dial reference: [" + uri+ "] -> [" + value.getRoom() + "], [" + value.getParticipant() + "]");
+        if (!outboundDialReferences.containsKey(uri)) {
+            outboundDialReferences.put(uri, value);
         }
     }
 
-    private DialReferenceValuePair removeDialReference(String uuid) {
-        System.out.println("Removing dial reference: [" + uuid + "]");
-        DialReferenceValuePair r = outboundDialReferences.remove(uuid);
+    private DialReferenceValuePair removeDialReference(String uri) {
+        System.out.println("Removing dial reference: [" + uri + "]");
+        DialReferenceValuePair r = outboundDialReferences.remove(uri);
         if (r == null) {
-            System.out.println("Returning null because the uuid has already been removed");
+            System.out.println("Returning null because the uri has already been removed");
         }
         System.out.println("Current dial references size: [" + outboundDialReferences.size() + "]");
         return r;
     }
 
-    private DialReferenceValuePair getDialReferenceValue(String uuid) {
-        return outboundDialReferences.get(uuid);
+    private DialReferenceValuePair getDialReferenceValue(String uri) {
+        return outboundDialReferences.get(uri);
     }
 
     private String getChannelCallStateFromEvent(EslEvent e) {
