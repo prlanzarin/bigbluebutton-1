@@ -158,15 +158,11 @@ trait VoiceApp {
   def stopKurentoTranscoder(userId: String) {
     getUser(userId) match {
       case Some(user) => {
-        if (user.mediaSourceUser || user.presenter) {
-          //also stops videoconf logo
-          outGW.send(new StopTranscoderRequest(mProps.meetingID, userId))
-          outGW.send(new StopTranscoderRequest(mProps.meetingID, meetingModel.VIDEOCONFERENCE_LOGO_PREFIX + mProps.voiceBridge))
-        } else {
-          //we dont't stop global transcoder, but let it die for timeout
-          //outGW.send(new StopTranscoderRequest(mProps.meetingID, meetingModel.globalCallCallername))
-        }
+        //also stops videoconf logo
+        outGW.send(new StopTranscoderRequest(mProps.meetingID, userId))
+        outGW.send(new StopTranscoderRequest(mProps.meetingID, meetingModel.VIDEOCONFERENCE_LOGO_PREFIX + mProps.voiceBridge))
       }
+
       case None => {}
     }
   }

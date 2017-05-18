@@ -312,7 +312,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             <mx:TextInput id="destination" width="170" text="" keyDown="btn_keyDown(event)" />
         </mx:HBox>
 
-        <!-- <mx:VBox paddingBottom="10" paddingLeft="20" paddingRight="20" verticalAlign="middle" visible="false" includeInLayout="false">
+        <mx:VBox paddingBottom="10" paddingLeft="20" paddingRight="20" verticalAlign="middle">
             <mx:HBox>
                 <mx:HBox paddingLeft="3">
                     <mx:Button width="60" id="keypadOneBtn" styleName="dialSipKeypadStyle" click="keypadClick('1')" label="1"/>
@@ -357,13 +357,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                     <mx:Button width="60" id="keypadHashtagBtn" styleName="dialSipKeypadStyle" click="keypadClick('#')" label="#"/>
                 </mx:HBox>
             </mx:HBox>
-        </mx:VBox> -->
-  
-        <mx:HBox width="100%" horizontalAlign="center">
-            <mx:Button id="dialCancelBtn" width="100%" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
-        </mx:HBox>
 
-        <mx:Text id="statusTxt" text="{statusString}" width="100%" />
+	        <mx:HBox width="100%" horizontalAlign="center" paddingTop="20">
+	            <mx:Button id="dialCancelBtn" width="100%" click="dialOrCancel()" label="{ResourceUtil.getInstance().getString('bbb.dialWindow.dialBtn')}"/>
+	        </mx:HBox>
+
+	        <mx:Text id="statusTxt" text="{statusString}" width="100%" />
+        </mx:VBox>
+
+
 
         <mx:HRule width="100%"/>
 
