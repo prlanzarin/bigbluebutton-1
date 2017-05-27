@@ -450,8 +450,6 @@ trait UsersApp {
           msg.callerIdNum
         }
 
-        log.info("CALLER ID NUM " + callerIdNum + " CALLER ID NAME " + msg.callerIdName + " VOICE USER ID " + msg.voiceUserId + " WEB USER ID " + webUserId);
-
         val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, callerIdNum,
           joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, listenOnly = msg.listenOnly, msg.hasVideo, msg.hasFloor)
 
@@ -477,9 +475,7 @@ trait UsersApp {
           handleTranscoding()
         }
 
-        /**
-         * If a SIP phone user is joining via Kurento Apps, signal it to start
-         */
+        // If a SIP phone user is joining via Kurento Apps, signal it to start
         if (msu) {
           var params = new scala.collection.mutable.HashMap[String, String]
           params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge

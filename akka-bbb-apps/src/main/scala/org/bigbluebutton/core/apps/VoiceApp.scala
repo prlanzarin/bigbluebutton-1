@@ -132,12 +132,11 @@ trait VoiceApp {
     }
   }
 
-  def startKurentoTranscoder(userId: String, params: scala.collection.mutable.HashMap[String, String]) {
+  def startPresenterTranscoder(userId: String, params: scala.collection.mutable.HashMap[String, String]) {
     usersModel.getUser(userId) foreach { user =>
       if (!user.phoneUser) {
-        log.info("Starting transcoder for WEB USER")
+        log.info("Starting transcoder for webcam user " + userId)
         //User's RTP transcoder
-
         if (user.hasStream && user.presenter) {
           params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
           params -= MessagesConstants.INPUT
@@ -145,17 +144,11 @@ trait VoiceApp {
           log.info("Starting VIDEO transcoder for WEB USER with params " + params)
           outGW.send(new StartTranscoderRequest(mProps.meetingID, user.userID, params))
         }
-        //else {
-        //  //if user has no video , send videoconf logo to FS
-        //  log.info("Starting FILE transcoder for WEB USER")
-        //  params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
-        //  outGW.send(new StartTranscoderRequest(mProps.meetingID, user.userID, params))
-        //}
       }
     }
   }
 
-  def stopKurentoTranscoder(userId: String) {
+  def stopPresenterTranscoder(userId: String) {
     getUser(userId) match {
       case Some(user) => {
         //also stops videoconf logo
@@ -272,7 +265,6 @@ trait VoiceApp {
   }
 
   def handleUserUnshareWebcamTranscoder(userId: String) {
-    //if (meetingModel.isTalker(userId)) {
     getUser(userId) match {
       case Some(user) => {
         if (user.presenter) {
@@ -285,7 +277,8 @@ trait VoiceApp {
             params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_FILE_TO_RTP
           }
           log.debug("User [{}] unshared webcam, updating his transcoder", userId)
-          stopKurentoTranscoder(userId);
+          stopPresenterTranscoder(userId);
+          // This should guarantee the transcoder session will be flushed
           outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
         }
       }

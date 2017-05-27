@@ -42,6 +42,7 @@ trait KurentoApp {
       params -= MessagesConstants.DESTINATION_VIDEO_PORT
       outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
 
+      // Desksharing viewing trigger
       if (msg.params(MessagesConstants.STREAM_TYPE) == MessagesConstants.STREAM_TYPE_DESKSHARE) {
         outGW.send(new StartDeskshareViewing(mProps.meetingID, 640, 480))
       }
@@ -101,11 +102,15 @@ trait KurentoApp {
 
     params += MessagesConstants.CODEC -> MessagesConstants.COPY
     params += MessagesConstants.STREAM_TYPE -> msg.params(MessagesConstants.STREAM_TYPE)
+
+    // Deskshare stream from Mconf to endpoint
     if (msg.params(MessagesConstants.STREAM_TYPE) == MessagesConstants.STREAM_TYPE_DESKSHARE) {
       params += MessagesConstants.TRANSCODER_TYPE -> MessagesConstants.TRANSCODE_RTMP_TO_RTP
       outGW.send(new StartTranscoderRequest(mProps.meetingID, msg.params(MessagesConstants.INPUT), params))
-    } else {
-      startKurentoTranscoder(msg.params(MessagesConstants.INPUT), params)
+    }
+    else {
+      // Webcam stream from Mconf to endpoint
+      startPresenterTranscoder(msg.params(MessagesConstants.INPUT), params)
     }
   }
 
@@ -115,5 +120,4 @@ trait KurentoApp {
       case _ => None
     }
   }
-
 }

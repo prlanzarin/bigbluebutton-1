@@ -222,10 +222,9 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
 
         switch(type){
             case TRANSCODE_RTMP_TO_RTP:
-
-                System.out.println("  > *** STREAM TYPE " + streamType);
+                log.debug("  > *** STREAM TYPE " + streamType);
                 if(!areRtmpToRtpParametersValid()) {
-                    System.out.println("  > ***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
+                    log.debug("  > ***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
                     return false;
                 }
 
@@ -246,21 +245,22 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setInput(input);
                 ffmpeg.addRtmpInputConnectionParameter(meetingId);
                 ffmpeg.addRtmpInputConnectionParameter("transcoder-"+transcoderId);
-                ffmpeg.setFrameRate(15);
-                ffmpeg.setBufSize(1024);
-                ffmpeg.setGop(1); //MCU compatibility
-                ffmpeg.setCodec("libopenh264");
-                ffmpeg.setMaxRate(1024);
-                ffmpeg.setSliceMode("dyn");
-                ffmpeg.setMaxNalSize("1024");
-                ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
-                ffmpeg.setProfile("baseline");
+                ffmpeg.setGop(100); //MCU compatibility
+                ffmpeg.setCodec("libx264");
+                // Compatibility parameters used for test
+                //ffmpeg.setFrameRate(15);
+                //ffmpeg.setBufSize(1024);
+                //ffmpeg.setMaxRate(1024);
+                //ffmpeg.setSliceMode("dyn");
+                //ffmpeg.setMaxNalSize("1024");
+                //ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
+                //ffmpeg.setProfile("baseline");
+                //ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
+                //ffmpeg.setAnalyzeDuration("1000"); // 1ms
+                //ffmpeg.setProbeSize("32"); // 1mS
                 ffmpeg.setFormat("rtp");
-                ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
                 ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
-                ffmpeg.setAnalyzeDuration("1000"); // 1ms
-                ffmpeg.setProbeSize("32"); // 1ms
                 System.out.println("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
@@ -293,7 +293,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setFrameRate(15);
                 ffmpeg.setBufSize(1024);
                 ffmpeg.setGop(1); //MCU compatibility
-                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setCodec("libx264");
                 ffmpeg.setMaxRate(1024);
                 ffmpeg.setSliceMode("dyn");
                 ffmpeg.setMaxNalSize("1024");
@@ -336,6 +336,8 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(input);
+
+                // Used codec is COPY, H264 transcoding won't be used
                 if (Constants.COPY.equals(this.codec)) {
                     ffmpeg.setLoglevel("verbose");
                     ffmpeg.setOutput(outputLive);
@@ -346,6 +348,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     command = ffmpeg.getFFmpegCommand(true);
                     break;
                 }
+
                 ffmpeg.setFormat("flv");
                 ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
@@ -354,11 +357,11 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setVideoBitRate(1024);
                 ffmpeg.setBufSize(1024);
                 ffmpeg.setMaxRate(1024);
-                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setCodec(this.codec);
                 ffmpeg.setProfile("baseline");
                 ffmpeg.setAnalyzeDuration("1000"); // 10ms
                 ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
-                ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=15");
+                ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=30");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
 

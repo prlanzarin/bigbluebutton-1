@@ -156,13 +156,8 @@ public class ConnectionManager  {
         DialReferenceValuePair value = new DialReferenceValuePair(dc.getRoom(),
             dc.getParticipant());
 
+        // Adds dials reference and waits for FreeSWITCH call referencing 'uri'
         eslEventListener.addDialReference(uri, value);
-
-        //Client c = manager.getESLClient();
-        //if (c.canSend()) {
-        //    String job = c.sendAsyncApiCommand(dc.getCommand(), dc.getCommandArgs());
-        //    System.out.println("DialCommand job uuid: "+ job);
-        //}
     }
 
     public void cancelDial(CancelDialCommand cdc) {

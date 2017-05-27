@@ -111,17 +111,17 @@ public class MeetingMessageReceiver implements MessageHandler {
 					StopMediaSourceMessage stopMediaSourceMessage = (StopMediaSourceMessage) msg;
 					bbbGW.stopMediaSource(stopMediaSourceMessage.meetingId, stopMediaSourceMessage.mediaSourceId);
 				}
-                else if (msg instanceof SetMeetingDesksharePresentMessage) {
-                	SetMeetingDesksharePresentMessage setMeetingDesksharePresentMessage = (SetMeetingDesksharePresentMessage) msg;
-                	bbbGW.setMeetingDesksharePresent(setMeetingDesksharePresentMessage.meetingId, setMeetingDesksharePresentMessage.desksharePresent);
-                }
-                else if (msg instanceof GetDeskshareStatusRequestMessage) {
-                	GetDeskshareStatusRequestMessage getDeskshareStatusRequestMessage = (GetDeskshareStatusRequestMessage) msg;
-                	bbbGW.getDeskshareStatusRequest(getDeskshareStatusRequestMessage.meetingId);
-                }
-                else {
-                    System.out.println("Unknown message: [" + message + "]");
-                }
+				else if (msg instanceof SetMeetingDesksharePresentMessage) {
+					SetMeetingDesksharePresentMessage setMeetingDesksharePresentMessage = (SetMeetingDesksharePresentMessage) msg;
+					bbbGW.setMeetingDesksharePresent(setMeetingDesksharePresentMessage.meetingId, setMeetingDesksharePresentMessage.desksharePresent);
+				}
+				else if (msg instanceof GetDeskshareStatusRequestMessage) {
+					GetDeskshareStatusRequestMessage getDeskshareStatusRequestMessage = (GetDeskshareStatusRequestMessage) msg;
+					bbbGW.getDeskshareStatusRequest(getDeskshareStatusRequestMessage.meetingId);
+				}
+				else {
+					System.out.println("Unknown message: [" + message + "]");
+				}
 			} else {
 				System.out.println("Failed to decode message: [" + message + "]");
 			}
