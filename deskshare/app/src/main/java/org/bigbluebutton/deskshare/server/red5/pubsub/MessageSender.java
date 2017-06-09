@@ -30,7 +30,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 public class MessageSender {
-	private static Logger log = Red5LoggerFactory.getLogger(MessageSender.class, "deskshare");
+	private static Logger log = Red5LoggerFactory.getLogger(MessageSender.class, "bigbluebutton");
 
 	private JedisPool redisPool;
 	private volatile boolean sendMessage = false;
