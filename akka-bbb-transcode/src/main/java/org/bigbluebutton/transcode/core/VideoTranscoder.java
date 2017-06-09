@@ -385,14 +385,19 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     return false;
                 }
 
+                ffmpeg = new FFmpegCommand();
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
+                ffmpeg.addRtmpOutputConnectionParameter(meetingId);
+
                 switch(sourceModule) {
                     case FFmpegUtils.VIDEO_MODULE:
                         input = "rtmp://" + sourceIp + "/" + sourceModule + "/" + meetingId + "/" + videoStreamName + " live=1";
                         outputLive = "rtmp://" + destinationIp + "/" + sourceModule + "/" + meetingId + "/" + FFmpegUtils.H263PREFIX + "/" + videoStreamName;
                         output = videoStreamName;
+                        ffmpeg.addRtmpOutputConnectionParameter(transcoderId);
                         break;
                     case FFmpegUtils.DESKSHARE_MODULE:
-                        input = "rtmp://" + sourceIp + "/" + sourceModule + "/" + meetingId + " live=1";
+                        input = "rtmp://" + sourceIp + "/" + sourceModule + "/" + meetingId + " conn=S:" + meetingId + " live=1";
                         outputLive = "rtmp://" + destinationIp + "/" + sourceModule + "/" + FFmpegUtils.H263PREFIX + "/" + meetingId;
                         output = meetingId;
                         break;
@@ -400,13 +405,9 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                         System.out.println("  > ***TRANSCODER WILL NOT START: Unrecognized module: " + sourceModule);
                 }
 
-                ffmpeg = new FFmpegCommand();
-                ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(input);
                 ffmpeg.setCodec("flv1"); // Sorensen H263
                 ffmpeg.setFormat("flv");
-                ffmpeg.addRtmpOutputConnectionParameter(meetingId);
-                ffmpeg.addRtmpOutputConnectionParameter(transcoderId);
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setLoglevel("quiet");
                 ffmpeg.setAnalyzeDuration("10000"); // 10ms
