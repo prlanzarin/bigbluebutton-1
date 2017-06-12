@@ -220,29 +220,6 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
         return "";
     }
 
-    private void requestRotateVideoTranscoder(IBroadcastStream stream) {
-        IConnection conn = Red5.getConnectionLocal();
-        String userId = getUserId();
-        String meetingId = conn.getScope().getName();
-        String streamId = stream.getPublishedName();
-        String streamName = getStreamName(streamId);
-        String ipAddress = conn.getHost();
-
-        switch (VideoRotator.getDirection(streamId)) {
-            case VideoRotator.ROTATE_RIGHT:
-                publisher.startRotateRightTranscoderRequest(meetingId, userId, streamName, ipAddress);
-                break;
-            case VideoRotator.ROTATE_LEFT:
-                publisher.startRotateLeftTranscoderRequest(meetingId, userId, streamName, ipAddress);
-                break;
-            case VideoRotator.ROTATE_UPSIDE_DOWN:
-                publisher.startRotateUpsideDownTranscoderRequest(meetingId, userId, streamName, ipAddress);
-                break;
-            default:
-                break;
-        }
-    }
-
     @Override
     public void streamBroadcastStart(IBroadcastStream stream) {
     	IConnection conn = Red5.getConnectionLocal();  
@@ -256,9 +233,8 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
         addH263PublishedStream(streamId);
         if (streamId.contains("/")) {
             if(VideoRotator.getDirection(streamId) != null) {
-//                VideoRotator rotator = new VideoRotator(streamId);
-                videoRotators.put(streamId, null);
-                requestRotateVideoTranscoder(stream);
+                VideoRotator rotator = new VideoRotator(streamId, publisher);
+                videoRotators.put(streamId, rotator);
             }
         }
         else if (recordVideoStream) {
@@ -308,8 +284,8 @@ public class VideoApplication extends MultiThreadedApplicationAdapter {
         removeH263ConverterIfNeeded(streamId);
         if(videoRotators.containsKey(streamId)) {
           // Stop rotator
-          videoRotators.remove(streamId);
-          publisher.stopTranscoderRequest(meetingId, userId);
+          VideoRotator rotator = videoRotators.remove(streamId);
+          rotator.stop();
         }
         removeH263PublishedStream(streamId);
       } else if (recordVideoStream) {

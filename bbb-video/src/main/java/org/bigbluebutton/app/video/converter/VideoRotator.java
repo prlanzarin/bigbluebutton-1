@@ -1,6 +1,6 @@
 package org.bigbluebutton.app.video.converter;
 
-import org.apache.commons.lang3.StringUtils;
+import org.bigbluebutton.red5.pubsub.MessagePublisher;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
@@ -20,6 +20,11 @@ public class VideoRotator {
 	public static final String ROTATE_UPSIDE_DOWN = "rotate_left/rotate_left";
 
 	private String streamName;
+	private String streamId;
+	private String userId;
+	private String meetingId;
+	private String ipAddress;
+	private MessagePublisher publisher;
 
 	/**
 	 * Create a new video rotator for the specified stream.
@@ -29,8 +34,17 @@ public class VideoRotator {
 	 * 
 	 * @param origin Name of the stream that will be rotated
 	 */
-	public VideoRotator(String origin) {
-		this.streamName = getStreamName(origin);
+	public VideoRotator(String origin, MessagePublisher publisher) {
+		this.streamId = origin;
+		this.streamName = getStreamName(streamId);
+		this.publisher = publisher;
+
+		IConnection conn = Red5.getConnectionLocal();
+		this.userId = getUserId();
+		this.meetingId = conn.getScope().getName();
+		this.ipAddress = conn.getHost();
+
+		start();
 	}
 	
 	/**
@@ -43,6 +57,22 @@ public class VideoRotator {
 		if(parts.length > 1)
 			return parts[parts.length-1];
 		return "";
+	}
+
+	private void start() {
+		switch (getDirection(streamId)) {
+			case ROTATE_RIGHT:
+				publisher.startRotateRightTranscoderRequest(meetingId, userId, streamName, ipAddress);
+				break;
+			case ROTATE_LEFT:
+				publisher.startRotateLeftTranscoderRequest(meetingId, userId, streamName, ipAddress);
+				break;
+			case ROTATE_UPSIDE_DOWN:
+				publisher.startRotateUpsideDownTranscoderRequest(meetingId, userId, streamName, ipAddress);
+				break;
+			default:
+				break;
+		}
 	}
 
 	/**
@@ -67,6 +97,16 @@ public class VideoRotator {
 			default:
 				return null;
 		}
+	}
+
+	public void stop() {
+		publisher.stopTranscoderRequest(meetingId, userId);
+	}
+
+	private String getUserId() {
+		String userid = (String) Red5.getConnectionLocal().getAttribute("USERID");
+		if ((userid == null) || ("".equals(userid))) userid = "unknown-userid";
+		return userid;
 	}
 
     public static boolean isRotatedStream(String streamName){
