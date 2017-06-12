@@ -86,7 +86,7 @@ end
 def sanity_archived_meeting(recording_dir)
   archived_done_files = Dir.glob("#{recording_dir}/status/archived/*.done")
 
-  FileUtils.mkdir_p("#{recording_dir}/status/sanity")
+  FileUtils.mkdir_p("#{recording_dir}/status/sanity") if ! File.exist?("#{recording_dir}/status/sanity") and ! File.symlink?("#{recording_dir}/status/sanity")
   archived_done_files.each do |archived_done|
     match = /([^\/]*).done$/.match(archived_done)
     meeting_id = match[1]
