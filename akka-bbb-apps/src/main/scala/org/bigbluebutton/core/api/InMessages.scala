@@ -119,6 +119,11 @@ case class UserLockedInVoiceConfMessage(voiceConfId: String, voiceUserId: String
 case class UserMutedInVoiceConfMessage(voiceConfId: String, voiceUserId: String, muted: Boolean)
 case class UserTalkingInVoiceConfMessage(voiceConfId: String, voiceUserId: String, talking: Boolean)
 case class VoiceConfRecordingStartedMessage(voiceConfId: String, recordStream: String, recording: Boolean, timestamp: String)
+case class VoiceOutboundDialRequest(meetingID: String, requesterID: String, options: Map[String, String], params: Map[String, String]) extends InMessage
+case class VoiceCancelDialRequest(meetingID: String, requesterID: String, uuid: String) extends InMessage
+case class VoiceSendDtmfRequest(meetingID: String, requesterID: String, uuid: String, dtmfDigit: String) extends InMessage
+case class VoiceDialing(voiceConfId: String, requesterID: String, uuid: String, callState: String)
+case class VoiceHangingUp(voiceConfId: String, requesterID: String, uuid: String, callState: String, hangupCause: String)
 
 // Whiteboard
 case class SendWhiteboardAnnotationRequest(meetingID: String, requesterID: String, annotation: AnnotationVO) extends InMessage

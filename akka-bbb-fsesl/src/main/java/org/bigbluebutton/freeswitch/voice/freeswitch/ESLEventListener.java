@@ -1,17 +1,23 @@
 package org.bigbluebutton.freeswitch.voice.freeswitch;
 
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import org.bigbluebutton.freeswitch.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.freeswitch.voice.events.ChannelHangupCompleteEvent;
 import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
 import org.bigbluebutton.freeswitch.voice.events.VoiceStartRecordingEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserLeftEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserMutedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserTalkingEvent;
+import org.bigbluebutton.freeswitch.voice.freeswitch.response.ConferenceMember;
 import org.freeswitch.esl.client.IEslEventListener;
 import org.freeswitch.esl.client.transport.event.EslEvent;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -25,6 +31,8 @@ public class ESLEventListener implements IEslEventListener {
     
     private final ConferenceEventListener conferenceEventListener;
     
+    private Map<String, DialReferenceValuePair> outboundDialReferences = new ConcurrentHashMap<String, DialReferenceValuePair>();
+
     public ESLEventListener(ConferenceEventListener conferenceEventListener) {
     	this.conferenceEventListener = conferenceEventListener;
     }
@@ -34,9 +42,43 @@ public class ESLEventListener implements IEslEventListener {
         //Ignored, Noop
     }
 
+    private static final Pattern DIAL_ORIGINATION_UUID_PATTERN = Pattern.compile(".* dial .*origination_uuid='([^']*)'.*");
+    private static final Pattern DIAL_RESPONSE_PATTERN = Pattern.compile("^\\[Call Requested: result: \\[(.*)\\].*\\]$");
+    private static final String[] DIAL_IGNORED_RESPONSES = new String[]{ "SUCCESS" };
+
     @Override
     public void backgroundJobResultReceived(EslEvent event) {
         System.out.println( "Background job result received [" + event + "]");
+
+        String arg = event.getEventHeaders().get("Job-Command-Arg");
+        if (arg != null) {
+            Matcher matcher = DIAL_ORIGINATION_UUID_PATTERN.matcher(arg);
+            if (matcher.matches()) {
+                String uuid = matcher.group(1).trim();
+                String responseString = event.getEventBodyLines().toString().trim();
+
+                System.out.println("Background job result for uuid [" + uuid + "], response: [" + responseString +"]");
+
+                matcher = DIAL_RESPONSE_PATTERN.matcher(responseString);
+                if (matcher.matches()) {
+                    String error = matcher.group(1).trim();
+
+                    if (Arrays.asList(DIAL_IGNORED_RESPONSES).contains(error)) {
+                        System.out.println("Ignoring error code [" + error + "]");
+                        return;
+                    }
+
+                    DialReferenceValuePair ref = removeDialReference(uuid);
+                    if (ref == null) {
+                        return;
+                    }
+
+                    ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uuid,
+                            "HANGUP", error, ref.getRoom(), ref.getParticipant());
+                    conferenceEventListener.handleConferenceEvent(hce);
+                }
+            }
+        }
     }
 
     @Override
@@ -178,10 +220,102 @@ public class ESLEventListener implements IEslEventListener {
 //           notifyObservers(event);
 //           return; 
 //        }
-	}
+        if(event.getEventName().equals("CHANNEL_CALLSTATE")) {
+            String uniqueId = this.getUniqueIdFromEvent(event);
+            String callState = this.getChannelCallStateFromEvent(event);
+            String originalCallState = this.getOrigChannelCallStateFromEvent(event);
+            String origCallerIdName = this.getOrigCallerIdNameFromEvent(event);
+            String channelName = this.getCallerChannelNameFromEvent(event);
+
+            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], CallState [" + callState + "]");
+
+            DialReferenceValuePair ref = getDialReferenceValue(uniqueId);
+            if (ref == null) {
+                return;
+            }
+
+            String room = ref.getRoom();
+            String participant = ref.getParticipant();
+
+            ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, callState,
+                                                    room, participant);
+
+            conferenceEventListener.handleConferenceEvent(cse);
+        }
+        else if(event.getEventName().equals("CHANNEL_HANGUP_COMPLETE")) {
+            String uniqueId = getUniqueIdFromEvent(event);
+            String callState = getChannelCallStateFromEvent(event);
+            String hangupCause = getHangupCauseFromEvent(event);
+            String origCallerIdName = getOrigCallerIdNameFromEvent(event);
+            String channelName = getCallerChannelNameFromEvent(event);
+
+            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], CallState [" + callState + "],  HangupCause [" + hangupCause + "]");
+            DialReferenceValuePair ref = removeDialReference(uniqueId);
+            if (ref == null) {
+                return;
+            }
+
+            String room = ref.getRoom();
+            String participant = ref.getParticipant();
+
+            ChannelHangupCompleteEvent hce = new ChannelHangupCompleteEvent(uniqueId, callState,
+                                                    hangupCause, room, participant);
+
+            conferenceEventListener.handleConferenceEvent(hce);
+        }
+    }
+
+    public void addDialReference(String uuid, DialReferenceValuePair value) {
+        System.out.println("Adding dial reference: [" + uuid + "] -> [" + value.getRoom() + "], [" + value.getParticipant() + "]");
+        if (!outboundDialReferences.containsKey(uuid)) {
+            outboundDialReferences.put(uuid, value);
+        }
+    }
+
+    private DialReferenceValuePair removeDialReference(String uuid) {
+        System.out.println("Removing dial reference: [" + uuid + "]");
+        DialReferenceValuePair r = outboundDialReferences.remove(uuid);
+        if (r == null) {
+            System.out.println("Returning null because the uuid has already been removed");
+        }
+        System.out.println("Current dial references size: [" + outboundDialReferences.size() + "]");
+        return r;
+    }
+
+    private DialReferenceValuePair getDialReferenceValue(String uuid) {
+        return outboundDialReferences.get(uuid);
+    }
+
+    private String getChannelCallStateFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Channel-Call-State");
+    }
+
+    private String getHangupCauseFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Hangup-Cause");
+    }
+
+    private String getCallerChannelNameFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Caller-Channel-Name");
+    }
+
+    private String getOrigChannelCallStateFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Original-Channel-Call-State");
+    }
+
+    private String getUniqueIdFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Unique-ID");
+    }
+
+    private String getOrigCallerIdNameFromEvent(EslEvent e) {
+        return e.getEventHeaders().get("Caller-Orig-Caller-ID-Name");
+    }
 
     private Integer getMemberIdFromEvent(EslEvent e) {
-        return new Integer(e.getEventHeaders().get("Member-ID"));
+        try {
+            return new Integer(e.getEventHeaders().get("Member-ID"));
+        } catch (NumberFormatException excp) {
+            return null;
+        }
     }
 
     private String getCallerIdFromEvent(EslEvent e) {

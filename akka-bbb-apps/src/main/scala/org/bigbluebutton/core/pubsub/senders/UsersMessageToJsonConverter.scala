@@ -500,4 +500,45 @@ object UsersMessageToJsonConverter {
     val header = Util.buildHeader(MessageNames.GUEST_ACCESS_DENIED, None)
     Util.buildJson(header, payload)
   }
+
+  def voiceDialingToJson(msg: VoiceDialing2): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.USER_ID, msg.requesterID);
+    payload.put(Constants.UUID, msg.uuid);
+    payload.put(Constants.STATE, msg.callState);
+
+    val header = Util.buildHeader(MessageNames.VOICE_DIALING, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceHangingUpToJson(msg: VoiceHangingUp2): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.USER_ID, msg.requesterID);
+    payload.put(Constants.UUID, msg.uuid);
+    payload.put(Constants.STATE, msg.callState);
+    payload.put(Constants.CAUSE, msg.hangupCause);
+
+    val header = Util.buildHeader(MessageNames.VOICE_HANGING_UP, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceOutboundDialToJson(msg: VoiceOutboundDial): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.REQUESTER_ID, msg.requesterID)
+    payload.put(Constants.OPTIONS, msg.options)
+    payload.put(Constants.PARAMS, msg.params)
+
+    val header = Util.buildHeader(MessageNames.VOICE_OUTBOUND_DIAL, None)
+    Util.buildJson(header, payload)
+  }
+
+  def voiceCancelDialToJson(msg: VoiceCancelDial): String = {
+    val payload = new java.util.HashMap[String, Any]()
+    payload.put(Constants.MEETING_ID, msg.meetingID)
+    payload.put(Constants.UUID, msg.uuid)
+
+    val header = Util.buildHeader(MessageNames.VOICE_CANCEL_DIAL, None)
+    Util.buildJson(header, payload)
+  }
 }
