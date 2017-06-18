@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import org.bigbluebutton.common.messages.BroadcastLayoutMessage;
+import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage;
+import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage;
 import org.bigbluebutton.common.messages.GetCurrentLayoutReplyMessage;
 import org.bigbluebutton.common.messages.GetRecordingStatusReplyMessage;
 import org.bigbluebutton.common.messages.GetUsersReplyMessage;
@@ -168,6 +170,18 @@ public class UserClientMessageSender {
             break;
           case UserEjectedFromMeetingMessage.USER_EJECTED_FROM_MEETING:
             processUserEjectedFromMeetingMessage(message);
+            break;
+          case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
+            ChannelCallStateInVoiceConfMessage ccs = ChannelCallStateInVoiceConfMessage.fromJson(message);
+            if (ccs != null) {
+              processChannelCallStateInVoiceConfMessage(ccs);
+            }
+            break;
+          case ChannelHangupInVoiceConfMessage.CHANNEL_HANGUP_IN_VOICE_CONF:
+            ChannelHangupInVoiceConfMessage ch = ChannelHangupInVoiceConfMessage.fromJson(message);
+            if (ch != null) {
+              processChannelHangupInVoiceConfMessage(ch);
+            }
             break;
         }
       }
@@ -470,6 +484,36 @@ public class UserClientMessageSender {
     message.put("msg", gson.toJson(args));
 
     DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.requesterId, "getUsersReply", message);
+    service.sendMessage(m);
+  }
+
+  private void processChannelCallStateInVoiceConfMessage(ChannelCallStateInVoiceConfMessage msg) {
+    Map<String, Object> args = new HashMap<String, Object>();
+    args.put("userId", msg.userId);
+    args.put("uuid", msg.uniqueId);
+    args.put("state", msg.callState);
+
+    Map<String, Object> message = new HashMap<String, Object>();
+    Gson gson = new Gson();
+    message.put("msg", gson.toJson(args));
+
+    DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.userId, "dialing", message);
+    service.sendMessage(m);
+  }
+
+  private void processChannelHangupInVoiceConfMessage(ChannelHangupInVoiceConfMessage msg) {
+    Map<String, Object> args = new HashMap<String, Object>();
+    args.put("userId", msg.userId);
+    args.put("uuid", msg.uniqueId);
+    args.put("state", msg.callState);
+    args.put("hangupCause", msg.hangupCause);
+
+    Map<String, Object> message = new HashMap<String, Object>();
+    Gson gson = new Gson();
+    message.put("msg", gson.toJson(args));
+
+
+    DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.userId, "hangingUp", message);
     service.sendMessage(m);
   }
 }

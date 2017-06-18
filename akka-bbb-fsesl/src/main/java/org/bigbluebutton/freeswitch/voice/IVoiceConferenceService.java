@@ -9,4 +9,8 @@ public interface IVoiceConferenceService {
 	void userMutedInVoiceConf(String voiceConfId, String voiceUserId, Boolean muted);
 	void userTalkingInVoiceConf(String voiceConfId, String voiceUserId, Boolean talking);
 
+	void channelCallStateInVoiceConf(String conference, String uniqueId, String callState,
+			String userId);
+	void channelHangupInVoiceConf(String conference, String uniqueId, String callState,
+			String hangupCause, String userId);
 }

@@ -144,6 +144,21 @@ public class MessagePublisher {
 
 	}
 
+	public void dial(String meetingID,String requesterUserId, Map<String,String> options, Map<String,String> params){
+		OutboundDialRequestInVoiceConfMessage msg = new OutboundDialRequestInVoiceConfMessage(meetingID, "" ,requesterUserId, options, params); 
+		sender.send(MessagingConstants.TO_USERS_CHANNEL, msg.toJson());
+	}
+
+	public void cancelDial(String meetingID,String requesterUserId, String uuid){
+		CancelDialRequestInVoiceConfMessage msg = new CancelDialRequestInVoiceConfMessage(meetingID, requesterUserId, uuid);
+		sender.send(MessagingConstants.TO_USERS_CHANNEL, msg.toJson());
+	}
+
+	public void sendDtmf(String meetingID,String requesterUserId, String uuid, String dtmfDigit){
+		SendDtmfRequestInVoiceConfMessage msg = new SendDtmfRequestInVoiceConfMessage(meetingID, requesterUserId, uuid, dtmfDigit);
+		sender.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, msg.toJson());
+	}
+
 	public void ejectUserFromMeeting(String meetingId, String userId, String ejectedBy) {
 		EjectUserFromMeetingRequestMessage msg = new EjectUserFromMeetingRequestMessage(meetingId, userId, ejectedBy);
 		sender.send(MessagingConstants.TO_USERS_CHANNEL, msg.toJson());

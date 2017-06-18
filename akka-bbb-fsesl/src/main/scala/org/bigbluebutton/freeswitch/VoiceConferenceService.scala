@@ -41,4 +41,14 @@ class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceSer
     val msg = new UserTalkingInVoiceConfMessage(voiceConfId, voiceUserId, talking)
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
   }
+
+  def channelCallStateInVoiceConf(conference: String, uniqueId: String, callState: String, voiceUserId: String) {
+    val msg = new ChannelCallStateInVoiceConfMessage("UNKNOWN-MEETING-ID", conference, uniqueId, callState, voiceUserId)
+    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
+  }
+
+  def channelHangupInVoiceConf(conference: String, uniqueId: String, callState: String, hangupCause: String, voiceUserId: String) {
+    val msg = new ChannelHangupInVoiceConfMessage("UNKNOWN-MEETING-ID", conference, uniqueId, callState, hangupCause, voiceUserId)
+    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
+  }
 }

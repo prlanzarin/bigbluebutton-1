@@ -67,6 +67,11 @@ public interface IBigBlueButtonInGW {
 	void voiceRecording(String meetingId, String recordingFile, 
 			            String timestamp, Boolean recording);
 	
+	void voiceOutboundDialRequest(String meetingID, String requesterID, Map<String, String> options, Map<String, String> params);
+	void voiceCancelDialRequest(String meetingID, String requesterID, String uuid);
+	void voiceSendDtmfRequest(String meetingID, String requesterID, String uuid, String dtmfDigit);
+	void voiceDialing(String meetingID, String userId, String uuid, String callState);
+	void voiceHangingUp(String meetingID, String userId, String uuid, String callState, String hangupCause);
 	// Presentation
 	void clear(String meetingID);
 	void removePresentation(String meetingID, String presentationID);
