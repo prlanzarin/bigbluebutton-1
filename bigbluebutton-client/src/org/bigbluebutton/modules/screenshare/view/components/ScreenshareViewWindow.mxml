@@ -339,6 +339,20 @@
 			
 			override protected function resourcesChanged():void{
 				super.resourcesChanged();
+/*
+				this.title = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
+				
+				if (windowControls != null) {
+					minimizeBtn.toolTip = ResourceUtil.getInstance().getString("bbb.window.minimizeBtn.toolTip");
+					minimizeBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screenshareView.minimizeBtn.accessibilityName");
+
+					maximizeRestoreBtn.toolTip = ResourceUtil.getInstance().getString("bbb.window.maximizeRestoreBtn.toolTip");
+					maximizeRestoreBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screenshareView.maximizeRestoreBtn.accessibilityName");
+
+					closeBtn.toolTip = ResourceUtil.getInstance().getString("bbb.window.closeBtn.toolTip");
+					closeBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screenshareView.closeBtn.accessibilityName");
+				}
+*/
 			}
 			
 			private function localeChanged(e:Event):void{
