@@ -396,7 +396,7 @@ package org.bigbluebutton.modules.videoconf.maps
     public function handleShareCameraRequestEvent(event:ShareCameraRequestEvent):void {
 		LOGGER.debug("[VideoEventMapDelegate:handleShareCameraRequestEvent]");
 		if (options.skipCamSettingsCheck) {
-			skipCameraSettingsCheck();
+			skipCameraSettingsCheck(parseInt(event.defaultCamera));
 		} else {
 			openWebcamPreview(event.publishInClient, event.defaultCamera, event.camerasArray);
 		}
