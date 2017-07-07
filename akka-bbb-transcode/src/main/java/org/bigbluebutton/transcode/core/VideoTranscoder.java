@@ -1,4 +1,3 @@
-
 package org.bigbluebutton.transcode.core;
 
 import java.io.BufferedReader;
@@ -222,9 +221,9 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
 
         switch(type){
             case TRANSCODE_RTMP_TO_RTP:
-                log.debug("  > *** STREAM TYPE " + streamType);
+                System.out.println("  > *** STREAM TYPE " + streamType);
                 if(!areRtmpToRtpParametersValid()) {
-                    log.debug("  > ***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
+                    System.out.println("  > ***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
                     return false;
                 }
 
@@ -245,22 +244,22 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setInput(input);
                 ffmpeg.addRtmpInputConnectionParameter(meetingId);
                 ffmpeg.addRtmpInputConnectionParameter("transcoder-"+transcoderId);
-                ffmpeg.setGop(100); //MCU compatibility
-                ffmpeg.setCodec("libx264");
-                // Compatibility parameters used for test
-                //ffmpeg.setFrameRate(15);
-                //ffmpeg.setBufSize(1024);
-                //ffmpeg.setMaxRate(1024);
-                //ffmpeg.setSliceMode("dyn");
-                //ffmpeg.setMaxNalSize("1024");
-                //ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
-                //ffmpeg.setProfile("baseline");
-                //ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
-                //ffmpeg.setAnalyzeDuration("1000"); // 1ms
-                //ffmpeg.setProbeSize("32"); // 1mS
+                ffmpeg.setFrameRate(15);
+                ffmpeg.setBufSize(1024);
+                ffmpeg.setGop(1); //MCU compatibility
+                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setMaxRate(1024);
+                ffmpeg.setSliceMode("dyn");
+                ffmpeg.setMaxNalSize("1024");
+                ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
+                ffmpeg.setProfile("baseline");
                 ffmpeg.setFormat("rtp");
+                ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
                 ffmpeg.setLoglevel("verbose");
                 ffmpeg.setOutput(outputLive);
+                ffmpeg.setAnalyzeDuration("1000"); // 1ms
+                ffmpeg.setProbeSize("32"); // 1ms
+
                 System.out.println("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
@@ -301,7 +300,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setProfile("baseline");
                 ffmpeg.setFormat("rtsp");
                 ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
-                ffmpeg.setLoglevel("verbose");
+                ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setAnalyzeDuration("1000"); // 1ms
                 ffmpeg.setProbeSize("32"); // 1ms
@@ -339,7 +338,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
 
                 // Used codec is COPY, H264 transcoding won't be used
                 if (Constants.COPY.equals(this.codec)) {
-                    ffmpeg.setLoglevel("verbose");
+                    ffmpeg.setLoglevel("quiet");
                     ffmpeg.setOutput(outputLive);
                     ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                     ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
@@ -350,7 +349,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 }
 
                 ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("verbose");
+                ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
@@ -417,7 +416,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setFrameSize("640x480");
                 ffmpeg.setIgnoreLoop(0);
                 ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("verbose");
+                ffmpeg.setLoglevel("quiet");
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
                 ffmpeg.setOutput(outputLive);
