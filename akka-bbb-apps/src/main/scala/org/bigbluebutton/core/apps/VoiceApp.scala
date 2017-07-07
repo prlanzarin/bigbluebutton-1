@@ -10,6 +10,8 @@ trait VoiceApp {
 
   val outGW: OutMessageGateway
 
+  var isPresenterTranscoding = false
+
   def handleUpdateCallAgent(msg: UpdateCallAgent) {
     if (usersModel.isGlobalCallAgent(msg.userId)) {
       meetingModel.setGlobalCallCallername(msg.userId)
@@ -123,7 +125,9 @@ trait VoiceApp {
           val params = new scala.collection.mutable.HashMap[String, String]
           params += MessagesConstants.INPUT -> curPres.userID
           params += MessagesConstants.STREAM_TYPE -> MessagesConstants.STREAM_TYPE_VIDEO
-          outGW.send(new StartKurentoSendRtpRequest(mProps.meetingID, params))
+          if(!isPresenterTranscoding) {
+            outGW.send(new StartKurentoSendRtpRequest(mProps.meetingID, params))
+          }
         case None => // do nothing
           log.info("No presenter found!");
       }
@@ -134,7 +138,7 @@ trait VoiceApp {
 
   def startPresenterTranscoder(userId: String, params: scala.collection.mutable.HashMap[String, String]) {
     usersModel.getUser(userId) foreach { user =>
-      if (!user.phoneUser) {
+      if (!user.phoneUser && !isPresenterTranscoding) {
         log.info("Starting transcoder for webcam user " + userId)
         //User's RTP transcoder
         if (user.hasStream && user.presenter) {
@@ -143,6 +147,7 @@ trait VoiceApp {
           params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
           log.info("Starting VIDEO transcoder for WEB USER with params " + params)
           outGW.send(new StartTranscoderRequest(mProps.meetingID, user.userID, params))
+          isPresenterTranscoding = true;
         }
       }
     }
@@ -151,9 +156,8 @@ trait VoiceApp {
   def stopPresenterTranscoder(userId: String) {
     getUser(userId) match {
       case Some(user) => {
-        //also stops videoconf logo
         outGW.send(new StopTranscoderRequest(mProps.meetingID, userId))
-        outGW.send(new StopTranscoderRequest(mProps.meetingID, meetingModel.VIDEOCONFERENCE_LOGO_PREFIX + mProps.voiceBridge))
+        isPresenterTranscoding = false;
       }
 
       case None => {}
@@ -243,7 +247,7 @@ trait VoiceApp {
     if (usersModel.activeTalkerChangedInWebconference(oldTalkerUserId, newTalkerUserId) && meetingModel.isSipPhonePresent()) {
       log.debug("Changing transcoder. oldTalkerUserId = " + oldTalkerUserId + " newTalkerUserId = " + newTalkerUserId)
       stopTranscoder(oldTalkerUserId)
-      startTranscoder(newTalkerUserId)
+      //startTranscoder(newTalkerUserId)
     }
   }
 
@@ -257,7 +261,6 @@ trait VoiceApp {
           params += MessagesConstants.INPUT -> usersModel.getUserMainWebcamStream(userId)
           log.debug("User [{}] shared webcam, updating his transcoder for params [{}] with meetingID [{}]", userId, params.toString(), mProps.meetingID)
           handleTranscoding()
-          outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
         }
       }
       case None => {}
@@ -279,7 +282,6 @@ trait VoiceApp {
           log.debug("User [{}] unshared webcam, updating his transcoder", userId)
           stopPresenterTranscoder(userId);
           // This should guarantee the transcoder session will be flushed
-          outGW.send(new UpdateTranscoderRequest(mProps.meetingID, userId, params))
         }
       }
       case None => log.debug("")
