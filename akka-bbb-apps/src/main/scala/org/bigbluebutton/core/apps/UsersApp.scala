@@ -652,7 +652,7 @@ trait UsersApp {
         case Some(curPres) => {
           usersModel.unbecomePresenter(curPres.userID)
           outGW.send(new UserStatusChange(mProps.meetingID, mProps.recorded, curPres.userID, "presenter", false: java.lang.Boolean))
-          stopKurentoTranscoder(curPres.userID)
+          stopPresenterTranscoder(curPres.userID)
         }
         case None => // do nothing
       }
