@@ -52,6 +52,10 @@ libraryDependencies += "org.mockito" % "mockito-core" % "2.7.12" % "test"
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.0.1" % "test"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
+libraryDependencies += "org.bigbluebutton" % "bbb-common-message" % "0.0.18-SNAPSHOT"
+
+libraryDependencies += "redis.clients" % "jedis" % "2.7.2"
+
 seq(Revolver.settings: _*)
 
 //-----------

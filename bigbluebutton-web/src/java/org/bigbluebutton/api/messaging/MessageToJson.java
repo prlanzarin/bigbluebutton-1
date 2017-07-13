@@ -7,9 +7,6 @@ import org.bigbluebutton.api.messaging.converters.messages.DestroyMeetingMessage
 import org.bigbluebutton.api.messaging.converters.messages.EndMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.KeepAliveMessage;
 import org.bigbluebutton.api.messaging.converters.messages.RegisterUserMessage;
-import org.bigbluebutton.api.messaging.converters.messages.PublishRecordingMessage;
-import org.bigbluebutton.api.messaging.converters.messages.UnpublishRecordingMessage;
-import org.bigbluebutton.api.messaging.converters.messages.DeleteRecordingMessage;
 
 public class MessageToJson {
 
@@ -73,38 +70,4 @@ public class MessageToJson {
 		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(KeepAliveMessage.KEEP_ALIVE_REQUEST, KeepAliveMessage.VERSION, null);
 		return MessageBuilder.buildJson(header, payload);				
 	}	
-	
-	public static String publishRecordingMessageToJson(PublishRecordingMessage message) {
-		HashMap<String, Object> payload = new HashMap<String, Object>();
-		payload.put(Constants.RECORD_ID, message.recordId);
-		payload.put(Constants.MEETING_ID, message.meetingId);
-		payload.put(Constants.EXTERNAL_MEETING_ID, message.externalMeetingId);
-		payload.put(Constants.FORMAT, message.format);
-
-		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(PublishRecordingMessage.PUBLISH_RECORDING, PublishRecordingMessage.VERSION, null);
-		return MessageBuilder.buildJson(header, payload);
-	}
-
-	public static String unpublishRecordingMessageToJson(UnpublishRecordingMessage message) {
-		HashMap<String, Object> payload = new HashMap<String, Object>();
-		payload.put(Constants.RECORD_ID, message.recordId);
-		payload.put(Constants.MEETING_ID, message.meetingId);
-		payload.put(Constants.EXTERNAL_MEETING_ID, message.externalMeetingId);
-		payload.put(Constants.FORMAT, message.format);
-
-		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(UnpublishRecordingMessage.UNPUBLISH_RECORDING, UnpublishRecordingMessage.VERSION, null);
-		return MessageBuilder.buildJson(header, payload);
-	}
-
-	public static String deleteRecordingMessageToJson(DeleteRecordingMessage message) {
-		HashMap<String, Object> payload = new HashMap<String, Object>();
-		payload.put(Constants.RECORD_ID, message.recordId);
-		payload.put(Constants.MEETING_ID, message.meetingId);
-		payload.put(Constants.EXTERNAL_MEETING_ID, message.externalMeetingId);
-		payload.put(Constants.FORMAT, message.format);
-
-		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(DeleteRecordingMessage.DELETE_RECORDING, DeleteRecordingMessage.VERSION, null);
-		return MessageBuilder.buildJson(header, payload);
-	}
-	
 }

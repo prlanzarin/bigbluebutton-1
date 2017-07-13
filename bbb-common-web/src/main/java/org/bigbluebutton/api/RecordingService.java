@@ -37,8 +37,7 @@ import org.apache.commons.io.FileUtils;
 import org.bigbluebutton.api.domain.Recording;
 import org.bigbluebutton.api.domain.RecordingMetadata;
 import org.bigbluebutton.api.util.RecordingMetadataReaderHelper;
-// TODO: REVIEW THIS REDIS SERVICE
-//import org.bigbluebutton.api.messaging.MessagingService;
+import org.bigbluebutton.api.messaging.RedisSimpleMessageSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +49,7 @@ public class RecordingService {
     private String unpublishedDir = "/var/bigbluebutton/unpublished";
     private String deletedDir = "/var/bigbluebutton/deleted";
     private RecordingServiceHelper recordingServiceHelper;
-    //private MessagingService messagingService;
+    private RedisSimpleMessageSender sender;
     private String recordStatusDir;
 
     public void startIngestAndProcessing(String meetingId) {
@@ -393,15 +392,29 @@ public class RecordingService {
             for (int f = 0; f < recordings.size(); f++) {
                 if (recordings.get(f).getName().equalsIgnoreCase(recordingId)) {
                     File dest;
+                    File recordingDir;
+                    Recording rec;
                     if (state.equals(Recording.STATE_PUBLISHED)) {
-                       dest = new File(publishedDir + File.separatorChar + format[i]);
-                       RecordingService.publishRecording(dest, recordingId, recordings.get(f), format[i]);
+                        dest = new File(publishedDir + File.separatorChar + format[i]);
+                        recordingDir = recordings.get(f);
+                        rec = getRecordingInfo(recordingDir);
+                        if (RecordingService.publishRecording(dest, recordingId, recordingDir)) {
+                            sender.publishRecording(rec.getId(), rec.getId(), rec.getExternalMeetingId(), format[i], true);
+                        }
                     } else if (state.equals(Recording.STATE_UNPUBLISHED)) {
-                       dest = new File(unpublishedDir + File.separatorChar + format[i]);
-                       RecordingService.unpublishRecording(dest, recordingId, recordings.get(f), format[i]);
+                        dest = new File(unpublishedDir + File.separatorChar + format[i]);
+                        recordingDir = recordings.get(f);
+                        rec = getRecordingInfo(recordingDir);
+                        if (RecordingService.unpublishRecording(dest, recordingId, recordingDir)) {
+                            sender.publishRecording(rec.getId(), rec.getId(), rec.getExternalMeetingId(), format[i], false);
+                        }
                     } else if (state.equals(Recording.STATE_DELETED)) {
-                       dest = new File(deletedDir + File.separatorChar + format[i]);
-                       RecordingService.deleteRecording(dest, recordingId, recordings.get(f), format[i]);
+                        dest = new File(deletedDir + File.separatorChar + format[i]);
+                        recordingDir = recordings.get(f);
+                        rec = getRecordingInfo(recordingDir);
+                        if (RecordingService.deleteRecording(dest, recordingId, recordingDir)) {
+                            sender.deleteRecording(rec.getId(), rec.getId(), rec.getExternalMeetingId(), format[i]);
+                        }
                     } else {
                        log.debug(String.format("State: %s, is not supported", state));
                        return;
@@ -411,7 +424,7 @@ public class RecordingService {
         }
     }
 
-    public static void publishRecording(File destDir, String recordingId, File recordingDir, String format) {
+    public static boolean publishRecording(File destDir, String recordingId, File recordingDir) {
         File metadataXml = RecordingMetadataReaderHelper.getMetadataXmlLocation(recordingDir.getPath());
         RecordingMetadata r = RecordingMetadataReaderHelper.getRecordingMetadata(metadataXml);
         if (r != null) {
@@ -428,15 +441,15 @@ public class RecordingService {
 
                 // Process the changes by saving the recording into metadata.xml
                 RecordingMetadataReaderHelper.saveRecordingMetadata(medataXmlFile, r);
-                //Recording rec = recordingServiceHelper.getRecordingInfo(recordingDir);
-                //messagingService.publishRecording(rec.getId(), rec.getId(), rec.getExternalMeetingId(), format, true);
+                return true;
             } catch (IOException e) {
               log.error("Failed to publish recording : " + recordingId, e);
             }
         }
+        return false;
     }
 
-    public static void unpublishRecording(File destDir, String recordingId, File recordingDir, String format) {
+    public static boolean unpublishRecording(File destDir, String recordingId, File recordingDir) {
         File metadataXml = RecordingMetadataReaderHelper.getMetadataXmlLocation(recordingDir.getPath());
 
         RecordingMetadata r = RecordingMetadataReaderHelper.getRecordingMetadata(metadataXml);
@@ -453,15 +466,15 @@ public class RecordingService {
 
                 // Process the changes by saving the recording into metadata.xml
                 RecordingMetadataReaderHelper.saveRecordingMetadata(medataXmlFile, r);
-                //Recording rec = recordingServiceHelper.getRecordingInfo(recordingDir);
-                //messagingService.publishRecording(rec.getId(), rec.getId(), rec.getExternalMeetingId(), format, false);
+                return true;
             } catch (IOException e) {
               log.error("Failed to unpublish recording : " + recordingId, e);
             }
         }
+        return false;
     }
 
-    public static void deleteRecording(File destDir, String recordingId, File recordingDir, String format) {
+    public static boolean deleteRecording(File destDir, String recordingId, File recordingDir) {
         File metadataXml = RecordingMetadataReaderHelper.getMetadataXmlLocation(recordingDir.getPath());
 
         RecordingMetadata r = RecordingMetadataReaderHelper.getRecordingMetadata(metadataXml);
@@ -478,12 +491,12 @@ public class RecordingService {
 
                 // Process the changes by saving the recording into metadata.xml
                 RecordingMetadataReaderHelper.saveRecordingMetadata(medataXmlFile, r);
-                //Recording rec = recordingServiceHelper.getRecordingInfo(recordingDir);
-                //messagingService.deleteRecording(rec.getId(), rec.getId(), rec.getExternalMeetingId(), format);
+                return true;
             } catch (IOException e) {
               log.error("Failed to delete recording : " + recordingId, e);
             }
         }
+        return false;
     }
 
 
@@ -615,7 +628,11 @@ public class RecordingService {
         return baseDir;
     }
 
-    //public void setMessagingService(MessagingService service) {
-    //    messagingService = service;
-    //}
+    public void setSender(RedisSimpleMessageSender sender) {
+        this.sender = sender;
+    }
+
+    public RedisSimpleMessageSender getSender() {
+        return this.sender;
+    }
 }

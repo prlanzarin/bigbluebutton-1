@@ -69,4 +69,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         </property> 
   	</bean>	  	
  
+   <bean id="redisSimpleSender" class="org.bigbluebutton.api.messaging.RedisSimpleMessageSender"
+        init-method="start" destroy-method="stop">
+      <property name="host" value="${redisHost}" />
+      <property name="port" value="${redisPort}" />
+  </bean>
 </beans>

@@ -29,9 +29,6 @@ import java.util.Set;
 import org.bigbluebutton.api.messaging.converters.messages.DestroyMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.EndMeetingMessage;
 import org.bigbluebutton.api.messaging.converters.messages.RegisterUserMessage;
-import org.bigbluebutton.api.messaging.converters.messages.PublishRecordingMessage;
-import org.bigbluebutton.api.messaging.converters.messages.UnpublishRecordingMessage;
-import org.bigbluebutton.api.messaging.converters.messages.DeleteRecordingMessage;
 import org.bigbluebutton.common.converters.ToJsonEncoder;
 import org.bigbluebutton.common.messages.Constants;
 import org.bigbluebutton.common.messages.MessagingConstants;
@@ -138,32 +135,6 @@ public class RedisMessagingService implements MessagingService {
   
 	public void removeMeeting(String meetingId){
 		storeService.removeMeeting(meetingId);
-	}
-
-	private void publishRecording(String recordId, String meetingId, String externalMeetingId, String format) {
-		PublishRecordingMessage msg = new PublishRecordingMessage(recordId, meetingId, externalMeetingId, format);
-		String json = MessageToJson.publishRecordingMessageToJson(msg);
-		sender.send(MessagingConstants.FROM_BBB_RECORDING_CHANNEL, json);
-	}
-
-	private void unpublishRecording(String recordId, String meetingId, String externalMeetingId, String format) {
-		UnpublishRecordingMessage msg = new UnpublishRecordingMessage(recordId, meetingId, externalMeetingId, format);
-		String json = MessageToJson.unpublishRecordingMessageToJson(msg);
-		sender.send(MessagingConstants.FROM_BBB_RECORDING_CHANNEL, json);
-	}
-
-	public void publishRecording(String recordId, String meetingId, String externalMeetingId, String format, boolean publish) {
-		if (publish) {
-			publishRecording(recordId, meetingId, externalMeetingId, format);
-		} else {
-			unpublishRecording(recordId, meetingId, externalMeetingId, format);
-		}
-	}
-
-	public void deleteRecording(String recordId, String meetingId, String externalMeetingId, String format) {
-		DeleteRecordingMessage msg = new DeleteRecordingMessage(recordId, meetingId, externalMeetingId, format);
-		String json = MessageToJson.deleteRecordingMessageToJson(msg);
-		sender.send(MessagingConstants.FROM_BBB_RECORDING_CHANNEL, json);
 	}
 
 	public void sendStunTurnInfo(String meetingId, String internalUserId, Set<StunServer> stuns, Set<TurnEntry> turns) {

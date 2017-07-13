@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -61,11 +62,18 @@ public class RecordingMetadata {
 
   private String meetingName = "";
 
+  @JacksonXmlProperty(localName = "raw_size")
+  private String rawSize;
+
+  private String size;
+
   private Breakout breakout;
 
   @JacksonXmlElementWrapper(localName = "breakoutRooms")
   @JacksonXmlProperty(localName = "breakoutRoom")
   private BreakoutRoom[] breakoutRooms;
+
+  private ArrayList<Download> downloads;
 
   private Metadata meta;
 
@@ -203,5 +211,29 @@ public class RecordingMetadata {
     int end = (int) Math.ceil((Long.parseLong(endTime)) / 60000.0);
 
     return end - start;
+  }
+
+  public void setRawSize(String rawSize) {
+    this.rawSize = rawSize;
+  }
+
+  public String getRawSize() {
+    return rawSize;
+  }
+
+  public void setSize(String size) {
+    this.size = size;
+  }
+
+  public String getSize() {
+    return size;
+  }
+
+  public ArrayList<Download> getDownloads() {
+    return downloads;
+  }
+
+  public void setDownloads(ArrayList<Download> downloads) {
+    this.downloads = downloads;
   }
 }

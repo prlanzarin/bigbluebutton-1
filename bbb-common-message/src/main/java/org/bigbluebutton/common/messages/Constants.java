@@ -156,4 +156,6 @@ public class Constants {
   public static final String OPERATION                       = "operation";
   public static final String NOTE                            = "note";
   public static final String METADATA                        = "metadata";
+  public static final String FORMAT                          = "format";
+  public static final String RECORD_ID                       = "record_id";
 }

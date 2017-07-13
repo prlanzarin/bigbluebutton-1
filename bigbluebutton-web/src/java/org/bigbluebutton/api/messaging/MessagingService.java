@@ -43,6 +43,4 @@ public interface MessagingService {
 	void registerUser(String meetingID, String internalUserId, String fullname, String role, String externUserID, String authToken, String avatarURL, String guest);
 	void sendKeepAlive(String system, Long timestamp);
 	void sendStunTurnInfo(String meetingId, String internalUserId, Set<StunServer> stuns, Set<TurnEntry> turns);
-	void publishRecording(String recordId, String meetingId, String externalMeetingId, String format, boolean publish);
-	void deleteRecording(String recordId, String meetingId, String externalMeetingId, String format);
 }
