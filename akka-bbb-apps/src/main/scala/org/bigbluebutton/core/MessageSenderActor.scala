@@ -34,6 +34,10 @@ import org.bigbluebutton.common.messages.LockLayoutMessage
 import org.bigbluebutton.core.pubsub.senders.WhiteboardMessageToJsonConverter
 import org.bigbluebutton.common.converters.ToJsonEncoder
 import org.bigbluebutton.common.messages.StopMeetingTranscodersMessage
+import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage
+import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
+import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
+import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage
 
 object MessageSenderActor {
   def props(meetingId: String, msgSender: MessageSender): Props =
@@ -126,6 +130,10 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: IsMeetingMutedReply => handleIsMeetingMutedReply(msg)
     case msg: UserListeningOnly => handleUserListeningOnly(msg)
     case msg: StopMeetingTranscoders => handleStopMeetingTranscoders(msg)
+    case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
+    case msg: VoiceCancelDial => handleVoiceCancelDial(msg)
+    case msg: VoiceDialing2 => handleVoiceDialing(msg)
+    case msg: VoiceHangingUp2 => handleVoiceHangingUp(msg)
     case msg: GetCurrentLayoutReply => handleGetCurrentLayoutReply(msg)
     case msg: BroadcastLayoutEvent => handleBroadcastLayoutEvent(msg)
     case msg: LockLayoutEvent => handleLockLayoutEvent(msg)
@@ -674,6 +682,26 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleStopMeetingTranscoders(msg: StopMeetingTranscoders) {
     val smt = new StopMeetingTranscodersMessage(msg.meetingID)
     service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, smt.toJson())
+  }
+
+  private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
+    val odr = new OutboundDialRequestInVoiceConfMessage(msg.meetingID, msg.voiceConfId, msg.requesterID, msg.options, msg.params)
+    service.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, odr.toJson())
+  }
+
+  private def handleVoiceCancelDial(msg: VoiceCancelDial) {
+    val cd = new CancelDialRequestInVoiceConfMessage(msg.meetingID, "", msg.uuid)
+    service.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, cd.toJson())
+  }
+
+  private def handleVoiceDialing(msg: VoiceDialing2) {
+    val ccs = new ChannelCallStateInVoiceConfMessage(msg.meetingID, "UNKNOWN-VOICE-CONF", msg.uuid, msg.callState, msg.requesterID)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, ccs.toJson())
+  }
+
+  private def handleVoiceHangingUp(msg: VoiceHangingUp2) {
+    val ch = new ChannelHangupInVoiceConfMessage(msg.meetingID, "UNKNOWN-VOICE-CONF", msg.uuid, msg.callState, msg.hangupCause, msg.requesterID)
+    service.send(MessagingConstants.FROM_USERS_CHANNEL, ch.toJson())
   }
 
   private def handleGetWhiteboardShapesReply(msg: GetWhiteboardShapesReply) {
