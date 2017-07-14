@@ -21,7 +21,7 @@ object MeetingActor {
 
 class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
     extends Actor with UsersApp with PresentationApp
-    with LayoutApp with ChatApp with WhiteboardApp with PollApp
+    with LayoutApp with ChatApp with WhiteboardApp with PollApp with VoiceApp
     with SharedNotesApp with ActorLogging with SystemConfiguration {
 
   val chatModel = new ChatModel()
@@ -82,6 +82,16 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
         handleUserMutedInVoiceConfMessage(msg)
       case msg: UserTalkingInVoiceConfMessage =>
         handleUserTalkingInVoiceConfMessage(msg)
+      case msg: VoiceOutboundDialRequest =>
+        handleVoiceOutboundDialRequest(msg)
+      case msg: VoiceCancelDialRequest =>
+        handleVoiceCancelDialRequest(msg)
+      case msg: VoiceSendDtmfRequest =>
+        handleVoiceSendDtmfRequest(msg)
+      case msg: VoiceDialing =>
+        handleVoiceDialing(msg)
+      case msg: VoiceHangingUp =>
+        handleVoiceHangingUp(msg)
       case msg: VoiceConfRecordingStartedMessage =>
         handleVoiceConfRecordingStartedMessage(msg)
       case msg: UserJoining =>

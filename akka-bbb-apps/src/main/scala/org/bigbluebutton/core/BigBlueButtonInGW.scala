@@ -485,6 +485,26 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
     bbbActor ! new VoiceConfRecordingStartedMessage(voiceConfId, recordingFile, recording, timestamp)
   }
 
+  def voiceOutboundDialRequest(meetingId: String, userId: String, options: java.util.Map[String, String], params: java.util.Map[String, String]) {
+    bbbActor ! new VoiceOutboundDialRequest(meetingId, userId, mapAsScalaMap(options).toMap, mapAsScalaMap(params).toMap)
+  }
+
+  def voiceCancelDialRequest(meetingId: String, userId: String, uuid: String) {
+    bbbActor ! new VoiceCancelDialRequest(meetingId, userId, uuid)
+  }
+
+  def voiceSendDtmfRequest(meetingId: String, userId: String, uuid: String, dtmfDigit: String) {
+    bbbActor ! new VoiceSendDtmfRequest(meetingId, userId, uuid, dtmfDigit)
+  }
+
+  def voiceDialing(voiceConfId: String, userId: String, uuid: String, callState: String) {
+    bbbActor ! new VoiceDialing(voiceConfId, userId, uuid, callState)
+  }
+
+  def voiceHangingUp(voiceConfId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
+    bbbActor ! new VoiceHangingUp(voiceConfId, userId, uuid, callState, hangupCause)
+  }
+
   // Polling
   def votePoll(meetingId: String, userId: String, pollId: String, questionId: Integer, answerId: Integer) {
     bbbActor ! new RespondToPollRequest(meetingId, userId, pollId, questionId, answerId)

@@ -79,6 +79,36 @@ public class VoiceService {
 		red5InGW.ejectUserFromVoice(meetingID, userId, ejectedBy); 	
 		
 	}
+
+	public void dial(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		Map<String, String> options = (Map<String, String>) msg.get("options");
+		Map<String, String> params = (Map<String, String>) msg.get("params");
+		log.debug("Dial from [" + meetingID + "] to destination [" + params.get("destination") + "]");
+		log.debug("options: {}, params: {}", options.toString(), params.toString());
+
+		red5InGW.dial(meetingID, requesterID, options, params);
+	}
+
+	public void cancelDial(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		String uuid = (String) msg.get("uuid");
+		log.debug("Cancel dial from [" + meetingID + "].");
+
+		red5InGW.cancelDial(meetingID, requesterID, uuid);
+	}
+
+	public void sendDtmf(Map<String, Object> msg) {
+		String meetingID = Red5.getConnectionLocal().getScope().getName();
+		String requesterID = getBbbSession().getInternalUserID();
+		String uuid = (String) msg.get("uuid");
+		String dtmfDigit = (String) msg.get("dtmfDigit");
+		log.debug("Send dtmf from [" + meetingID + "]. Digit = ["+dtmfDigit+"]");
+
+		red5InGW.sendDtmf(meetingID, requesterID, uuid, dtmfDigit);
+	}
 		
 	private BigBlueButtonSession getBbbSession() {
 		return (BigBlueButtonSession) Red5.getConnectionLocal().getAttribute(Constants.SESSION);

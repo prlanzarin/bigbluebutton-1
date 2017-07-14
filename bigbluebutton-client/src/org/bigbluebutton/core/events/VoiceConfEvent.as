@@ -31,11 +31,24 @@ package org.bigbluebutton.core.events
 		public static const UNMUTE_USER:String = "VOICECONF_UNMUTE_USER";
 		
 		public static const EJECT_USER:String = "VOICECONF_EJECT_USER";
+
+		public static const DIAL:String = "VOICECONF_DIAL";
+		public static const DIALING:String = "VOICECONF_DIALING";
+		public static const HANGINGUP:String = "VOICECONF_HANGINGUP";
+		public static const CANCEL_DIAL:String = "VOICECONF_CANCEL_DIAL";
+		public static const SEND_DTMF:String = "VOICECONF_SEND_DTMF";
 		
 		public var userid:String;
 		public var mute:Boolean;
 		public var lock:Boolean;
 		
+		public var dialOptions:Array;
+		public var dialParams:Array;
+		public var uuid:String;
+		public var dialState:String;
+		public var dialHangupCause:String;
+		public var dtmfDigit:String;
+
 		public function VoiceConfEvent(type:String)
 		{
 			super(type, true, false);
