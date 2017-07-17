@@ -325,6 +325,13 @@ stop_bigbluebutton () {
         if [ -f /etc/init.d/bbb-fsesl-akka ]; then
                 /etc/init.d/bbb-fsesl-akka stop
         fi
+
+        if [ -f /etc/init/bbb-transcode-akka.conf ]; then
+                service bbb-transcode-akka stop
+        fi
+        if [ -f /etc/init.d/bbb-transcode-akka ]; then
+                /etc/init.d/bbb-transcode-akka stop
+        fi
    fi
 }
 
@@ -389,6 +396,13 @@ start_bigbluebutton () {
         fi
         if [ -f /etc/init.d/bbb-fsesl-akka ]; then
                 /etc/init.d/bbb-fsesl-akka start
+        fi
+
+        if [ -f /etc/init/bbb-transcode-akka.conf ]; then
+                service bbb-transcode-akka start
+        fi
+        if [ -f /etc/init.d/bbb-transcode-akka ]; then
+                /etc/init.d/bbb-transcode-akka start
         fi
 
 
@@ -1592,6 +1606,7 @@ if [ $ZIP ]; then
 	tar rf  /tmp/$LOG_FILE.tar /var/log/bigbluebutton/*	> /dev/null 2>&1
 	tar rf  /tmp/$LOG_FILE.tar /var/log/bbb-apps-akka	> /dev/null 2>&1
 	tar rf  /tmp/$LOG_FILE.tar /var/log/bbb-fsesl-akka	> /dev/null 2>&1
+	tar rf  /tmp/$LOG_FILE.tar /var/log/bbb-transcode-akka	> /dev/null 2>&1
 	tar rf  /tmp/$LOG_FILE.tar /var/log/nginx/error.log	> /dev/null 2>&1
 	if [ $DISTRIB_ID == "ubuntu" ]; then
 		tar rf /tmp/$LOG_FILE.tar /var/log/syslog		> /dev/null 2>&1
@@ -1887,6 +1902,10 @@ if [ $CLEAN ]; then
 
 	if [ -d /var/log/bbb-apps-akka ]; then
 		rm -f /var/log/bbb-apps-akka/*
+        fi
+
+	if [ -d /var/log/bbb-transcode-akka ]; then
+		rm -f /var/log/bbb-transcode-akka/*
         fi
 
 	start_bigbluebutton

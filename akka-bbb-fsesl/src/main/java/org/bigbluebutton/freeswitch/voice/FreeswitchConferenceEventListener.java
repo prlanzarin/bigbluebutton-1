@@ -26,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.bigbluebutton.freeswitch.voice.events.DeskShareStartedEvent;
 import org.bigbluebutton.freeswitch.voice.events.DeskShareEndedEvent;
+import org.bigbluebutton.freeswitch.voice.events.ChannelCallStateEvent;
+import org.bigbluebutton.freeswitch.voice.events.ChannelHangupCompleteEvent;
 import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
 import org.bigbluebutton.freeswitch.voice.events.DeskShareRTMPBroadcastEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceConferenceEvent;
@@ -101,6 +103,14 @@ public class FreeswitchConferenceEventListener implements ConferenceEventListene
 						vcs.deskShareRTMPBroadcastStopped(evt.getRoom(), evt.getBroadcastingStreamUrl(),
 								evt.getVideoWidth(), evt.getVideoHeight(), evt.getTimestamp());
 					}
+				} else if (event instanceof ChannelCallStateEvent) {
+					ChannelCallStateEvent evt = (ChannelCallStateEvent) event;
+					System.out.println("************** FreeswitchConferenceEventListener ChannelCallStateEvent ");
+					vcs.channelCallStateInVoiceConf(evt.getRoom(), evt.getUniqueId(), evt.getCallState(), evt.getParticipant());
+				} else if (event instanceof ChannelHangupCompleteEvent) {
+					ChannelHangupCompleteEvent evt = (ChannelHangupCompleteEvent) event;
+					System.out.println("************** FreeswitchConferenceEventListener ChannelHangupCompleteEvent ");
+					vcs.channelHangupInVoiceConf(evt.getRoom(), evt.getUniqueId(), evt.getCallState(), evt.getHangupCause(), evt.getParticipant());
 				}
 			}
 		};

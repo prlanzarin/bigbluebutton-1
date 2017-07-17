@@ -112,4 +112,9 @@ object Constants {
   val REDO = "redo"
   val OPERATION = "operation"
   val NOTE = "note"
+  val OPTIONS = "options"
+  val PARAMS = "params"
+  val UUID = "uuid"
+  val STATE = "state"
+  val CAUSE = "cause"
 }

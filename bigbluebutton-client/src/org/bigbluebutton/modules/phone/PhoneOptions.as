@@ -57,6 +57,12 @@ package org.bigbluebutton.modules.phone
 		[Bindable]
 		public var forceListenOnly:Boolean = false;
 		
+		[Bindable]
+		public var enableOutboundCalls:Boolean = false;
+
+		[Bindable]
+		public var outboundCallsProfile:String = "external";
+
 		public function PhoneOptions() {
 			parseOptions();
 		}
@@ -99,6 +105,12 @@ package org.bigbluebutton.modules.phone
 				}
 				if (vxml.@showMicrophoneHint != undefined) {
 					showMicrophoneHint = (vxml.@showMicrophoneHint.toString().toUpperCase() == "TRUE");
+				}
+				if (vxml.@enableOutboundCalls != undefined) {
+					enableOutboundCalls = (vxml.@enableOutboundCalls.toString().toUpperCase() == "TRUE");
+				}
+				if (vxml.@outboundCallsProfile != undefined) {
+					outboundCallsProfile = vxml.@outboundCallsProfile.toString();
 				}
 			}
 		}

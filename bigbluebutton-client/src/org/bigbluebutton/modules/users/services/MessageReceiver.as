@@ -186,6 +186,12 @@ package org.bigbluebutton.modules.users.services
         case "guest_access_denied":
           handleGuestAccessDenied(message);
           break;
+        case "dialing":
+          handleDialing(message);
+          break;
+        case "hangingUp":
+          handleHangingUp(message);
+          break;
       }
     }
 
@@ -296,6 +302,36 @@ package org.bigbluebutton.modules.users.services
       MeetingModel.getInstance().meetingMuted = map.meetingMuted;
       
       UserManager.getInstance().getConference().applyLockSettings();
+    }
+
+    private function handleDialing(msg:Object):void {
+      LOGGER.debug("*** handleDialing " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+      var userid:String = map.userId;
+      var uuid:String = map.uuid;
+      var state:String = map.state;
+
+      var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.DIALING);
+      event.userid = userid;
+      event.uuid = uuid;
+      event.dialState = state;
+      globalDispatcher.dispatchEvent(event);
+    }
+
+    private function handleHangingUp(msg:Object):void {
+      LOGGER.debug("*** handleHangingUp " + msg.msg + " **** \n");
+      var map:Object = JSON.parse(msg.msg);
+      var userid:String = map.userId;
+      var uuid:String = map.uuid;
+      var state:String = map.state;
+      var hangupCause:String = map.hangupCause;
+
+      var event:VoiceConfEvent = new VoiceConfEvent(VoiceConfEvent.HANGINGUP);
+      event.userid = userid;
+      event.uuid = uuid;
+      event.dialState = state;
+      event.dialHangupCause = hangupCause;
+      globalDispatcher.dispatchEvent(event);
     }
     
     private function handleInactivityWarning(msg:Object):void {

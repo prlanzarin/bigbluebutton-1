@@ -574,6 +574,26 @@ class BigBlueButtonInGW(
     eventBus.publish(BigBlueButtonEvent(meetingId, new DeskShareGetDeskShareInfoRequest(meetingId, requesterId, replyTo)))
   }
 
+  def voiceOutboundDialRequest(meetingId: String, userId: String, options: java.util.Map[String, String], params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new VoiceOutboundDialRequest(meetingId, userId, mapAsScalaMap(options).toMap, mapAsScalaMap(params).toMap)))
+  }
+
+  def voiceCancelDialRequest(meetingId: String, userId: String, uuid: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new VoiceCancelDialRequest(meetingId, userId, uuid)))
+  }
+
+  def voiceSendDtmfRequest(meetingId: String, userId: String, uuid: String, dtmfDigit: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new VoiceSendDtmfRequest(meetingId, userId, uuid, dtmfDigit)))
+  }
+
+  def voiceDialing(voiceConfId: String, userId: String, uuid: String, callState: String) {
+    eventBus.publish(BigBlueButtonEvent(voiceConfId, new VoiceDialing(voiceConfId, userId, uuid, callState)))
+  }
+
+  def voiceHangingUp(voiceConfId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
+    eventBus.publish(BigBlueButtonEvent(voiceConfId, new VoiceHangingUp(voiceConfId, userId, uuid, callState, hangupCause)))
+  }
+
   // Polling
   def votePoll(meetingId: String, userId: String, pollId: String, questionId: Integer, answerId: Integer) {
     eventBus.publish(BigBlueButtonEvent(meetingId, new RespondToPollRequest(meetingId, userId, pollId, questionId, answerId)))

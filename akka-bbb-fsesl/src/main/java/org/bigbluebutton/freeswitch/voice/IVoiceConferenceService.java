@@ -13,4 +13,8 @@ public interface IVoiceConferenceService {
 	void deskShareRTMPBroadcastStarted(String room, String streamname, Integer videoWidth, Integer videoHeight, String timestamp);
 	void deskShareRTMPBroadcastStopped(String room, String streamname, Integer videoWidth, Integer videoHeight, String timestamp);
 
+	void channelCallStateInVoiceConf(String conference, String uniqueId, String callState,
+			String userId);
+	void channelHangupInVoiceConf(String conference, String uniqueId, String callState,
+			String hangupCause, String userId);
 }

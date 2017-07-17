@@ -126,6 +126,15 @@ public class UsersMessageReceiver implements MessageHandler{
 					  case LogoutEndMeetingRequestMessage.LOGOUT_END_MEETING_REQUEST_MESSAGE:
 						  processLogoutEndMeetingRequestMessage(message);
 						  break;
+					  case OutboundDialRequestInVoiceConfMessage.OUTBOUND_DIAL_REQUEST_IN_VOICE_CONF:
+						  processOutboundDialRequestInVoiceConfMessage(message);
+						  break;
+					  case CancelDialRequestInVoiceConfMessage.CANCEL_DIAL_REQUEST_IN_VOICE_CONF:
+						  processCancelDialRequestInVoiceConfMessage(message);
+						  break;
+					  case SendDtmfRequestInVoiceConfMessage.SEND_DTMF_REQUEST_IN_VOICE_CONF:
+						  processSendDtmfRequestInVoiceConfMessage(message);
+						  break;
 					}
 				}
 			}
@@ -156,6 +165,12 @@ public class UsersMessageReceiver implements MessageHandler{
 						  break;
 					  case VoiceConfRecordingStartedMessage.VOICE_CONF_RECORDING_STARTED:
 						  processVoiceConfRecordingStartedMessage(message);
+						  break;
+					  case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
+						  processChannelCallStateInVoiceConfMessage(message);
+						  break;
+					  case ChannelHangupInVoiceConfMessage.CHANNEL_HANGUP_IN_VOICE_CONF:
+						  processChannelHangupInVoiceConfMessage(message);
 						  break;
 					}
 				}
@@ -391,6 +406,41 @@ public class UsersMessageReceiver implements MessageHandler{
 		LogoutEndMeetingRequestMessage lemm = LogoutEndMeetingRequestMessage.fromJson(message);
 		if (lemm != null) {
 			bbbInGW.logoutEndMeeting(lemm.meetingId, lemm.userId);
+		}
+	}
+
+	private void processOutboundDialRequestInVoiceConfMessage(String message) {
+		OutboundDialRequestInVoiceConfMessage msg = OutboundDialRequestInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceOutboundDialRequest(msg.meetingId, msg.userId, msg.options, msg.params);
+		}
+	}
+
+	private void processCancelDialRequestInVoiceConfMessage(String message) {
+		CancelDialRequestInVoiceConfMessage msg = CancelDialRequestInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceCancelDialRequest(msg.meetingId, msg.userId, msg.uniqueId);
+		}
+	}
+
+	private void processSendDtmfRequestInVoiceConfMessage(String message) {
+		SendDtmfRequestInVoiceConfMessage msg = SendDtmfRequestInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceSendDtmfRequest(msg.meetingId, msg.userId, msg.uniqueId, msg.dtmfDigit);
+		}
+	}
+
+	private void processChannelCallStateInVoiceConfMessage(String message) {
+		ChannelCallStateInVoiceConfMessage msg = ChannelCallStateInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceDialing(msg.voiceConfId, msg.userId, msg.uniqueId, msg.callState);
+		}
+	}
+
+	private void processChannelHangupInVoiceConfMessage(String message) {
+		ChannelHangupInVoiceConfMessage msg = ChannelHangupInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.voiceHangingUp(msg.voiceConfId, msg.userId, msg.uniqueId, msg.callState, msg.hangupCause);
 		}
 	}
 }

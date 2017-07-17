@@ -11,6 +11,8 @@ import org.bigbluebutton.common.messages.DeskShareStartedEventMessage
 import org.bigbluebutton.common.messages.DeskShareStoppedEventMessage
 import org.bigbluebutton.common.messages.DeskShareRTMPBroadcastStartedEventMessage
 import org.bigbluebutton.common.messages.DeskShareRTMPBroadcastStoppedEventMessage
+import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
+import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
 
 class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceService {
 
@@ -72,6 +74,16 @@ class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceSer
   def deskShareRTMPBroadcastStopped(voiceConfId: String, streamname: String, vw: java.lang.Integer, vh: java.lang.Integer, timestamp: String) {
     println("******** FreeswitchConferenceService send deskShareRTMPBroadcastStopped to BBB " + voiceConfId)
     val msg = new DeskShareRTMPBroadcastStoppedEventMessage(voiceConfId, streamname, vw, vh, timestamp)
+    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
+  }
+
+  def channelCallStateInVoiceConf(conference: String, uniqueId: String, callState: String, voiceUserId: String) {
+    val msg = new ChannelCallStateInVoiceConfMessage("UNKNOWN-MEETING-ID", conference, uniqueId, callState, voiceUserId)
+    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
+  }
+
+  def channelHangupInVoiceConf(conference: String, uniqueId: String, callState: String, hangupCause: String, voiceUserId: String) {
+    val msg = new ChannelHangupInVoiceConfMessage("UNKNOWN-MEETING-ID", conference, uniqueId, callState, hangupCause, voiceUserId)
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
   }
 

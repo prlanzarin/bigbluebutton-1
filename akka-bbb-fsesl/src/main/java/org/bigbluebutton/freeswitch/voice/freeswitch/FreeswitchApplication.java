@@ -19,12 +19,15 @@
 package org.bigbluebutton.freeswitch.voice.freeswitch;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.BroadcastConferenceCommand;
+import org.bigbluebutton.freeswitch.voice.freeswitch.actions.CancelDialCommand;
+import org.bigbluebutton.freeswitch.voice.freeswitch.actions.DialCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.EjectUserCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.FreeswitchCommand;
@@ -33,6 +36,7 @@ import org.bigbluebutton.freeswitch.voice.freeswitch.actions.MuteUserCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.RecordConferenceCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.TransferUserToMeetingCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.*;
+import org.bigbluebutton.freeswitch.voice.freeswitch.actions.SendDtmfCommand;
 
 public class FreeswitchApplication {
 
@@ -138,6 +142,23 @@ public class FreeswitchApplication {
 		DeskShareHangUpCommand huCmd = new DeskShareHangUpCommand(voiceConfId, fsConferenceName, USER, timestamp);
 		queueMessage(huCmd);
 	}
+
+		public void dial(String room, String participant, Map<String, String> options, Map<String, String> params) {
+			DialCommand command = new DialCommand(room, participant, options, params, USER);
+			System.out.println("SENDING DIAL destination=[" + command.getDestination() + "]");
+			queueMessage(command);
+		}
+
+		public void cancelDial(String room, String uuid) {
+			CancelDialCommand command = new CancelDialCommand(room, uuid, USER);
+			queueMessage(command);
+		}
+
+		public void sendDtmf(String room, String uuid, String dtmfDigit) {
+			SendDtmfCommand command = new SendDtmfCommand(room, uuid, dtmfDigit, USER);
+			queueMessage(command);
+		}
+
 		private void sendMessageToFreeswitch(final FreeswitchCommand command) {
 			Runnable task = new Runnable() {
 				public void run() {
@@ -171,6 +192,14 @@ public class FreeswitchApplication {
 						manager.hangUp(cmd);
 					} else if (command instanceof BroadcastConferenceCommand) {
 						manager.broadcast((BroadcastConferenceCommand) command);
+					} else if (command instanceof DialCommand) {
+						manager.dial((DialCommand) command);
+					} else if (command instanceof CancelDialCommand) {
+						CancelDialCommand cmd = (CancelDialCommand) command;
+						manager.cancelDial(cmd);
+					} else if (command instanceof SendDtmfCommand) {
+						SendDtmfCommand sdc = (SendDtmfCommand) command;
+						manager.sendDtmf(sdc);
 					}
 				}
 			};

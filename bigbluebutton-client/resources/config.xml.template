@@ -59,6 +59,8 @@
 			skipCheck="false"
 			showButton="true"
 			enabledEchoCancel="true"
+			enableOutboundCalls="true"
+			outboundCallsProfile="external"
 			useWebRTCIfAvailable="true"
 			showPhoneOption="false"
 			showWebRTCStats="false"

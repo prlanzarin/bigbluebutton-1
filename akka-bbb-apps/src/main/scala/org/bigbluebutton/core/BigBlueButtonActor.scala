@@ -51,6 +51,8 @@ class BigBlueButtonActor(val system: ActorSystem,
     case msg: UserMutedInVoiceConfMessage => handleUserMutedInVoiceConfMessage(msg)
     case msg: UserTalkingInVoiceConfMessage => handleUserTalkingInVoiceConfMessage(msg)
     case msg: VoiceConfRecordingStartedMessage => handleVoiceConfRecordingStartedMessage(msg)
+    case msg: VoiceDialing => handleVoiceDialing(msg)
+    case msg: VoiceHangingUp => handleVoiceHangingUp(msg)
     case _ => // do nothing
   }
 
@@ -88,6 +90,18 @@ class BigBlueButtonActor(val system: ActorSystem,
   }
 
   private def handleUserTalkingInVoiceConfMessage(msg: UserTalkingInVoiceConfMessage) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleVoiceDialing(msg: VoiceDialing) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleVoiceHangingUp(msg: VoiceHangingUp) {
     findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
       m.actorRef ! msg
     }
@@ -145,6 +159,7 @@ class BigBlueButtonActor(val system: ActorSystem,
         context.system.scheduler.scheduleOnce(Duration.create(2500, TimeUnit.MILLISECONDS)) {
           // Disconnect all clients
           outGW.send(new DisconnectAllUsers(msg.meetingID))
+          outGW.send(new StopMeetingTranscoders(msg.meetingID))
           log.info("Destroyed meetingId={}", msg.meetingID)
           outGW.send(new MeetingDestroyed(msg.meetingID))
 

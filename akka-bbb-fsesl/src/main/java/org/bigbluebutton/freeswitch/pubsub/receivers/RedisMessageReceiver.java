@@ -1,9 +1,12 @@
 package org.bigbluebutton.freeswitch.pubsub.receivers;
 
+import org.bigbluebutton.common.messages.CancelDialRequestInVoiceConfMessage;
 import org.bigbluebutton.common.messages.EjectAllUsersFromVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.EjectUserFromVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.GetUsersFromVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.MuteUserInVoiceConfRequestMessage;
+import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage;
+import org.bigbluebutton.common.messages.SendDtmfRequestInVoiceConfMessage;
 import org.bigbluebutton.common.messages.StartRecordingVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.StopRecordingVoiceConfRequestMessage;
 import org.bigbluebutton.common.messages.TransferUserToVoiceConfRequestMessage;
@@ -73,6 +76,15 @@ public class RedisMessageReceiver {
 						  System.out.println("RedisMessageReceiver got DESKSHARE_HANG_UP_MESSAGE");
 						  processDeskShareHangUpEventMessage(message);
 					  break;
+						case OutboundDialRequestInVoiceConfMessage.OUTBOUND_DIAL_REQUEST_IN_VOICE_CONF:
+							processOutboundDialRequestInVoiceConfMessage(message);
+							break;
+						case CancelDialRequestInVoiceConfMessage.CANCEL_DIAL_REQUEST_IN_VOICE_CONF:
+							processCancelDialRequestInVoiceConfMessage(message);
+							break;
+						case SendDtmfRequestInVoiceConfMessage.SEND_DTMF_REQUEST_IN_VOICE_CONF:
+							processSendDtmfRequestInVoiceConfMessage(message);
+							break;
 					}
 				}
 			}
@@ -135,5 +147,20 @@ public class RedisMessageReceiver {
 		StopRecordingVoiceConfRequestMessage msg = StopRecordingVoiceConfRequestMessage
 				.fromJson(json);
 		fsApp.stopRecording(msg.voiceConfId, msg.meetingId, msg.recordStream);
+	}
+
+	private void processOutboundDialRequestInVoiceConfMessage(String json) {
+		OutboundDialRequestInVoiceConfMessage msg = OutboundDialRequestInVoiceConfMessage.fromJson(json);
+		fsApp.dial(msg.voiceConfId, msg.userId, msg.options, msg.params);
+	}
+
+	private void processCancelDialRequestInVoiceConfMessage(String json) {
+		CancelDialRequestInVoiceConfMessage msg = CancelDialRequestInVoiceConfMessage.fromJson(json);
+		fsApp.cancelDial(msg.meetingId, msg.uniqueId);
+	}
+
+	private void processSendDtmfRequestInVoiceConfMessage(String json) {
+		SendDtmfRequestInVoiceConfMessage msg = SendDtmfRequestInVoiceConfMessage.fromJson(json);
+		fsApp.sendDtmf(msg.meetingId, msg.uniqueId, msg.dtmfDigit);
 	}
 }

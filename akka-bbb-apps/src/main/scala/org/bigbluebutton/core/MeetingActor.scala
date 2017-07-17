@@ -13,11 +13,7 @@ import org.bigbluebutton.core.api._
 import java.util.concurrent.TimeUnit
 import org.bigbluebutton.core.util._
 import scala.concurrent.duration._
-import org.bigbluebutton.core.apps.{ PollApp, UsersApp, PresentationApp, LayoutApp, ChatApp, WhiteboardApp, CaptionApp, SharedNotesApp }
-import org.bigbluebutton.core.apps.{ ChatModel, LayoutModel, UsersModel, PollModel, WhiteboardModel, CaptionModel, SharedNotesModel }
-import org.bigbluebutton.core.apps.PresentationModel
-import org.bigbluebutton.core.apps.BreakoutRoomApp
-import org.bigbluebutton.core.apps.BreakoutRoomModel
+import org.bigbluebutton.core.apps._
 
 object MeetingActorInternal {
   def props(mProps: MeetingProperties,
@@ -368,6 +364,13 @@ class MeetingActor(val mProps: MeetingProperties,
     case msg: DestroyAdditionalNotesRequest => liveMeeting.handleDestroyAdditionalNotesRequest(msg)
     case msg: RequestAdditionalNotesSetRequest => liveMeeting.handleRequestAdditionalNotesSetRequest(msg)
     case msg: SharedNotesSyncNoteRequest => liveMeeting.handleSharedNotesSyncNoteRequest(msg)
+
+    // Voice
+    case msg: VoiceOutboundDialRequest => liveMeeting.handleVoiceOutboundDialRequest(msg)
+    case msg: VoiceCancelDialRequest => liveMeeting.handleVoiceCancelDialRequest(msg)
+    case msg: VoiceSendDtmfRequest => liveMeeting.handleVoiceSendDtmfRequest(msg)
+    case msg: VoiceDialing => liveMeeting.handleVoiceDialing(msg)
+    case msg: VoiceHangingUp => liveMeeting.handleVoiceHangingUp(msg)
 
     case _ => // do nothing
   }

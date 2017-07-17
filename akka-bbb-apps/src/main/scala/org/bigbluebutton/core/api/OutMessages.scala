@@ -78,6 +78,11 @@ case class TransferUserToMeeting(voiceConfId: String, targetVoiceConfId: String,
 case class UserJoinedVoice(meetingID: String, recorded: Boolean, confNum: String, user: UserVO) extends IOutMessage
 case class UserLeftVoice(meetingID: String, recorded: Boolean, confNum: String, user: UserVO) extends IOutMessage
 case class AllowUserToShareDesktopOut(meetingID: String, userID: String, allowed: Boolean) extends IOutMessage
+case class VoiceOutboundDial(meetingID: String, recorded: Boolean, voiceConfId: String, requesterID: String, options: Map[String, String], params: Map[String, String]) extends IOutMessage
+case class VoiceCancelDial(meetingID: String, recorded: Boolean, uuid: String) extends IOutMessage
+case class VoiceSendDtmf(meetingID: String, recorded: Boolean, uuid: String, dtmfDigit: String) extends IOutMessage
+case class VoiceDialing2(meetingID: String, recorded: Boolean, requesterID: String, uuid: String, callState: String) extends IOutMessage
+case class VoiceHangingUp2(meetingID: String, recorded: Boolean, requesterID: String, uuid: String, callState: String, hangupCause: String) extends IOutMessage
 
 // Voice
 case class IsMeetingMutedReply(meetingID: String, recorded: Boolean, requesterID: String, meetingMuted: Boolean) extends IOutMessage
@@ -173,6 +178,9 @@ case class GetCurrentDocumentReply(meetingID: String, recorded: Boolean, request
 case class CreateAdditionalNotesReply(meetingID: String, recorded: Boolean, requesterID: String, noteID: String, noteName: String) extends IOutMessage
 case class DestroyAdditionalNotesReply(meetingID: String, recorded: Boolean, requesterID: String, noteID: String) extends IOutMessage
 case class SharedNotesSyncNoteReply(meetingID: String, recorded: Boolean, requesterID: String, noteID: String, note: NoteReport) extends IOutMessage
+
+//Transcode
+case class StopMeetingTranscoders(meetingID: String) extends IOutMessage
 
 // Value Objects
 case class MeetingVO(id: String, recorded: Boolean)

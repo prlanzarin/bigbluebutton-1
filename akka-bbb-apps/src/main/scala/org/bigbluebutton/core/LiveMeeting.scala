@@ -26,7 +26,8 @@ class LiveMeeting(val mProps: MeetingProperties,
   val notesModel: SharedNotesModel)(implicit val context: ActorContext)
     extends UsersApp with PresentationApp
     with LayoutApp with ChatApp with WhiteboardApp with PollApp
-    with BreakoutRoomApp with CaptionApp with SharedNotesApp {
+    with BreakoutRoomApp with CaptionApp with SharedNotesApp
+    with VoiceApp {
 
   val log = Logging(context.system, getClass)
 
@@ -132,7 +133,9 @@ class LiveMeeting(val mProps: MeetingProperties,
     outGW.send(new MeetingEnding(msg.meetingId))
 
     meetingModel.meetingHasEnded
-
+    // Maybe this is not necessary since we already send it while
+    // handling meeting destroyed message in BigBlueButtonActor
+    outGW.send(new StopMeetingTranscoders(msg.meetingId))
     outGW.send(new MeetingEnded(msg.meetingId, mProps.recorded, mProps.voiceBridge))
   }
 
