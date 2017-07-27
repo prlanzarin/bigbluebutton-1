@@ -176,7 +176,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 				queryForChatHistory();
 				
-				chatMessagesList.accessibilityProperties.description = ResourceUtil.getInstance().getString('bbb.accessibility.chat.initialDescription');
+				if (chatMessagesList.accessibilityProperties != null) {
+					chatMessagesList.accessibilityProperties.description = ResourceUtil.getInstance().getString('bbb.accessibility.chat.initialDescription');
+				}
 				
 				if (publicChat && UserManager.getInstance().getConference().isBreakout){
 					var timerListener : Listener = new Listener();
