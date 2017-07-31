@@ -123,6 +123,11 @@ var RECORDINGS = "./resources";
 var SLIDES_XML = RECORDINGS + '/slides_new.xml';
 var SHAPES_SVG = RECORDINGS + '/shapes.svg';
 var hasVideo = false;
+var syncing = false;
+var masterVideoSeeked = false;
+var primaryMedia;
+var secondaryMedias;
+var allMedias;
 
 /*
  * Sets the title attribute in a thumbnail.
@@ -286,19 +291,6 @@ generateThumbnails = function() {
   }
 }
 
-google_frame_warning = function(){
-  console.log("==Google frame warning");
-  var message = "To support this playback please install 'Google Chrome Frame', or use other browser: Firefox, Safari, Chrome, Opera";
-  var line = document.createElement("p");
-  var link = document.createElement("a");
-  line.appendChild(document.createTextNode(message));
-  link.setAttribute("href", "http://www.google.com/chromeframe")
-  link.setAttribute("target", "_blank")
-  link.appendChild(document.createTextNode("Install Google Chrome Frame"));
-  document.getElementById("chat").appendChild(line);
-  document.getElementById("chat").appendChild(link);
-}
-
 function checkUrl(url)
 {
   console.log("==Checking Url",url);
@@ -355,7 +347,11 @@ load_video = function(){
    //video.setAttribute('autoplay','autoplay');
 
    document.getElementById("video-area").appendChild(video);
-   document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'video'}));
+
+   Popcorn("#video").on("canplayall", function() {
+      console.log("==Video loaded");
+      document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'video'}));
+   });
 }
 
 load_audio = function() {
@@ -389,7 +385,12 @@ load_audio = function() {
    //leave auto play turned off for accessiblity support
    //audio.setAttribute('autoplay','autoplay');
    document.getElementById("audio-area").appendChild(audio);
-   document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'audio'}));
+
+   //remember: audio id is 'video'
+   Popcorn("#video").on("canplayall", function() {
+      console.log("==Audio loaded");
+      document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'audio'}));
+   });
 }
 
 load_deskshare_video = function () {
@@ -405,14 +406,88 @@ load_deskshare_video = function () {
    var presentationArea = document.getElementById("presentation-area");
    presentationArea.insertBefore(deskshare_video,presentationArea.childNodes[0]);
 
-   $('#video').on("play", function() {
-       Popcorn('#deskshare-video').play();
+   setSync();
+
+   Popcorn("#deskshare-video").on("canplayall", function() {
+      console.log("==Deskshare video loaded");
+      document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'deskshare'}));
    });
-   $('#video').on("pause", function() {
-       Popcorn('#deskshare-video').pause();
+}
+
+function setSync() {
+   //master video
+   primaryMedia = Popcorn("#video");
+
+   //slave videos
+   secondaryMedias = [ Popcorn("#deskshare-video") ];
+
+   allMedias = [primaryMedia].concat(secondaryMedias);
+
+   //when we play the master video, we play all other videos as well...
+   primaryMedia.on("play", function() {
+      for(i = 0; i < secondaryMedias.length ; i++)
+         secondaryMedias[i].play();
    });
 
-   document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'deskshare'}));
+   //when we pause the master video, we sync
+   primaryMedia.on("pause", function() {
+      sync();
+   });
+
+   primaryMedia.on("seeking", function() {
+      if(primaryMedia.played().length != 0)
+         masterVideoSeeked = true;
+   });
+
+   //when finished seeking, we sync all medias...
+   primaryMedia.on("seeked", function() {
+      if(primaryMedia.paused())
+         sync();
+      else
+         primaryMedia.pause();
+   });
+
+
+   for(i = 0; i < allMedias.length ; i++) {
+
+       allMedias[i].on("waiting", function() {
+          //if one of the medias is 'waiting', we must sync
+          if(!primaryMedia.seeking() && !syncing) {
+             syncing = true;
+             //pause the master video, causing to pause and sync all videos...
+             console.log("syncing videos...");
+             primaryMedia.pause();
+          }
+       });
+
+
+       allMedias[i].on("canplaythrough", function() {
+          if(syncing || masterVideoSeeked) {
+              var allMediasAreReady = true;
+              for(i = 0; i < allMedias.length ; i++)
+                  allMediasAreReady &= (allMedias[i].media.readyState == 4)
+
+              if(allMediasAreReady) {
+                 syncing = false;
+                 masterVideoSeeked = false;
+                 //play the master video, causing to play all videos...
+                 console.log("resuming...");
+                 primaryMedia.play();
+              }
+          }
+       });
+   }
+}
+
+function sync() {
+  for(var i = 0; i < secondaryMedias.length ; i++) {
+     if(secondaryMedias[i].media.readyState > 1) {
+        secondaryMedias[i].pause();
+
+        //set the current time will fire a "canplaythrough" event to tell us that the video can be played...
+        secondaryMedias[i].currentTime(primaryMedia.currentTime());
+     }
+  }
 }
 
 load_script = function(file){
@@ -430,9 +505,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
   startLoadingBar();
 
-  if (appName == "Microsoft Internet Explorer" && navigator.userAgent.match("chromeframe") == false ) {
-    google_frame_warning();
-  }
 
   if (checkUrl(RECORDINGS + '/video/webcams.webm') == true) {
     hasVideo = true;
@@ -519,16 +591,14 @@ function swapVideoPresentation() {
   // if the cursor is currently being useful, he we'll be redrawn automatically soon
   showCursor(false);
 
-  // wait for the svg with the slides to be fully loaded and then set the current image
-  // as visible.
+  // wait for the svg with the slides to be fully loaded, then restore slides state and resize them
   function checkSVGLoaded() {
     var done = false;
     var svg = document.getElementsByTagName("object")[0];
     if (svg !== undefined && svg !== null && currentImage && svg.getSVGDocument('svgfile')) {
       var img = svg.getSVGDocument('svgfile').getElementById(currentImage.getAttribute("id"));
       if (img !== undefined && img !== null) {
-        img.style.visibility = "visible";
-        resizeSlides();
+        restoreSlidesState(img);
         done = true;
       }
     }
@@ -537,6 +607,45 @@ function swapVideoPresentation() {
     }
   }
   checkSVGLoaded();
+}
+
+function restoreSlidesState(img) {
+  //set the current image as visible
+  img.style.visibility = "visible";
+
+  resizeSlides();
+  restoreCanvas();
+
+  var isPaused = Popcorn("#video").paused();
+  if(isPaused) {
+    restoreViewBoxSize();
+    restoreCursor(img);
+  }
+}
+
+function restoreCanvas() {
+  var numCurrent = current_image.substr(5);
+  var currentCanvas;
+  currentCanvas = getSVGElementById("canvas" + numCurrent);
+
+  if(currentCanvas !== null) {
+    currentCanvas.setAttribute("display", "");
+  }
+}
+
+function restoreViewBoxSize() {
+  var t = Popcorn("#video").currentTime().toFixed(1);
+  var vboxVal = getViewboxAtTime(t);
+  if(vboxVal !== undefined) {
+    setViewBox(vboxVal);
+  }
+}
+
+function restoreCursor(img) {
+    var imageWidth = parseInt(img.getAttribute("width"), 10);
+    var imageHeight = parseInt(img.getAttribute("height"), 10);
+    showCursor(true);
+    drawCursor(parseFloat(currentCursorVal[0]) / (imageWidth/2), parseFloat(currentCursorVal[1]) / (imageHeight/2), img);
 }
 
 // Manually resize some components we can't properly resize just using css.

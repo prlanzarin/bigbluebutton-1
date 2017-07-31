@@ -19,7 +19,6 @@
 
 
 // - - - START OF GLOBAL VARIABLES - - - //
-"use strict";
 
 function getUrlParameters() {
     console.log("** Getting url params");
@@ -66,12 +65,26 @@ function showCursor(show) {
   }
 };
 
+function getSVGElementById(id) {
+  var element = null;
+  if (svgobj.contentDocument) {
+    element = svgobj.contentDocument.getElementById(id);
+  } else {
+    var svgDocument = svgobj.getSVGDocument('svgfile');
+    if (svgDocument) {
+      element = svgDocument.getElementById(id);
+    } else {
+      console.warn("Couldn't load the SVG file");
+    }
+  }
+  return element;
+}
+
 function setViewBox(time) {
   var vboxVal = getViewboxAtTime(time);
   if(vboxVal !== undefined) {
     setTransform(time);
-    if(svgobj.contentDocument) svgfile = svgobj.contentDocument.getElementById("svgfile");
-    else svgfile = svgobj.getSVGDocument('svgfile').getElementById("svgfile");
+    svgfile = getSVGElementById("svgfile");
     svgfile.setAttribute('viewBox', vboxVal);
   }
 }
@@ -104,6 +117,32 @@ function getViewboxAtTime(time) {
 			}
 		}
 	}
+}
+
+function setSlideAspect(time, imageWidth, imageHeight) {
+  var isDeskshare = mustShowDesktopVideo(time);
+  var aspectAtTime = getAspectAtTime(time);
+  if (aspectAtTime != undefined && aspectAtTime != 0 && !isDeskshare) {
+    currentSlideAspect = aspectAtTime;
+  } else {
+    currentSlideAspect = parseFloat((imageWidth/imageHeight));
+  }
+}
+
+function getAspectAtTime(time) {
+  var curr_t = parseFloat(time);
+  var key;
+  for (key in slideAspectValues) {
+    if(slideAspectValues.hasOwnProperty(key)) {
+      var arry = key.split(",");
+      if(arry[1] == "end") {
+        return slideAspectValues[key];
+      }
+      else if ((parseFloat(arry[0]) <= curr_t) && (parseFloat(arry[1]) >= curr_t)) {
+        return slideAspectValues[key];
+      }
+    }
+  }
 }
 
 function getCursorAtTime(time) {
@@ -163,16 +202,7 @@ function isThereDeskshareVideo() {
   }
 }
 
-function resyncVideos() {
-  if (!isThereDeskshareVideo()) return;
-  var currentTime = Popcorn('#video').currentTime();
-  var currentDeskshareVideoTime = Popcorn("#deskshare-video").currentTime();
-  if (Math.abs(currentTime - currentDeskshareVideoTime) >= 0.1)
-    Popcorn("#deskshare-video").currentTime(currentTime);
-}
-
 function handlePresentationAreaContent(time) {
-  var meetingDuration = parseFloat(new Popcorn("#video").duration().toFixed(1));
   if(time >= meetingDuration)
      return;
 
@@ -189,7 +219,6 @@ function handlePresentationAreaContent(time) {
     sharingDesktop = false;
   }
 
-  resyncVideos();
   resizeDeshareVideo();
 }
 
@@ -212,8 +241,7 @@ function runPopcorn() {
 
   getMetadata();
 
-  if(svgobj.contentDocument) svgfile = svgobj.contentDocument.getElementById("svgfile");
-  else svgfile = svgobj.getSVGDocument('svgfile');
+  svgfile = getSVGElementById("svgfile");
 
   //making the object for requesting the read of the XML files.
   if (window.XMLHttpRequest) {
@@ -235,15 +263,15 @@ function runPopcorn() {
   var shapeelements = xmlDoc.getElementsByTagName("svg");
 
   //get the array of values for the first shape (getDataPoints(0) is the first shape).
-  var array = $(shapeelements[0]).find("g").filter(function(){ //get all the lines from the svg file
+  var shapesArray = $(shapeelements[0]).find("g").filter(function(){ //get all the lines from the svg file
     return $(this).attr('class') == 'shape';
   });
 
   //create a map from timestamp to id list
   var timestampToId = {};
-  for (var j = 0; j < array.length; j++) {
-    shapeTime = array[j].getAttribute("timestamp");
-    shapeId = array[j].getAttribute("id");
+  for (var j = 0; j < shapesArray.length; j++) {
+    shapeTime = shapesArray[j].getAttribute("timestamp");
+    shapeId = shapesArray[j].getAttribute("id");
 
     if (timestampToId[shapeTime] == undefined) {
       timestampToId[shapeTime] = new Array(0);
@@ -252,13 +280,12 @@ function runPopcorn() {
   }
 
   //fill the times array with the times of the svg images.
-  for (var j = 0; j < array.length; j++) {
-    times[j] = array[j].getAttribute("timestamp");
+  for (var j = 0; j < shapesArray.length; j++) {
+    times[j] = shapesArray[j].getAttribute("timestamp");
   }
 
   var times_length = times.length; //get the length of the times array.
 
-  getPresentationText();
 
   // PROCESS PANZOOMS.XML
   console.log("** Getting panzooms.xml");
@@ -282,6 +309,7 @@ function runPopcorn() {
   	vboxValues[[panZoomArray[k].getAttribute("timestamp"), second_val]] = viewBoxes[k].childNodes[0].data;
   }
 
+  getPresentationText();
 
   // PROCESS CURSOR.XML
   console.log("** Getting cursor.xml");
@@ -328,17 +356,17 @@ function runPopcorn() {
   svgobj.style.top = "0px";
   var next_shape;
   var shape;
-  for (var j = 0; j < array.length - 1; j++) { //iterate through all the shapes and pick out the main ones
-    var time = array[j].getAttribute("timestamp");
-    shape = array[j].getAttribute("shape");
-    next_shape = array[j+1].getAttribute("shape");
+  for (var j = 0; j < shapesArray.length - 1; j++) { //iterate through all the shapes and pick out the main ones
+    var time = shapesArray[j].getAttribute("timestamp");
+    shape = shapesArray[j].getAttribute("shape");
+    next_shape = shapesArray[j+1].getAttribute("shape");
 
-  	if(shape !== next_shape) {
-  		main_shapes_ids.push(array[j].getAttribute("id"));
-  	}
+    if(shape !== next_shape) {
+      main_shapes_ids.push(shapesArray[j].getAttribute("id"));
+    }
   }
-  if (array.length !== 0) {
-    main_shapes_ids.push(array[array.length-1].getAttribute("id")); //put last value into this array always!
+  if (shapesArray.length !== 0) {
+    main_shapes_ids.push(shapesArray[shapesArray.length-1].getAttribute("id")); //put last value into this array always!
   }
 
   var get_shapes_in_time = function(t) {
@@ -349,8 +377,7 @@ function runPopcorn() {
       var shape = null;
       for (var i = 0; i < shapes_in_time.length; i++) {
         var id = shapes_in_time[i];
-        if(svgobj.contentDocument) shape = svgobj.contentDocument.getElementById(id);
-        else shape = svgobj.getSVGDocument('svgfile').getElementById(id);
+        shape = getSVGElementById(id);
 
         if (shape !== null) { //if there is actually a new shape to be displayed
           shape = shape.getAttribute("shape"); //get actual shape tag for this specific time of playback
@@ -367,75 +394,72 @@ function runPopcorn() {
       start: 1, // start time
       end: p.duration(),
       onFrame: function(options) {
-        //console.log("**Popcorn video onframe");
-        if(!((p.paused() === true) && (p.seeking() === false))) {
-          var t = p.currentTime().toFixed(1); //get the time and round to 1 decimal place
+        var currentTime = p.currentTime();
+        if ( (!p.paused() || p.seeking()) && (Math.abs(currentTime - lastFrameTime) >= 0.1) ) {
+          lastFrameTime = currentTime;
+          var t = currentTime.toFixed(1); //get the time and round to 1 decimal place
 
           current_shapes = get_shapes_in_time(t);
 
           //redraw everything (only way to make everything elegant)
-          for (var i = 0; i < array.length; i++) {
-            var time_s = array[i].getAttribute("timestamp");
+          for (var i = 0; i < shapesArray.length; i++) {
+            var time_s = shapesArray[i].getAttribute("timestamp");
             var time_f = parseFloat(time_s);
 
-            if(svgobj.contentDocument) shape = svgobj.contentDocument.getElementById(array[i].getAttribute("id"));
-            else shape = svgobj.getSVGDocument('svgfile').getElementById(array[i].getAttribute("id"));
+            shape = getSVGElementById(shapesArray[i].getAttribute("id"));
 
-            var shape_i = shape.getAttribute("shape");
-            if (time_f < t) {
-              if(current_shapes.indexOf(shape_i) > -1) { //currently drawing the same shape so don't draw the older steps
-                shape.style.visibility = "hidden"; //hide older steps to shape
-              } else if(main_shapes_ids.indexOf(shape.getAttribute("id")) > -1) { //as long as it is a main shape, it can be drawn... no intermediate steps.
-                if(parseFloat(shape.getAttribute("undo")) === -1) { //As long as the undo event hasn't happened yet...
-                  shape.style.visibility = "visible";
-                } else if (parseFloat(shape.getAttribute("undo")) > t) {
-                  shape.style.visibility = "visible";
-                } else {
+            if(shape != null) {
+                var shape_i = shape.getAttribute("shape");
+                if (time_f < t) {
+                  if(current_shapes.indexOf(shape_i) > -1) { //currently drawing the same shape so don't draw the older steps
+                    shape.style.visibility = "hidden"; //hide older steps to shape
+                  } else if(main_shapes_ids.indexOf(shape.getAttribute("id")) > -1) { //as long as it is a main shape, it can be drawn... no intermediate steps.
+                    if(parseFloat(shape.getAttribute("undo")) === -1) { //As long as the undo event hasn't happened yet...
+                      shape.style.visibility = "visible";
+                    } else if (parseFloat(shape.getAttribute("undo")) > t) {
+                      shape.style.visibility = "visible";
+                    } else {
+                      shape.style.visibility = "hidden";
+                    }
+                  } else {
+                    shape.style.visibility = "hidden";
+                  }
+                } else if(time_s === t) { //for the shapes with the time specific to the current time
+                  // only makes visible the last drawing of a given shape
+                  var idx = current_shapes.indexOf(shape_i);
+                  if (idx > -1) {
+                    current_shapes.splice(idx, 1);
+                    idx = current_shapes.indexOf(shape_i);
+                    if (idx > -1) {
+                      shape.style.visibility = "hidden";
+                    } else {
+                      shape.style.visibility = "visible";
+                    }
+                  } else {
+                    // this is an inconsistent state, since current_shapes should have at least one drawing of this shape
+                    shape.style.visibility = "hidden";
+                  }
+                } else { //for shapes that shouldn't be drawn yet (larger time than current time), don't draw them.
                   shape.style.visibility = "hidden";
                 }
-              }
-            } else if(time_s === t) { //for the shapes with the time specific to the current time
-              // only makes visible the last drawing of a given shape
-              var idx = current_shapes.indexOf(shape_i);
-              if (idx > -1) {
-                current_shapes.splice(idx, 1);
-                idx = current_shapes.indexOf(shape_i);
-                if (idx > -1) {
-                  shape.style.visibility = "hidden";
-                } else {
-                  shape.style.visibility = "visible";
-                }
-              } else {
-                // this is an inconsistent state, since current_shapes should have at least one drawing of this shape
-                shape.style.visibility = "hidden";
-              }
-            } else { //for shapes that shouldn't be drawn yet (larger time than current time), don't draw them.
-              shape.style.visibility = "hidden";
             }
           }
 
           var next_image = getImageAtTime(t); //fetch the name of the image at this time.
-          var imageXOffset = 0;
-          var imageYOffset = 0;
 
           if(current_image && (current_image !== next_image) && (next_image !== undefined)){	//changing slide image
-            if(svgobj.contentDocument) {
-              var img = svgobj.contentDocument.getElementById(current_image);
-              if (img) {
-                img.style.visibility = "hidden";
-              }
-              var ni = svgobj.contentDocument.getElementById(next_image);
+            var img = getSVGElementById(current_image);
+            var ni = getSVGElementById(next_image);
+            if (img) {
+              img.style.visibility = "hidden";
             }
-            else {
-              var img = svgobj.getSVGDocument('svgfile').getElementById(current_image);
-              if (img) {
-                img.style.visibility = "hidden";
-              }
-              var ni = svgobj.getSVGDocument('svgfile').getElementById(next_image);
-            }
+
             document.getElementById("slideText").innerHTML = ""; //destroy old plain text
 
-            ni.style.visibility = "visible";
+            if (ni) {
+              ni.style.visibility = "visible";
+            }
+
             document.getElementById("slideText").innerHTML = slidePlainText[next_image] + next_image; //set new plain text
 
             if ($("#accEnabled").is(':checked')) {
@@ -459,23 +483,23 @@ function runPopcorn() {
             current_image = next_image;
           }
 
-          if(svgobj.contentDocument) var thisimg = svgobj.contentDocument.getElementById(current_image);
-          else var thisimg = svgobj.getSVGDocument('svgfile').getElementById(current_image);
+          thisimg = getSVGElementById(current_image);
 
           if (thisimg) {
-            var imageWidth = parseInt(thisimg.getAttribute("width"), 10);
-            var imageHeight = parseInt(thisimg.getAttribute("height"), 10);
+            var imageWidth = parseFloat(thisimg.getAttribute("width"));
+            var imageHeight = parseFloat(thisimg.getAttribute("height"));
 
             setViewBox(t);
+            setSlideAspect(t,imageWidth,imageHeight);
 
-            var cursorVal = getCursorAtTime(t);
-            if (cursorVal != null && !$('#slide').hasClass('no-background')) {
+            if (getCursorAtTime(t) != null && getCursorAtTime(t) != undefined && !$('#slide').hasClass('no-background')) {
+              currentCursorVal = getCursorAtTime(t);
               cursorShownAt = new Date().getTime();
               showCursor(true);
               // width and height are divided by 2 because that's the value used as a reference
               // when positions in cursor.xml is calculated
-              var cursorX = parseFloat(cursorVal[0]) / (imageWidth/2);
-              var cursorY = parseFloat(cursorVal[1]) / (imageHeight/2);
+              var cursorX = parseFloat(currentCursorVal[0]) / (imageWidth/2);
+              var cursorY = parseFloat(currentCursorVal[1]) / (imageHeight/2);
               drawCursor(cursorX, cursorY);
 
               // hide the cursor after 3s of inactivity
@@ -531,7 +555,7 @@ function adaptViewBoxToDeskshare(time) {
 
 function getCanvasFromImage(image) {
   var canvasId = "canvas" + image.substr(5);
-  var canvas = svgobj.contentDocument ? svgobj.contentDocument.getElementById(canvasId) : svgobj.getSVGDocument('svgfile').getElementById(canvasId);
+  var canvas = getSVGElementById(canvasId);
   return canvas;
 }
 
@@ -597,11 +621,15 @@ function defineStartTime() {
   return temp_start_time;
 }
 
+var lastFrameTime = 0.0;
+
+var shape;
+var current_shapes = [];
+
 var deskshare_image = null;
 var current_image = "image0";
 var previous_image = null;
 var current_canvas;
-var shape;
 var next_canvas;
 var next_image;
 var next_pgid;
@@ -610,7 +638,7 @@ var svgfile;
 //current time
 var t;
 var len;
-var current_shapes = [];
+var meetingDuration;
 //coordinates for x and y for each second
 var panAndZoomTimes = [];
 var viewBoxes = [];
@@ -622,7 +650,10 @@ var shapeId;
 var clearTimes = [];
 var main_shapes_ids = [];
 var vboxValues = {};
+var slideAspectValues = {};
+var currentSlideAspect = 0;
 var cursorValues = {};
+var currentCursorVal;
 var imageAtTime = {};
 var slidePlainText = {}; //holds slide plain text for retrieval
 var cursorStyle;
@@ -683,8 +714,18 @@ function initPopcorn() {
   firstLoad = false;
   generateThumbnails();
 
-  var p = Popcorn("#video");
-  p.currentTime(defineStartTime());
+  var startTime = defineStartTime();
+  console.log("** startTime = " + startTime);
+
+  Popcorn("#video").currentTime(startTime);
+  if(isThereDeskshareVideo())
+    Popcorn("#deskshare-video").currentTime(startTime);
+
+  //Popcorn documentation suggests this way to get the duration, since this information does not come with 'loadedmetadata' event.
+  Popcorn("#video").cue(2, function() {
+    meetingDuration = parseFloat(Popcorn("#video").duration().toFixed(1));
+    console.log("** Meeting duration (seconds): " + meetingDuration);
+  });
 }
 
 svgobj.addEventListener('load', function() {
@@ -810,6 +851,69 @@ function processPresentationText(response) {
   } else {
     setPresentationTextFromTxt(images);
   }
+
+  //at this point, we're sure that the array 'imageAtTime' is ready. Now, we need to set the aspects times to resize the slide div during the playback.
+  processSlideAspectTimes();
+}
+
+function processSlideAspectTimes() {
+  var key;
+  var lastAspectValue = 0;
+  for (key in vboxValues) {
+    if (vboxValues.hasOwnProperty(key)) {
+      var start_timestamp = key.split(",")[0];
+      var stop_timestamp = key.split(",")[1];
+      var vboxWidth = parseFloat(vboxValues[key].split(" ")[2]);
+      var vboxHeight = parseFloat(vboxValues[key].split(" ")[3]);
+      var aspectValue = processAspectValue(vboxWidth,vboxHeight,start_timestamp,lastAspectValue);
+      slideAspectValues[[start_timestamp, stop_timestamp]] = aspectValue;
+      lastAspectValue = aspectValue;
+    }
+  }
+}
+
+function processAspectValue(vboxWidth, vboxHeight, time, lastAspectValue) {
+  var imageId;
+  if (time == "0.0") {
+    //a little hack 'cause function getImageAtTime with time = 0.0 returns the background image...
+    //we need the first slide instead
+    imageId = "image1";
+  }
+  else {
+    imageId = getImageAtTime(time);
+  }
+
+  if (imageId !== undefined) {
+    var image = getSVGElementById(imageId);
+
+    if (image) {
+      if(mustShowDesktopVideo(parseFloat(time))) {
+        return lastAspectValue;
+      }
+
+      var imageWidth = parseFloat(image.getAttribute("width"));
+      var imageHeight = parseFloat(image.getAttribute("height"));
+
+      //fit-to-width: returning vbox aspect
+      if(vboxWidth == imageWidth && vboxHeight < imageHeight) {
+        return parseFloat(vboxWidth/vboxHeight);
+      }
+      //fit-to-page: returning image aspect
+      else if(vboxWidth == imageWidth && vboxHeight == imageHeight) {
+        return parseFloat(imageWidth/imageHeight);
+      }
+      //if it's not fit-to-width neither fit-to-page we return the previous aspect
+      else {
+        return lastAspectValue;
+      }
+    } else {
+      console.log("processAspectValue: there is no image for the id = " + imageId);
+      return lastAspectValue;
+    }
+  } else {
+    console.log("processAspectValue: imageId undefined");
+    return lastAspectValue;
+  }
 }
 
 function getPresentationText() {
@@ -867,16 +971,10 @@ window.onresize = function(event) {
 var resizeSlides = function() {
   if (currentImage) {
     var $slide = $("#slide");
-
-    var imageWidth = parseInt(currentImage.getAttribute("width"), 10);
-    var imageHeight = parseInt(currentImage.getAttribute("height"), 10);
-    var imgRect = currentImage.getBoundingClientRect();
-    var aspectRatio = imageWidth/imageHeight;
-    var max = aspectRatio * $slide.parent().outerHeight();
-    $slide.css("max-width", max);
-
-    var height = $slide.parent().width() / aspectRatio;
-    $slide.css("max-height", height);
+    var maxWidth = currentSlideAspect * $slide.parent().outerHeight();
+    $slide.css("max-width", maxWidth);
+    var maxHeight = $slide.parent().width() / currentSlideAspect;
+    $slide.css("max-height", maxHeight);
   }
 };
 
