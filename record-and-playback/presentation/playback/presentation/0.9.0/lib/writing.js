@@ -555,7 +555,7 @@ function adaptViewBoxToDeskshare(time) {
 
 function getCanvasFromImage(image) {
   var canvasId = "canvas" + image.substr(5);
-  var canvas = svgobj.contentDocument ? svgobj.contentDocument.getElementById(canvasId) : svgobj.getSVGDocument('svgfile').getElementById(canvasId);
+  var canvas = getSVGElementById(canvasId);
   return canvas;
 }
 
@@ -884,13 +884,7 @@ function processAspectValue(vboxWidth, vboxHeight, time, lastAspectValue) {
   }
 
   if (imageId !== undefined) {
-    var image;
-    if (svgobj.contentDocument) {
-      image = svgobj.contentDocument.getElementById(imageId);
-    }
-    else {
-      image = svgobj.getSVGDocument('svgfile').getElementById(imageId);
-    }
+    var image = getSVGElementById(imageId);
 
     if (image) {
       if(mustShowDesktopVideo(parseFloat(time))) {
