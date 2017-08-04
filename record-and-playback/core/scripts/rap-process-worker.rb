@@ -40,7 +40,8 @@ def process_archived_meetings(recording_dir)
       process_type = match2[1]
 
       processed_done = "#{recording_dir}/status/processed/#{meeting_id}-#{process_type}.done"
-      next if File.exists?(processed_done)
+      published_done = "#{recording_dir}/status/published/#{meeting_id}-#{process_type}.done"
+      next if File.exists?(processed_done) or File.exists?(published_done)
 
       processed_fail = "#{recording_dir}/status/processed/#{meeting_id}-#{process_type}.fail"
       if File.exists?(processed_fail)

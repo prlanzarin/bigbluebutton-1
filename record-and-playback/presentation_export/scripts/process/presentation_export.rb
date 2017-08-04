@@ -46,41 +46,36 @@ if not FileTest.directory?(target_dir)
   logger = Logger.new("/var/log/bigbluebutton/presentation_export/process-#{meeting_id}.log", 'daily' )
   BigBlueButton.logger = logger
 
-  if not File.exists? "#{recording_dir}/status/published/#{meeting_id}-presentation.done"
+  published_done = "#{recording_dir}/status/published/#{meeting_id}-presentation.done"
+  if not File.exists?(published_done)
     BigBlueButton.logger.info "Presentation not published yet, aborting"
     abort
   end
 
   FileUtils.mkdir_p "/var/log/bigbluebutton/presentation_export"
 
-  publish_dir = "#{recording_dir}/publish/presentation/#{meeting_id}"
-  if FileTest.directory?(publish_dir)
-    # this recording has already been published (or publish processed), need to
-    # figure out if it's published or unpublished
-
-    meeting_published_dir = "#{presentation_published_dir}/#{meeting_id}"
+  meeting_published_dir = "#{presentation_published_dir}/#{meeting_id}"
+  if not FileTest.directory?(meeting_published_dir)
+    meeting_published_dir = "#{presentation_unpublished_dir}/#{meeting_id}"
     if not FileTest.directory?(meeting_published_dir)
-      meeting_published_dir = "#{presentation_unpublished_dir}/#{meeting_id}"
-      if not FileTest.directory?(meeting_published_dir)
-        meeting_published_dir = nil
-      end
+      meeting_published_dir = nil
     end
+  end
 
-    if meeting_published_dir
-      BigBlueButton.logger.info("Processing script presentation_export.rb")
-      FileUtils.mkdir_p target_dir
+  if meeting_published_dir
+    BigBlueButton.logger.info("Processing script presentation_export.rb")
+    FileUtils.mkdir_p target_dir
 
-      resources_dir = "#{target_dir}/resources"
-      FileUtils.mkdir_p resources_dir
-      FileUtils.cp_r Dir.glob("#{meeting_published_dir}/*"), resources_dir
+    resources_dir = "#{target_dir}/resources"
+    FileUtils.mkdir_p resources_dir
+    FileUtils.cp_r Dir.glob("#{meeting_published_dir}/*"), resources_dir
 
-      player_dir = "#{target_dir}/playback"
-      FileUtils.mkdir_p player_dir
-      FileUtils.cp_r Dir.glob("#{playback_dir}/*"), player_dir
+    player_dir = "#{target_dir}/playback"
+    FileUtils.mkdir_p player_dir
+    FileUtils.cp_r Dir.glob("#{playback_dir}/*"), player_dir
 
-      process_done = File.new("#{recording_dir}/status/processed/#{meeting_id}-presentation_export.done", "w")
-      process_done.write("Processed #{meeting_id}")
-      process_done.close
-    end
+    process_done = File.new("#{recording_dir}/status/processed/#{meeting_id}-presentation_export.done", "w")
+    process_done.write("Processed #{meeting_id}")
+    process_done.close
   end
 end
