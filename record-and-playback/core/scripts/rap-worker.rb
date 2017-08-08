@@ -85,17 +85,11 @@ end
 
 def sanity_archived_meeting(recording_dir)
   archived_done_files = Dir.glob("#{recording_dir}/status/archived/*.done")
-
-  FileUtils.mkdir_p("#{recording_dir}/status/sanity") if ! File.exist?("#{recording_dir}/status/sanity") and ! File.symlink?("#{recording_dir}/status/sanity")
   archived_done_files.each do |archived_done|
     match = /([^\/]*).done$/.match(archived_done)
     meeting_id = match[1]
 
-    sanity_done = "#{recording_dir}/status/sanity/#{meeting_id}.done"
-    next if File.exists?(sanity_done)
-
-    sanity_fail = "#{recording_dir}/status/sanity/#{meeting_id}.fail"
-    next if File.exists?(sanity_fail)
+    next if ! Dir.glob("#{recording_dir}/status/sanity*/#{meeting_id}.*").empty?
 
     BigBlueButton.redis_publisher.put_sanity_started meeting_id
 
@@ -104,7 +98,7 @@ def sanity_archived_meeting(recording_dir)
     step_stop_time = BigBlueButton.monotonic_clock
     step_time = step_stop_time - step_start_time
 
-    step_succeeded = (ret == 0 && File.exists?(sanity_done))
+    step_succeeded = (ret == 0)
 
     BigBlueButton.redis_publisher.put_sanity_ended meeting_id, {
       "success" => step_succeeded,
@@ -112,16 +106,46 @@ def sanity_archived_meeting(recording_dir)
     }
 
     if step_succeeded
+      sanity_dir = find_sanity_dir(recording_dir)
+      sanity_done = "#{sanity_dir}/#{meeting_id}.done"
+      FileUtils.touch(sanity_done)
+      
       BigBlueButton.logger.info("Successfully sanity checked #{meeting_id}")
       post_archive(meeting_id)
       FileUtils.rm(archived_done)
     else
       BigBlueButton.logger.error("Sanity check failed on #{meeting_id}")
+      sanity_fail = "#{recording_dir}/status/sanity/#{meeting_id}.fail"
       FileUtils.touch(sanity_fail)
     end
   end
 end
 
+def find_sanity_dir(recording_dir)
+  BigBlueButton.logger.info("Finding best sanity dir to create the .done file")
+  possibilities = Dir.glob("#{recording_dir}/status/sanity*")
+  best = nil
+  possibilities.each do |sanity_dir|
+    duration = 0.0
+    Dir.glob("#{sanity_dir}/*.done").each do |sanity_done|
+      match = /([^\/]*).done$/.match(sanity_done)
+      record_id = match[1]
+      rec_events = BigBlueButton::Events.match_start_and_stop_rec_events(BigBlueButton::Events.get_start_and_stop_rec_events("#{recording_dir}/raw/#{record_id}/events.xml"))
+      rec_events.each do |e|
+        duration += e[:stop_timestamp] - e[:start_timestamp]
+      end
+    end
+    BigBlueButton.logger.info("#{sanity_dir} => #{duration}")
+    if best.nil? || duration < best[:duration]
+      best = {
+        :duration => duration,
+        :sanity_dir => sanity_dir
+      }
+    end
+  end
+  BigBlueButton.logger.info("Best: #{best[:sanity_dir]} => #{best[:duration]}")
+  best[:sanity_dir]
+end
 
 def process_archived_meeting(recording_dir)
   sanity_done_files = Dir.glob("#{recording_dir}/status/sanity/*.done")

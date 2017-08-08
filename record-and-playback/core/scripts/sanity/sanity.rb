@@ -157,17 +157,8 @@ begin
 	redis = BigBlueButton::RedisWrapper.new(redis_host, redis_port)
 	events_archiver = BigBlueButton::RedisEventsArchiver.new redis    
     events_archiver.delete_events(meeting_id)
-
-	#create done files for sanity
-	BigBlueButton.logger.info("creating sanity done files")
-	sanity_done = File.new("#{recording_dir}/status/sanity/#{meeting_id}.done", "w")
-	sanity_done.write("sanity check #{meeting_id}")
-	sanity_done.close
 rescue Exception => e
 	BigBlueButton.logger.error("error in sanity check: " + e.message)
-	sanity_done = File.new("#{recording_dir}/status/sanity/#{meeting_id}.fail", "w")
-        sanity_done.write("error: " + e.message)
-        sanity_done.close
+	exit 1
 end
-
 
