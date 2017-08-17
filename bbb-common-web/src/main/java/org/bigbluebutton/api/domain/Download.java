@@ -1,12 +1,20 @@
 package org.bigbluebutton.api.domain;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
+@JacksonXmlRootElement(localName = "download")
 public class Download {
 	private String format;
+	@JacksonXmlProperty(localName = "link")
 	private String url;
 	private int length;
 	private String md5;
 	private String key;
 	private String size;
+
+	public Download() {}
+
 	public Download(String format, String url, String md5, String key, String size, int length) {
 		this.format = format;
 		this.url = url;
