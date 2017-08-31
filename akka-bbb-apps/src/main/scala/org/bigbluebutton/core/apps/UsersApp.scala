@@ -267,7 +267,7 @@ trait UsersApp {
       outGW.send(new DisconnectUser(mProps.meetingID, msg.userId))
 
       outGW.send(new UserLeft(msg.meetingID, mProps.recorded, user))
-      sipPhoneLeft()
+      phoneLeft()
       mediaSourceUserLeft(msg.userId);
     }
   }
@@ -360,8 +360,6 @@ trait UsersApp {
         }
       }
 
-      val si = new SipInfo("", "", "", "")
-
       /**
        * Initialize the newly joined user copying voice status in case this
        * join is due to a reconnect.
@@ -370,7 +368,7 @@ trait UsersApp {
         ru.role, emojiStatus = "none", presenter = false,
         hasStream = false, locked = getInitialLockStatus(ru.role),
         webcamStreams = new ListSet[String](), phoneUser = false, mediaSourceUser = false, vu,
-        listenOnly = vu.listenOnly, joinedWeb = true, si)
+        listenOnly = vu.listenOnly, joinedWeb = true)
 
       usersModel.addUser(uvo)
 
@@ -378,7 +376,6 @@ trait UsersApp {
 
       outGW.send(new UserJoined(mProps.meetingID, mProps.recorded, uvo))
       outGW.send(new MeetingState(mProps.meetingID, mProps.recorded, uvo.userID, meetingModel.getPermissions(), meetingModel.isMeetingMuted()))
-      outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight())) //update video everytime user joins the room
 
       // Become presenter if the only moderator		
       if ((usersModel.numModerators == 1) || (usersModel.noPresenter())) {
@@ -453,7 +450,6 @@ trait UsersApp {
         val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, callerIdNum,
           joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, listenOnly = msg.listenOnly, msg.hasVideo, msg.hasFloor)
 
-        val si = new SipInfo("", "", "", "")
         /**
          * If user is not joined listenOnly then user is joined calling through phone or webrtc.
          * So we call him "phoneUser".
@@ -462,7 +458,7 @@ trait UsersApp {
           Role.VIEWER, emojiStatus = "none", presenter = false,
           hasStream = msg.hasVideo || msu, locked = getInitialLockStatus(Role.VIEWER),
           webcamStreams = new ListSet[String](),
-          phoneUser = !msg.listenOnly, mediaSourceUser = msu, vu, listenOnly = msg.listenOnly, joinedWeb = false, si)
+          phoneUser = !msg.listenOnly, mediaSourceUser = msu, vu, listenOnly = msg.listenOnly, joinedWeb = false)
 
         usersModel.addUser(uvo)
 
@@ -471,8 +467,8 @@ trait UsersApp {
         outGW.send(new UserJoined(mProps.meetingID, mProps.recorded, uvo))
         outGW.send(new UserJoinedVoice(mProps.meetingID, mProps.recorded, mProps.voiceBridge, uvo))
         if (uvo.hasStream) {
-          meetingModel.setSipPhonePresent(!msu) // mediaSourceUser is a sip-phone but doesnt trigger sip-video mechanism
-          handleTranscoding()
+          meetingModel.setSipPhonePresent(msu)
+          handleOutboundStream()
         }
 
         // If a SIP phone user is joining via Kurento Apps, signal it to start
@@ -484,8 +480,6 @@ trait UsersApp {
           log.info("Sending a new KurentoRtpRequest = " + params.toString() + " for caller " + uvo.userID + " at endpoint " + callerIdNum)
           outGW.send(new StartKurentoRtpRequest(mProps.meetingID, uvo.userID, params))
         }
-
-        outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
 
         if (meetingModel.isMeetingMuted()) {
           outGW.send(new MuteVoiceUser(mProps.meetingID, mProps.recorded, uvo.userID, uvo.userID,
@@ -594,19 +588,17 @@ trait UsersApp {
           val userLeaving = usersModel.removeUser(user.userID)
           userLeaving foreach (u => outGW.send(new UserLeft(mProps.meetingID, mProps.recorded, u)))
         }
-        sipPhoneLeft()
+        phoneLeft()
       }
 
       stopRecordingVoiceConference()
     }
   }
 
-  def sipPhoneLeft() {
+  def phoneLeft() {
     if (usersModel.getPhoneUsersSendingVideo.isEmpty) {
       meetingModel.setSipPhonePresent(false)
-      meetingModel.setGlobalVideoStreamName("")
       stopAllTranscoders()
-      outGW.send(new SipVideoUpdated(mProps.meetingID, mProps.recorded, mProps.voiceBridge, meetingModel.isSipVideoPresent(), meetingModel.globalVideoStreamName(), meetingModel.talkerUserId(), meetingModel.globalVideoStreamWidth(), meetingModel.globalVideoStreamHeight()))
     }
     log.info("Is there any phoneUser sending video in this meeting? " + meetingModel.isSipPhonePresent())
   }
@@ -652,7 +644,6 @@ trait UsersApp {
         case Some(curPres) => {
           usersModel.unbecomePresenter(curPres.userID)
           outGW.send(new UserStatusChange(mProps.meetingID, mProps.recorded, curPres.userID, "presenter", false: java.lang.Boolean))
-          stopPresenterTranscoder(curPres.userID)
         }
         case None => // do nothing
       }
@@ -663,7 +654,9 @@ trait UsersApp {
           usersModel.setCurrentPresenterInfo(new Presenter(newPresenterID, newPresenterName, assignedBy))
           outGW.send(new PresenterAssigned(mProps.meetingID, mProps.recorded, new Presenter(newPresenterID, newPresenterName, assignedBy)))
           outGW.send(new UserStatusChange(mProps.meetingID, mProps.recorded, newPresenterID, "presenter", true: java.lang.Boolean))
-          handleTranscoding()
+          if (meetingModel.isDesksharePresent) {
+            handleOutboundStream()
+          }
         }
         case None => // do nothing
       }

@@ -81,12 +81,6 @@ case class Voice(
   muted: Boolean,
   talking: Boolean)
 
-case class SipInfo(
-  localIpAddress: String,
-  localVideoPort: String,
-  remoteVideoPort: String,
-  sipHost: String)
-
 case class UserVO(
   userID: String,
   externUserID: String,
@@ -101,8 +95,7 @@ case class UserVO(
   mediaSourceUser: Boolean,
   voiceUser: VoiceUser,
   listenOnly: Boolean,
-  joinedWeb: Boolean,
-  sipInfo: SipInfo)
+  joinedWeb: Boolean)
 
 case class VoiceUser(
   userId: String,

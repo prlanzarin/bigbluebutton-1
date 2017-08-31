@@ -28,7 +28,6 @@ import org.bigbluebutton.common.messages.ValidateAuthTokenTimeoutMessage;
 import org.bigbluebutton.common.messages.UserEjectedFromMeetingMessage;
 import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage;
 import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage;
-import org.bigbluebutton.common.messages.SipVideoUpdatedInVoiceConfMessage;
 import org.bigbluebutton.red5.client.messaging.BroadcastClientMessage;
 import org.bigbluebutton.red5.client.messaging.ConnectionInvokerService;
 import org.bigbluebutton.red5.client.messaging.DirectClientMessage;
@@ -170,12 +169,6 @@ public class UserClientMessageSender {
             break;
           case UserEjectedFromMeetingMessage.USER_EJECTED_FROM_MEETING:
             processUserEjectedFromMeetingMessage(message);
-            break;
-          case SipVideoUpdatedInVoiceConfMessage.SIP_VIDEO_UPDATED_IN_VOICE_CONF:
-            SipVideoUpdatedInVoiceConfMessage svu = SipVideoUpdatedInVoiceConfMessage.fromJson(message);
-            if (svu != null) {
-              processSipVideoUpdatedInVoiceConfMessage(svu);
-            }
             break;
           case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
             ChannelCallStateInVoiceConfMessage ccs = ChannelCallStateInVoiceConfMessage.fromJson(message);
@@ -490,24 +483,6 @@ public class UserClientMessageSender {
     message.put("msg", gson.toJson(args));
 
     DirectClientMessage m = new DirectClientMessage(msg.meetingId, msg.requesterId, "getUsersReply", message);
-    service.sendMessage(m);
-  }
-
-  private void processSipVideoUpdatedInVoiceConfMessage(SipVideoUpdatedInVoiceConfMessage msg) {
-
-    Map<String, Object> args = new HashMap<String, Object>();
-    args.put("voiceConf", msg.voiceConfId);
-    args.put("isSipVideoPresent", (Boolean) msg.isSipVideoPresent);
-    args.put("sipVideoStreamName", msg.sipVideoStreamName);
-    args.put("talkerUserId", msg.talkerUserId);
-    args.put("width", msg.width);
-    args.put("height", msg.height);
-
-    Map<String, Object> message = new HashMap<String, Object>();
-    Gson gson = new Gson();
-    message.put("msg", gson.toJson(args));
-
-    BroadcastClientMessage m = new BroadcastClientMessage(msg.meetingId, "sipVideoUpdate", message);
     service.sendMessage(m);
   }
 

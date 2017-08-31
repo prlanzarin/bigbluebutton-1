@@ -211,7 +211,7 @@ class UsersModel {
   }
 
   def getPhoneUsersSendingVideo(): Array[UserVO] = {
-    uservos.values filter (u => (u.phoneUser == true && u.hasStream == true && !u.mediaSourceUser)) toArray
+    uservos.values filter (u => ((u.phoneUser == true || u.mediaSourceUser) && u.hasStream == true)) toArray
   }
 
   def activeTalkerChangedInWebconference(oldActiveTalkerUserId: String, newActiveTalkerUserId: String): Boolean = {

@@ -42,16 +42,6 @@ class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceSer
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
   }
 
-  def videoPausedInVoiceConf(conference: String) {
-    val msg = new VideoPausedInVoiceConfMessage(conference)
-    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
-  }
-
-  def videoResumedInVoiceConf(conference: String) {
-    val msg = new VideoResumedInVoiceConfMessage(conference)
-    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
-  }
-
   def activeTalkerChangedInVoiceConf(conference: String, voiceUserId: String) {
     val msg = new ActiveTalkerChangedInVoiceConfMessage(conference, voiceUserId, "UNKNOWN-USER_ID")
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())

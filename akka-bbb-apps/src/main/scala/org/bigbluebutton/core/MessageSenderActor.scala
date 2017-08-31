@@ -28,7 +28,6 @@ import org.bigbluebutton.common.messages.UserEjectedFromMeetingMessage
 import org.bigbluebutton.common.messages.LockLayoutMessage
 import org.bigbluebutton.core.pubsub.senders.WhiteboardMessageToJsonConverter
 import org.bigbluebutton.common.converters.ToJsonEncoder
-import org.bigbluebutton.common.messages.SipVideoUpdatedInVoiceConfMessage
 import org.bigbluebutton.common.messages.StartTranscoderRequestMessage
 import org.bigbluebutton.common.messages.UpdateTranscoderRequestMessage
 import org.bigbluebutton.common.messages.StopTranscoderRequestMessage
@@ -120,7 +119,6 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
     case msg: UserLeftVoice => handleUserLeftVoice(msg)
     case msg: IsMeetingMutedReply => handleIsMeetingMutedReply(msg)
     case msg: UserListeningOnly => handleUserListeningOnly(msg)
-    case msg: SipVideoUpdated => handleSipVideoUpdated(msg)
     case msg: StartTranscoderRequest => handleStartTranscoderRequest(msg)
     case msg: UpdateTranscoderRequest => handleUpdateTranscoderRequest(msg)
     case msg: StopTranscoderRequest => handleStopTranscoderRequest(msg)
@@ -650,11 +648,6 @@ class MessageSenderActor(val meetingId: String, val service: MessageSender)
   private def handleUserListeningOnly(msg: UserListeningOnly) {
     val json = UsersMessageToJsonConverter.userListeningOnlyToJson(msg)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
-  }
-
-  private def handleSipVideoUpdated(msg: SipVideoUpdated) {
-    val svu = new SipVideoUpdatedInVoiceConfMessage(msg.meetingID, msg.voiceBridge, msg.isSipVideoPresent, msg.sipVideoStreamName, msg.talkerUserId, msg.width, msg.height)
-    service.send(MessagingConstants.FROM_USERS_CHANNEL, svu.toJson())
   }
 
   private def handleStartTranscoderRequest(msg: StartTranscoderRequest) {

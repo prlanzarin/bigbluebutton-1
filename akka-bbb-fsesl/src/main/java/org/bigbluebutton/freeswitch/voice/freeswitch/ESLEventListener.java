@@ -13,8 +13,6 @@ import org.bigbluebutton.freeswitch.voice.events.ChannelCallStateEvent;
 import org.bigbluebutton.freeswitch.voice.events.ChannelHangupCompleteEvent;
 import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
 import org.bigbluebutton.freeswitch.voice.events.VideoFloorChangedEvent;
-import org.bigbluebutton.freeswitch.voice.events.VideoPausedEvent;
-import org.bigbluebutton.freeswitch.voice.events.VideoResumedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceStartRecordingEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserLeftEvent;
@@ -31,9 +29,7 @@ public class ESLEventListener implements IEslEventListener {
     private static final String STOP_TALKING_EVENT = "stop-talking";
     private static final String START_RECORDING_EVENT = "start-recording";
     private static final String STOP_RECORDING_EVENT = "stop-recording";
-    private static final String VIDEO_PAUSED_EVENT = "video-paused";
-    private static final String VIDEO_RESUMED_EVENT = "video-resumed";
-    private static final String VIDEO_FLOOR_CHANGE_EVENT = "video-floor-change";
+    private static final String FLOOR_CHANGE_EVENT = "floor-change";
     
     private final ConferenceEventListener conferenceEventListener;
     
@@ -118,14 +114,6 @@ public class ESLEventListener implements IEslEventListener {
         Matcher gcpMatcher = GLOBALCALL_NAME_PATTERN.matcher(callerIdName);
         if (gcpMatcher.matches()) {
             System.out.println("GLOBAL CALL CONNECTED [" + callerIdName + "]");
-
-            printConfsThatHaveActiveVideo();
-            //if the conference has a active video before the global is connected, it means that a sip phone is already sending video
-            if(isThereVideoActive(confName)) {
-                System.out.println("Sending VideoResumedEvent because there is(are) sip phone(s) sending video (confName = " + confName + ")");
-                VideoResumedEvent vResumed = new VideoResumedEvent(confName);
-                conferenceEventListener.handleConferenceEvent(vResumed);
-            }
 
         	return;
         }
@@ -257,24 +245,8 @@ public class ESLEventListener implements IEslEventListener {
             String confName = event.getEventHeaders().get("Conference-Name");
             if (action != null && confName != null) {
                 switch (action) {
-                    case VIDEO_PAUSED_EVENT:
-                        System.out.println("Received " + action + " from Freeswitch");
-                        VideoPausedEvent vPaused = new VideoPausedEvent(confName);
-                        conferenceEventListener.handleConferenceEvent(vPaused);
-                        if(isThereVideoActive(confName)) {
-                            confsThatVideoIsActive.remove(confName);
-                            System.out.println("Received video paused => " + confName + " doesn't have active video anymore.");
-                        }
-                        break;
-
-                    case VIDEO_RESUMED_EVENT:
-                        System.out.println("Received " + action + " from Freeswitch from conference " +confName);
-                        VideoResumedEvent vResumed = new VideoResumedEvent(confName);
-                        conferenceEventListener.handleConferenceEvent(vResumed);
-                        break;
-
-                    case VIDEO_FLOOR_CHANGE_EVENT:
-                        System.out.println("Received " + action + " from Freeswitch");
+                    case FLOOR_CHANGE_EVENT:
+                        System.out.println("Received FLOOR_CHANGE " + action + " from Freeswitch");
                         String holderMemberId = getNewFloorHolderMemberIdFromEvent(event);
 
                         if(!holderMemberId.isEmpty()) {
@@ -282,11 +254,7 @@ public class ESLEventListener implements IEslEventListener {
                             if(!isThereVideoActive(confName))
                                 confsThatVideoIsActive.add(confName);
                         }
-                        else if(isThereVideoActive(confName)) {
-                                confsThatVideoIsActive.remove(confName);
-                                System.out.println("Received an empty id as video floor => " + confName + " doesn't have active video anymore.");
-                             }
-
+                        
                         VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
                         conferenceEventListener.handleConferenceEvent(vFloor);
                         break;
@@ -439,12 +407,5 @@ public class ESLEventListener implements IEslEventListener {
 
     private boolean isThereVideoActive(String confName) {
         return confsThatVideoIsActive.contains(confName);
-    }
-
-    private void printConfsThatHaveActiveVideo() {
-        String message = "Rooms that have active video at this precise moment: ";
-        message = message + Arrays.toString(confsThatVideoIsActive.toArray(new String[0]));
-
-        System.out.println(message);
     }
 }

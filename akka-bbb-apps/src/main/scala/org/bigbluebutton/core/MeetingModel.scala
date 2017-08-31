@@ -16,7 +16,6 @@ class MeetingModel {
   private var muted = false;
   private var meetingEnded = false
   private var meetingMuted = false
-  private var _isSipVideoPresent = false
   private var _isSipPhonePresent = false
   private var _isDesksharePresent = false
   private var _talkerUserId = ""
@@ -128,14 +127,6 @@ class MeetingModel {
     TimeUnit.NANOSECONDS.toMinutes(System.nanoTime())
   }
 
-  def setSipVideoPresent(value: Boolean) {
-    _isSipVideoPresent = value
-  }
-
-  def isSipVideoPresent(): Boolean = {
-    _isSipVideoPresent
-  }
-
   def setSipPhonePresent(value: Boolean) {
     _isSipPhonePresent = value
   }
@@ -162,30 +153,6 @@ class MeetingModel {
 
   def isTalker(userId: String): Boolean = {
     _talkerUserId == userId
-  }
-
-  def setGlobalVideoStreamName(streamName: String) {
-    _globalVideoStreamName = streamName
-  }
-
-  def globalVideoStreamName(): String = {
-    _globalVideoStreamName
-  }
-
-  def setGlobalVideoStreamWidth(streamWidth: String) {
-    _globalVideoStreamWidth = streamWidth
-  }
-
-  def globalVideoStreamWidth(): String = {
-    _globalVideoStreamWidth
-  }
-
-  def setGlobalVideoStreamHeight(streamHeight: String) {
-    _globalVideoStreamHeight = streamHeight
-  }
-
-  def globalVideoStreamHeight(): String = {
-    _globalVideoStreamHeight
   }
 
   def setGlobalCallCallername(callername: String) {
@@ -226,17 +193,6 @@ class MeetingModel {
 
   def sipHost(): String = {
     _sipHost
-  }
-
-  def isSipVideoEnabled(): Boolean = {
-    !globalCallCallername.isEmpty() && !globalCallLocalIpAddress.isEmpty() && !globalCallLocalVideoPort.isEmpty() && !globalCallRemoteVideoPort.isEmpty() && !sipHost.isEmpty()
-  }
-
-  def isVideoconferenceStream(streamName: String): Boolean = {
-    Option(streamName) match {
-      case Some(s) => s.startsWith(VIDEOCONFERENCE_STREAM_NAME)
-      case None => false
-    }
   }
 
   def setKurentoToken(token: String) {

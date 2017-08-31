@@ -28,8 +28,6 @@ import org.bigbluebutton.freeswitch.voice.events.ChannelHangupCompleteEvent;
 
 import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
 import org.bigbluebutton.freeswitch.voice.events.VideoFloorChangedEvent;
-import org.bigbluebutton.freeswitch.voice.events.VideoPausedEvent;
-import org.bigbluebutton.freeswitch.voice.events.VideoResumedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceConferenceEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceStartRecordingEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserJoinedEvent;
@@ -83,15 +81,7 @@ public class FreeswitchConferenceEventListener implements ConferenceEventListene
 					VoiceStartRecordingEvent evt = (VoiceStartRecordingEvent) event;
 					System.out.println("************** FreeswitchConferenceEventListener VoiceStartRecordingEvent recording=[" + evt.startRecord() + "]");
 					vcs.voiceConfRecordingStarted(evt.getRoom(), evt.getRecordingFilename(), evt.startRecord(), evt.getTimestamp());
-				} else if (event instanceof VideoPausedEvent) {
-                    VideoPausedEvent evt = (VideoPausedEvent) event;
-                    System.out.println("************** FreeswitchConferenceEventListener VideoPausedEvent ");
-                    vcs.videoPausedInVoiceConf(evt.getRoom());
-                } else if (event instanceof VideoResumedEvent) {
-                    VideoResumedEvent evt = (VideoResumedEvent) event;
-                    System.out.println("************** FreeswitchConferenceEventListener VideoResumedEvent ");
-                    vcs.videoResumedInVoiceConf(evt.getRoom());
-                } else if (event instanceof VideoFloorChangedEvent) {
+				} else if (event instanceof VideoFloorChangedEvent) {
                     VideoFloorChangedEvent evt = (VideoFloorChangedEvent) event;
                     System.out.println("************** FreeswitchConferenceEventListener VideoFloorHolderChangedEvent");
                     vcs.activeTalkerChangedInVoiceConf(evt.getRoom(), evt.getFloorHolderVoiceUserId());

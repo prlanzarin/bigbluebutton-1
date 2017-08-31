@@ -459,14 +459,6 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
     bbbActor ! new VoiceConfRecordingStartedMessage(voiceConfId, recordingFile, recording, timestamp)
   }
 
-  def sipVideoPaused(voiceConfId: String) {
-    bbbActor ! new SipVideoPaused(voiceConfId)
-  }
-
-  def sipVideoResumed(voiceConfId: String) {
-    bbbActor ! new SipVideoResumed(voiceConfId)
-  }
-
   def activeTalkerChanged(voiceConfId: String, voiceUserId: String) {
     bbbActor ! new ActiveTalkerChanged(voiceConfId, voiceUserId)
   }
@@ -489,10 +481,6 @@ class BigBlueButtonInGW(val system: ActorSystem, recorderApp: RecorderApplicatio
 
   def voiceHangingUp(voiceConfId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
     bbbActor ! new VoiceHangingUp(voiceConfId, userId, uuid, callState, hangupCause)
-  }
-
-  def updateCallAgent(meetingId: String, userId: String, localIpAddress: String, localVideoPort: String, remoteVideoPort: String, sipHost: String) {
-    bbbActor ! new UpdateCallAgent(meetingId, userId, localIpAddress, localVideoPort, remoteVideoPort, sipHost)
   }
 
   // Polling

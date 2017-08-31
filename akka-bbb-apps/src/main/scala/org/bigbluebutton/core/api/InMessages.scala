@@ -116,10 +116,7 @@ case class VoiceCancelDialRequest(meetingID: String, requesterID: String, uuid: 
 case class VoiceSendDtmfRequest(meetingID: String, requesterID: String, uuid: String, dtmfDigit: String) extends InMessage
 case class VoiceDialing(voiceConfId: String, requesterID: String, uuid: String, callState: String)
 case class VoiceHangingUp(voiceConfId: String, requesterID: String, uuid: String, callState: String, hangupCause: String)
-case class SipVideoPaused(voiceConfId: String)
-case class SipVideoResumed(voiceConfId: String)
 case class ActiveTalkerChanged(voiceConfId: String, voiceUserId: String)
-case class UpdateCallAgent(meetingID: String, userId: String, localIpAddress: String, localVideoPort: String, remoteVideoPort: String, sipHost: String) extends InMessage
 
 // Whiteboard
 case class SendWhiteboardAnnotationRequest(meetingID: String, requesterID: String, annotation: AnnotationVO) extends InMessage

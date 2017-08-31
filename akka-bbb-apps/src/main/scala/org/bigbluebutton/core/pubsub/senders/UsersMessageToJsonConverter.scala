@@ -454,19 +454,6 @@ object UsersMessageToJsonConverter {
     Util.buildJson(header, payload)
   }
 
-  def sipVideoUpdatedToJson(msg: SipVideoUpdated): String = {
-    val payload = new java.util.HashMap[String, Any]()
-    payload.put(Constants.VOICE_CONF, msg.voiceBridge)
-    payload.put(Constants.IS_SIP_VIDEO_PRESENT, msg.isSipVideoPresent: java.lang.Boolean)
-    payload.put(Constants.SIP_VIDEO_STREAM_NAME, msg.sipVideoStreamName)
-    payload.put(Constants.TALKER_USER_ID, msg.talkerUserId)
-    payload.put(Constants.WIDTH_RATIO, msg.width)
-    payload.put(Constants.HEIGHT_RATIO, msg.height)
-
-    val header = Util.buildHeader(MessageNames.SIP_VIDEO_UPDATE, None)
-    Util.buildJson(header, payload)
-  }
-
   def voiceOutboundDialToJson(msg: VoiceOutboundDial): String = {
     val payload = new java.util.HashMap[String, Any]()
     payload.put(Constants.MEETING_ID, msg.meetingID)

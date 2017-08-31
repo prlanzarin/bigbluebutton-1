@@ -41,8 +41,6 @@ import org.bigbluebutton.common.messages.UserEmojiStatusMessage;
 import org.bigbluebutton.common.messages.UserShareWebcamRequestMessage;
 import org.bigbluebutton.common.messages.UserTalkingInVoiceConfMessage;
 import org.bigbluebutton.common.messages.UserUnshareWebcamRequestMessage;
-import org.bigbluebutton.common.messages.VideoPausedInVoiceConfMessage;
-import org.bigbluebutton.common.messages.VideoResumedInVoiceConfMessage;
 import org.bigbluebutton.common.messages.VoiceConfRecordingStartedMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 
@@ -175,12 +173,6 @@ public class UsersMessageReceiver implements MessageHandler{
 					  case ActiveTalkerChangedInVoiceConfMessage.ACTIVE_TALKER_CHANGED_IN_VOICE_CONF:
 						  processActiveTalkerChangedInVoiceConfMessage(message);
 						  break;
-					case VideoPausedInVoiceConfMessage.VIDEO_PAUSED_IN_VOICE_CONF:
-					  processVideoPausedInVoiceConfMessage(message);
-					  break;
-					case VideoResumedInVoiceConfMessage.VIDEO_RESUMED_IN_VOICE_CONF:
-					  processVideoResumedInVoiceConfMessage(message);
-					  break;
 					  case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
 						  processChannelCallStateInVoiceConfMessage(message);
 						  break;
@@ -434,20 +426,6 @@ public class UsersMessageReceiver implements MessageHandler{
 		ActiveTalkerChangedInVoiceConfMessage msg = ActiveTalkerChangedInVoiceConfMessage.fromJson(message);
 		if (msg != null) {
 			bbbInGW.activeTalkerChanged(msg.voiceConfId, msg.voiceUserId);
-		}
-	}
-
-	private void processVideoPausedInVoiceConfMessage(String message) {
-		VideoPausedInVoiceConfMessage msg = VideoPausedInVoiceConfMessage.fromJson(message);
-		if (msg != null) {
-			bbbInGW.sipVideoPaused(msg.voiceConfId);
-		}
-	}
-
-	private void processVideoResumedInVoiceConfMessage(String message) {
-		VideoResumedInVoiceConfMessage msg = VideoResumedInVoiceConfMessage.fromJson(message);
-		if (msg != null) {
-			bbbInGW.sipVideoResumed(msg.voiceConfId);
 		}
 	}
 

@@ -54,12 +54,6 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleUserMutedInVoiceConfMessage(msg)
     case msg: UserTalkingInVoiceConfMessage =>
       handleUserTalkingInVoiceConfMessage(msg)
-    case msg: SipVideoPaused =>
-      handleSipVideoPaused(msg)
-    case msg: SipVideoResumed =>
-      handleSipVideoResumed(msg)
-    case msg: UpdateCallAgent =>
-      handleUpdateCallAgent(msg)
     case msg: ActiveTalkerChanged =>
       handleActiveTalkerChanged(msg)
     case msg: VoiceOutboundDialRequest =>
@@ -194,8 +188,6 @@ class MeetingActor(val mProps: MeetingProperties, val outGW: OutMessageGateway)
       handleStopTranscoderReply(msg)
     case msg: TranscoderStatusUpdate =>
       handleTranscoderStatusUpdate(msg)
-    case msg: StartProbingReply =>
-      handleStartProbingReply(msg)
     case msg: StartMediaSource =>
       handleStartMediaSource(msg)
     case msg: StopMediaSource =>

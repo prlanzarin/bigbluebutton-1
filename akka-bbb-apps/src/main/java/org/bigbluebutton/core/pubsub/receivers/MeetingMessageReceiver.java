@@ -17,7 +17,6 @@ import org.bigbluebutton.common.messages.StartMediaSourceMessage;
 import org.bigbluebutton.common.messages.StopMediaSourceMessage;
 import org.bigbluebutton.common.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.common.messages.UserDisconnectedFromGlobalAudio;
-import org.bigbluebutton.common.messages.UpdateCallAgentMessage;
 import org.bigbluebutton.common.messages.ValidateAuthTokenMessage;
 import org.bigbluebutton.common.messages.SetMeetingDesksharePresentMessage;
 import org.bigbluebutton.common.messages.GetDeskshareStatusRequestMessage;
@@ -98,10 +97,6 @@ public class MeetingMessageReceiver implements MessageHandler {
 				else if (msg instanceof GetAllMeetingsRequest) {
 					GetAllMeetingsRequest emm = (GetAllMeetingsRequest) msg;
 					bbbGW.getAllMeetings("no_need_of_a_meeting_id");
-				}
-				else if (msg instanceof UpdateCallAgentMessage) {
-					  UpdateCallAgentMessage updateCallAgentMessage = (UpdateCallAgentMessage) msg;
-					  bbbGW.updateCallAgent(updateCallAgentMessage.meetingId, updateCallAgentMessage.userId, updateCallAgentMessage.localIpAddress, updateCallAgentMessage.localVideoPort, updateCallAgentMessage.remoteVideoPort, updateCallAgentMessage.sipHost);
 				}
 				else if (msg instanceof StartMediaSourceMessage) {
 					StartMediaSourceMessage startMediaSourceMessage = (StartMediaSourceMessage) msg;
