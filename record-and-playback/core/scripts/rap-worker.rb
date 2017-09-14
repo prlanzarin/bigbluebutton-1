@@ -105,8 +105,8 @@ def sanity_archived_meeting(recording_dir)
       "step_time" => step_time
     }
 
+    sanity_dir = find_sanity_dir(recording_dir)
     if step_succeeded
-      sanity_dir = find_sanity_dir(recording_dir)
       sanity_done = "#{sanity_dir}/#{meeting_id}.done"
       FileUtils.touch(sanity_done)
       
@@ -115,7 +115,7 @@ def sanity_archived_meeting(recording_dir)
       FileUtils.rm(archived_done)
     else
       BigBlueButton.logger.error("Sanity check failed on #{meeting_id}")
-      sanity_fail = "#{recording_dir}/status/sanity/#{meeting_id}.fail"
+      sanity_fail = "#{sanity_dir}/#{meeting_id}.fail"
       FileUtils.touch(sanity_fail)
     end
   end
@@ -130,6 +130,7 @@ def find_sanity_dir(recording_dir)
     Dir.glob("#{sanity_dir}/*.done").each do |sanity_done|
       match = /([^\/]*).done$/.match(sanity_done)
       record_id = match[1]
+      next if ! File.exists? "#{recording_dir}/raw/#{record_id}/events.xml"
       rec_events = BigBlueButton::Events.match_start_and_stop_rec_events(BigBlueButton::Events.get_start_and_stop_rec_events("#{recording_dir}/raw/#{record_id}/events.xml"))
       rec_events.each do |e|
         duration += e[:stop_timestamp] - e[:start_timestamp]
