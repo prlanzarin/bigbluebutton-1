@@ -38,6 +38,14 @@ public class MessageFromJsonConverter {
 					return UserDisconnectedFromGlobalAudio.fromJson(message);
 				  case GetAllMeetingsRequest.GET_ALL_MEETINGS_REQUEST_EVENT:
 					return new GetAllMeetingsRequest("the_string_is_not_used_anywhere");
+				  case StartMediaSourceMessage.START_MEDIA_SOURCE_REQUEST:
+					return processStartMediaSourceMessage(payload);
+				  case StopMediaSourceMessage.STOP_MEDIA_SOURCE_REQUEST:
+					return processStopMediaSourceMessage(payload);
+				  case SetMeetingDesksharePresentMessage.SET_MEETING_DESKSHARE_PRESENT:
+				  	return processSetMeetingDesksharePresentMessage(payload);
+				  case GetDeskshareStatusRequestMessage.GET_DESKSHARE_STATUS_REQUEST:
+				  	return processGetDeskshareStatusRequestMessage(payload);
 				}
 			}
 		}
@@ -98,4 +106,28 @@ public class MessageFromJsonConverter {
 		String id = payload.get(Constants.MEETING_ID).getAsString();
 		return new ActivityResponseMessage(id);
 	}
+
+	private static IBigBlueButtonMessage processStartMediaSourceMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		String mediaSourceId = payload.get(Constants.MEDIA_SOURCE_ID).getAsString();
+		String mediaSourceUri = payload.get(Constants.MEDIA_SOURCE_URI).getAsString();
+		return new StartMediaSourceMessage(meetingId, mediaSourceId, mediaSourceUri);
+	}
+
+	private static IBigBlueButtonMessage processStopMediaSourceMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		String mediaSourceId = payload.get(Constants.MEDIA_SOURCE_ID).getAsString();
+		return new StopMediaSourceMessage(meetingId, mediaSourceId);
+	}
+
+	private static IBigBlueButtonMessage processSetMeetingDesksharePresentMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		Boolean desksharePresent = payload.get(Constants.DESKSHARE_PRESENT).getAsBoolean();
+		return new SetMeetingDesksharePresentMessage(meetingId, desksharePresent);
+	}
+
+	private static IBigBlueButtonMessage processGetDeskshareStatusRequestMessage(JsonObject payload) {
+		String meetingId = payload.get(Constants.MEETING_ID).getAsString();
+		return new GetDeskshareStatusRequestMessage(meetingId);
+	} 
 }

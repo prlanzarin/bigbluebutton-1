@@ -60,6 +60,9 @@ public class RedisMessageReceiver {
 
 		SharedNotesMessageReceiver notesRx = new SharedNotesMessageReceiver(bbbGW);
 		receivers.add(notesRx);
+
+		KurentoMessageReceiver kurentoRx = new KurentoMessageReceiver(bbbGW);
+		receivers.add(kurentoRx);
 	}
 	
 	public void handleMessage(String pattern, String channel, String message) {

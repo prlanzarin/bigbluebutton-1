@@ -143,21 +143,21 @@ public class FreeswitchApplication {
 		queueMessage(huCmd);
 	}
 
-		public void dial(String room, String participant, Map<String, String> options, Map<String, String> params) {
-			DialCommand command = new DialCommand(room, participant, options, params, USER);
-			System.out.println("SENDING DIAL destination=[" + command.getDestination() + "]");
-			queueMessage(command);
-		}
+	public void dial(String room, String participant, Map<String, String> options, Map<String, String> params) {
+		DialCommand command = new DialCommand(room, participant, options, params, USER);
+		System.out.println("SENDING DIAL destination=[" + command.getDestination() + "]");
+		queueMessage(command);
+	}
 
-		public void cancelDial(String room, String uuid) {
-			CancelDialCommand command = new CancelDialCommand(room, uuid, USER);
-			queueMessage(command);
-		}
+	public void cancelDial(String room, String uuid) {
+		CancelDialCommand command = new CancelDialCommand(room, uuid, USER);
+		queueMessage(command);
+	}
 
-		public void sendDtmf(String room, String uuid, String dtmfDigit) {
-			SendDtmfCommand command = new SendDtmfCommand(room, uuid, dtmfDigit, USER);
-			queueMessage(command);
-		}
+	public void sendDtmf(String room, String uuid, String dtmfDigit) {
+		SendDtmfCommand command = new SendDtmfCommand(room, uuid, dtmfDigit, USER);
+		queueMessage(command);
+	}
 
 		private void sendMessageToFreeswitch(final FreeswitchCommand command) {
 			Runnable task = new Runnable() {

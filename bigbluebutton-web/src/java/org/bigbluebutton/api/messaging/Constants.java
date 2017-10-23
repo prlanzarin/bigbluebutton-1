@@ -97,4 +97,6 @@ public class Constants {
   public static final String GUEST                           = "guest";
   public static final String WAITING_FOR_ACCEPTANCE          = "waiting_for_acceptance";
   public static final String METADATA                        = "metadata";
+  public static final String MEDIA_SOURCE_ID                 = "media_source_id";
+  public static final String MEDIA_SOURCE_URI                = "media_source_uri";
 }

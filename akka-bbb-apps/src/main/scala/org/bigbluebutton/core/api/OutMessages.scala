@@ -29,6 +29,8 @@ case class DisconnectUser(meetingID: String, userId: String) extends IOutMessage
 case class KeepAliveMessageReply(aliveID: String) extends IOutMessage
 case class PubSubPong(system: String, timestamp: Long) extends IOutMessage
 case object IsAliveMessage extends IOutMessage
+case class GetDeskshareStatusReply(meetingID: String, desksharePresent: Boolean) extends IOutMessage
+case class StartDeskshareViewing(meetingID: String, videoWidth: Int, videoHeight: Int) extends IOutMessage
 
 // Breakout Rooms
 case class BreakoutRoomsListOutMessage(meetingId: String, rooms: Vector[BreakoutRoomBody], roomsReady: Boolean) extends IOutMessage
@@ -181,6 +183,16 @@ case class SharedNotesSyncNoteReply(meetingID: String, recorded: Boolean, reques
 
 //Transcode
 case class StopMeetingTranscoders(meetingID: String) extends IOutMessage
+case class StartTranscoderRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
+case class UpdateTranscoderRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
+case class StopTranscoderRequest(meetingID: String, transcoderId: String) extends IOutMessage
+case class StartProbingRequest(meetingID: String, transcoderId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
+
+//Kurento
+case class StartKurentoRtpRequest(meetingID: String, kurentoEndpointId: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
+case class StopKurentoRtpRequest(meetingID: String, kurentoEndpointId: String) extends IOutMessage
+case class StopAllMediaSources(meetingID: String) extends IOutMessage
+case class StartKurentoSendRtpRequest(meetingID: String, params: scala.collection.mutable.HashMap[String, String]) extends IOutMessage
 
 // Value Objects
 case class MeetingVO(id: String, recorded: Boolean)

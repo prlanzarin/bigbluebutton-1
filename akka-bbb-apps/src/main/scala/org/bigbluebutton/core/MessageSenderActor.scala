@@ -44,6 +44,15 @@ import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
 import org.bigbluebutton.common.messages.OutboundDialRequestInVoiceConfMessage
 import org.bigbluebutton.common.messages.TransferUserToVoiceConfRequestMessage
 import org.bigbluebutton.core
+import org.bigbluebutton.common.messages.StartTranscoderRequestMessage
+import org.bigbluebutton.common.messages.UpdateTranscoderRequestMessage
+import org.bigbluebutton.common.messages.StopTranscoderRequestMessage
+import org.bigbluebutton.common.messages.StartKurentoRtpRequestMessage
+import org.bigbluebutton.common.messages.StopKurentoRtpRequestMessage
+import org.bigbluebutton.common.messages.StopAllMediaSourcesMessage
+import org.bigbluebutton.common.messages.GetDeskshareStatusReplyMessage
+import org.bigbluebutton.common.messages.StartDeskshareViewingMessage
+import org.bigbluebutton.common.messages.StartKurentoSendRtpRequestMessage
 
 object MessageSenderActor {
   def props(msgSender: MessageSender): Props =
@@ -137,6 +146,9 @@ class MessageSenderActor(val service: MessageSender)
     case msg: UserLeftVoice => handleUserLeftVoice(msg)
     case msg: IsMeetingMutedReply => handleIsMeetingMutedReply(msg)
     case msg: UserListeningOnly => handleUserListeningOnly(msg)
+    case msg: StartTranscoderRequest => handleStartTranscoderRequest(msg)
+    case msg: UpdateTranscoderRequest => handleUpdateTranscoderRequest(msg)
+    case msg: StopTranscoderRequest => handleStopTranscoderRequest(msg)
     case msg: StopMeetingTranscoders => handleStopMeetingTranscoders(msg)
     case msg: VoiceOutboundDial => handleVoiceOutboundDial(msg)
     case msg: VoiceCancelDial => handleVoiceCancelDial(msg)
@@ -176,6 +188,14 @@ class MessageSenderActor(val service: MessageSender)
     case msg: CreateAdditionalNotesReply => handleCreateAdditionalNotesReply(msg)
     case msg: DestroyAdditionalNotesReply => handleDestroyAdditionalNotesReply(msg)
     case msg: SharedNotesSyncNoteReply => handleSharedNotesSyncNoteReply(msg)
+
+    case msg: GetDeskshareStatusReply => handleGetDeskshareStatusReply(msg)
+    case msg: StartDeskshareViewing => handleStartDeskshareViewing(msg)
+    case msg: StartKurentoRtpRequest => handleStartKurentoRtpRequest(msg)
+    case msg: StopKurentoRtpRequest => handleStopKurentoRtpRequest(msg)
+    case msg: StopAllMediaSources => handleStopAllMediaSources(msg)
+    case msg: StartKurentoSendRtpRequest => handleStartKurentoSendRtpRequest(msg)
+
     case _ => // do nothing
   }
 
@@ -748,6 +768,21 @@ class MessageSenderActor(val service: MessageSender)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, json)
   }
 
+  private def handleStartTranscoderRequest(msg: StartTranscoderRequest) {
+    val str = new StartTranscoderRequestMessage(msg.meetingID, msg.transcoderId, mapAsJavaMap(msg.params))
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
+  }
+
+  private def handleUpdateTranscoderRequest(msg: UpdateTranscoderRequest) {
+    val str = new UpdateTranscoderRequestMessage(msg.meetingID, msg.transcoderId, mapAsJavaMap(msg.params))
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
+  }
+
+  private def handleStopTranscoderRequest(msg: StopTranscoderRequest) {
+    val str = new StopTranscoderRequestMessage(msg.meetingID, msg.transcoderId)
+    service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, str.toJson())
+  }
+
   private def handleStopMeetingTranscoders(msg: StopMeetingTranscoders) {
     val smt = new StopMeetingTranscodersMessage(msg.meetingID)
     service.send(MessagingConstants.TO_BBB_TRANSCODE_SYSTEM_CHAN, smt.toJson())
@@ -755,7 +790,7 @@ class MessageSenderActor(val service: MessageSender)
 
   private def handleVoiceOutboundDial(msg: VoiceOutboundDial) {
     val odr = new OutboundDialRequestInVoiceConfMessage(msg.meetingID, msg.voiceConfId, msg.requesterID, msg.options, msg.params)
-    service.send(MessagingConstants.TO_VOICE_CONF_SYSTEM_CHAN, odr.toJson())
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, odr.toJson())
   }
 
   private def handleVoiceCancelDial(msg: VoiceCancelDial) {
@@ -771,6 +806,21 @@ class MessageSenderActor(val service: MessageSender)
   private def handleVoiceHangingUp(msg: VoiceHangingUp2) {
     val ch = new ChannelHangupInVoiceConfMessage(msg.meetingID, "UNKNOWN-VOICE-CONF", msg.uuid, msg.callState, msg.hangupCause, msg.requesterID)
     service.send(MessagingConstants.FROM_USERS_CHANNEL, ch.toJson())
+  }
+
+  private def handleStartKurentoRtpRequest(msg: StartKurentoRtpRequest) {
+    val skrr = new StartKurentoRtpRequestMessage(msg.meetingID, msg.kurentoEndpointId, msg.params)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, skrr.toJson())
+  }
+
+  private def handleStopKurentoRtpRequest(msg: StopKurentoRtpRequest) {
+    val skrr = new StopKurentoRtpRequestMessage(msg.meetingID, msg.kurentoEndpointId)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, skrr.toJson())
+  }
+
+  private def handleStopAllMediaSources(msg: StopAllMediaSources) {
+    val sams = new StopAllMediaSourcesMessage(msg.meetingID)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, sams.toJson())
   }
 
   private def handleGetWhiteboardShapesReply(msg: GetWhiteboardShapesReply) {
@@ -893,5 +943,20 @@ class MessageSenderActor(val service: MessageSender)
   private def handleSharedNotesSyncNoteReply(msg: SharedNotesSyncNoteReply) {
     val json = SharedNotesMessageToJsonConverter.sharedNotesSyncNoteReplyToJson(msg)
     service.send(MessagingConstants.FROM_SHAREDNOTES_CHANNEL, json)
+  }
+
+  private def handleGetDeskshareStatusReply(msg: GetDeskshareStatusReply) {
+    val gdsr = new GetDeskshareStatusReplyMessage(msg.meetingID, msg.desksharePresent)
+    service.send(MessagingConstants.FROM_MEETING_CHANNEL, gdsr.toJson())
+  }
+
+  private def handleStartDeskshareViewing(msg: StartDeskshareViewing) {
+    val sdv = new StartDeskshareViewingMessage(msg.meetingID, msg.videoWidth, msg.videoHeight)
+    service.send(MessagingConstants.FROM_MEETING_CHANNEL, sdv.toJson())
+  }
+
+  private def handleStartKurentoSendRtpRequest(msg: StartKurentoSendRtpRequest) {
+    val sksrr = new StartKurentoSendRtpRequestMessage(msg.meetingID, msg.params)
+    service.send(MessagingConstants.TO_KURENTO_SYSTEM_CHAN, sksrr.toJson())
   }
 }

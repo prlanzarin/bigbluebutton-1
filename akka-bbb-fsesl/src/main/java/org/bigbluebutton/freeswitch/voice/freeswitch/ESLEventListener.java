@@ -16,6 +16,7 @@ import org.bigbluebutton.freeswitch.voice.events.DeskShareEndedEvent;
 import org.bigbluebutton.freeswitch.voice.events.DeskShareStartedEvent;
 import org.bigbluebutton.freeswitch.voice.events.DeskShareRTMPBroadcastEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceConferenceEvent;
+import org.bigbluebutton.freeswitch.voice.events.VideoFloorChangedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceStartRecordingEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserJoinedEvent;
 import org.bigbluebutton.freeswitch.voice.events.VoiceUserLeftEvent;
@@ -37,12 +38,14 @@ public class ESLEventListener implements IEslEventListener {
 
     private final ConferenceEventListener conferenceEventListener;
     
+    private static final String FLOOR_CHANGE_EVENT = "floor-change";
+    
     private Map<String, DialReferenceValuePair> outboundDialReferences = new ConcurrentHashMap<String, DialReferenceValuePair>();
 
     public ESLEventListener(ConferenceEventListener conferenceEventListener) {
         this.conferenceEventListener = conferenceEventListener;
     }
-    
+
     @Override
     public void conferenceEventPlayFile(String uniqueId, String confName, int confSize, EslEvent event) {
         //Ignored, Noop
@@ -55,6 +58,8 @@ public class ESLEventListener implements IEslEventListener {
     @Override
     public void backgroundJobResultReceived(EslEvent event) {
         System.out.println( "Background job result received [" + event + "]");
+
+        String uri = this.getCallerIdFromEvent(event);
 
         String arg = event.getEventHeaders().get("Job-Command-Arg");
         if (arg != null) {
@@ -74,7 +79,8 @@ public class ESLEventListener implements IEslEventListener {
                         return;
                     }
 
-                    DialReferenceValuePair ref = removeDialReference(uuid);
+                    DialReferenceValuePair ref = removeDialReference(uri);
+
                     if (ref == null) {
                         return;
                     }
@@ -102,9 +108,12 @@ public class ESLEventListener implements IEslEventListener {
         Integer memberId = this.getMemberIdFromEvent(event);
         Map<String, String> headers = event.getEventHeaders();
         String callerId = this.getCallerIdFromEvent(event);
-        String callerIdName = this.getCallerIdNameFromEvent(event);
+        String callerIdName = this.getValidCallerIdNameFromConferenceEvent(event);
+
         boolean muted = headers.get("Speak").equals("true") ? false : true; //Was inverted which was causing a State issue
         boolean speaking = headers.get("Talking").equals("true") ? true : false;
+        boolean hasVideo = headers.get("Video").equals("true") ? true : false;
+        boolean hasFloor = headers.get("Floor").equals("true") ? true : false;
 
         String voiceUserId = callerIdName;
 
@@ -131,7 +140,7 @@ public class ESLEventListener implements IEslEventListener {
             System.out.println("User joined voice conference, user=[" + callerIdName + "], conf=[" +
                     confName + "] callerId=[" + callerId + "]");
 
-            VoiceUserJoinedEvent pj = new VoiceUserJoinedEvent(voiceUserId, memberId.toString(), confName, callerId, callerIdName, muted, speaking, "none");
+            VoiceUserJoinedEvent pj = new VoiceUserJoinedEvent(voiceUserId, memberId.toString(), confName, callerId, callerIdName, muted, speaking, "none", hasVideo, hasFloor);
             conferenceEventListener.handleConferenceEvent(pj);
         }
     }
@@ -278,22 +287,45 @@ public class ESLEventListener implements IEslEventListener {
 //           notifyObservers(event);
 //           return; 
 //        }
-        if(event.getEventName().equals("CHANNEL_CALLSTATE")) {
+          if(event.getEventName().equals("CUSTOM")) {
+            String action = event.getEventHeaders().get("Action");
+            String confName = event.getEventHeaders().get("Conference-Name");
+            if (action != null && confName != null) {
+                switch (action) {
+                    case FLOOR_CHANGE_EVENT:
+                        System.out.println("Received FLOOR_CHANGE " + action + " from Freeswitch");
+                        String holderMemberId = getNewFloorHolderMemberIdFromEvent(event);
+                        
+                        VideoFloorChangedEvent vFloor= new VideoFloorChangedEvent(confName, holderMemberId);
+                        conferenceEventListener.handleConferenceEvent(vFloor);
+                        break;
+
+                    default:
+                        System.out.println("Unknown conference Action [" + action + "]");
+                }
+            }
+        }
+        else if(event.getEventName().equals("CHANNEL_CALLSTATE")) {
             String uniqueId = this.getUniqueIdFromEvent(event);
             String callState = this.getChannelCallStateFromEvent(event);
             String originalCallState = this.getOrigChannelCallStateFromEvent(event);
             String origCallerIdName = this.getOrigCallerIdNameFromEvent(event);
             String channelName = this.getCallerChannelNameFromEvent(event);
+            String uri = this.getCallerIdFromEvent(event);
 
-            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], CallState [" + callState + "]");
 
-            DialReferenceValuePair ref = getDialReferenceValue(uniqueId);
+            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], URI [" + uri + "], CallState [" + callState + "]");
+
+            DialReferenceValuePair ref = getDialReferenceValue(uri);
             if (ref == null) {
+                System.out.println("There was no dial reference, aborting...");
                 return;
             }
 
             String room = ref.getRoom();
             String participant = ref.getParticipant();
+
+            System.out.println("There was a dial reference for uuid [" + uniqueId + "], URI [" + uri + "], room [" + room + "], participant [" + participant + "]");
 
             ChannelCallStateEvent cse = new ChannelCallStateEvent(uniqueId, callState,
                                                     room, participant);
@@ -306,10 +338,12 @@ public class ESLEventListener implements IEslEventListener {
             String hangupCause = getHangupCauseFromEvent(event);
             String origCallerIdName = getOrigCallerIdNameFromEvent(event);
             String channelName = getCallerChannelNameFromEvent(event);
+            String uri = this.getCallerIdFromEvent(event);
 
-            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], CallState [" + callState + "],  HangupCause [" + hangupCause + "]");
-            DialReferenceValuePair ref = removeDialReference(uniqueId);
+            System.out.println("Received [" +  event.getEventName() + "] for uuid [" + uniqueId + "], URI [" + uri + "], CallState [" + callState + "],  HangupCause [" + hangupCause + "]");
+            DialReferenceValuePair ref = removeDialReference(uri);
             if (ref == null) {
+                System.out.println("There was no dial reference, aborting...");
                 return;
             }
 
@@ -323,25 +357,25 @@ public class ESLEventListener implements IEslEventListener {
         }
     }
 
-    public void addDialReference(String uuid, DialReferenceValuePair value) {
-        System.out.println("Adding dial reference: [" + uuid + "] -> [" + value.getRoom() + "], [" + value.getParticipant() + "]");
-        if (!outboundDialReferences.containsKey(uuid)) {
-            outboundDialReferences.put(uuid, value);
+    public void addDialReference(String uri, DialReferenceValuePair value) {
+        System.out.println("Adding dial reference: [" + uri+ "] -> [" + value.getRoom() + "], [" + value.getParticipant() + "]");
+        if (!outboundDialReferences.containsKey(uri)) {
+            outboundDialReferences.put(uri, value);
         }
     }
 
-    private DialReferenceValuePair removeDialReference(String uuid) {
-        System.out.println("Removing dial reference: [" + uuid + "]");
-        DialReferenceValuePair r = outboundDialReferences.remove(uuid);
+    private DialReferenceValuePair removeDialReference(String uri) {
+        System.out.println("Removing dial reference: [" + uri + "]");
+        DialReferenceValuePair r = outboundDialReferences.remove(uri);
         if (r == null) {
-            System.out.println("Returning null because the uuid has already been removed");
+            System.out.println("Returning null because the uri has already been removed");
         }
         System.out.println("Current dial references size: [" + outboundDialReferences.size() + "]");
         return r;
     }
 
-    private DialReferenceValuePair getDialReferenceValue(String uuid) {
-        return outboundDialReferences.get(uuid);
+    private DialReferenceValuePair getDialReferenceValue(String uri) {
+        return outboundDialReferences.get(uri);
     }
 
     private String getChannelCallStateFromEvent(EslEvent e) {
@@ -384,6 +418,21 @@ public class ESLEventListener implements IEslEventListener {
         return e.getEventHeaders().get("Caller-Caller-ID-Name");
     }
 
+    private String getValidCallerIdNameFromConferenceEvent(EslEvent e) {
+        /*
+         * For some equipments, if callerIdName is 'unknown', we get the caller name
+         * from the sip user agent
+         */
+        String callerIdName = this.getCallerIdNameFromEvent(e);
+        String callerIPAddress = this.getCallerNetworkAddress(e);
+        return ConferenceMember.getValidCallerIdName(callerIdName,callerIPAddress);
+    }
+
+    private String getCallerNetworkAddress(EslEvent e){
+        return e.getEventHeaders().get("Caller-Network-Addr");
+    }
+
+    
     private String getRecordFilenameFromEvent(EslEvent e) {
         return e.getEventHeaders().get("Path");
     }
@@ -431,4 +480,11 @@ public class ESLEventListener implements IEslEventListener {
         }
     }
 
+    private String getNewFloorHolderMemberIdFromEvent(EslEvent e) {
+        String newHolder = e.getEventHeaders().get("New-ID");
+        if(newHolder == null || newHolder.equalsIgnoreCase("none")) {
+            newHolder = "";
+        }
+        return newHolder;
+    }
 }

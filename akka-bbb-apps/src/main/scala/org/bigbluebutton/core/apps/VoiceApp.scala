@@ -25,6 +25,15 @@ trait VoiceApp {
     outGW.send(new VoiceSendDtmf(msg.meetingID, mProps.recorded, msg.uuid, msg.dtmfDigit));
   }
 
+  def handleActiveTalkerChanged(msg: ActiveTalkerChanged) {
+    usersModel.getUserWithVoiceUserId(msg.voiceUserId) foreach { user =>
+      val oldTalkerUserId = meetingModel.talkerUserId
+      meetingModel.setTalkerUserId(user.userID)
+      handleActiveTalkerChangedInWebconference(oldTalkerUserId, meetingModel.talkerUserId())
+      log.debug("Active Talker Changed: talkerUserId={" + meetingModel.talkerUserId() + "}")
+    }
+  }
+
   def handleVoiceDialing(msg: VoiceDialing) {
     outGW.send(new VoiceDialing2(mProps.meetingID, mProps.recorded, msg.requesterID, msg.uuid, msg.callState));
   }

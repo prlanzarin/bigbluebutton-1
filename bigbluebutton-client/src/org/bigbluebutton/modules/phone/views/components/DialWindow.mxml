@@ -111,7 +111,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                         destination.text = "";
                         break;
                     case DIALING:
-                        closeBtn.enabled = false;
+                        closeBtn.enabled = true;
                         destination.enabled = false;
                         dialCancelBtn.enabled = false;
                         break;
@@ -167,10 +167,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
                     case "RINGING":
                         trace("Remembering UUID " + event.uuid);
                         uuid = event.uuid;
-                        callState = RINGING;
+                        if(callState != ACCEPTED)
+                            callState = RINGING;
                         statusString = getDialStateString(event.dialState);
                         break;
                     case "ACTIVE":
+                    case "EARLY":
                         trace("Remembering UUID " + event.uuid);
                         uuid = event.uuid;
                         callState = ACCEPTED;

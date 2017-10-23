@@ -38,6 +38,8 @@ class BigBlueButtonActor(val system: ActorSystem,
     }
   }
 
+  private var kurentoToken = "unknown_kurento_token"
+
   def receive = {
     case msg: CreateMeeting => handleCreateMeeting(msg)
     case msg: DestroyMeeting => handleDestroyMeeting(msg)
@@ -53,6 +55,8 @@ class BigBlueButtonActor(val system: ActorSystem,
     case msg: VoiceConfRecordingStartedMessage => handleVoiceConfRecordingStartedMessage(msg)
     case msg: VoiceDialing => handleVoiceDialing(msg)
     case msg: VoiceHangingUp => handleVoiceHangingUp(msg)
+    case msg: ActiveTalkerChanged => handleActiveTalkerChanged(msg)
+    case msg: UpdateKurentoToken => handleUpdateKurentoToken(msg)
     case _ => // do nothing
   }
 
@@ -91,6 +95,20 @@ class BigBlueButtonActor(val system: ActorSystem,
 
   private def handleUserTalkingInVoiceConfMessage(msg: UserTalkingInVoiceConfMessage) {
     findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleActiveTalkerChanged(msg: ActiveTalkerChanged) {
+    findMeetingWithVoiceConfId(msg.voiceConfId) foreach { m =>
+      m.actorRef ! msg
+    }
+  }
+
+  private def handleUpdateKurentoToken(msg: UpdateKurentoToken) {
+    kurentoToken = msg.token
+    System.out.println("Kurento token updated successfully, new token: " + msg.token)
+    meetings.values foreach { m =>
       m.actorRef ! msg
     }
   }
@@ -149,7 +167,6 @@ class BigBlueButtonActor(val system: ActorSystem,
           eventBus.publish(BigBlueButtonEvent(m.mProps.parentMeetingID,
             BreakoutRoomEnded(m.mProps.parentMeetingID, m.mProps.meetingID)))
         }
-
         // Eject all users using the client.
         outGW.send(new EndAndKickAll(msg.meetingID, m.mProps.recorded))
         // Eject all users from the voice conference
@@ -191,7 +208,7 @@ class BigBlueButtonActor(val system: ActorSystem,
           m.mProps.recorded, m.mProps.meetingName, m.mProps.voiceBridge, msg.mProps.duration, msg.mProps.moderatorPass,
           msg.mProps.viewerPass, msg.mProps.createTime, msg.mProps.createDate, msg.mProps.isBreakout))
 
-        m.actorRef ! new InitializeMeeting(m.mProps.meetingID, m.mProps.recorded)
+        m.actorRef ! new InitializeMeeting(m.mProps.meetingID, m.mProps.recorded, kurentoToken)
       }
       case Some(m) => {
         log.info("Meeting already created. meetingID={}", msg.mProps.meetingID)

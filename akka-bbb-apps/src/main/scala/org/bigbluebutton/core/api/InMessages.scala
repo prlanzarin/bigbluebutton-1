@@ -31,11 +31,16 @@ case class MonitorNumberOfUsers(meetingID: String) extends InMessage
 case class SendTimeRemainingUpdate(meetingId: String) extends InMessage
 case class ExtendMeetingDuration(meetingId: String, userId: String) extends InMessage
 case class CreateMeeting(meetingID: String, mProps: MeetingProperties) extends InMessage
-case class InitializeMeeting(meetingID: String, recorded: Boolean) extends InMessage
+case class InitializeMeeting(meetingID: String, recorded: Boolean, kurentoToken: String) extends InMessage
 case class DestroyMeeting(meetingID: String) extends InMessage
 case class StartMeeting(meetingID: String) extends InMessage
 case class EndMeeting(meetingId: String) extends InMessage
 case class LockSetting(meetingID: String, locked: Boolean, settings: Map[String, Boolean]) extends InMessage
+case class StartMediaSource(meetingID: String, mediaSourceId: String, mediaSourceUri: String) extends InMessage
+case class StopMediaSource(meetingID: String, mediaSourceId: String) extends InMessage
+case class UpdateKurentoToken(token: String) extends InMessage
+case class SetMeetingDesksharePresent(meetingID: String, desksharePresent: Boolean) extends InMessage
+case class GetDeskshareStatusRequest(meetingID: String) extends InMessage
 
 ////////////////////////////////////////////////////////////////////////////////////// 
 // Breakout room
@@ -179,7 +184,7 @@ case class EjectUserFromVoiceRequest(meetingID: String, userId: String, ejectedB
 case class VoiceUserJoinedMessage(meetingID: String, user: String, voiceConfId: String,
   callerIdNum: String, callerIdName: String, muted: Boolean, talking: Boolean) extends InMessage
 case class UserJoinedVoiceConfMessage(voiceConfId: String, voiceUserId: String, userId: String, externUserId: String,
-  callerIdName: String, callerIdNum: String, muted: Boolean, talking: Boolean, avatarURL: String, listenOnly: Boolean) extends InMessage
+  callerIdName: String, callerIdNum: String, muted: Boolean, talking: Boolean, avatarURL: String, listenOnly: Boolean, hasVideo: Boolean, hasFloor: Boolean) extends InMessage
 case class UserLeftVoiceConfMessage(voiceConfId: String, voiceUserId: String) extends InMessage
 case class UserLockedInVoiceConfMessage(voiceConfId: String, voiceUserId: String, locked: Boolean) extends InMessage
 case class UserMutedInVoiceConfMessage(voiceConfId: String, voiceUserId: String, muted: Boolean) extends InMessage
@@ -190,6 +195,7 @@ case class VoiceCancelDialRequest(meetingID: String, requesterID: String, uuid: 
 case class VoiceSendDtmfRequest(meetingID: String, requesterID: String, uuid: String, dtmfDigit: String) extends InMessage
 case class VoiceDialing(voiceConfId: String, requesterID: String, uuid: String, callState: String) extends InMessage
 case class VoiceHangingUp(voiceConfId: String, requesterID: String, uuid: String, callState: String, hangupCause: String) extends InMessage
+case class ActiveTalkerChanged(voiceConfId: String, voiceUserId: String) extends InMessage
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Whiteboard
@@ -224,3 +230,17 @@ case class CreateAdditionalNotesRequest(meetingID: String, requesterID: String, 
 case class DestroyAdditionalNotesRequest(meetingID: String, requesterID: String, noteID: String) extends InMessage
 case class RequestAdditionalNotesSetRequest(meetingID: String, requesterID: String, additionalNotesSetSize: Int) extends InMessage
 case class SharedNotesSyncNoteRequest(meetingID: String, requesterID: String, noteID: String) extends InMessage
+
+//Transcode
+case class StartTranscoderReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+case class UpdateTranscoderReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+case class StopTranscoderReply(meetingID: String, transcoderId: String) extends InMessage
+case class TranscoderStatusUpdate(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+case class StartProbingReply(meetingID: String, transcoderId: String, params: Map[String, String]) extends InMessage
+
+//Kurento
+case class AllMediaSourcesStopped(meetingID: String) extends InMessage
+case class StartKurentoRtpReply(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage
+case class StartKurentoSendRtpReply(meetingID: String, params: Map[String, String]) extends InMessage
+case class StopKurentoRtpReply(meetingID: String, kurentoEndpointId: String) extends InMessage
+case class UpdateKurentoRtp(meetingID: String, kurentoEndpointId: String, params: Map[String, String]) extends InMessage

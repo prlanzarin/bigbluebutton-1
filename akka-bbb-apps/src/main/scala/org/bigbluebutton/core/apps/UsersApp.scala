@@ -8,6 +8,7 @@ import scala.collection.immutable.ListSet
 import org.bigbluebutton.core.OutMessageGateway
 import org.bigbluebutton.core.LiveMeeting
 import org.bigbluebutton.core.api.GuestPolicy
+import org.bigbluebutton.common.messages.{ Constants => MessagesConstants }
 
 trait UsersApp {
   this: LiveMeeting =>
@@ -289,6 +290,8 @@ trait UsersApp {
       outGW.send(new DisconnectUser(mProps.meetingID, msg.userId))
 
       outGW.send(new UserLeft(msg.meetingID, mProps.recorded, user))
+      phoneLeft()
+      mediaSourceUserLeft(msg.userId);
     }
   }
 
@@ -299,6 +302,7 @@ trait UsersApp {
       usersModel.addUser(uvo)
       log.info("User shared webcam.  meetingId=" + mProps.meetingID + " userId=" + uvo.userID
         + " stream=" + msg.stream + " streams=" + streams)
+      handleUserShareWebcamTranscoder(uvo.userID)
       outGW.send(new UserSharedWebcam(mProps.meetingID, mProps.recorded, uvo.userID, msg.stream))
     }
   }
@@ -311,6 +315,7 @@ trait UsersApp {
         usersModel.addUser(uvo)
         log.info("User unshared webcam.  meetingId=" + mProps.meetingID + " userId=" + uvo.userID
           + " stream=" + msg.stream + " streams=" + streams)
+        handleUserUnshareWebcamTranscoder(uvo.userID)
         outGW.send(new UserUnsharedWebcam(mProps.meetingID, mProps.recorded, uvo.userID, msg.stream))
       }
 
@@ -353,7 +358,7 @@ trait UsersApp {
              */
             new VoiceUser(u.voiceUser.userId, msg.userID, ru.name, ru.name,
               joined = false, locked = false, muted = false,
-              talking = false, u.avatarURL, listenOnly = u.listenOnly)
+              talking = false, u.avatarURL, listenOnly = u.listenOnly, false, false)
           }
         }
         case None => {
@@ -363,7 +368,7 @@ trait UsersApp {
            */
           new VoiceUser(msg.userID, msg.userID, ru.name, ru.name,
             joined = false, locked = false,
-            muted = false, talking = false, ru.avatarURL, listenOnly = false)
+            muted = false, talking = false, ru.avatarURL, listenOnly = false, false, false)
         }
       }
 
@@ -375,7 +380,7 @@ trait UsersApp {
       val uvo = new UserVO(msg.userID, ru.externId, ru.name,
         ru.role, ru.guest, waitingForAcceptance = waitingForAcceptance, emojiStatus = "none", presenter = false,
         hasStream = false, locked = getInitialLockStatus(ru.role),
-        webcamStreams = new ListSet[String](), phoneUser = false, vu,
+        webcamStreams = new ListSet[String](), phoneUser = false, mediaSourceUser = false, vu,
         listenOnly = vu.listenOnly, avatarURL = vu.avatarURL, joinedWeb = true,
         reconnectionStatus = new ReconnectionStatus("", false, null))
 
@@ -425,6 +430,19 @@ trait UsersApp {
           stopAutoStartedRecording()
         }
 
+        val vu = u.voiceUser
+        if (vu.joined || u.listenOnly) {
+          /**
+           * The user that left is still in the voice conference. Maybe this user just got disconnected
+           * and is reconnecting. Make the user as joined only in the voice conference. If we get a
+           * user left voice conference message, then we will remove the user from the users list.
+           */
+
+          switchUserToPhoneUser((new UserJoinedVoiceConfMessage(mProps.voiceBridge,
+            vu.userId, u.userID, u.externUserID, vu.callerName,
+            vu.callerNum, vu.muted, vu.talking, "", u.listenOnly, vu.hasVideo, vu.hasFloor)));
+        }
+
         checkCaptionOwnerLogOut(u.userID)
       }
     }
@@ -468,8 +486,15 @@ trait UsersApp {
         /**
          * If user is not joined listenOnly then user is joined calling through phone or webrtc.
          */
-        val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, msg.callerIdNum,
-          joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, msg.avatarURL, listenOnly = msg.listenOnly)
+        val msu = usersModel.isMediaSourceUser(msg.callerIdNum, meetingModel.kurentoToken)
+        val callerIdNum = if (msu) {
+          msg.callerIdNum.split(meetingModel.kurentoToken)(0)
+        } else {
+          msg.callerIdNum
+        }
+
+        val vu = new VoiceUser(msg.voiceUserId, webUserId, msg.callerIdName, callerIdNum,
+          joined = !msg.listenOnly, locked = false, muted = msg.muted, talking = msg.talking, msg.avatarURL, listenOnly = msg.listenOnly, msg.hasVideo, msg.hasFloor)
 
         /**
          * If user is not joined listenOnly then user is joined calling through phone or webrtc.
@@ -477,17 +502,32 @@ trait UsersApp {
          */
         val uvo = new UserVO(webUserId, msg.externUserId, msg.callerIdName,
           Role.VIEWER, guest = false, waitingForAcceptance = false, emojiStatus = "none", presenter = false,
-          hasStream = false, locked = getInitialLockStatus(Role.VIEWER),
+          hasStream = msg.hasVideo, locked = getInitialLockStatus(Role.VIEWER),
           webcamStreams = new ListSet[String](),
-          phoneUser = !msg.listenOnly, vu, listenOnly = msg.listenOnly, avatarURL = msg.avatarURL, joinedWeb = false,
+          phoneUser = !msg.listenOnly, mediaSourceUser = msu, vu, listenOnly = msg.listenOnly, avatarURL = msg.avatarURL, joinedWeb = false,
           reconnectionStatus = new ReconnectionStatus("", false, null))
 
         usersModel.addUser(uvo)
 
-        log.info("User joined from phone.  meetingId=" + mProps.meetingID + " userId=" + uvo.userID + " user=" + uvo)
+        log.info("User joined from phone.  meetingId=" + mProps.meetingID + " userId=" + uvo.userID + " isMediaSourceUser= " + msu + " user=" + uvo)
 
         outGW.send(new UserJoined(mProps.meetingID, mProps.recorded, uvo))
         outGW.send(new UserJoinedVoice(mProps.meetingID, mProps.recorded, mProps.voiceBridge, uvo))
+        if (uvo.mediaSourceUser) {
+          System.out.println("MSU => " + msu)
+          meetingModel.setSipPhonePresent(msu)
+          handleOutboundStream()
+        }
+
+        // If a SIP phone user is joining via Kurento Apps, signal it to start
+        if (msu) {
+          var params = new scala.collection.mutable.HashMap[String, String]
+          params += MessagesConstants.VOICE_CONF -> mProps.voiceBridge
+          params += MessagesConstants.INPUT -> callerIdNum
+          //Each media uses RTP protocol to send it's data to BBB
+          log.info("Sending a new KurentoRtpRequest = " + params.toString() + " for caller " + uvo.userID + " at endpoint " + callerIdNum)
+          outGW.send(new StartKurentoRtpRequest(mProps.meetingID, uvo.userID, params))
+        }
 
         if (meetingModel.isMeetingMuted()) {
           outGW.send(new MuteVoiceUser(mProps.meetingID, mProps.recorded, uvo.userID, uvo.userID,
@@ -514,7 +554,7 @@ trait UsersApp {
       case Some(user) => {
         val vu = new VoiceUser(msg.voiceUserId, msg.userId, msg.callerIdName,
           msg.callerIdNum, joined = true, locked = false,
-          msg.muted, msg.talking, msg.avatarURL, msg.listenOnly)
+          msg.muted, msg.talking, msg.avatarURL, msg.listenOnly, msg.hasVideo, msg.hasFloor)
         val nu = user.copy(voiceUser = vu, listenOnly = msg.listenOnly)
         usersModel.addUser(nu)
 
@@ -544,7 +584,7 @@ trait UsersApp {
 
         val vu = new VoiceUser(msg.voiceUserId, msg.userId, msg.callerIdName,
           msg.callerIdNum, joined = true, locked = false,
-          msg.muted, msg.talking, msg.avatarURL, msg.listenOnly)
+          msg.muted, msg.talking, msg.avatarURL, msg.listenOnly, msg.hasVideo, msg.hasFloor)
         val nu = user.copy(voiceUser = vu, listenOnly = msg.listenOnly)
         usersModel.addUser(nu)
 
@@ -584,7 +624,7 @@ trait UsersApp {
        * Reset user's voice status.
        */
       val vu = new VoiceUser(user.userID, user.userID, user.name, user.name,
-        joined = false, locked = false, muted = false, talking = false, user.avatarURL, listenOnly = false)
+        joined = false, locked = false, muted = false, talking = false, user.avatarURL, listenOnly = false, false, false)
       val nu = user.copy(voiceUser = vu, phoneUser = false, listenOnly = false)
       usersModel.addUser(nu)
 
@@ -596,9 +636,22 @@ trait UsersApp {
           val userLeaving = usersModel.removeUser(user.userID)
           userLeaving foreach (u => outGW.send(new UserLeft(mProps.meetingID, mProps.recorded, u)))
         }
+        phoneLeft()
       }
     }
     stopRecordingVoiceConference()
+  }
+
+  def phoneLeft() {
+    if (usersModel.getPhoneUsersSendingVideo.isEmpty) {
+      meetingModel.setSipPhonePresent(false)
+      stopAllTranscoders()
+    }
+    log.info("Is there any phoneUser sending video in this meeting? " + meetingModel.isSipPhonePresent())
+  }
+
+  def mediaSourceUserLeft(userId: String) {
+    outGW.send(new StopKurentoRtpRequest(mProps.meetingID, userId))
   }
 
   def handleUserMutedInVoiceConfMessage(msg: UserMutedInVoiceConfMessage) {
@@ -648,6 +701,9 @@ trait UsersApp {
           usersModel.setCurrentPresenterInfo(new Presenter(newPresenterID, newPresenterName, assignedBy))
           outGW.send(new PresenterAssigned(mProps.meetingID, mProps.recorded, new Presenter(newPresenterID, newPresenterName, assignedBy)))
           outGW.send(new UserStatusChange(mProps.meetingID, mProps.recorded, newPresenterID, "presenter", true: java.lang.Boolean))
+          if (meetingModel.isDesksharePresent) {
+            handleOutboundStream()
+          }
         }
         case None => // do nothing
       }

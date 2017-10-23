@@ -13,6 +13,7 @@ import org.bigbluebutton.common.messages.DeskShareRTMPBroadcastStartedEventMessa
 import org.bigbluebutton.common.messages.DeskShareRTMPBroadcastStoppedEventMessage
 import org.bigbluebutton.common.messages.ChannelCallStateInVoiceConfMessage
 import org.bigbluebutton.common.messages.ChannelHangupInVoiceConfMessage
+import org.bigbluebutton.common.messages.ActiveTalkerChangedInVoiceConfMessage
 
 class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceService {
 
@@ -24,10 +25,11 @@ class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceSer
   }
 
   def userJoinedVoiceConf(voiceConfId: String, voiceUserId: String, userId: String, callerIdName: String,
-    callerIdNum: String, muted: java.lang.Boolean, talking: java.lang.Boolean, avatarURL: String) {
+    callerIdNum: String, muted: java.lang.Boolean, talking: java.lang.Boolean, avatarURL: String,
+    hasVideo: java.lang.Boolean, hasFloor: java.lang.Boolean) {
     println("******** FreeswitchConferenceService received voiceUserJoined vui=[" +
       userId + "] wui=[" + voiceUserId + "]")
-    val msg = new UserJoinedVoiceConfMessage(voiceConfId, voiceUserId, userId, callerIdName, callerIdNum, muted, talking, avatarURL)
+    val msg = new UserJoinedVoiceConfMessage(voiceConfId, voiceUserId, userId, callerIdName, callerIdNum, muted, talking, avatarURL, hasVideo, hasFloor)
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
   }
 
@@ -77,6 +79,11 @@ class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceSer
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
   }
 
+  def activeTalkerChangedInVoiceConf(conference: String, voiceUserId: String) {
+    val msg = new ActiveTalkerChangedInVoiceConfMessage(conference, voiceUserId, "UNKNOWN-USER_ID")
+    sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
+  }
+
   def channelCallStateInVoiceConf(conference: String, uniqueId: String, callState: String, voiceUserId: String) {
     val msg = new ChannelCallStateInVoiceConfMessage("UNKNOWN-MEETING-ID", conference, uniqueId, callState, voiceUserId)
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
@@ -86,5 +93,4 @@ class VoiceConferenceService(sender: RedisPublisher) extends IVoiceConferenceSer
     val msg = new ChannelHangupInVoiceConfMessage("UNKNOWN-MEETING-ID", conference, uniqueId, callState, hangupCause, voiceUserId)
     sender.publish(FROM_VOICE_CONF_SYSTEM_CHAN, msg.toJson())
   }
-
 }

@@ -13,9 +13,13 @@ import org.bigbluebutton.common.messages.MessageFromJsonConverter;
 import org.bigbluebutton.common.messages.MessagingConstants;
 import org.bigbluebutton.common.messages.PubSubPingMessage;
 import org.bigbluebutton.common.messages.RegisterUserMessage;
+import org.bigbluebutton.common.messages.StartMediaSourceMessage;
+import org.bigbluebutton.common.messages.StopMediaSourceMessage;
 import org.bigbluebutton.common.messages.UserConnectedToGlobalAudio;
 import org.bigbluebutton.common.messages.UserDisconnectedFromGlobalAudio;
 import org.bigbluebutton.common.messages.ValidateAuthTokenMessage;
+import org.bigbluebutton.common.messages.SetMeetingDesksharePresentMessage;
+import org.bigbluebutton.common.messages.GetDeskshareStatusRequestMessage;
 import org.bigbluebutton.core.api.IBigBlueButtonInGW;
 import org.bigbluebutton.messages.CreateMeetingRequest;
 import org.slf4j.Logger;
@@ -108,7 +112,24 @@ public class MeetingMessageReceiver implements MessageHandler {
 				} else if (msg instanceof ActivityResponseMessage) {
 					ActivityResponseMessage arm = (ActivityResponseMessage) msg;
 					bbbGW.activityResponse(arm.meetingId);
-				} else {
+				}
+				else if (msg instanceof StartMediaSourceMessage) {
+					StartMediaSourceMessage startMediaSourceMessage = (StartMediaSourceMessage) msg;
+					bbbGW.startMediaSource(startMediaSourceMessage.meetingId, startMediaSourceMessage.mediaSourceId, startMediaSourceMessage.mediaSourceUri);
+				}
+				else if (msg instanceof StopMediaSourceMessage) {
+					StopMediaSourceMessage stopMediaSourceMessage = (StopMediaSourceMessage) msg;
+					bbbGW.stopMediaSource(stopMediaSourceMessage.meetingId, stopMediaSourceMessage.mediaSourceId);
+				}
+				else if (msg instanceof SetMeetingDesksharePresentMessage) {
+					SetMeetingDesksharePresentMessage setMeetingDesksharePresentMessage = (SetMeetingDesksharePresentMessage) msg;
+					bbbGW.setMeetingDesksharePresent(setMeetingDesksharePresentMessage.meetingId, setMeetingDesksharePresentMessage.desksharePresent);
+				}
+				else if (msg instanceof GetDeskshareStatusRequestMessage) {
+					GetDeskshareStatusRequestMessage getDeskshareStatusRequestMessage = (GetDeskshareStatusRequestMessage) msg;
+					bbbGW.getDeskshareStatusRequest(getDeskshareStatusRequestMessage.meetingId);
+				}
+				else {
 					System.out.println("Unknown message: [" + message + "]");
 				}
 			} else {

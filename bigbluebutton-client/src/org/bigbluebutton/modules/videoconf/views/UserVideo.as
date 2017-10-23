@@ -160,7 +160,11 @@ package org.bigbluebutton.modules.videoconf.views
       _ns.receiveVideo(true);
       _ns.receiveAudio(false);
       
-      _videoProfile = UserVideo.getVideoProfile(streamName);
+      if (user && user.mediaSourceUser)
+        _videoProfile = BBB.mediaSourceVideoProfile;
+      else
+        _videoProfile = getVideoProfile(streamName);
+
       LOGGER.debug("Remote video profile: {0}", [_videoProfile.toString()]);
       if (_videoProfile == null) {
         throw("Invalid video profile");
@@ -183,7 +187,9 @@ package org.bigbluebutton.modules.videoconf.views
       
       _ns.play(streamName);
 
-      user.addViewingStream(streamName);
+      if (user != null) {
+        user.addViewingStream(streamName);
+      }
       invalidateDisplayList();
     }
 

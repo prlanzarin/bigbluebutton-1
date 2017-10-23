@@ -26,12 +26,12 @@ import org.bigbluebutton.freeswitch.voice.events.ConferenceEventListener;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.BroadcastConferenceCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.CancelDialCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.DialCommand;
+import org.bigbluebutton.freeswitch.voice.freeswitch.actions.SendDtmfCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.EjectAllUsersCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.EjectUserCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.GetAllUsersCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.MuteUserCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.RecordConferenceCommand;
-import org.bigbluebutton.freeswitch.voice.freeswitch.actions.SendDtmfCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.TransferUserToMeetingCommand;
 import org.bigbluebutton.freeswitch.voice.freeswitch.actions.*;
 import org.freeswitch.esl.client.inbound.Client;
@@ -135,6 +135,13 @@ public class ConnectionManager {
 		}
 	}
 
+	public void tranfer(TransferUserToMeetingCommand tutmc) {
+		Client c = manager.getESLClient();
+		if (c.canSend()) {
+			c.sendAsyncApiCommand(tutmc.getCommand(), tutmc.getCommandArgs());
+		}
+	}
+
 	private String createUuid() {
 		System.out.println("Creating UUID");
 		Client c = manager.getESLClient();
@@ -142,34 +149,27 @@ public class ConnectionManager {
 			EslMessage res = c.sendSyncApiCommand("create_uuid", null);
 
 			if (res.getHeaderValue(Name.CONTENT_TYPE).equals(Value.API_RESPONSE)
-				&& !res.getBodyLines().isEmpty()) {
-					return res.getBodyLines().get(0);
-			}
+					&& !res.getBodyLines().isEmpty()) {
+				return res.getBodyLines().get(0);
+					}
 		}
 		return null;
 	}
 
 	public void dial(DialCommand dc) {
-		String uuid = createUuid();
-		if (uuid == null) {
-			System.out.println("UUID is null, aborting dial");
+		String uri = dc.getParamUri();
+		if (uri == null) {
+			System.out.println("URI is null, aborting dial");
 			return;
 		}
 
-		System.out.println("Sending async dial command with uuid" + uuid);
-
-		dc.setOriginationUuid(uuid);
+		System.out.println("Sending async dial command with URI" + uri);
 
 		DialReferenceValuePair value = new DialReferenceValuePair(dc.getRoom(),
-			dc.getParticipant());
+				dc.getParticipant());
 
-		eslEventListener.addDialReference(uuid, value);
-
-		Client c = manager.getESLClient();
-		if (c.canSend()) {
-			String job = c.sendAsyncApiCommand(dc.getCommand(), dc.getCommandArgs());
-			System.out.println("DialCommand job uuid: "+ job);
-		}
+		// Adds dials reference and waits for FreeSWITCH call referencing 'uri'
+		eslEventListener.addDialReference(uri, value);
 	}
 
 	public void cancelDial(CancelDialCommand cdc) {
@@ -187,13 +187,6 @@ public class ConnectionManager {
 		Client c = manager.getESLClient();
 		if (c.canSend()) {
 			c.sendAsyncApiCommand(cdc.getCommand(), cdc.getCommandArgs());
-		}
-	}
-
-	public void tranfer(TransferUserToMeetingCommand tutmc) {
-		Client c = manager.getESLClient();
-		if (c.canSend()) {
-			c.sendAsyncApiCommand(tutmc.getCommand(), tutmc.getCommandArgs());
 		}
 	}
 

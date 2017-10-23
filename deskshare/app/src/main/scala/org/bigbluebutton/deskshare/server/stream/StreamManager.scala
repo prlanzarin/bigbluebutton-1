@@ -21,9 +21,11 @@ package org.bigbluebutton.deskshare.server.stream
 import org.bigbluebutton.deskshare.server.red5.DeskshareApplication
 import org.red5.server.api.scope.IScope
 import org.red5.server.api.so.ISharedObject
+import org.red5.server.api.stream.IBroadcastStream
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.ArrayList
+import java.util.concurrent.TimeUnit
 
 import scala.actors.Actor
 import scala.actors.Actor._

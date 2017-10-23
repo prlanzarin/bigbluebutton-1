@@ -47,8 +47,8 @@ public class FFmpegUtils {
                        + "c=IN IP4 " + localIpAddress + "\r\n"
                        + "t=0 0\r\n"
                        + "m=video " + localVideoPort + " RTP/AVP " + codecId +"\r\n"
-                       + "a=rtpmap:" + codecId + " " + codecName + "/" + sampleRate + "/1\r\n";
-
+                       + "a=rtpmap:" + codecId + " " + codecName + "/" + sampleRate + "/1\r\n"
+                       + "a=fmtp:96 packetization-mode=0\r\n";
 
         Charset charset = Charset.forName("US-ASCII");
         try {

@@ -27,7 +27,7 @@ class LiveMeeting(val mProps: MeetingProperties,
     extends UsersApp with PresentationApp
     with LayoutApp with ChatApp with WhiteboardApp with PollApp
     with BreakoutRoomApp with CaptionApp with SharedNotesApp
-    with VoiceApp {
+    with VoiceApp with KurentoApp {
 
   val log = Logging(context.system, getClass)
 
@@ -133,9 +133,12 @@ class LiveMeeting(val mProps: MeetingProperties,
     outGW.send(new MeetingEnding(msg.meetingId))
 
     meetingModel.meetingHasEnded
+    // Kurento media sources
+    outGW.send(new StopAllMediaSources(msg.meetingId))
     // Maybe this is not necessary since we already send it while
     // handling meeting destroyed message in BigBlueButtonActor
     outGW.send(new StopMeetingTranscoders(msg.meetingId))
+
     outGW.send(new MeetingEnded(msg.meetingId, mProps.recorded, mProps.voiceBridge))
   }
 
@@ -283,4 +286,14 @@ class LiveMeeting(val mProps: MeetingProperties,
     log.info("User endorsed that meeting {} is active", mProps.meetingID)
     outGW.send(new MeetingIsActive(mProps.meetingID))
   }
+
+  // SIP-Deskshare integration
+  def handleSetMeetingDesksharePresent(msg: SetMeetingDesksharePresent) {
+    meetingModel.setDesksharePresent(msg.desksharePresent)
+  }
+
+  def handleGetDeskshareStatusRequest(msg: GetDeskshareStatusRequest) {
+    outGW.send(new GetDeskshareStatusReply(mProps.meetingID, meetingModel.isDesksharePresent()))
+  }
+
 }

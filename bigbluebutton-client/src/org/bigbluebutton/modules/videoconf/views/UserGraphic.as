@@ -36,6 +36,10 @@ package org.bigbluebutton.modules.videoconf.views
             _background.setActualSize(unscaledWidth, unscaledHeight);
         }
 
+        public function updateVideoDimensions(width:Number, height:Number):void {
+            setOriginalDimensions(width,height);
+        }
+
         protected function setOriginalDimensions(width:Number, height:Number):void {
             _origWidth = width;
             _origHeight = height;

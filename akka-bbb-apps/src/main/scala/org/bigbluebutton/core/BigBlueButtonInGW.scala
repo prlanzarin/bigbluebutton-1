@@ -74,7 +74,8 @@ class BigBlueButtonInGW(
           red5DeskShareIP, red5DeskShareApp,
           msg.payload.isBreakout,
           msg.payload.sequence,
-          msg.payload.metadata)
+          msg.payload.metadata,
+          "unknown_kurento_token")
 
         eventBus.publish(BigBlueButtonEvent("meeting-manager", new CreateMeeting(msg.payload.id, mProps)))
       }
@@ -134,6 +135,22 @@ class BigBlueButtonInGW(
 
   def activityResponse(meetingId: String) {
     eventBus.publish(BigBlueButtonEvent(meetingId, new ActivityResponse(meetingId)))
+  }
+
+  def startMediaSource(meetingId: String, mediaSourceId: String, mediaSourceUri: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StartMediaSource(meetingId, mediaSourceId, mediaSourceUri)))
+  }
+
+  def stopMediaSource(meetingId: String, mediaSourceId: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StopMediaSource(meetingId, mediaSourceId)))
+  }
+
+  def setMeetingDesksharePresent(meetingId: String, desksharePresent: java.lang.Boolean) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new SetMeetingDesksharePresent(meetingId, desksharePresent)))
+  }
+
+  def getDeskshareStatusRequest(meetingId: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new GetDeskshareStatusRequest(meetingId)))
   }
 
   /**
@@ -521,9 +538,11 @@ class BigBlueButtonInGW(
   }
 
   def voiceUserJoined(voiceConfId: String, voiceUserId: String, userId: String, callerIdName: String,
-    callerIdNum: String, muted: java.lang.Boolean, avatarURL: String, talking: java.lang.Boolean) {
+    callerIdNum: String, muted: java.lang.Boolean, avatarURL: String, talking: java.lang.Boolean,
+    hasVideo: java.lang.Boolean, hasFloor: java.lang.Boolean) {
+
     eventBus.publish(BigBlueButtonEvent(voiceConfId, new UserJoinedVoiceConfMessage(voiceConfId, voiceUserId, userId, userId, callerIdName,
-      callerIdNum, muted, talking, avatarURL, false /*hardcode listenOnly to false as the message for listenOnly is ConnectedToGlobalAudio*/ )))
+      callerIdNum, muted, talking, avatarURL, false /*hardcode listenOnly to false as the message for listenOnly is ConnectedToGlobalAudio*/ , hasVideo, hasFloor)))
   }
 
   def voiceUserLeft(voiceConfId: String, voiceUserId: String) {
@@ -592,6 +611,10 @@ class BigBlueButtonInGW(
 
   def voiceHangingUp(voiceConfId: String, userId: String, uuid: String, callState: String, hangupCause: String) {
     eventBus.publish(BigBlueButtonEvent(voiceConfId, new VoiceHangingUp(voiceConfId, userId, uuid, callState, hangupCause)))
+  }
+
+  def activeTalkerChanged(voiceConfId: String, voiceUserId: String) {
+    eventBus.publish(BigBlueButtonEvent(voiceConfId, new ActiveTalkerChanged(voiceConfId, voiceUserId)))
   }
 
   // Polling
@@ -667,5 +690,61 @@ class BigBlueButtonInGW(
 
   def sharedNotesSyncNoteRequest(meetingId: String, userId: String, noteId: String) {
     eventBus.publish(BigBlueButtonEvent(meetingId, new SharedNotesSyncNoteRequest(meetingId, userId, noteId)))
+  }
+
+  /**
+   * *******************************************************************
+   * Message Interface for transcode
+   * *****************************************************************
+   */
+
+  def startTranscoderReply(meetingId: String, transcoderId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StartTranscoderReply(meetingId, transcoderId, mapAsScalaMap(params).toMap)))
+  }
+
+  def updateTranscoderReply(meetingId: String, transcoderId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new UpdateTranscoderReply(meetingId, transcoderId, mapAsScalaMap(params).toMap)))
+  }
+
+  def stopTranscoderReply(meetingId: String, transcoderId: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StopTranscoderReply(meetingId, transcoderId)))
+  }
+
+  def transcoderStatusUpdate(meetingId: String, transcoderId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new TranscoderStatusUpdate(meetingId, transcoderId, mapAsScalaMap(params).toMap)))
+  }
+
+  def startProbingReply(meetingId: String, transcoderId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StartProbingReply(meetingId, transcoderId, mapAsScalaMap(params).toMap)))
+  }
+
+  /**
+   * *******************************************************************
+   * Message Interface for kurento
+   * *****************************************************************
+   */
+
+  def allMediaSourcesStopped(meetingId: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new AllMediaSourcesStopped(meetingId)))
+  }
+
+  def startKurentoRtpReply(meetingId: String, kurentoEndpointId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StartKurentoRtpReply(meetingId, kurentoEndpointId, mapAsScalaMap(params).toMap)))
+  }
+
+  def stopKurentoRtpReply(meetingId: String, kurentoEndpointId: String) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StopKurentoRtpReply(meetingId, kurentoEndpointId)))
+  }
+
+  def updateKurentoRtp(meetingId: String, kurentoEndpointId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new UpdateKurentoRtp(meetingId, kurentoEndpointId, mapAsScalaMap(params).toMap)))
+  }
+
+  def updateKurentoToken(token: String) {
+    eventBus.publish(BigBlueButtonEvent("meeting-manager", new UpdateKurentoToken(token)))
+  }
+
+  def startKurentoSendRtpReply(meetingId: String, params: java.util.Map[String, String]) {
+    eventBus.publish(BigBlueButtonEvent(meetingId, new StartKurentoSendRtpReply(meetingId, mapAsScalaMap(params).toMap)))
   }
 }

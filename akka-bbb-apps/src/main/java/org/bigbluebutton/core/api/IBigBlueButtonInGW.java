@@ -18,6 +18,7 @@ public interface IBigBlueButtonInGW {
 	void lockSettings(String meetingID, Boolean locked, Map<String, Boolean> lockSettigs);
 	void activityResponse(String meetingID);
 
+
 	// Polling
 	void votePoll(String meetingId, String userId, String pollId, Integer questionId, Integer answerId);
 	void startPoll(String meetingId, String requesterId, String pollId, String pollType);
@@ -63,19 +64,21 @@ public interface IBigBlueButtonInGW {
 	void ejectUserFromVoice(String meetingID, String userId, String ejectedBy);
 	void ejectUserFromMeeting(String meetingId, String userId, String ejectedBy);
 	void voiceUserJoined(String voiceConfId, String voiceUserId, String userId, String callerIdName, 
-								String callerIdNum, Boolean muted, String avatarURL, Boolean talking);
+								String callerIdNum, Boolean muted, String avatarURL, Boolean talking, Boolean hasVideo, Boolean hasFloor);
 	void voiceUserLeft(String meetingId, String userId);
 	void voiceUserLocked(String meetingId, String userId, Boolean locked);
 	void voiceUserMuted(String meetingId, String userId, Boolean muted);
 	void voiceUserTalking(String meetingId, String userId, Boolean talking);
 	void voiceRecording(String meetingId, String recordingFile, 
 			            String timestamp, Boolean recording);
+	void activeTalkerChanged(String meetingId, String userId);
 
 	void voiceOutboundDialRequest(String meetingID, String requesterID, Map<String, String> options, Map<String, String> params);
 	void voiceCancelDialRequest(String meetingID, String requesterID, String uuid);
 	void voiceSendDtmfRequest(String meetingID, String requesterID, String uuid, String dtmfDigit);
 	void voiceDialing(String meetingID, String userId, String uuid, String callState);
 	void voiceHangingUp(String meetingID, String userId, String uuid, String callState, String hangupCause);
+
 	// Presentation
 	void clear(String meetingID);
 	void removePresentation(String meetingID, String presentationID);
@@ -133,6 +136,10 @@ public interface IBigBlueButtonInGW {
 	void deskShareRTMPBroadcastStopped(String conferenceName, String streamname, int videoWidth, int videoHeight, String timestamp);
 	void deskShareGetInfoRequest(String meetingId, String requesterId, String replyTo);
 
+	// DeskShare SIP interop
+	void setMeetingDesksharePresent(String meetingID, Boolean desksharePresent);
+	void getDeskshareStatusRequest(String meetingID);
+
 	// Shared notes
 	void patchDocument(String meetingID, String requesterID, String noteID, String patch, String operation);
 	void getCurrentDocument(String meetingID, String requesterID);
@@ -140,4 +147,22 @@ public interface IBigBlueButtonInGW {
 	void destroyAdditionalNotes(String meetingID, String requesterID, String noteID);
 	void requestAdditionalNotesSet(String meetingID, String requesterID, int additionalNotesSetSize);
 	void sharedNotesSyncNoteRequest(String meetingID, String requesterID, String noteID);
+
+	//Transcode
+	void startTranscoderReply(String meetingId, String transcoderId, Map<String,String> params);
+	void updateTranscoderReply(String meetingId, String transcoderId, Map<String,String> params);
+	void stopTranscoderReply(String meetingId, String transcoderId);
+	void transcoderStatusUpdate(String meetingId, String transcoderId, Map<String,String> params);
+	void startProbingReply(String meetingId, String transcoderId, Map<String,String> params);
+
+	//Kurento
+	void allMediaSourcesStopped(String meetingId);
+	void startKurentoRtpReply(String meetingId, String kurentoEndpointId, Map<String,String> params);
+	void startKurentoSendRtpReply(String meetingId, Map<String,String> params);
+	void stopKurentoRtpReply(String meetingId, String kurentoEndpointId);
+	void updateKurentoRtp(String meetingId, String kurentoEndpointId, Map<String,String> params);
+	void startMediaSource(String meetingID, String mediaSourceId, String mediaSourceUri);
+	void stopMediaSource(String meetingID, String mediaSourceId);
+	void updateKurentoToken(String token);
+
 }

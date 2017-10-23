@@ -10,7 +10,8 @@ case class MeetingProperties(meetingID: String, externalMeetingID: String, paren
   recorded: Boolean, voiceBridge: String, deskshareBridge: String, duration: Int,
   autoStartRecording: Boolean, allowStartStopRecording: Boolean, webcamsOnlyForModerator: Boolean,
   moderatorPass: String, viewerPass: String, createTime: Long, createDate: String,
-  red5DeskShareIP: String, red5DeskShareApp: String, isBreakout: Boolean, sequence: Int, metadata: java.util.Map[String, String])
+  red5DeskShareIP: String, red5DeskShareApp: String, isBreakout: Boolean, sequence: Int,
+  metadata: java.util.Map[String, String], startKurentoToken: String)
 
 case class MeetingExtensionProp(maxExtensions: Int = 2, numExtensions: Int = 0, extendByMinutes: Int = 20,
   sendNotice: Boolean = true, sent15MinNotice: Boolean = false,
@@ -28,8 +29,15 @@ class MeetingModel {
   private var guestPolicy = GuestPolicy.ASK_MODERATOR
   private var guestPolicySetBy: String = null
 
+  private var _isSipPhonePresent = false
+  private var _isDesksharePresent = false
+  private var _talkerUserId = ""
+  private var _kurentoToken = ""
+
   private var hasLastWebUserLeft = false
   private var lastWebUserLeftOnTimestamp: Long = 0
+  private var VIDEOCONFERENCE_STREAM_NAME = "sip_"
+  val VIDEOCONFERENCE_LOGO_PREFIX = "video_conf_"
 
   private var voiceRecordingFilename: String = ""
   private var rtmpBroadcastingUrl: String = ""
@@ -138,4 +146,43 @@ class MeetingModel {
   def setGuestPolicy(policy: GuestPolicy.GuestPolicy) = guestPolicy = policy
   def getGuestPolicySetBy(): String = guestPolicySetBy
   def setGuestPolicySetBy(user: String) = guestPolicySetBy = user
+
+  def setSipPhonePresent(value: Boolean) {
+    _isSipPhonePresent = value
+  }
+
+  def isSipPhonePresent(): Boolean = {
+    _isSipPhonePresent
+  }
+
+  // SIP-Deskshare interop
+  def setDesksharePresent(value: Boolean) = {
+    _isDesksharePresent = value
+  }
+
+  def isDesksharePresent(): Boolean = {
+    _isDesksharePresent
+  }
+
+  // SIP video switching floor holder
+  def setTalkerUserId(userId: String) {
+    _talkerUserId = userId
+  }
+
+  def talkerUserId(): String = {
+    _talkerUserId
+  }
+
+  def isTalker(userId: String): Boolean = {
+    _talkerUserId == userId
+  }
+
+  // RTSP/SIP Kurento client identifier
+  def setKurentoToken(token: String) {
+    _kurentoToken = token
+  }
+
+  def kurentoToken(): String = {
+    _kurentoToken
+  }
 }

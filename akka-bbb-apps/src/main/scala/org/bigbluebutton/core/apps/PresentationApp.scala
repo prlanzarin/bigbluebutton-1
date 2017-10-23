@@ -24,6 +24,7 @@ trait PresentationApp {
 
   def handleInitializeMeeting(msg: InitializeMeeting) {
 
+    meetingModel.setKurentoToken(msg.kurentoToken)
   }
 
   def handleClearPresentation(msg: ClearPresentation) {

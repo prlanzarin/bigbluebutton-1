@@ -24,6 +24,7 @@ object UsersMessageToJsonConverter {
     wuser += "locked" -> user.locked
     wuser += "webcam_stream" -> user.webcamStreams.toArray
     wuser += "phone_user" -> user.phoneUser
+    wuser += "media_source_user" -> user.mediaSourceUser
     wuser += "listenOnly" -> user.listenOnly
     wuser += "avatarURL" -> user.avatarURL
 
@@ -36,6 +37,8 @@ object UsersMessageToJsonConverter {
     vuser += "locked" -> user.voiceUser.locked
     vuser += "muted" -> user.voiceUser.muted
     vuser += "talking" -> user.voiceUser.talking
+    vuser += "has_video" -> user.voiceUser.hasVideo
+    vuser += "has_floor" -> user.voiceUser.hasFloor
 
     wuser.put("voiceUser", mapAsJavaMap(vuser))
 

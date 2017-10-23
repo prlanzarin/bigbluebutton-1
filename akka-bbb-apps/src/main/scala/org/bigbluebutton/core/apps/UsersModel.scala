@@ -26,6 +26,7 @@ class UsersModel {
   private var meetingMuted = false
   private var recordingVoice = false
   private var reconnectionInterval = FiniteDuration(30, "seconds")
+  private var GLOBAL_CALL_NAME_PREFIX = "GLOBAL_CALL_"
 
   private var currentPresenter = new Presenter("system", "system", "system")
 
@@ -109,6 +110,14 @@ class UsersModel {
 
   def getUsers(): Array[UserVO] = {
     uservos.values toArray
+  }
+
+  def getMediaSourceUsers(): Array[UserVO] = {
+    uservos.values filter (u => u.mediaSourceUser) toArray
+  }
+
+  def getMediaSourceUser(userID: String): Option[UserVO] = {
+    uservos.values find (u => u.userID == userID)
   }
 
   def numModerators(): Int = {
@@ -230,5 +239,65 @@ class UsersModel {
 
   def getReconnectionDeadline: Deadline = {
     reconnectionInterval.fromNow
+  }
+
+  def isGlobalCallAgent(callername: String): Boolean = {
+    Option(callername) match {
+      case Some(c) => c.startsWith(GLOBAL_CALL_NAME_PREFIX)
+      case None => false
+    }
+  }
+
+  def getPhoneUsersSendingVideo(): Array[UserVO] = {
+    uservos.values filter (u => ((u.phoneUser == true || u.mediaSourceUser) && u.hasStream == true)) toArray
+  }
+
+  def activeTalkerChangedInWebconference(oldActiveTalkerUserId: String, newActiveTalkerUserId: String): Boolean = {
+    val changed: Boolean = getUser(oldActiveTalkerUserId) match {
+      case Some(ou) =>
+        getUser(newActiveTalkerUserId) match {
+          case Some(nu) => ou.phoneUser ^ nu.phoneUser
+          case _ => ou.phoneUser ^ newActiveTalkerUserId.startsWith(GLOBAL_CALL_NAME_PREFIX)
+        }
+
+      case _ =>
+        getUser(newActiveTalkerUserId) match {
+          case Some(nu) => oldActiveTalkerUserId.startsWith(GLOBAL_CALL_NAME_PREFIX) ^ newActiveTalkerUserId.startsWith(GLOBAL_CALL_NAME_PREFIX)
+          case _ => false
+        }
+    }
+    return changed
+  }
+
+  def getUserMainWebcamStream(userId: String): String = {
+    getUser(userId) match {
+      case Some(u) =>
+        Option(u.webcamStreams) match {
+          case Some(streams) => streams.head
+          case None => ""
+        }
+      case None => ""
+    }
+  }
+
+  def getTranscoderParam(key: String, params: Map[String, String]): Option[String] = {
+    Option(params) match {
+      case Some(map) =>
+        map.get(key) match {
+          case Some("") => None
+          case Some(s) => Option(s)
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
+  def isMediaSourceUser(callerIdNum: String, kurentoToken: String): Boolean = {
+    System.out.println("isMediaSourceUser ? callerIdNum = " + callerIdNum + " , kurentoToken = " + kurentoToken)
+    Option(callerIdNum) match {
+      case Some("") => false
+      case Some(c) => c.contains(kurentoToken)
+      case None => false
+    }
   }
 }

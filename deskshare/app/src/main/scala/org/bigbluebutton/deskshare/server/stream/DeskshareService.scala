@@ -58,6 +58,14 @@ class DeskshareService(streamManager: StreamManager, sessionGateway: SessionMana
 	
 	def stopSharingDesktop(meetingId: String) {
 	  log.debug("DeskshareService: Stop sharing for meeting [%s]", meetingId)
+	  var removeSession = false
+	  if (streamManager.hasRtmpStream(meetingId)) {
+	  	streamManager.stopRtmpStream(meetingId)
+	  	removeSession = true
+	  }
 	  sessionGateway.stopSharingDesktop(meetingId, meetingId)
+	  if (removeSession) {
+	  	sessionGateway.removeSession(meetingId, 1)
+	  }
 	}
 }

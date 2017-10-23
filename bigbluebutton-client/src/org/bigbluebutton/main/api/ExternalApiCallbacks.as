@@ -391,7 +391,8 @@ package org.bigbluebutton.main.api
       if (inEchoTest) {
         _dispatcher.dispatchEvent(new WebRTCEchoTestEvent(WebRTCEchoTestEvent.WEBRTC_ECHO_TEST_STARTED));
       } else {
-        _dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED));
+        var e:WebRTCCallEvent = new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED);
+        _dispatcher.dispatchEvent(e);
       }
     }
     

@@ -26,4 +26,8 @@ public interface Recorder {
 	public void stop();
 	public void addListener(RecordStatusListener l);
 	public void removeListener(RecordStatusListener l);
+	public String getFileName();
+	public void sendRecordStartedEvent();
+	public void sendRecordStoppedEvent();
+	public void sendRecordErrorEvent(String reason);
 }

@@ -166,6 +166,9 @@ public class UsersMessageReceiver implements MessageHandler{
 					  case VoiceConfRecordingStartedMessage.VOICE_CONF_RECORDING_STARTED:
 						  processVoiceConfRecordingStartedMessage(message);
 						  break;
+					  case ActiveTalkerChangedInVoiceConfMessage.ACTIVE_TALKER_CHANGED_IN_VOICE_CONF:
+						  processActiveTalkerChangedInVoiceConfMessage(message);
+						  break;
 					  case ChannelCallStateInVoiceConfMessage.CHANNEL_CALL_STATE_IN_VOICE_CONF:
 						  processChannelCallStateInVoiceConfMessage(message);
 						  break;
@@ -175,13 +178,40 @@ public class UsersMessageReceiver implements MessageHandler{
 					}
 				}
 			}
+		} else if (channel.equalsIgnoreCase(MessagingConstants.FROM_BBB_TRANSCODE_SYSTEM_CHAN)) {
+			JsonParser parser = new JsonParser();
+			JsonObject obj = (JsonObject) parser.parse(message);
+			if (obj.has("header") && obj.has("payload")) {
+				JsonObject header = (JsonObject) obj.get("header");
+
+				if (header.has("name")) {
+					String messageName = header.get("name").getAsString();
+					switch (messageName) {
+						case StartTranscoderReplyMessage.START_TRANSCODER_REPLY:
+							processStartTranscoderReplyMessage(message);
+							break;
+						case UpdateTranscoderReplyMessage.UPDATE_TRANSCODER_REPLY:
+							processUpdateTranscoderReplyMessage(message);
+							break;
+						case StopTranscoderReplyMessage.STOP_TRANSCODER_REPLY:
+							processStopTranscoderReplyMessage(message);
+							break;
+						case TranscoderStatusUpdateMessage.TRANSCODER_STATUS_UPDATE:
+							processTranscoderStatusUpdateMessage(message);
+							break;
+						case StartProbingReplyMessage.START_PROBING_REPLY:
+							processStartProbingReplyMessage(message);
+							break;
+					}
+				}
+			}
 		}
 	}
 	
 	private void processUserJoinedVoiceConfMessage(String json) {
 		UserJoinedVoiceConfMessage msg = UserJoinedVoiceConfMessage.fromJson(json);
 		if (msg != null) {
-			bbbInGW.voiceUserJoined(msg.voiceConfId, msg.voiceUserId, msg.userId, msg.callerIdName, msg.callerIdNum, msg.muted, msg.avatarURL, msg.talking);
+			bbbInGW.voiceUserJoined(msg.voiceConfId, msg.voiceUserId, msg.userId, msg.callerIdName, msg.callerIdNum, msg.muted, msg.avatarURL, msg.talking, msg.hasVideo, msg.hasFloor);
 		}
 	}
 
@@ -441,6 +471,48 @@ public class UsersMessageReceiver implements MessageHandler{
 		ChannelHangupInVoiceConfMessage msg = ChannelHangupInVoiceConfMessage.fromJson(message);
 		if (msg != null) {
 			bbbInGW.voiceHangingUp(msg.voiceConfId, msg.userId, msg.uniqueId, msg.callState, msg.hangupCause);
+		}
+	}
+
+	private void processActiveTalkerChangedInVoiceConfMessage(String message) {
+		ActiveTalkerChangedInVoiceConfMessage msg = ActiveTalkerChangedInVoiceConfMessage.fromJson(message);
+		if (msg != null) {
+			bbbInGW.activeTalkerChanged(msg.voiceConfId, msg.voiceUserId);
+		}
+	}
+
+	private void processStartTranscoderReplyMessage(String message) {
+		StartTranscoderReplyMessage msg = StartTranscoderReplyMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.startTranscoderReply(msg.meetingId, msg.transcoderId, msg.params);
+		}
+	}
+
+	private void processUpdateTranscoderReplyMessage(String message) {
+		UpdateTranscoderReplyMessage msg = UpdateTranscoderReplyMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.updateTranscoderReply(msg.meetingId, msg.transcoderId, msg.params);
+		}
+	}
+
+	private void processStopTranscoderReplyMessage(String message) {
+		StopTranscoderReplyMessage msg = StopTranscoderReplyMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.stopTranscoderReply(msg.meetingId, msg.transcoderId);
+		}
+	}
+
+	private void processTranscoderStatusUpdateMessage(String message) {
+		TranscoderStatusUpdateMessage msg = TranscoderStatusUpdateMessage.fromJson(message);
+		if(msg !=null){
+			bbbInGW.transcoderStatusUpdate(msg.meetingId, msg.transcoderId, msg.params);
+		}
+	}
+
+	private void processStartProbingReplyMessage(String message) {
+		StartProbingReplyMessage msg = StartProbingReplyMessage.fromJson(message);
+		if (msg != null){
+			bbbInGW.startProbingReply(msg.meetingId, msg.transcoderId, msg.params);
 		}
 	}
 }

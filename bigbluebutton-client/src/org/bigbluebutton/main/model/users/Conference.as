@@ -38,7 +38,7 @@ package org.bigbluebutton.main.model.users {
 	
 	public class Conference {
 		public var userEjectedFromMeeting:Boolean = false;
-		public var meetingName:String;
+      public var meetingName:String;
 		
 		public var externalMeetingID:String;
 		

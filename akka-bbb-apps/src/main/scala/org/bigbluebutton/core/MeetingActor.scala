@@ -352,6 +352,10 @@ class MeetingActor(val mProps: MeetingProperties,
     case msg: DeskShareRTMPBroadcastStoppedRequest => liveMeeting.handleDeskShareRTMPBroadcastStoppedRequest(msg)
     case msg: DeskShareGetDeskShareInfoRequest => liveMeeting.handleDeskShareGetDeskShareInfoRequest(msg)
 
+    // SIP-Deskshare
+    case msg: SetMeetingDesksharePresent => liveMeeting.handleSetMeetingDesksharePresent(msg)
+    case msg: GetDeskshareStatusRequest => liveMeeting.handleGetDeskshareStatusRequest(msg)
+
     // Guest
     case msg: GetGuestPolicy => liveMeeting.handleGetGuestPolicy(msg)
     case msg: SetGuestPolicy => liveMeeting.handleSetGuestPolicy(msg)
@@ -371,6 +375,23 @@ class MeetingActor(val mProps: MeetingProperties,
     case msg: VoiceSendDtmfRequest => liveMeeting.handleVoiceSendDtmfRequest(msg)
     case msg: VoiceDialing => liveMeeting.handleVoiceDialing(msg)
     case msg: VoiceHangingUp => liveMeeting.handleVoiceHangingUp(msg)
+
+    // Transcoder
+    case msg: StartTranscoderReply => liveMeeting.handleStartTranscoderReply(msg)
+    case msg: UpdateTranscoderReply => liveMeeting.handleUpdateTranscoderReply(msg)
+    case msg: StopTranscoderReply => liveMeeting.handleStopTranscoderReply(msg)
+    case msg: TranscoderStatusUpdate => liveMeeting.handleTranscoderStatusUpdate(msg)
+
+    // Kurento
+    case msg: ActiveTalkerChanged => liveMeeting.handleActiveTalkerChanged(msg)
+    case msg: StartMediaSource => liveMeeting.handleStartMediaSource(msg)
+    case msg: StopMediaSource => liveMeeting.handleStopMediaSource(msg)
+    case msg: AllMediaSourcesStopped => liveMeeting.handleAllMediaSourcesStopped(msg)
+    case msg: StartKurentoRtpReply => liveMeeting.handleStartKurentoRtpReply(msg)
+    case msg: StopKurentoRtpReply => liveMeeting.handleStopKurentoRtpReply(msg)
+    case msg: UpdateKurentoRtp => liveMeeting.handleUpdateKurentoRtp(msg)
+    case msg: UpdateKurentoToken => liveMeeting.handleUpdateKurentoToken(msg)
+    case msg: StartKurentoSendRtpReply => liveMeeting.handleStartKurentoSendRtpReply(msg)
 
     case _ => // do nothing
   }

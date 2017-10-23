@@ -61,6 +61,10 @@ public class DialCommand extends FreeswitchCommand {
 		return params.get("destination");
 	}
 
+	public String getParamUri() {
+		return params.get("uri");
+	}
+
 	public String getCompleteDestination() {
 		return getModuleProfile() + getDestination();
 	}

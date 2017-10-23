@@ -43,4 +43,6 @@ public interface MessagingService {
 	void registerUser(String meetingID, String internalUserId, String fullname, String role, String externUserID, String authToken, String avatarURL, String guest);
 	void sendKeepAlive(String system, Long timestamp);
 	void sendStunTurnInfo(String meetingId, String internalUserId, Set<StunServer> stuns, Set<TurnEntry> turns);
+	void startMediaSource(String meetingID, String mediaSourceId, String mediaSourceUri);
+	void stopMediaSource(String meetingID, String mediaSourceId);
 }

@@ -19,6 +19,8 @@
 package org.bigbluebutton.deskshare.server.red5
 
 import org.red5.server.api.{IContext, IConnection}
+import org.red5.server.api.stream.IBroadcastStream
+import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.so.SharedObjectService
 import org.red5.server.api.so.{ISharedObject, ISharedObjectService}
 import org.red5.server.stream.IProviderService
@@ -66,7 +68,6 @@ class DeskshareApplication(streamManager: StreamManager, deskShareServer: DeskSh
 	
 	override def appConnect(conn: IConnection, params: Array[Object]): Boolean = {
 		logger.debug("deskShare appConnect to scope " + conn.getScope().getContextPath());
-		var meetingId = params(0).asInstanceOf[String]
 		super.appConnect(conn, params);
 	}
 	

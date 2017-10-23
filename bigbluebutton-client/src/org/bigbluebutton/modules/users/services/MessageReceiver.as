@@ -51,7 +51,7 @@ package org.bigbluebutton.modules.users.services
   import org.bigbluebutton.main.model.users.events.UsersConnectionEvent;
   import org.bigbluebutton.modules.screenshare.events.WebRTCViewStreamEvent;
   import org.bigbluebutton.modules.users.events.MeetingMutedEvent;
-
+  
   public class MessageReceiver implements IMessageListener
   {
 	private static const LOGGER:ILogger = getClassLogger(MessageReceiver);
@@ -686,13 +686,21 @@ package org.bigbluebutton.modules.users.services
       user.userLocked = joinedUser.locked;
       user.avatarURL = joinedUser.avatarURL;
       user.me = (user.userID == UserManager.getInstance().getConference().getMyUserId());
-
+      user.phoneUser = joinedUser.phoneUser;
+      user.mediaSourceUser = joinedUser.mediaSourceUser;
+      LOGGER.info("User joined = " + JSON.stringify(user));
       UserManager.getInstance().getConference().addUser(user);
       
       if (joinedUser.hasStream) {
-        var streams:Array = joinedUser.webcamStream;
-        for each(var stream:String in streams) {
-          UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
+
+        if(joinedUser.phoneUser && !joinedUser.mediaSourceUser)
+            user.hasStream = joinedUser.hasStream;
+
+        else {
+           var streams:Array = joinedUser.webcamStream;
+           for each(var stream:String in streams) {
+              UserManager.getInstance().getConference().sharedWebcam(user.userID, stream);
+           }
         }
       }
 

@@ -26,9 +26,11 @@ public class UserJoinedVoiceConfMessage {
 	public final Boolean muted;
 	public final Boolean talking;
 	public final String avatarURL;
+	public final Boolean hasVideo;
+	public final Boolean hasFloor;
 	
 	public UserJoinedVoiceConfMessage(String voiceConfId, String voiceUserId, String userId,
-			String callerIdName, String callerIdNum, Boolean muted, Boolean talking, String avatarURL) {
+			String callerIdName, String callerIdNum, Boolean muted, Boolean talking, String avatarURL, Boolean hasVideo, Boolean hasFloor) {
 		this.voiceConfId = voiceConfId;
 		this.voiceUserId = voiceUserId;
 		this.userId = userId;
@@ -37,6 +39,8 @@ public class UserJoinedVoiceConfMessage {
 		this.muted = muted;
 		this.talking = talking;
 		this.avatarURL = avatarURL;
+		this.hasVideo = hasVideo;
+		this.hasFloor = hasFloor;
 	}
 	
 	public String toJson() {
@@ -49,6 +53,8 @@ public class UserJoinedVoiceConfMessage {
 		payload.put(MUTED, muted);
 		payload.put(TALKING, talking);
 		payload.put(AVATAR_URL, avatarURL);
+		payload.put(Constants.HAS_VIDEO, hasVideo);
+		payload.put(Constants.HAS_FLOOR, hasFloor);
 		
 		java.util.HashMap<String, Object> header = MessageBuilder.buildHeader(USER_JOINED_VOICE_CONF, VERSION, null);
 
@@ -72,8 +78,10 @@ public class UserJoinedVoiceConfMessage {
 							&& payload.has(CALLER_ID_NAME)
 							&& payload.has(CALLER_ID_NUM)
 							&& payload.has(MUTED)
-							&& payload.has(TALKING) 
-							&& payload.has(AVATAR_URL)) {
+							&& payload.has(TALKING)
+							&& payload.has(AVATAR_URL)
+							&& payload.has(Constants.HAS_VIDEO)
+							&& payload.has(Constants.HAS_FLOOR)) {
 						String voiceConfId = payload.get(VOICE_CONF_ID).getAsString();
 						String voiceUserId = payload.get(VOICE_USER_ID).getAsString();
 						String userId = payload.get(USER_ID).getAsString();
@@ -82,7 +90,10 @@ public class UserJoinedVoiceConfMessage {
 						Boolean muted = payload.get(MUTED).getAsBoolean();
 						Boolean talking = payload.get(TALKING).getAsBoolean();
 						String avatarURL = payload.get(AVATAR_URL).getAsString();
-						return new UserJoinedVoiceConfMessage(voiceConfId, voiceUserId, userId, callerIdName, callerIdNum, muted, talking, avatarURL);
+						Boolean hasVideo = payload.get(Constants.HAS_VIDEO).getAsBoolean();
+						Boolean hasFloor = payload.get(Constants.HAS_FLOOR).getAsBoolean();
+						return new UserJoinedVoiceConfMessage(voiceConfId, voiceUserId, userId, callerIdName, callerIdNum, muted, talking, avatarURL, hasVideo, hasFloor);
+						
 					}
 				} 
 			}

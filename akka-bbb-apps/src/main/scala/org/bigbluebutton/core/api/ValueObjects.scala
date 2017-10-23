@@ -126,6 +126,7 @@ case class UserVO(
   locked: Boolean,
   webcamStreams: Set[String],
   phoneUser: Boolean,
+  mediaSourceUser: Boolean,
   voiceUser: VoiceUser,
   listenOnly: Boolean,
   avatarURL: String,
@@ -142,7 +143,9 @@ case class VoiceUser(
   muted: Boolean,
   talking: Boolean,
   avatarURL: String,
-  listenOnly: Boolean)
+  listenOnly: Boolean,
+  hasVideo: Boolean,
+  hasFloor: Boolean)
 
 case class MeetingConfig(name: String,
   id: MeetingID,

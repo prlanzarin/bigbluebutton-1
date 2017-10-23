@@ -1,4 +1,3 @@
-
 package org.bigbluebutton.transcode.core;
 
 import java.io.BufferedReader;
@@ -41,6 +40,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
 
     public static enum Type{
         TRANSCODE_RTP_TO_RTMP,
+        TRANSCODE_RTMP_TO_RTSP,
         TRANSCODE_RTMP_TO_RTP,
         TRANSCODE_FILE_TO_RTP,
         TRANSCODE_FILE_TO_RTMP,
@@ -83,6 +83,8 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
     private String remoteVideoPort;
     private String sdpPath;
     private String sourceModule;
+    private String codec;
+    private String streamType;
     private VideoTranscoderObserver observer;
     private String globalVideoWidth = "640";// get this from properties (Stored in FFmpegUtils)
     private String globalVideoHeight = "480";// get this from properties
@@ -108,6 +110,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
             stop();
         } else if (msg instanceof UpdateVideoTranscoderRequest) {
             UpdateVideoTranscoderRequest uvtr = (UpdateVideoTranscoderRequest) msg;
+            System.out.println("Update System Transcoder request params " + uvtr.getParams());
             update(uvtr.getParams());
         } else if (msg instanceof DestroyVideoTranscoderRequest) {
             destroyTranscoder();
@@ -142,6 +145,8 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
+                    this.codec = params.get(Constants.CODEC);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
 
                 case Constants.TRANSCODE_RTMP_TO_RTP:
@@ -153,6 +158,16 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
                     this.videoStreamName = params.get(Constants.INPUT);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
+                    break;
+
+                case Constants.TRANSCODE_RTMP_TO_RTSP:
+                    this.type = Type.TRANSCODE_RTMP_TO_RTSP;
+                    this.sourceIp = params.get(Constants.LOCAL_IP_ADDRESS);
+                    this.remoteVideoPort = params.get(Constants.REMOTE_VIDEO_PORT);
+                    this.destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
+                    this.videoStreamName = params.get(Constants.INPUT);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
                     break;
 
                 case Constants.TRANSCODE_FILE_TO_RTP:
@@ -246,15 +261,20 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
 
         switch(type){
             case TRANSCODE_RTMP_TO_RTP:
-
                 if(!areRtmpToRtpParametersValid()) {
                     System.out.println("  > ***TRANSCODER WILL NOT START: Rtmp to Rtp Parameters are invalid");
                     return false;
                 }
 
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
+                                + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        input = "rtmp://" + sourceIp + "/deskShare/" + meetingId + " live=1";
+                }
 
-                input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
-                        + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
                 outputLive = "rtp://" + destinationIp + ":" + remoteVideoPort + "?localport=" + localVideoPort;
                 output = "";
 
@@ -278,6 +298,51 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.setAnalyzeDuration("1000"); // 1ms
                 ffmpeg.setProbeSize("32"); // 1ms
+
+                System.out.println("Preparing FFmpeg process monitor");
+                command = ffmpeg.getFFmpegCommand(true);
+                break;
+
+            case TRANSCODE_RTMP_TO_RTSP:
+
+                if (!areRtmpToRtspParametersValid()) {
+                    System.out.println("  > ***TRANSCODER WILL NOT START: Rtmp to Rtsp Parameters are invalid");
+                    return false;
+                }
+
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        input = "rtmp://" + sourceIp + "/video/" + meetingId + "/"
+                                + videoStreamName + " live=1"; //the full input is composed by the videoStreamName
+                        outputLive = "rtsp://" + destinationIp + ":" + remoteVideoPort + "/live/" + meetingId + "/" + videoStreamName;
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        input = "rtmp://" + sourceIp + "/deskShare/" + meetingId + " live=1";
+                        outputLive = "rtsp://" + destinationIp + ":" + remoteVideoPort + "/live/" + meetingId + "/deskShare";
+                }
+
+                output = "";
+
+                ffmpeg = new FFmpegCommand();
+                ffmpeg.setFFmpegPath(FFMPEG_PATH);
+                ffmpeg.setInput(input);
+                ffmpeg.addRtmpInputConnectionParameter(meetingId);
+                ffmpeg.addRtmpInputConnectionParameter("transcoder-"+transcoderId);
+                ffmpeg.setFrameRate(15);
+                ffmpeg.setBufSize(1024);
+                ffmpeg.setGop(1); //MCU compatibility
+                ffmpeg.setCodec("libx264");
+                ffmpeg.setMaxRate(1024);
+                ffmpeg.setSliceMode("dyn");
+                ffmpeg.setMaxNalSize("1024");
+                ffmpeg.setRtpFlags("h264_mode0"); //RTP's packetization mode 0
+                ffmpeg.setProfile("baseline");
+                ffmpeg.setFormat("rtsp");
+                ffmpeg.setPayloadType(FFmpegConstants.CODEC_ID_H264);
+                ffmpeg.setLoglevel("quiet");
+                ffmpeg.setOutput(outputLive);
+                ffmpeg.setAnalyzeDuration("1000"); // 1ms
+                ffmpeg.setProbeSize("32"); // 1ms
                 System.out.println("Preparing FFmpeg process monitor");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
@@ -290,31 +355,52 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 }
 
                 //Create SDP FILE
-                sdpPath = FFmpegUtils.createSDPVideoFile(callername, sourceIp, localVideoPort, FFmpegConstants.CODEC_NAME_H264, FFmpegConstants.CODEC_ID_H264, FFmpegConstants.SAMPLE_RATE_H264, voiceBridge);
+                sdpPath = FFmpegUtils.createSDPVideoFile(callername, sourceIp, localVideoPort, FFmpegConstants.CODEC_NAME_H264, FFmpegConstants.CODEC_ID_H264, FFmpegConstants.SAMPLE_RATE_H264, Constants.COPY.equals(this.codec)?callername:voiceBridge);
                 input = sdpPath;
 
-                //Generate video stream name
-                videoStreamName = generateVideoStreamName(type);
-                outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
-                        + videoStreamName+" live=1";
-                output = videoStreamName;
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        //Generate video stream name
+                        videoStreamName = generateVideoStreamName(type);
+                        outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
+                                + videoStreamName+" live=1";
+                        output = videoStreamName;
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        outputLive = "rtmp://" + destinationIp + "/deskShare/" + meetingId + " live=1";
+                        output = Constants.DESKSHARE;
+                }
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(input);
+
+                // Used codec is COPY, H264 transcoding won't be used
+                if (Constants.COPY.equals(this.codec)) {
+                    ffmpeg.setLoglevel("quiet");
+                    ffmpeg.setOutput(outputLive);
+                    ffmpeg.addRtmpOutputConnectionParameter(meetingId);
+                    ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
+                    ffmpeg.setCodec("copy");
+                    ffmpeg.setFormat("flv");
+                    command = ffmpeg.getFFmpegCommand(true);
+                    break;
+                }
+
                 ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("verbose");
+                ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
                 ffmpeg.setVideoBitRate(1024);
                 ffmpeg.setBufSize(1024);
                 ffmpeg.setMaxRate(1024);
-                ffmpeg.setCodec("libopenh264");
+                ffmpeg.setCodec(this.codec);
                 ffmpeg.setProfile("baseline");
-                ffmpeg.setAnalyzeDuration("1000"); // 1ms
+                ffmpeg.setAnalyzeDuration("1000"); // 10ms
                 ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
-                ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=15");
+                ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=30");
+
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
 
@@ -370,7 +456,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 ffmpeg.setFrameSize("640x480");
                 ffmpeg.setIgnoreLoop(0);
                 ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("verbose");
+                ffmpeg.setLoglevel("quiet");
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
                 ffmpeg.setOutput(outputLive);
@@ -544,6 +630,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     String localVideoPort = params.get(Constants.LOCAL_VIDEO_PORT);
                     String remoteVideoPort = params.get(Constants.REMOTE_VIDEO_PORT);
                     String destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
+                    String streamType = params.get(Constants.STREAM_TYPE);
 
                     setType(transcoderType);
                     setVideoStreamName(input);
@@ -551,6 +638,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     setLocalVideoPort(localVideoPort);
                     setRemoteVideoPort(remoteVideoPort);
                     setDestinationIp(destinationIp);
+                    setStreamType(streamType);
 
                     status = Status.UPDATING; //mark update status
                     stopTranscoder();
@@ -748,12 +836,42 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
         return areVideoPortsValid();
     }
 
+    public boolean areRtmpToRtspParametersValid() {
+        //log.debug("Checking Rtmp to Rtp Transcoder Parameters...");
+
+        if(meetingId == null || meetingId.isEmpty()) {
+           //log.debug("meetingId is null or empty");
+           return false;
+        }
+
+        if(videoStreamName == null || videoStreamName.isEmpty()) {
+           //log.debug("videoStreamName is null or empty");
+           return false;
+        }
+
+        if(remoteVideoPort == null || remoteVideoPort.isEmpty()) {
+           //log.debug("remoteVideoPort is null or empty");
+           return false;
+        }
+
+        if(remoteVideoPort.equals("0")) {
+           //log.debug("remoteVideoPort is 0");
+           return false;
+        }
+
+        return true;
+    }
+
     public boolean areRtpToRtmpParametersValid() {
         //log.debug("Checking Rtp to Rtmp Transcoder Parameters...");
 
         if(meetingId == null || meetingId.isEmpty()) {
            //log.debug("meetingId is null or empty");
            return false;
+        }
+
+        if (streamType == null || streamType.isEmpty()) {
+            return false;
         }
 
         return isSdpPathValid();
@@ -837,7 +955,9 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
     public String generateVideoStreamName(Type type){
         switch(type){
             case TRANSCODE_RTP_TO_RTMP:
-                return FFmpegUtils.GLOBAL_VIDEO_STREAM_NAME_PREFIX + voiceBridge + "_" + System.currentTimeMillis();
+                return Constants.COPY.equals(this.codec) ?
+                callername + "_" + System.currentTimeMillis()
+                :FFmpegUtils.GLOBAL_VIDEO_STREAM_NAME_PREFIX + voiceBridge + "_" + System.currentTimeMillis();
             case TRANSCODE_FILE_TO_RTMP:
                 return FFmpegUtils.VIDEOCONF_LOGO_STREAM_NAME_PREFIX + voiceBridge + "_" + System.currentTimeMillis();
             default:
@@ -902,6 +1022,11 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
             default:
                 return "UNKNOWN";
         }
+    }
+
+    public void setStreamType(String streamType) {
+      if(streamType != null)
+        this.streamType = streamType;
     }
 
     public void setSourceIp(String sourceIp) {

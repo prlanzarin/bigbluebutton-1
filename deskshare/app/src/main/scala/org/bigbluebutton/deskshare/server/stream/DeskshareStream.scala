@@ -92,7 +92,7 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 		if (record) {
 	  		recorder.stop()
 	  	}
-		dsClient.sendDeskshareStreamStopped(new ArrayList[Object]())
+		dsClient.sendDeskshareStreamStopped(name)
 		broadcastStream.stop()
 	    broadcastStream.close()	  
 	    exit()
@@ -103,7 +103,7 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 	  if (record) {
 	  	recorder.start()
 	  }
-   	  dsClient.sendDeskshareStreamStarted(width, height)
+   	  dsClient.sendDeskshareStreamStarted(name, width, height)
 	}
 	
 	private def updateStreamMouseLocation(ml: UpdateStreamMouseLocation) = {
@@ -145,5 +145,9 @@ class DeskshareStream(app: DeskshareApplication, name: String, val width: Int, v
 	override def exit(reason : AnyRef) : Nothing = {
 	  log.warning("DeskShareStream: **** Exiting Actor %s for room %s", reason, name)
 	  super.exit(reason)
+	}
+
+	def getRecorder(): Recorder = {
+		recorder
 	}
 }
