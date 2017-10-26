@@ -6,4 +6,3 @@ Type=simple
 ExecStart=/usr/local/bigbluebutton/core/scripts/mconf-decrypter.rb
 WorkingDirectory=/usr/local/bigbluebutton/core/scripts
 User=tomcat7
-Slice=mconf_decrypter.slice

@@ -1,4 +1,0 @@
-[Unit]
-Description=Mconf decrypter processing
-Wants=mconf-recording-decrypter.service
-StopWhenUnneeded=true
