@@ -4,7 +4,7 @@ Description=Mconf decrypter processing timer
 [Timer]
 OnActiveSec=0
 OnUnitInactiveSec=60s
-Unit=mconf-recording-decrypter.service
+Unit=mconf-recording-decrypter.target
 
 [Install]
 WantedBy=timers.target
