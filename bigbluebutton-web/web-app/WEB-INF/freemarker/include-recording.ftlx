@@ -44,8 +44,9 @@
     </#list>
 </metadata>
 
-<#assign pb = r.getPlayback()>
+<#if r.getPlayback()??>
 <playback>
+    <#assign pb = r.getPlayback()>
     <format>
         <type>${pb.getFormat()}</type>
         <url>${pb.getLink()}</url>
@@ -77,11 +78,12 @@
         </#if>
     </format>
 </playback>
+</#if>
 
+<#if r.getDownload()??>
 <download>
-    <#if r.getDownloads()??>
-    <#list r.getDownloads() as p>
-        <#if p?? && p.getFormat()??>
+    <#assign p = r.getDownload()>
+    <#if p?? && p.getFormat()??>
         <format>
             <type>${p.getFormat()}</type>
             <url>${p.getUrl()}</url>
@@ -90,7 +92,6 @@
             <length>${p.getLength()}</length>
             <size>${p.getSize()}</size>
         </format>
-        </#if>
-    </#list>
     </#if>
 </download>
+</#if>
