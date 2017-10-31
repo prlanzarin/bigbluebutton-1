@@ -60,7 +60,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private var recordingFlag:Boolean;
 			private var firstAudioJoin:Boolean = true;
-			private var layoutOptions:LayoutOptions = null;
+			private var _layoutOptions:LayoutOptions = null;
 			private var _confirmationAlert:Alert = null;
 			
 			[Embed(source="/org/bigbluebutton/common/assets/images/record.png")]
@@ -68,6 +68,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private function onCreationComplete():void {
 				ResourceUtil.getInstance().addEventListener(Event.CHANGE, localeChanged); // Listen for locale changing
+			}
+
+			public function get layoutOptions():LayoutOptions {
+				if (_layoutOptions == null) {
+					_layoutOptions = new LayoutOptions();
+					_layoutOptions.parseOptions();
+				}
+				return _layoutOptions;
 			}
 
 			private function hideConfirmationAlert():void {
@@ -101,7 +109,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				// need to save the flag in case of any remote update on the recording status
 				recordingFlag = !this.selected;
 
-				showConfirmationAlert();
+				if (layoutOptions.showRecordingConfirmation) {
+					showConfirmationAlert();
+				} else {
+					doChangeRecordingStatus();
+				}
 			}
 
 			private function onCloseConfirmationDialog(e:CloseEvent):void {
@@ -162,11 +174,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 			
 			private function showRecordingNotification():void {
-				if (layoutOptions == null) {
-					layoutOptions = new LayoutOptions();
-					layoutOptions.parseOptions();
-				}
-
 				if (firstAudioJoin && this.visible && !this.selected 
 						&& layoutOptions.showRecordingNotification
 						&& UserManager.getInstance().getConference().amIModerator()
