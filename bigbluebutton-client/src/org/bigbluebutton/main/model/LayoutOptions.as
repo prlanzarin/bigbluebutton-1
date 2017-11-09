@@ -57,6 +57,9 @@ package org.bigbluebutton.main.model {
 		[Bindable]
 		public var showNetworkMonitor:Boolean = true;
 
+		[Bindable]
+		public var showRecordingConfirmation:Boolean = true;
+
 		public var defaultLayout:String = "Default";
 		
 		public function parseOptions():void {
@@ -113,6 +116,11 @@ package org.bigbluebutton.main.model {
 				if(vxml.@showNetworkMonitor != undefined){
 					showNetworkMonitor = (vxml.@showNetworkMonitor.toString().toUpperCase() == "TRUE") ? true : false;
 				}
+
+				if(vxml.@showRecordingConfirmation != undefined){
+					showRecordingConfirmation = (vxml.@showRecordingConfirmation.toString().toUpperCase() == "TRUE") ? true : false;
+				}
+
 			}
 		}
 	

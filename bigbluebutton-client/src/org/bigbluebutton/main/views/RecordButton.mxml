@@ -63,7 +63,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private var recordingFlag:Boolean;
 			private var firstAudioJoin:Boolean = true;
-			private var layoutOptions:LayoutOptions = null;
+			private var _layoutOptions:LayoutOptions = null;
 			private var _confirmationAlert:Alert = null;
 			
 			[Embed(source="/org/bigbluebutton/common/assets/images/record.png")]
@@ -71,6 +71,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private function onCreationComplete():void {
 				ResourceUtil.getInstance().addEventListener(Event.CHANGE, localeChanged); // Listen for locale changing
+			}
+
+			public function get layoutOptions():LayoutOptions {
+				if (_layoutOptions == null) {
+					_layoutOptions = new LayoutOptions();
+					_layoutOptions.parseOptions();
+				}
+				return _layoutOptions;
 			}
 
 			private function hideConfirmationAlert():void {
@@ -104,7 +112,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				// need to save the flag in case of any remote update on the recording status
 				recordingFlag = !this.selected;
 
-				showConfirmationAlert();
+				if (layoutOptions.showRecordingConfirmation) {
+					showConfirmationAlert();
+				} else {
+					doChangeRecordingStatus();
+				}
 			}
 
 			private function onCloseConfirmationDialog(e:CloseEvent):void {
@@ -132,7 +144,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				this.enabled = false;
 				LOGGER.debug("RecordButton:doChangeRecordingStatus changing record status to {0}", [event.payload.recording]);
 				
-				if (!recordingFlag && getLayoutOptions().logoutOnStopRecording) {
+				if (!recordingFlag && layoutOptions.logoutOnStopRecording) {
 					LOGGER.debug("Using 'logoutOnStopRecording' option to logout user after stopping recording");
 					navigateToURL(new URLRequest(BBB.getLogoutURL()), "_self");
 				}
@@ -170,7 +182,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			
 			private function showRecordingNotification():void {
 				if (firstAudioJoin && this.visible && !this.selected 
-						&& getLayoutOptions().showRecordingNotification
+						&& layoutOptions.showRecordingNotification
 						&& UserManager.getInstance().getConference().amIModerator()
 						&& MeetingModel.getInstance().meeting.allowStartStopRecording
 						&& this.enabled) {
@@ -187,14 +199,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					
 					firstAudioJoin = false;
 				}
-			}
-			
-			private function getLayoutOptions() : LayoutOptions {
-				if (layoutOptions == null) {
-					layoutOptions = new LayoutOptions();
-					layoutOptions.parseOptions();
-				}
-				return layoutOptions;
 			}
 			
 			private function onRecordButtonMouseOver(event:MouseEvent):void {
