@@ -17,7 +17,9 @@
 <endTime><#if r.getEndTime()?? && r.getEndTime() != "">${r.getEndTime()}</#if></endTime>
 <size><#if r.getSize()?? && r.getSize() != "">${r.getSize()}</#if></size>
 <rawSize><#if r.getRawSize()?? && r.getRawSize() != "">${r.getRawSize()}</#if></rawSize>
-<participants><#if r.getParticipants()??>${r.getParticipants()}</#if></participants>
+<#if r.getParticipants()?? && r.getParticipants() != 0>
+    <participants>${r.getParticipants()}</participants>
+</#if>
 
 <#if r.getBreakout()??>
     <#assign breakout = r.getBreakout()>
@@ -44,9 +46,10 @@
     </#list>
 </metadata>
 
-<#if r.getPlayback()??>
+<#if r.getPlaybacks()??>
+<#list r.getPlaybacks()>
 <playback>
-    <#assign pb = r.getPlayback()>
+    <#items as pb>
     <format>
         <type>${pb.getFormat()}</type>
         <url>${pb.getLink()}</url>
@@ -77,7 +80,9 @@
             </#if>
         </#if>
     </format>
+    </#items>
 </playback>
+</#list>
 </#if>
 
 <#if r.getDownload()??>

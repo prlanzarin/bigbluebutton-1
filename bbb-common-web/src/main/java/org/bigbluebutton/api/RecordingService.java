@@ -37,6 +37,7 @@ import org.apache.commons.io.FileUtils;
 import org.bigbluebutton.api.domain.Recording;
 import org.bigbluebutton.api.domain.RecordingMetadata;
 import org.bigbluebutton.api.util.RecordingMetadataReaderHelper;
+import org.bigbluebutton.api.util.RecordingResponse;
 import org.bigbluebutton.api.messaging.RedisSimpleMessageSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,13 +187,36 @@ public class RecordingService {
     }
 
 
-    public List<RecordingMetadata> filterRecordingsByMetadata(List<RecordingMetadata> recordings, Map<String, String> metadataFilters) {
-        List<RecordingMetadata> resultRecordings = new ArrayList<RecordingMetadata>();
+    public List<RecordingResponse> filterRecordingsByMetadata(List<RecordingMetadata> recordings, Map<String, String> metadataFilters) {
+        // Apply filters and group by recordId
+        Map<String, List<RecordingMetadata>> result = new HashMap<String, List<RecordingMetadata>>();
         for (RecordingMetadata entry : recordings) {
-            if (recordingMatchesMetadata(entry, metadataFilters))
-                resultRecordings.add(entry);
+            if (recordingMatchesMetadata(entry, metadataFilters)) {
+                if (!result.containsKey(entry.getId())) {
+                    result.put(entry.getId(), new ArrayList());
+                }
+                result.get(entry.getId()).add(entry);
+            }
         }
-        return resultRecordings;
+
+        // Merge playbacks by recordId
+        List<RecordingResponse> response = new ArrayList<RecordingResponse>();
+        response = mergePlaybacks(result);
+
+        return response;
+    }
+
+    private List<RecordingResponse> mergePlaybacks(Map<String, List<RecordingMetadata>> result) {
+        List<RecordingResponse> response = new ArrayList<RecordingResponse>();
+        for (String key : result.keySet()) {
+            List<RecordingMetadata> recs = result.get(key);
+            RecordingResponse rec = new RecordingResponse();
+            for (RecordingMetadata rm : recs) {
+                rec.importRecordingMetadata(rm);
+            }
+            response.add(rec);
+        }
+        return response;
     }
 
     public Map<String, Recording> filterRecordingsByMetadata(Map<String, Recording> recordings, Map<String, String> metadataFilters) {
