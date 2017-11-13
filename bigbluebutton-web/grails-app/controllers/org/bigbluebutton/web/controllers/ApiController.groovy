@@ -21,6 +21,7 @@ package org.bigbluebutton.web.controllers
 import com.google.gson.Gson
 import org.bigbluebutton.api.domain.RecordingMetadata
 import org.bigbluebutton.api.util.ResponseBuilder
+import org.bigbluebutton.api.util.RecordingResponse
 
 import javax.servlet.ServletRequest;
 
@@ -1549,7 +1550,7 @@ class ApiController {
     }
 
     List<RecordingMetadata> recsList = meetingService.getRecordingsMetadata(internalRecordIds, states);
-    List<RecordingMetadata> recs = meetingService.filterRecordingsByMetadata(recsList, ParamsProcessorUtil.processMetaParam(params));
+    List<RecordingResponse> recs = meetingService.filterRecordingsByMetadata(recsList, ParamsProcessorUtil.processMetaParam(params));
 
     if (recs.isEmpty()) {
       response.addHeader("Cache-Control", "no-cache")

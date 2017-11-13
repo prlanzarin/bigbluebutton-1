@@ -61,6 +61,7 @@ import org.bigbluebutton.api.messaging.messages.UserRoleChanged;
 import org.bigbluebutton.api.messaging.messages.UserSharedWebcam;
 import org.bigbluebutton.api.messaging.messages.UserStatusChanged;
 import org.bigbluebutton.api.messaging.messages.UserUnsharedWebcam;
+import org.bigbluebutton.api.util.RecordingResponse;
 import org.bigbluebutton.presentation.PresentationUrlDownloadService;
 import org.bigbluebutton.api.messaging.messages.StunTurnInfoRequested;
 import org.bigbluebutton.web.services.ExpiredMeetingCleanupTimerTask;
@@ -421,7 +422,7 @@ public class MeetingService implements MessageListener {
         return recs;
     }
 
-    public List<RecordingMetadata> filterRecordingsByMetadata(List<RecordingMetadata> recsList,
+    public List<RecordingResponse> filterRecordingsByMetadata(List<RecordingMetadata> recsList,
                                                              Map<String, String> metadataFilters) {
         return recordingService.filterRecordingsByMetadata(recsList, metadataFilters);
     }
