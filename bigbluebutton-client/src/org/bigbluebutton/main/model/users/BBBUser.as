@@ -21,6 +21,7 @@ package org.bigbluebutton.main.model.users
 	import com.asfusion.mate.events.Dispatcher;
 	
 	import flash.events.Event;
+	import flash.external.ExternalInterface;
 	
 	import org.as3commons.lang.ArrayUtils;
 	import org.as3commons.logging.api.ILogger;
@@ -46,6 +47,7 @@ package org.bigbluebutton.main.model.users
 		// e.g. userdata-CUSTOMDATA_X
 		public static const CUSTOMDATA_RECORD:String = "record";
 		public static const CUSTOMDATA_DISABLED_RECORD_REASON:String = "disabled_record_reason";
+		public static const CUSTOMDATA_LANGUAGE:String = "language";
 		
     // Flag to tell that user is in the process of leaving the meeting.
     public var isLeavingFlag:Boolean = false;
@@ -199,7 +201,7 @@ package org.bigbluebutton.main.model.users
 		
 		[Bindable] public var userLocked:Boolean = false;
 		[Bindable] public var status:String = "";
-		[Bindable] public var customdata:Object = {};
+		[Bindable] private var _customdata:Object = {};
 		
 		/*
 		 * This variable is for accessibility for the Users Window. It can't be manually set
@@ -419,6 +421,10 @@ package org.bigbluebutton.main.model.users
 			return isCustomData(CUSTOMDATA_DISABLED_RECORD_REASON);
 		}
 
+		public function isLanguageDefined():Boolean {
+			return isCustomData(CUSTOMDATA_LANGUAGE);
+		}
+
 		public function record():Boolean {
 			var response:Boolean = false;
 			if (isRecordDefined()) {
@@ -432,6 +438,15 @@ package org.bigbluebutton.main.model.users
 			if (isDisabledRecordingReasonDefined()) {
 				response = customdata[CUSTOMDATA_DISABLED_RECORD_REASON].toString();
 			}
+			return response;
+		}
+
+		public function language():String {
+			var response:String = ExternalInterface.call("getLanguage");
+			if (isLanguageDefined()) {
+				response = customdata[CUSTOMDATA_LANGUAGE].toString();
+			}
+			LOGGER.info(response);
 			return response;
 		}
 		
@@ -464,6 +479,23 @@ package org.bigbluebutton.main.model.users
 					dispatcher.dispatchEvent(e);
 				}
 			}
+		}
+
+		private function updateLanguage():void {
+			if (isLanguageDefined()) {
+				ResourceUtil.getInstance().setPreferredLocale(language());
+			}
+		}
+
+		[Bindable]
+		public function set customdata(customdata:Object):void {
+			this._customdata = customdata;
+
+			updateLanguage();
+		}
+
+		public function get customdata():Object {
+			return this._customdata;
 		}
 	}
 }
