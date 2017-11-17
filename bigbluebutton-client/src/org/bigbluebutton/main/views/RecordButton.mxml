@@ -156,7 +156,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				resourcesChanged();
 
 				if (UserManager.getInstance().getConference().record) {
-					this.enabled = UserManager.getInstance().getConference().amIModerator() && MeetingModel.getInstance().meeting.allowStartStopRecording;
+					this.enabled = UserManager.getInstance().getConference().mayIRecord() && MeetingModel.getInstance().meeting.allowStartStopRecording;
 				}
 
 				if (! this.enabled) {
@@ -183,7 +183,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private function showRecordingNotification():void {
 				if (firstAudioJoin && this.visible && !this.selected 
 						&& layoutOptions.showRecordingNotification
-						&& UserManager.getInstance().getConference().amIModerator()
+						&& UserManager.getInstance().getConference().mayIRecord()
 						&& MeetingModel.getInstance().meeting.allowStartStopRecording
 						&& this.enabled) {
 					var alert:Alert = Alert.show(ResourceUtil.getInstance().getString("bbb.mainToolbar.recordBtn..notification.message1") + "\n\n" + ResourceUtil.getInstance().getString("bbb.mainToolbar.recordBtn..notification.message2"), ResourceUtil.getInstance().getString("bbb.mainToolbar.recordBtn..notification.title"), Alert.OK, this);
@@ -202,46 +202,65 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 			
 			private function onRecordButtonMouseOver(event:MouseEvent):void {
-				if (UserManager.getInstance().getConference().amIModerator() && UserManager.getInstance().getConference().record) {
+				if (UserManager.getInstance().getConference().mayIRecord() && UserManager.getInstance().getConference().record) {
 					this.styleName = this.selected? "recordButtonStyleStop": "recordButtonStyleStart";
 				}
 			}
 
 			private function onRecordButtonMouseOut(event:MouseEvent):void {
-				if (UserManager.getInstance().getConference().amIModerator() && UserManager.getInstance().getConference().record) {
+				if (UserManager.getInstance().getConference().mayIRecord() && UserManager.getInstance().getConference().record) {
 					this.styleName = this.selected? "recordButtonStyleStart": "recordButtonStyleNormal";
+				}
+			}
+
+			private function getFromLocale(tag:String):String {
+				return ResourceUtil.getInstance().getString(tag);
+			}
+
+			private function updateRecordableToolTip():void {
+				if (UserManager.getInstance().getConference().mayIRecord()) {
+					// The user is a moderator or have an external permission to record
+					if (MeetingModel.getInstance().meeting.allowStartStopRecording) {
+						if (this.selected) {
+							this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.stop');
+						} else {
+							this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.start');
+						}
+					} else {
+						this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.wontInterrupt');
+					}
+				} else {
+					// The user is a viewer or have his permission to record disabled
+					if (this.selected) {
+						this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.recording');
+					} else {
+						if (UserManager.getInstance().getConference().isDisabledRecordReasonDefined()) {
+							this.toolTip = UserManager.getInstance().getConference().getMyDisabledRecordReason();
+						} else {
+							// Fallback
+							this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.onlyModerators');
+						}
+					}
+				}
+			}
+
+			private function updateUnrecordableToolTip():void {
+				if (UserManager.getInstance().getConference().mayIRecord()) {
+					if (MeetingModel.getInstance().meeting.isMetadata("wont-record-message")) {
+						this.toolTip = MeetingModel.getInstance().meeting.metadata["wont-record-message"];
+					} else {
+						this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.wontRecord');
+					}
+				} else {
+					this.toolTip = getFromLocale('bbb.mainToolbar.recordBtn.toolTip.wontRecord');
 				}
 			}
 
 			private function updateToolTip():void {
 				if (UserManager.getInstance().getConference().record) {
-					if (UserManager.getInstance().getConference().amIModerator()) {
-						if (MeetingModel.getInstance().meeting.allowStartStopRecording) {
-							if (this.selected) {
-								this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.stop');
-							} else {
-								this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.start');
-							}
-						} else {
-							this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.wontInterrupt');
-						}
-					} else {
-						if (this.selected) {
-							this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.recording');
-						} else {
-							this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.onlyModerators');
-						}
-					}
+					updateRecordableToolTip();
 				} else {
-					if (UserManager.getInstance().getConference().amIModerator()) {
-						if (MeetingModel.getInstance().meeting.isMetadata("wont-record-message")) {
-							this.toolTip = MeetingModel.getInstance().meeting.metadata["wont-record-message"];
-						} else {
-							this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.wontRecord');
-						}
-					} else {
-						this.toolTip = ResourceUtil.getInstance().getString('bbb.mainToolbar.recordBtn.toolTip.wontRecord');
-					}
+					updateUnrecordableToolTip();
 				}
 			}
 

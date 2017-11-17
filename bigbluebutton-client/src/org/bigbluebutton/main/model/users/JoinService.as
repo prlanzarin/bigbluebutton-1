@@ -90,10 +90,10 @@ package org.bigbluebutton.main.model.users
 			dispatcher.dispatchEvent(e);
 		}
 
-		private function extractMetadata(metadata:Object):Object {
+		private function extractDataObject(dataObject:Object):Object {
 			var response:Object = new Object();
-			if (metadata) {
-				var data:Array = metadata as Array;
+			if (dataObject) {
+				var data:Array = dataObject as Array;
 				for each (var item:Object in data) {
 					for (var id:String in item) {
 						var value:String = item[id] as String;
@@ -152,26 +152,14 @@ package org.bigbluebutton.main.model.users
                   MeetingModel.getInstance().modOnlyMessage = response.modOnlyMessage;
                 }
           
-                response.customdata = new Object();
-       
-                if (result.response.customdata) {
-                    var cdata:Array = result.response.customdata as Array;
-                    for each (var item:Object in cdata) {
-                        for (var id:String in item) {
-                        var value:String = item[id] as String;
-                        response.customdata[id] = value;
-                    }                        
-                }
-                
-            }
-				        
-            response.metadata = extractMetadata(result.response.metadata);
+                response.customdata = extractDataObject(result.response.customdata);
+                response.metadata = extractDataObject(result.response.metadata);
 
         UsersModel.getInstance().me = new MeBuilder(response.internalUserId, response.username).withAvatar(response.avatarURL)
                                              .withExternalId(response.externUserID).withToken(response.authToken)
                                              .withLayout(response.defaultLayout).withWelcome(response.welcome)
                                              .withDialNumber(response.dialnumber).withRole(response.role)
-                                             .withCustomData(response.customData).withGuest(response.guest.toUpperCase() == "TRUE").build();
+                                             .withCustomData(response.customdata).withGuest(response.guest.toUpperCase() == "TRUE").build();
                 
         MeetingModel.getInstance().meeting = new MeetingBuilder(response.conference, response.conferenceName)
                                              .withDefaultLayout(response.defaultLayout).withVoiceConf(response.voiceBridge)

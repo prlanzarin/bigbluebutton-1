@@ -208,7 +208,7 @@ package org.bigbluebutton.main.model.users
 		}
 
 		public function changeRecordingStatus(e:BBBEvent):void {
-			if (this.isModerator() && !e.payload.remote) {
+			if (this.mayIRecord() && !e.payload.remote) {
 				var myUserId:String = UserManager.getInstance().getConference().getMyUserId();
 				sender.changeRecordingStatus(myUserId, e.payload.recording);
 			}
@@ -245,6 +245,10 @@ package org.bigbluebutton.main.model.users
 
 		public function isModerator():Boolean {
 			return UserManager.getInstance().getConference().amIModerator();
+		}
+
+		public function mayIRecord():Boolean {
+			return UserManager.getInstance().getConference().mayIRecord();
 		}
 		
 		public function get participants():ArrayCollection {

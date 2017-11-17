@@ -41,6 +41,11 @@ package org.bigbluebutton.main.model.users
 		public static const MODERATOR:String = "MODERATOR";
 		public static const VIEWER:String = "VIEWER";
 		public static const PRESENTER:String = "PRESENTER";
+
+		// Custom data flags
+		// e.g. userdata-CUSTOMDATA_X
+		public static const CUSTOMDATA_RECORD:String = "record";
+		public static const CUSTOMDATA_DISABLED_RECORD_REASON:String = "disabled_record_reason";
 		
     // Flag to tell that user is in the process of leaving the meeting.
     public var isLeavingFlag:Boolean = false;
@@ -397,6 +402,37 @@ package org.bigbluebutton.main.model.users
 		private function sendStreamStartedEvent(stream: String):void{
 			var dispatcher:Dispatcher = new Dispatcher();
 			dispatcher.dispatchEvent(new StreamStartedEvent(userID, name, stream));
+		}
+
+		public function isCustomData(key: String):Boolean {
+			if (customdata != null) {
+				return customdata.hasOwnProperty(key);
+			}
+			return false;
+		}
+
+		public function isRecordDefined():Boolean {
+			return isCustomData(CUSTOMDATA_RECORD);
+		}
+
+		public function isDisabledRecordingReasonDefined():Boolean {
+			return isCustomData(CUSTOMDATA_DISABLED_RECORD_REASON);
+		}
+
+		public function record():Boolean {
+			var response:Boolean = false;
+			if (isRecordDefined()) {
+				response = customdata[CUSTOMDATA_RECORD].toString().toUpperCase() == "TRUE";
+			}
+			return response;
+		}
+
+		public function disabledRecordReason():String {
+			var response:String = "";
+			if (isDisabledRecordingReasonDefined()) {
+				response = customdata[CUSTOMDATA_DISABLED_RECORD_REASON].toString();
+			}
+			return response;
 		}
 		
 		public function applyLockSettings():void {
