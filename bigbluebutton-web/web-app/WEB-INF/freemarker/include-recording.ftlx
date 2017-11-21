@@ -21,6 +21,18 @@
     <participants>${r.getParticipants()}</participants>
 </#if>
 
+<#if r.getRecordingUsersExternalId()??>
+<#list r.getRecordingUsersExternalId()>
+  <recordingUsers>
+    <#items as externalUserId>
+      <user>
+        <externalUserID>${externalUserId}</externalUserID>
+      </user>
+    </#items>
+  </recordingUsers>
+</#list>
+</#if>
+
 <#if r.getBreakout()??>
     <#assign breakout = r.getBreakout()>
     <breakout>

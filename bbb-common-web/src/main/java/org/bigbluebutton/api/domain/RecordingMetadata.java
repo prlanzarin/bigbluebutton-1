@@ -18,6 +18,10 @@ public class RecordingMetadata {
    <published>true</published>
    <start_time>1489173065780</start_time>
    <end_time>1489173199386</end_time>
+   <recording_users>
+   <userExternalId>iuwhefjbksjdbubv</userExternalId>
+   <userExternalId>hjklhjklhjkl98ol</userExternalId>
+   </recording_users>
    <breakout parentMeetingId="f3ffe06acedf425565cc024c8ebe89a6552e8782-1489172964374" sequence="2" meetingId="f2041d123b6a4b994e7ad87ee9d348496a73472c-1489173065780"/>
    <meta>
    <meetingId>f2041d123b6a4b994e7ad87ee9d348496a73472c-1489173065780</meetingId>
@@ -65,6 +69,10 @@ public class RecordingMetadata {
 
   @JacksonXmlProperty(localName = "raw_size")
   private String rawSize;
+
+  @JacksonXmlElementWrapper(localName = "recording_users")
+  @JacksonXmlProperty(localName = "externalUserId")
+  private String[] recordingUsersExternalId;
 
   private String size;
 
@@ -221,6 +229,14 @@ public class RecordingMetadata {
 
   public String getRawSize() {
     return rawSize;
+  }
+
+  public void setRecordingUsersExternalId(String[] recordingUsersExternalId) {
+    this.recordingUsersExternalId = recordingUsersExternalId;
+  }
+
+  public String[] getRecordingUsersExternalId() {
+    return recordingUsersExternalId;
   }
 
   public String getSize() {
