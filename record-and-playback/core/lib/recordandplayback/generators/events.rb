@@ -48,6 +48,34 @@ module BigBlueButton
       participants_ids.length
     end
 
+    def self.get_recording_users_external_id(events_xml)
+      BigBlueButton.logger.info("Task: Getting users that activated recording")
+      doc = Nokogiri::XML(File.open(events_xml))
+      recording_users_external_id = []
+      doc.xpath("//event[@eventname='RecordStatusEvent']").each do |e|
+        user_id = e.xpath(".//userId").text
+        if e.xpath(".//status").text == "true"
+          user_external_id = BigBlueButton::Events.get_user_external_id(events_xml, user_id)
+          if !recording_users_external_id.include?(user_external_id)
+            recording_users_external_id << user_external_id
+          end
+        end
+      end
+      recording_users_external_id
+    end
+
+    def self.get_user_external_id(events_xml, user_id)
+      doc = Nokogiri::XML(File.open(events_xml))
+      user_external_id = ""
+      doc.xpath("//event[@eventname='ParticipantJoinEvent']").each do |e|
+        if (e.xpath(".//userId").text == user_id)
+          user_external_id = e.xpath(".//externalUserId").text
+          break
+        end
+      end
+      user_external_id
+    end
+
     # Get the meeting metadata
     def self.get_meeting_metadata(events_xml)
       BigBlueButton.logger.info("Task: Getting meeting metadata")

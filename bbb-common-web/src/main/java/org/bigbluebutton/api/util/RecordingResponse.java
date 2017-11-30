@@ -23,6 +23,7 @@ public class RecordingResponse {
   private String rawSize;
   private Breakout breakout;
   private BreakoutRoom[] breakoutRooms;
+  private String[] recordingUsersExternalId;
   private Metadata metadata;
   private List<RecordingMetadataPlayback> playbacks = new ArrayList();
   private String metadataXml;
@@ -108,6 +109,14 @@ public class RecordingResponse {
 
   public BreakoutRoom[] getBreakoutRooms() {
     return breakoutRooms;
+  }
+
+  public void setRecordingUsersExternalId(String[] recordingUsersExternalId) {
+    this.recordingUsersExternalId = recordingUsersExternalId;
+  }
+
+  public String[] getRecordingUsersExternalId() {
+    return recordingUsersExternalId;
   }
 
   public void setMeta(Metadata metadata) {
@@ -217,6 +226,7 @@ public class RecordingResponse {
       this.setParticipants(recordingMetadata.getParticipants());
       this.setMeeting(recordingMetadata.getMeeting());
       this.setRawSize(recordingMetadata.getRawSize());
+      this.setRecordingUsersExternalId(recordingMetadata.getRecordingUsersExternalId());
       this.setBreakout(recordingMetadata.getBreakout());
       this.setBreakoutRooms(recordingMetadata.getBreakoutRooms());
       this.setMeta(recordingMetadata.getMeta());
