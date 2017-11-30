@@ -145,6 +145,26 @@ package org.bigbluebutton.main.model.users {
 			return 0;
 		}
 
+		public function isDisabledRecordReasonDefined():Boolean {
+			return me.isDisabledRecordingReasonDefined();
+		}
+
+		public function isRecordDefined():Boolean {
+			return me.isRecordDefined();
+		}
+
+		public function getMyDisabledRecordReason():String {
+			return me.disabledRecordReason();
+		}
+
+		public function mayIRecord():Boolean {
+			if (isRecordDefined()) {
+				return me.record();
+			} else {
+				return amIModerator();
+			}
+		}
+
 		public function addUser(newuser:BBBUser):void {
 			if (hasUser(newuser.userID)) {
 				removeUser(newuser.userID);
