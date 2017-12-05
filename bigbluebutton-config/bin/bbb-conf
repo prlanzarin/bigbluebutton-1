@@ -1509,7 +1509,7 @@ if [ $CHECK ]; then
 	PORT_IP=$(cat /var/www/bigbluebutton/client/conf/config.xml | sed -n '/porttest /{s/.*host="//;s/".*//;p}')
 	echo "  		Port test (tunnel): $PORT_IP"
 
-	RED5_IP=$(cat /var/www/bigbluebutton/client/conf/config.xml | sed -n '/uri.*video/{s/.*rtmp[s]*:\/\///;s/\/.*//;p}')
+	RED5_IP=$(cat /var/www/bigbluebutton/client/conf/config.xml | sed -n '/uri=".*\/video"/{s/.*rtmp[s]*:\/\///;s/\/.*//;p}')
 	WEBRTC_ENABLED_CLIENT=$(grep -i useWebrtcIfAvailable /var/www/bigbluebutton/client/conf/config.xml | cut -d '"' -f2)
 	echo "                              red5: $RED5_IP"
 	echo "              useWebrtcIfAvailable: $WEBRTC_ENABLED_CLIENT"
