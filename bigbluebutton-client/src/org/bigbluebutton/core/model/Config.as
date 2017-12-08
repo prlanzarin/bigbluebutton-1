@@ -101,11 +101,11 @@ package org.bigbluebutton.core.model
     	
 		public function get branding():Object{
 			var a:Object = new Object();
-			a.copyright = config.branding.@copyright;
-			a.logo = config.branding.@logo;
-			a.background = config.branding.@background;
-			a.toolbarColor = config.branding.@toolbarColor;
-			a.toolbarColorAlphas = config.branding.@toolbarColorAlphas;
+			a.copyright = config.branding.@copyright.toString();
+			a.logo = config.branding.@logo.toString();
+			a.background = config.branding.@background.toString();
+			a.toolbarColor = config.branding.@toolbarColor.toString();
+			a.toolbarColorAlphas = config.branding.@toolbarColorAlphas.toString();
 			return a
 		}
 
