@@ -426,10 +426,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       override protected function resourcesChanged():void{
         super.resourcesChanged();
 /*
-        this.title = ResourceUtil.getInstance().getString('bbb.screensharePublish.title');
+        this.title = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
         
         if (titleBarOverlay != null) {
-          titleBarOverlay.accessibilityName = ResourceUtil.getInstance().getString('bbb.screensharePublish.title');
+          titleBarOverlay.accessibilityName = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
         }
         
         if (windowControls != null) {
