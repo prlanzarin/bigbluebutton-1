@@ -378,20 +378,21 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 						
 			private function handleConfigLoadedEvent(e:ConfigLoadedEvent):void{
 				var config:Config = BBB.getConfigManager().config;
+				var branding:Object = config.branding;
 				shortcutKeysBtn.includeInLayout = shortcutKeysBtn.visible = config.shortcutKeys.showButton;
 
-				if (config.branding.logo == "") {
+				if (branding.logo == "") {
 					hideLogo();
 				} else {
-					logo.source = config.branding.logo;
+					logo.source = branding.logo;
 				}
 
-				if (config.branding.toolbarColor != "") {
-					setStyle("backgroundColor", config.branding.toolbarColor);
+				if (branding.toolbarColor != "") {
+					setStyle("backgroundColor", branding.toolbarColor);
 				}
 
-				if (config.branding.toolbarColorAlphas != "") {
-					setStyle("highlightAlphas", config.branding.toolbarColorAlphas.split(","));
+				if (branding.toolbarColorAlphas != "") {
+					setStyle("highlightAlphas", branding.toolbarColorAlphas.split(","));
 				}
 			}
 			
