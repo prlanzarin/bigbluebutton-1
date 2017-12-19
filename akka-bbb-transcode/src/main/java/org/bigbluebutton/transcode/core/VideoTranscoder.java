@@ -295,26 +295,21 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
 
                 //Generate video stream name
                 videoStreamName = generateVideoStreamName(type);
-                outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
+                // TODO make stream path dynamic by turning it into a param
+                outputLive = "rtmp://" + destinationIp + "/video-broadcast/" + meetingId + "/"
                         + videoStreamName+" live=1";
                 output = videoStreamName;
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);
                 ffmpeg.setInput(input);
-                ffmpeg.setFormat("flv");
-                ffmpeg.setLoglevel("verbose");
+
+                ffmpeg.setLoglevel("quiet");
                 ffmpeg.setOutput(outputLive);
                 ffmpeg.addRtmpOutputConnectionParameter(meetingId);
                 ffmpeg.addRtmpOutputConnectionParameter("transcoder-"+transcoderId);
-                ffmpeg.setVideoBitRate(1024);
-                ffmpeg.setBufSize(1024);
-                ffmpeg.setMaxRate(1024);
-                ffmpeg.setCodec("libopenh264");
-                ffmpeg.setProfile("baseline");
-                ffmpeg.setAnalyzeDuration("1000"); // 1ms
-                ffmpeg.addCustomParameter("-s", globalVideoWidth+"x"+globalVideoHeight);
-                ffmpeg.addCustomParameter("-filter:v","scale=iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih):ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih), pad="+globalVideoWidth+":"+globalVideoHeight+":("+globalVideoWidth+"-iw*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2:("+globalVideoHeight+"-ih*min("+globalVideoWidth+"/iw\\,"+globalVideoHeight+"/ih))/2, fps=fps=15");
+                ffmpeg.setCodec("copy");
+                ffmpeg.setFormat("flv");
                 command = ffmpeg.getFFmpegCommand(true);
                 break;
 
