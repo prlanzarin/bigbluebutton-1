@@ -20,18 +20,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 -->
 
-<dspub:CustomMdiWindow
+<mx:Box
 	xmlns:mx="http://www.adobe.com/2006/mxml"
-	implements="org.bigbluebutton.common.IBbbModuleWindow"
 	xmlns:mate="http://mate.asfusion.com/"
-	xmlns:dspub="org.bigbluebutton.common.*"
+	xmlns:common="org.bigbluebutton.common.*"
 	backgroundColor="#C0C0C0"
 	initialize="init()"
 	creationComplete="onCreationComplete()"
 	verticalScrollPolicy="off" horizontalScrollPolicy="off"
-	width="700" height="350"
-	title="{ResourceUtil.getInstance().getString('bbb.screensharePublish.title')}"
-	resizable="false">
+	width="100%" height="100%">
 
 	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}" method="onChangedPresenter" />
 	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}" method="onChangedPresenter" />
@@ -151,17 +148,17 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 
 			private function onCreationComplete():void {
-				windowControls.maximizeRestoreBtn.enabled = false;
+				//windowControls.maximizeRestoreBtn.enabled = false;
 
 				setCurrentState("dispFullRegionControlBar"); //TODO ANTON
 				resourcesChanged();
 
-				titleBarOverlay.tabIndex = dsOptions.baseTabIndex;
-				titleBarOverlay.focusEnabled = true;
+				//titleBarOverlay.tabIndex = dsOptions.baseTabIndex;
+				//titleBarOverlay.focusEnabled = true;
 			}
 
 			private function remoteFocus(e:ShortcutEvent):void{
-				focusManager.setFocus(minimizeBtn);
+				//focusManager.setFocus(minimizeBtn);
 			}
 
 			public function get defaultWidth():int{
@@ -375,14 +372,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			/*
 			 * Override the close handler. We want the Event Map to send a message to
 			 * the MDIManager to close this window;
-			 */
 			override public function close(event:MouseEvent = null):void {
 				stopSharing();
 				closeWindow();
 			}
+			 */
 
 			override protected function resourcesChanged():void{
 				super.resourcesChanged();
+			/*
 				this.title = ResourceUtil.getInstance().getString('bbb.screensharePublish.title');
 
 				if (titleBarOverlay != null) {
@@ -399,6 +397,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					closeBtn.toolTip = ResourceUtil.getInstance().getString('bbb.screensharePublish.closeBtn.toolTip');
 					closeBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screensharePublish.closeBtn.accessibilityName");
 				}
+			 */
 			}
 
 			private function localeChanged(e:Event):void{
@@ -412,10 +411,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		]]>
 	</mx:Script>
 
-	<dspub:TabIndexer startIndex="{dsOptions.baseTabIndex + 1}"
-					  tabIndices="{[minimizeBtn, maximizeRestoreBtn, closeBtn, btnClosePublish]}"/>
+	<common:TabIndexer startIndex="{dsOptions.baseTabIndex + 1}" tabIndices="{[btnClosePublish]}"/>
 
-<dspub:states>
+<mx:states>
   <mx:State name="dispFullRegionControlBar">
   <mx:AddChild relativeTo="mainElement" position="after">
       <mx:HBox width="100%" horizontalAlign="center">
@@ -478,10 +476,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
     </mx:AddChild>
   </mx:State>
 
-  </dspub:states>
+  </mx:states>
 
   <mx:VBox id="mainContainer" width="100%" height="100%"  paddingBottom="2" paddingLeft="2" paddingRight="2" paddingTop="2">
     <mx:HBox width="100%" height="90%" id="mainElement"/>
   </mx:VBox>
 
-  </dspub:CustomMdiWindow>
+</mx:Box>

@@ -55,9 +55,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<ObjectBuilder generator="{WebRTCDeskshareManager}"/>
 	</EventHandlers>
 
-	<EventHandlers type="{ShareEvent.START_SHARING}">
+	<!--EventHandlers type="{ShareEvent.START_SHARING}">
 		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStartSharingEvent"/>
-	</EventHandlers>
+	</EventHandlers-->
 
 	<EventHandlers type="{BBBEvent.START_DESKSHARE}">
 		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStartSharingEvent"/>

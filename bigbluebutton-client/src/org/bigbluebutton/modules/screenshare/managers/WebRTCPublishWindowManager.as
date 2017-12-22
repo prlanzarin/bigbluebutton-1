@@ -35,7 +35,7 @@ package org.bigbluebutton.modules.screenshare.managers
 	public class WebRTCPublishWindowManager {
 		private static const LOGGER:ILogger = getClassLogger(PublishWindowManager);
 
-		private var shareWindow:WebRTCDesktopPublishWindow;
+		//private var shareWindow:WebRTCDesktopPublishWindow;
 		private var globalDispatcher:Dispatcher;
 		private var service:WebRTCDeskshareService;
 		private var buttonShownOnToolbar:Boolean = false;
@@ -53,17 +53,17 @@ package org.bigbluebutton.modules.screenshare.managers
 		}
 
 		public function stopSharing():void {
-			if (shareWindow != null) shareWindow.stopSharing();
+			//if (shareWindow != null) shareWindow.stopSharing();
 		}
 
 		private function autopublishTimerHandler(event:TimerEvent):void {
-			shareWindow.shareScreen(true);
+			//shareWindow.shareScreen(true);
 		}
 
 		public function handleShareWindowCloseEvent():void {
-			closeWindow(shareWindow);
+			//closeWindow(shareWindow);
 		}
-
+/*
 		public function openWindow(window:IBbbModuleWindow = null):void {
 			var event:OpenWindowEvent = new OpenWindowEvent(OpenWindowEvent.OPEN_WINDOW_EVENT);
 
@@ -84,20 +84,20 @@ package org.bigbluebutton.modules.screenshare.managers
 			globalDispatcher.dispatchEvent(event);
 			shareWindow = null;
 		}
-
+*/
 		public function startViewing(rtmp:String, videoWidth:Number, videoHeight:Number):void{
 			/* re use window object that is used to display installaion instructions */
 			/* the window is first created for the instructions prompting the user to
 			install the extension. this way after the extension is installed and the user
 			retries when the video stream comes in it re uses the window element instead of
 			making a second window and preventing the first from being removed */
-			if (shareWindow == null) {
-				shareWindow = new WebRTCDesktopPublishWindow();
-				shareWindow.visible = true;
-				openWindow(shareWindow);
-			}
+			//if (shareWindow == null) {
+				//shareWindow = new WebRTCDesktopPublishWindow();
+				//shareWindow.visible = true;
+				//openWindow(shareWindow);
+			//}
 
-			shareWindow.startVideo(rtmp, videoWidth, videoHeight);
+			//shareWindow.startVideo(rtmp, videoWidth, videoHeight);
 		}
 	}
 }

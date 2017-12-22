@@ -42,9 +42,9 @@ package org.bigbluebutton.modules.screenshare.managers
 	public class WebRTCDeskshareManager {
 		private static const LOGGER:ILogger = getClassLogger(WebRTCDeskshareManager);
 
-		private var publishWindowManager:WebRTCPublishWindowManager;
-		private var viewWindowManager:WebRTCViewerWindowManager;
-		private var toolbarButtonManager:ToolbarButtonManager;
+		//private var publishWindowManager:WebRTCPublishWindowManager;
+		//private var viewWindowManager:WebRTCViewerWindowManager;
+		//private var toolbarButtonManager:ToolbarButtonManager;
 		private var module:ScreenshareModule;
 		private var service:WebRTCDeskshareService;
 		private var globalDispatcher:Dispatcher;
@@ -57,8 +57,8 @@ package org.bigbluebutton.modules.screenshare.managers
 			LOGGER.debug("WebRTCDeskshareManager::WebRTCDeskshareManager");
 			service = new WebRTCDeskshareService();
 			globalDispatcher = new Dispatcher();
-			publishWindowManager = new WebRTCPublishWindowManager(service);
-			viewWindowManager = new WebRTCViewerWindowManager(service);
+			//publishWindowManager = new WebRTCPublishWindowManager(service);
+			//viewWindowManager = new WebRTCViewerWindowManager(service);
 		}
 
 		public function handleStartModuleEvent(module:ScreenshareModule):void {
@@ -74,8 +74,8 @@ package org.bigbluebutton.modules.screenshare.managers
 		public function handleStopModuleEvent():void {
 			LOGGER.debug("WebRTC Deskshare Module stopping");
 
-			publishWindowManager.stopSharing();
-			viewWindowManager.stopViewing();
+			//publishWindowManager.stopSharing();
+			//viewWindowManager.stopViewing();
 			service.disconnect();
 		}
 
@@ -89,7 +89,7 @@ package org.bigbluebutton.modules.screenshare.managers
 		public function handleStreamStopEvent(args:Object):void {
 			LOGGER.debug("WebRTCDeskshareManager::handleStreamStopEvent");
 			sharing = false;
-			viewWindowManager.handleViewWindowCloseEvent();
+			//viewWindowManager.handleViewWindowCloseEvent();
 		}
 
 		public function handleRequestStopSharingEvent():void {
@@ -100,11 +100,11 @@ package org.bigbluebutton.modules.screenshare.managers
 
 		private function stopWebRTCDeskshare():void {
 			LOGGER.debug("WebRTCDeskshareManager::stopWebRTCDeskshare");
-			viewWindowManager.stopViewing();
+			//viewWindowManager.stopViewing();
 
 			/* close the sharing window. The sharing window can also be open when going through
 			extension installation */
-			publishWindowManager.stopSharing();
+			//publishWindowManager.stopSharing();
 
 			if (ExternalInterface.available) {
 				if(usingKurentoWebRTC) {
@@ -175,7 +175,7 @@ package org.bigbluebutton.modules.screenshare.managers
 		public function handleMadeViewerEvent(e:MadePresenterEvent):void{
 			LOGGER.debug("Got MadeViewerEvent ");
 			if (sharing) {
-				publishWindowManager.stopSharing();
+				//publishWindowManager.stopSharing();
 				stopWebRTCDeskshare();
 			}
 			sharing = false;
@@ -197,7 +197,7 @@ package org.bigbluebutton.modules.screenshare.managers
 			};
 
 			onWebRTCBrokeFailure = (newOnWebRTCBrokeFailure != null) ? newOnWebRTCBrokeFailure : function(message:String):void {
-				publishWindowManager.openWindow();
+				//publishWindowManager.openWindow();
 				globalDispatcher.dispatchEvent(new WebRTCPublishWindowChangeState(WebRTCPublishWindowChangeState.DISPLAY_INSTALL));
 			};
 
@@ -249,7 +249,7 @@ package org.bigbluebutton.modules.screenshare.managers
 		}
 
 		public function handleShareWindowCloseEvent():void {
-			publishWindowManager.handleShareWindowCloseEvent();
+			//publishWindowManager.handleShareWindowCloseEvent();
 			sharing = false;
 			stopWebRTCDeskshare();
 		}
@@ -257,7 +257,7 @@ package org.bigbluebutton.modules.screenshare.managers
 		public function handleViewWindowCloseEvent():void {
 			LOGGER.debug("Received stop viewing command");
 			sharing = false;
-			viewWindowManager.handleViewWindowCloseEvent();
+			//viewWindowManager.handleViewWindowCloseEvent();
 		}
 
 		public function handleStreamStartEvent(e:WebRTCViewStreamEvent):void{
@@ -266,7 +266,7 @@ package org.bigbluebutton.modules.screenshare.managers
 			LOGGER.debug("Received start viewing command when isPresenter==[{0}]",[isPresenter]);
 
 			if(isPresenter && usingWebRTC) {
-				publishWindowManager.startViewing(e.rtmp, e.videoWidth, e.videoHeight);
+				//publishWindowManager.startViewing(e.rtmp, e.videoWidth, e.videoHeight);
 			} else {
 				var options:ScreenshareOptions = new ScreenshareOptions();
 				options.parseOptions();
@@ -275,7 +275,7 @@ package org.bigbluebutton.modules.screenshare.managers
 					return;
 				}
 
-				viewWindowManager.startViewing(e.rtmp, e.videoWidth, e.videoHeight);
+				//viewWindowManager.startViewing(e.rtmp, e.videoWidth, e.videoHeight);
 			}
 
 			 sharing = true; //TODO must uncomment this for the non-webrtc desktop share

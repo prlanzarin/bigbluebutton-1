@@ -24,13 +24,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   xmlns:mx="http://www.adobe.com/2006/mxml" 
   xmlns:mate="http://mate.asfusion.com/"
   xmlns:common="org.bigbluebutton.common.*"
+  xmlns:views="org.bigbluebutton.modules.screenshare.view.components.*"
   creationComplete="onCreationComplete()"	
   xmlns:dspub="org.bigbluebutton.common.*"
   verticalScrollPolicy="off" horizontalScrollPolicy="off"
-  width="700" height="350">
+  width="100%" height="100%">
   
-  <mate:Listener type="{StartShareRequestSuccessEvent.START_SHARE_REQUEST_SUCCESS}" method="handleStartShareRequestSuccessEvent" />
-  <!--mate:Listener type="{ScreenSharePausedEvent.SCREENSHARE_PAUSED}" method="handleScreenSharePausedEvent" /-->
   <mate:Listener type="{ShareStoppedEvent.SHARE_STOPPED}" method="handleScreenShareShareStoppedEvent" />
   <mate:Listener type="{ViewStreamEvent.START}" method="handleStartViewStreamEvent" />
   <mate:Listener type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}" method="onChangedPresenter" />
@@ -38,7 +37,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <mate:Listener type="{ViewStreamEvent.STOP}" method="closePublishWindow" />
   <mate:Listener type="{LocaleChangeEvent.LOCALE_CHANGED}" method="localeChanged" />
   <mate:Listener type="{StopSharingButtonEvent.STOP_SHARING}" method="stopSharingEvent" />
-  <mate:Listener type="{ShortcutEvent.REMOTE_FOCUS_DESKTOP}" method="remoteFocus" />
   <mate:Listener type="{BBBEvent.RECONNECT_DISCONNECTED_EVENT}" method="handleDisconnectedEvent" />
     
   <mx:Script>
@@ -69,6 +67,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
       import org.bigbluebutton.modules.screenshare.model.ScreenshareOptions;
       import org.bigbluebutton.modules.screenshare.services.red5.Connection;
+      import org.bigbluebutton.modules.screenshare.utils.BrowserCheck;
       import org.bigbluebutton.util.i18n.ResourceUtil;
       
       private static const LOGGER:ILogger = getClassLogger(ScreensharePublishWindow);
@@ -97,7 +96,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       private var globalDispatcher:Dispatcher = new Dispatcher();
       
       [Bindable] private var baseIndex:int;
-      [Bindable] private var dsOptions:ScreenshareOptions;
+      [Bindable] private var options:ScreenshareOptions = new ScreenshareOptions();
       
       private var paused:Boolean = false;
       
@@ -106,13 +105,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       [Bindable]
       private var shareTypeProvider:Array;
+
+      [Bindable] private var enableWebRTCScreenshare:Boolean;
       
       private function init():void {
-        dsOptions = new ScreenshareOptions();
-        baseIndex = dsOptions.baseTabIndex;
+        baseIndex = options.baseTabIndex;
       }
       
       private function onCreationComplete():void {
+        options.parseOptions();
+
+        enableWebRTCScreenshare = options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported();
+
         var fullOS:String = Capabilities.os;
         if (fullOS.indexOf("Windows") != -1) {
           os = "Windows";
@@ -126,30 +130,23 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         }
         
         browser = ExternalInterface.call("determineBrowser")[0];
-        
-        //windowControls.maximizeRestoreBtn.enabled = false;
-        
-        //titleBarOverlay.tabIndex = dsOptions.baseTabIndex;
-        //titleBarOverlay.focusEnabled = true;
-        
+
         resourcesChanged();
-		
-		//focusManager.setFocus(titleBarOverlay);
-		
-		if (tunnel) {
-			helpInfoBox.visible = helpInfoBox.includeInLayout = false;
-			//previewBox.visible = previewBox.includeInLayout = false;
-			tunnelBox.visible = tunnelBox.includeInLayout = true;
-			
-			shareTypeBox.visible = false;
-			cancelBtn.visible = cancelBtn.includeInLayout = true;
-			startBtn.visible = startBtn.includeInLayout = false;
-			//stopBtn.visible = stopBtn.includeInLayout = false;
-		}
-      }
-      
-      private function remoteFocus(e:ShortcutEvent):void{
-        //focusManager.setFocus(minimizeBtn);
+
+        if (tunnel) {
+          helpInfoBox.visible = helpInfoBox.includeInLayout = false;
+          tunnelBox.visible = tunnelBox.includeInLayout = true;
+
+          shareTypeBox.visible = false;
+          cancelBtn.visible = cancelBtn.includeInLayout = true;
+          startBtn.visible = startBtn.includeInLayout = false;
+        }
+
+        if (!enableWebRTCScreenshare) {
+          useJavaWebStart();
+        } else {
+          useWebRTCScreenshare();
+        }
       }
       
       public function get defaultWidth():int{
@@ -177,23 +174,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             closeWindow();  
           }
       }
-      
-      /*
-      * Implement resizeable interface.
-      */
-      public function resetWidthAndHeight():void{/* do nothing */}
-      
+
       public function initWindow(connection:Connection, uri:String, room:String, tunnel:Boolean):void {
         this.connection = connection;
         this.uri = uri;
         this.room = room;
 		this.tunnel = tunnel;
       }
-      
-      private function handleStartShareRequestSuccessEvent(event:StartShareRequestSuccessEvent):void {
-        
-      }
-      
+
       private function handleScreenShareShareStoppedEvent(event:ShareStoppedEvent):void {
         LOGGER.debug("handleScreenShareShareStoppedEvent reason="+event.reason);
         
@@ -213,35 +201,16 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         
         if (showReason) {
           helpInfoBox.visible = helpInfoBox.includeInLayout = false;
-          //previewBox.visible = previewBox.includeInLayout = false;
           errorBox.visible = errorBox.includeInLayout = true;
           
           shareTypeBox.visible = false;
-          //cancelBtn.visible = cancelBtn.includeInLayout = true;
+          cancelBtn.visible = cancelBtn.includeInLayout = true;
           startBtn.visible = startBtn.includeInLayout = false;
-          //stopBtn.visible = stopBtn.includeInLayout = false;
         } else {
           closeWindow();
         }
       }
-/*
-      private function handleScreenSharePausedEvent(event:ScreenSharePausedEvent):void {
-        if (videoWrapper != null && video != null && video.parent == videoWrapper) {
-            videoWrapper.removeChild(video);
-            
-            if (paused) {
-                LOGGER.debug("handleScreenSharePausedEvent - enable push button.");
-                pauseBtn.enabled = true;
-                pauseBtn.visible = pauseBtn.includeInLayout = false;
-                restartBtn.visible = restartBtn.includeInLayout = true;
-                pauseBox.visible = pauseBox.includeInLayout = true;
-                videoWrapper.visible = videoWrapper.includeInLayout = false;
-            } else {
-                switchView(true);
-			}
-        }
-      }
-*/
+
       public function shareScreen(fullScreen:Boolean):void {
         LOGGER.debug("Calling shareScreen");
         startBtn.enabled = false;
@@ -272,32 +241,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         sharingFullScreen = false;
         streaming = false;
         
-        //closeWindow();
       }
-/*
-      public function pauseSharing():void {
-        LOGGER.debug("Calling pauseSharing");
-        if (!paused) {
-          paused = true;
-          if (streaming) {
-            stopStream();
-            var streamEvent:RequestToPauseSharing = new RequestToPauseSharing();
-            dispatchEvent(streamEvent);
-          }
-          sharingFullScreen = false;
-          streaming = false;
-          
-          pauseBtn.enabled = false;
-        } else {
-          paused = false;
-          
-          restartBtn.enabled = false;
-          
-          var restartSharingEvent:RequestToRestartSharing = new RequestToRestartSharing();
-          dispatchEvent(restartSharingEvent);
-        }
-      }
-*/
+
       public function stopSharingEvent(evt:StopSharingButtonEvent):void{
         if (streaming) {
           stopStream();
@@ -313,62 +258,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         var width: int = ScreenshareModel.getInstance().width;
         var height: int = ScreenshareModel.getInstance().height;
         var streamId: String = ScreenshareModel.getInstance().streamId;
-        //startPreviewStream(connection.getConnection(), streamId, width, height);
       }
-/*
-      private function startPreviewStream(nc:NetConnection, streamId:String, capWidth:Number, capHeight:Number):void{
-        
-        switchView(false);
-        
-        LOGGER.debug("Viewing stream =[" + streamId + "]");
-        streaming = true;
-        
-        restartBtn.enabled = true;
-        pauseBtn.visible = pauseBtn.includeInLayout = true;
-        restartBtn.visible = restartBtn.includeInLayout = false;
-        
-        // Store capture dimensions so we can position cursor properly.
-        captureWidth = capWidth;
-        captureHeight = capHeight;
-        
-        var vidW:Number = captureWidth;
-        var vidH:Number = captureHeight;
-        
-        // for some reason videoHolder's height is always '0' even when set to 100% so we have to do it manually
-        videoWrapper.height = this.height - controlBar.height - this.titleBar.height - pauseBtn.height - publishView.getStyle('paddingTop') - publishView.getStyle('paddingBottom') - 10;
-        videoWrapper.width = this.width - publishView.getStyle('paddingLeft') - publishView.getStyle('paddingRight') - 10;
-        
-        vidW = videoWrapper.width;
-        vidH = videoWrapper.width * captureHeight / captureWidth;
-        
-        if (vidH > videoWrapper.height) {
-          vidH = videoWrapper.height;
-          vidW = videoWrapper.height * captureWidth / captureHeight;
-        }
-        
-        LOGGER.debug("deskshare preview[" + captureWidth + "," + captureHeight + "][" + vidW + "," + vidH + "]");
-        video = new Video(vidW, vidH);
-		
-        videoWrapper.addChild(video);
-        video.x = videoWrapper.width/2 - video.width/2;
-        video.y = videoWrapper.height/2 - video.height/2;
-        
-        ns = new NetStream(nc);
-        ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncError);
-        ns.addEventListener( NetStatusEvent.NET_STATUS, onNetStatus );
-        ns.client = this;
-        ns.bufferTime = 0;
-        ns.receiveVideo(true);
-        ns.receiveAudio(false);
-        video.attachNetStream(ns);
-        ns.play(streamId);
-        
-        pauseBox.visible = pauseBox.includeInLayout = false;
-        videoWrapper.visible = videoWrapper.includeInLayout = true;
-        pauseBox.width = vidW;
-        pauseBox.height = vidH;
-      }
-*/
+
       public function onMetaData(info:Object):void{
         LOGGER.debug("metadata: width=" + info.width + " height=" + info.height);
       }
@@ -412,37 +303,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         shareScreen(sharingFullScreen);
       }
       
-      
-      /*
-      * Override the close handler. We want the Event Map to send a message to
-      * the MDIManager to close this window;
-      */
-/*
-      override public function close(event:MouseEvent = null):void {
-        stopSharing();
-        closeWindow();
-      }
-*/
       override protected function resourcesChanged():void{
         super.resourcesChanged();
-/*
-        this.title = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
-        
-        if (titleBarOverlay != null) {
-          titleBarOverlay.accessibilityName = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
-        }
-        
-        if (windowControls != null) {
-          minimizeBtn.toolTip = ResourceUtil.getInstance().getString('bbb.screensharePublish.minimizeBtn.toolTip');
-          minimizeBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screensharePublish.minimizeBtn.accessibilityName");
-          
-          maximizeRestoreBtn.toolTip = ResourceUtil.getInstance().getString('bbb.screensharePublish.maximizeRestoreBtn.toolTip');
-          maximizeRestoreBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screensharePublish.maximizeRestoreBtn.accessibilityName");
-          
-          closeBtn.toolTip = ResourceUtil.getInstance().getString('bbb.screensharePublish.closeBtn.toolTip');
-          closeBtn.accessibilityName = ResourceUtil.getInstance().getString("bbb.screensharePublish.closeBtn.accessibilityName");
-        }
-*/
+
         shareTypeProvider = [ResourceUtil.getInstance().getString('bbb.screensharePublish.shareType.fullScreen'),
                              ResourceUtil.getInstance().getString('bbb.screensharePublish.shareType.region')];
         
@@ -451,6 +314,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       private function localeChanged(e:Event):void{
         resourcesChanged();
+        setCurrentState(currentState);
       }
       
       private function closePublishWindow(event:ViewStreamEvent):void{
@@ -528,94 +392,177 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       private function switchView(showHelp:Boolean):void {
         helpInfoBox.visible = helpInfoBox.includeInLayout = showHelp;
-        //previewBox.visible = !showHelp;
         
         shareTypeBox.visible = showHelp;
         cancelBtn.visible = cancelBtn.includeInLayout = showHelp;
         startBtn.visible = startBtn.includeInLayout = showHelp;
-        //stopBtn.visible = stopBtn.includeInLayout = !showHelp;
       }
 
       private function onCancelButtonClick():void {
         dispatchEvent(new ShareEvent(ShareEvent.REFRESH_SCREENSHARE_PUBLISH_TAB));
       }
+
+      override public function setCurrentState(stateName:String, playTransition:Boolean = true):void {
+        LOGGER.debug("Setting current state to " + stateName);
+        super.setCurrentState(stateName, playTransition);
+        switch(stateName) {
+          case "javaWebStartState":
+            resourcesChanged();
+            break;
+          case "webRTCScreenshareState":
+            //webRTCScreensharePublishWindow.connect();
+            break;
+        }
+      }
+
+      private function useWebRTCScreenshare():void {
+        //ScreenshareModel.getInstance().usingWebRTCScreenshare = true;
+        setCurrentState("webRTCScreenshareState");
+      }
+
+      private function useJavaWebStart():void {
+        //ScreenshareModel.getInstance().usingWebRTCScreenshare = false;
+        setCurrentState("javaWebStartState");
+      }
+
+      private function onLinkClicked(e:TextEvent):void{
+        LOGGER.debug("Clicked on link[{0}]", [e.text]);
+        if (ExternalInterface.available) {
+          ExternalInterface.call("chatLinkClicked", e.text);
+        }
+      }
     ]]>
   </mx:Script>
-  
-	<common:TabIndexer id="tabIndexer" startIndex="{dsOptions.baseTabIndex + 1}"
-					   tabIndices="{[helpButton, shareTypeCombo, startBtn, cancelBtn]}"/>
-	
-  <!--http://stackoverflow.com/questions/369120/why-does-mxstates-have-trouble-being-resolved-to-a-component-implementation-->
-  <mx:Box id="publishView" height="100%" width="100%" styleName="desktopShareViewStyle">
-    <mx:VBox id="helpInfoBox" width="100%" height="100%" verticalAlign="middle" verticalGap="12">
-      <mx:HBox width="100%">
-        <mx:Text styleName="desktopShareTextStyle" width="100%"
-                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.commonHelpText.text')}" />
-        <mx:LinkButton id="helpButton"
-                       height="22"
-                       label="?" 
-                       styleName="micSettingsWindowHelpButtonStyle"
-                       right="0"
-                       click="onHelpButtonClicked()"
-                       toolTip="{ResourceUtil.getInstance().getString('bbb.screensharePublish.helpButton.toolTip')}"
-                       accessibilityName="{ResourceUtil.getInstance().getString('bbb.screensharePublish.helpButton.accessibilityName')}"/>
-      </mx:HBox>
-      <mx:VBox id="helpBox" width="100%" verticalAlign="middle">
-        <mx:VBox width="30%" horizontalAlign="center">
-          <mx:Image id="helpImg1" source="{helpImg1.getStyle('imageSource')}" />
-          <mx:Text id="helpLbl1" width="100%" styleName="desktopShareTextStyle" />
+
+  <common:TabIndexer id="tabIndexer"
+      startIndex="{options.baseTabIndex + 1}"
+      tabIndices="{[helpButton, shareTypeCombo, startBtn, cancelBtn]}"/>
+
+  <mx:states>
+    <mx:State name="javaWebStartState">
+      <mx:AddChild>
+        <mx:VBox height="100%" width="100%">
+          <mx:ControlBar horizontalAlign="right">
+            <mx:Spacer width="100%"/>
+              <mx:HBox id="shareTypeBox" visible="false" verticalAlign="middle">
+                <mx:Label styleName="desktopShareTextStyle"
+                    text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.shareTypeLabel.text')}"/>
+                <mx:ComboBox id="shareTypeCombo" dataProvider="{shareTypeProvider}"/>
+              </mx:HBox>
+            <mx:Spacer width="80%"/>
+            <mx:Button id="startBtn"
+                click="onStartButtonClick()"
+                label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.startButton.label')}"/>
+            <mx:Button id="cancelBtn"
+                click="onCancelButtonClick()"
+                visible="false"
+                includeInLayout="false"
+                label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.cancelButton.label')}"/>
+          </mx:ControlBar>
+          <mx:Box id="publishView"
+              height="100%"
+              width="100%"
+              styleName="desktopShareViewStyle">
+            <mx:VBox id="helpInfoBox"
+                width="100%"
+                height="100%"
+                verticalAlign="middle"
+                verticalGap="12">
+              <mx:HBox width="100%">
+                <mx:Text styleName="desktopShareTextStyle"
+                    width="100%"
+                    text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.commonHelpText.text')}"/>
+                <mx:LinkButton id="helpButton"
+                    height="22"
+                    label="?"
+                    styleName="micSettingsWindowHelpButtonStyle"
+                    right="0"
+                    click="onHelpButtonClicked()"
+                    toolTip="{ResourceUtil.getInstance().getString('bbb.screensharePublish.helpButton.toolTip')}"
+                    accessibilityName="{ResourceUtil.getInstance().getString('bbb.screensharePublish.helpButton.accessibilityName')}"/>
+              </mx:HBox>
+              <mx:VBox id="helpBox" width="100%" verticalAlign="middle">
+                <mx:VBox width="30%" horizontalAlign="center">
+                  <mx:Image id="helpImg1" source="{helpImg1.getStyle('imageSource')}" />
+                  <mx:Text id="helpLbl1" width="100%" styleName="desktopShareTextStyle" />
+                </mx:VBox>
+                <mx:VBox width="30%" horizontalAlign="center">
+                  <mx:Image id="helpImg2" source="{helpImg2.getStyle('imageSource')}" />
+                  <mx:Text id="helpLbl2" width="100%" styleName="desktopShareTextStyle" />
+                </mx:VBox>
+                <mx:VBox width="30%" horizontalAlign="center">
+                  <mx:Image id="helpImg3" source="{helpImg3.getStyle('imageSource')}" />
+                  <mx:Text id="helpLbl3" width="100%" styleName="desktopShareTextStyle" />
+                </mx:VBox>
+                <mx:VBox id="helpBox4" width="30%" horizontalAlign="center" visible="false" includeInLayout="false">
+                  <mx:Image id="helpImg4" source="{helpImg4.getStyle('imageSource')}" />
+                  <mx:Text id="helpLbl4" width="100%" styleName="desktopShareTextStyle" />
+                </mx:VBox>
+              </mx:VBox>
+            </mx:VBox>
+            <mx:VBox id="errorBox"
+                width="100%"
+                height="100%"
+                visible="false"
+                includeInLayout="false"
+                horizontalAlign="center"
+                verticalAlign="middle">
+              <mx:Text id="startFailedLbl"
+                  width="70%"
+                  visible="false"
+                  includeInLayout="false"
+                  textAlign="center"
+                  styleName="desktopShareTextStyle"
+                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.startFailed.label')}"/>
+              <mx:Text id="restartFailedLbl"
+                  width="70%"
+                  textAlign="center"
+                  visible="false"
+                  includeInLayout="false"
+                  styleName="desktopShareTextStyle"
+                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.restartFailed.label')}"/>
+              <mx:Text id="jwsCrashedLbl"
+                  width="70%"
+                  textAlign="center"
+                  visible="false"
+                  includeInLayout="false"
+                  styleName="desktopShareTextStyle"
+                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.jwsCrashed.label')}"/>
+              <mx:Text width="70%"
+                  textAlign="center"
+                  styleName="desktopShareTextStyle"
+                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.commonErrorMessage.label')}"/>
+            </mx:VBox>
+            <mx:VBox id="tunnelBox"
+                width="100%"
+                height="100%"
+                visible="false"
+                includeInLayout="false"
+                horizontalAlign="center"
+                verticalAlign="middle">
+              <mx:Text width="80%"
+                  textAlign="center"
+                  styleName="desktopShareTextStyle"
+                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.tunnelingErrorMessage.one')}"/>
+              <mx:Text width="80%"
+                  textAlign="center"
+                  styleName="desktopShareTextStyle"
+                  text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.tunnelingErrorMessage.two')}"/>
+            </mx:VBox>
+          </mx:Box>
         </mx:VBox>
-        <mx:VBox width="30%" horizontalAlign="center">
-          <mx:Image id="helpImg2" source="{helpImg2.getStyle('imageSource')}" />
-          <mx:Text id="helpLbl2" width="100%" styleName="desktopShareTextStyle" />
-        </mx:VBox>
-        <mx:VBox width="30%" horizontalAlign="center">
-          <mx:Image id="helpImg3" source="{helpImg3.getStyle('imageSource')}" />
-          <mx:Text id="helpLbl3" width="100%" styleName="desktopShareTextStyle" />
-        </mx:VBox>
-        <mx:VBox id="helpBox4" width="30%" horizontalAlign="center" visible="false" includeInLayout="false">
-          <mx:Image id="helpImg4" source="{helpImg4.getStyle('imageSource')}" />
-          <mx:Text id="helpLbl4" width="100%" styleName="desktopShareTextStyle" />
-        </mx:VBox>
-      </mx:VBox>
-    </mx:VBox>
-    <!--mx:VBox id="previewBox" width="100%" height="100%" visible="false" horizontalAlign="center" >
-      <mx:Box id="videoHolder" width="100%" height="90%" horizontalAlign="center">
-        <mx:UIComponent id="videoWrapper" width="100%" height="100%" />
-        <mx:VBox id="pauseBox" visible="false" includeInLayout="false" styleName="desksharePublishPauseBox" >
-          <mx:Text width="100%" textAlign="center" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.pauseMessage.label')}" />
-        </mx:VBox>
-	  </mx:Box>
-      <mx:Button id="pauseBtn"
-                 click="pauseSharing()"
-                 toolTip="{ResourceUtil.getInstance().getString('bbb.screensharePublish.pause.tooltip')}" 
-                 label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.pause.label')}" />
-      <mx:Button id="restartBtn"
-                 visible="false" includeInLayout="false"
-                 click="pauseSharing()"
-                 toolTip="{ResourceUtil.getInstance().getString('bbb.screensharePublish.restart.tooltip')}" 
-                 label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.restart.label')}" />
-    </mx:VBox-->
-    <mx:VBox id="errorBox" width="100%" height="100%" visible="false" includeInLayout="false" horizontalAlign="center" verticalAlign="middle">
-      <mx:Text id="startFailedLbl" width="70%" visible="false" includeInLayout="false" textAlign="center" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.startFailed.label')}"/>
-      <mx:Text id="restartFailedLbl" width="70%" textAlign="center" visible="false" includeInLayout="false" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.restartFailed.label')}"/>
-      <mx:Text id="jwsCrashedLbl" width="70%" textAlign="center" visible="false" includeInLayout="false" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.jwsCrashed.label')}"/>
-      <mx:Text width="70%" textAlign="center" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.commonErrorMessage.label')}"/>
-    </mx:VBox>
-    <mx:VBox id="tunnelBox" width="100%" height="100%" visible="false" includeInLayout="false" horizontalAlign="center" verticalAlign="middle">
-      <mx:Text width="80%" textAlign="center" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.tunnelingErrorMessage.one')}" />
-      <mx:Text width="80%" textAlign="center" styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.tunnelingErrorMessage.two')}" />
-    </mx:VBox>
-  </mx:Box>
-  <mx:ControlBar horizontalAlign="right">
-    <mx:Spacer width="100%" />
-      <mx:HBox id="shareTypeBox" visible="false" verticalAlign="middle">
-        <mx:Label styleName="desktopShareTextStyle" text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.shareTypeLabel.text')}" />
-        <mx:ComboBox id="shareTypeCombo" dataProvider="{shareTypeProvider}" />
-      </mx:HBox>
-    <mx:Spacer width="80%" />
-    <mx:Button id="startBtn" click="onStartButtonClick()" label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.startButton.label')}" />
-    <mx:Button id="cancelBtn" click="onCancelButtonClick()" visible="false" includeInLayout="false" label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.cancelButton.label')}" />
-    <!--mx:Button id="stopBtn" visible="false" includeInLayout="false" click="close()" label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.stopButton.label')}" /-->
-  </mx:ControlBar>
+      </mx:AddChild>
+    </mx:State>
+
+    <mx:State name="webRTCScreenshareState">
+      <mx:AddChild>
+        <views:WebRTCDesktopPublishWindow id="webRTCScreensharePublishWindow"
+            height="100%"
+            width="100%"/>
+            <!--success="onWebRTCScreenshareSuccess"
+            fail="onWebRTCScreenshareFail"/-->
+      </mx:AddChild>
+    </mx:State>
+  </mx:states>
+
 </mx:Canvas>
