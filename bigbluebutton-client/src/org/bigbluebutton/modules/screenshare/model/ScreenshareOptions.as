@@ -25,18 +25,16 @@ package org.bigbluebutton.modules.screenshare.model
 		[Bindable] public var showButton:Boolean = true;
 		[Bindable] public var baseTabIndex:int;
 		[Bindable] public var tryWebRTCFirst:Boolean = false;
-		[Bindable] public var tryKurentoWebRTC:Boolean = false;
 		[Bindable] public var chromeExtensionLink:String = null;
-                [Bindable] public var chromeExtensionKey:String = null;
-    [Bindable] public var helpUrl:String;
+		[Bindable] public var chromeExtensionKey:String = null;
+		[Bindable] public var helpUrl:String;
 
 		public function parseOptions():void {
 			var vxml:XML = BBB.getConfigForModule("ScreenshareModule");
 			if (vxml != null) {
 				if (vxml.@baseTabIndex != undefined) {
 					baseTabIndex = vxml.@baseTabIndex;
-				}
-				else{
+				} else {
 					baseTabIndex = 201;
 				}
 				if (vxml.@showButton != undefined){
@@ -45,19 +43,15 @@ package org.bigbluebutton.modules.screenshare.model
 				if (vxml.@tryWebRTCFirst != undefined) {
 					tryWebRTCFirst = (vxml.@tryWebRTCFirst.toString().toUpperCase() == "TRUE") ? true : false;
 				}
-				if (vxml.@tryKurentoWebRTC!= undefined) {
-					tryKurentoWebRTC = (vxml.@tryKurentoWebRTC.toString().toUpperCase() == "TRUE") ? true : false;
-				}
 				if (vxml.@chromeExtensionLink != undefined) {
 					chromeExtensionLink = vxml.@chromeExtensionLink.toString();
 				}
 				if (vxml.@chromeExtensionKey != undefined) {
-                                        chromeExtensionKey = vxml.@chromeExtensionKey.toString();
-                                }
-
-        if (vxml.@help != undefined){
-          helpUrl = vxml.@help; 
-        }
+					chromeExtensionKey = vxml.@chromeExtensionKey.toString();
+				}
+				if (vxml.@help != undefined){
+					helpUrl = vxml.@help; 
+				}
 			}
 		}
 	}

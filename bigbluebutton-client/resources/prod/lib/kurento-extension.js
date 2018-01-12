@@ -433,7 +433,7 @@ window.getScreenConstraints = function(sendSource, callback) {
     }, chromeExtension);
   }
   else if (isFirefox) {
-    screenConstraints.video.mediaSource= "window";
+    screenConstraints.video.mediaSource= "screen";
     screenConstraints.video.width= {max: "1280"};
     screenConstraints.video.height = {max:  "720"};
 

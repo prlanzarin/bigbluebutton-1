@@ -102,6 +102,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.screenshare.events.RequestToRestartSharing;
 			import org.bigbluebutton.modules.screenshare.events.RequestToStartSharing;
 			import org.bigbluebutton.modules.screenshare.view.components.ScreenshareViewWindow;
+			import org.bigbluebutton.modules.screenshare.view.components.WebRTCDesktopViewWindow;
 			import org.bigbluebutton.modules.polling.events.PollShowResultEvent;
 			import org.bigbluebutton.modules.polling.events.PollStartedEvent;
 			import org.bigbluebutton.modules.polling.events.PollStoppedEvent;
@@ -178,9 +179,23 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private var noticeSound:Sound = new noticeSoundClass() as Sound;
 
 			private var whiteboardOverlay:IBbbCanvas = null;
-			private var screenshareView:ScreenshareViewWindow = null;
 			private var whiteboardAdded:Boolean = false;
-			
+
+			private var _screenshareView:Object = null;
+
+			public function get screenshareView():Object {
+				return this._screenshareView;
+			}
+
+			public function set screenshareView(obj:Object):void {
+				if (obj is ScreenshareViewWindow) {
+					LOGGER.debug("Adding ScreenshareViewWindow");
+				} else if (obj is WebRTCDesktopViewWindow) {
+					LOGGER.debug("Adding WebRTCDesktopViewWindow");
+				}
+				this._screenshareView = obj;
+			}
+
 			private function init():void{
 				presentOptions = new PresentOptions();
 			}
@@ -316,7 +331,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				if (currentTabIndex == PRESENTATION_TAB_INDEX && slideView != null) {
 					slideView.onParentResized(parentWidth, parentHeight);
 				} else if (currentTabIndex == SCREENSHARE_VIEW_TAB_INDEX && screenshareView != null) {
-					screenshareView.onParentResized(parentWidth, parentHeight);
+					screenshareView.onParentResized();
 				}
 			}
 			
@@ -1032,7 +1047,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					LOGGER.debug("Adding whiteboard layer to Deskshare View Canvas");
 					changeWhiteboardPageOnly("deskshare");
 					screenshareView.acceptOverlayCanvas(whiteboardOverlay);
-					whiteboardOverlay.acceptOverlayCanvas(screenshareView);
+					whiteboardOverlay.acceptOverlayCanvas(screenshareView as IBbbCanvas);
 					if(UsersUtil.amIPresenter()) {
 						annotationsPermissionChanged(true);
 					}
@@ -1098,7 +1113,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					e.viewTabContent.setStyle("horizontalAlign","center");
 					e.viewTabContent.label = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
 
-					presenterTabs.addChild(e.viewTabContent);
+					presenterTabs.addChild(e.viewTabContent as DisplayObject);
 					selectDeskshareViewTab();
 
 					if (UsersUtil.amIPresenter()) {

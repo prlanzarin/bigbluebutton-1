@@ -46,7 +46,8 @@ package org.bigbluebutton.modules.screenshare.managers {
         private var service:ScreenshareService;
         private var globalDispatcher:Dispatcher;
         private var sharing:Boolean = false;
-        private var usingJava:Boolean = true;
+        private var force:Boolean = false;
+        private var _option:ScreenshareOptions = null;
         
         public function ScreenshareManager() {
             service = new ScreenshareService();
@@ -56,6 +57,22 @@ package org.bigbluebutton.modules.screenshare.managers {
             toolbarButtonManager = new ToolbarButtonManager();
         }
         
+        public function get option():ScreenshareOptions {
+            if (this._option == null) {
+                this._option = new ScreenshareOptions();
+                this._option.parseOptions();
+            }
+            return this._option;
+        }
+
+        public function get usingJava():Boolean {
+            if (force || !option.tryWebRTCFirst || !BrowserCheck.isWebRTCSupported()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         public function handleStartModuleEvent(module:ScreenshareModule):void {
             LOGGER.debug("Screenshare Module starting");
             this.module = module;
@@ -111,14 +128,11 @@ package org.bigbluebutton.modules.screenshare.managers {
         
         private function handleStreamStartEvent(streamId:String, videoWidth:Number, videoHeight:Number):void {
             LOGGER.debug("Received start vieweing command");
-            //if (!usingJava) { return; }
             viewWindowManager.startViewing(streamId, videoWidth, videoHeight);
         }
 
         private function initDeskshare():void {
             sharing = false;
-            var option:ScreenshareOptions = new ScreenshareOptions();
-            option.parseOptions();
             if (option.showButton) {
                 toolbarButtonManager.addToolbarButton();
             }
@@ -139,19 +153,15 @@ package org.bigbluebutton.modules.screenshare.managers {
             sharing = false;
         }
         
-        public function handleRequestStartSharingEvent(force:Boolean = false):void {
+        public function handleRequestStartSharingEvent():void {
             toolbarButtonManager.startedSharing();
-            var option:ScreenshareOptions = new ScreenshareOptions();
-            option.parseOptions();
 
-            if (force || (option.tryWebRTCFirst && !BrowserCheck.isWebRTCSupported()) || !option.tryWebRTCFirst) {
-              usingJava = true;
+            if (usingJava) {
               publishWindowManager.startSharing(module.getCaptureServerUri(), module.getRoom(), module.tunnel());
               sharing = true;
               service.requestShareToken();
             } else {
               sharing = false;
-              usingJava = false;
             }
         }
        
@@ -172,9 +182,11 @@ package org.bigbluebutton.modules.screenshare.managers {
         }
         
         public function handleRequestStopSharingEvent():void {
-            service.requestStopSharing(ScreenshareModel.getInstance().streamId);
-            publishWindowManager.handleShareWindowCloseEvent();
-            toolbarButtonManager.stoppedSharing();            
+            if (usingJava) {
+                service.requestStopSharing(ScreenshareModel.getInstance().streamId);
+                publishWindowManager.handleShareWindowCloseEvent();
+                toolbarButtonManager.stoppedSharing();
+            }
         }
         
         public function handleShareStartRequestResponseEvent(event:ShareStartRequestResponseEvent):void {
@@ -194,8 +206,6 @@ package org.bigbluebutton.modules.screenshare.managers {
         public function handleStartSharingEvent():void {
             //toolbarButtonManager.disableToolbarButton();
             toolbarButtonManager.startedSharing();
-            var option:ScreenshareOptions = new ScreenshareOptions();
-            option.parseOptions();
             publishWindowManager.startSharing(module.getCaptureServerUri(), module.getRoom(), module.tunnel());
             sharing = true;
         }
@@ -227,8 +237,9 @@ package org.bigbluebutton.modules.screenshare.managers {
 
 
         public function handleUseJavaModeCommand():void {
-          // true to force Java desksharing to be used regardless of WebRTC settings
-          handleRequestStartSharingEvent(true);
+          // true to force Java screensharing to be used regardless of WebRTC settings
+          force = true;
+          handleRequestStartSharingEvent();
         }
 
         public function handleDeskshareToolbarStopEvent():void {

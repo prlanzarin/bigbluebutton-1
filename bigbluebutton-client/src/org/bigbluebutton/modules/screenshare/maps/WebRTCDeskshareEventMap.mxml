@@ -70,6 +70,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<EventHandlers type="{RequestToStopSharing.REQUEST_SHARE_STOP}">
 		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStopSharingEvent"/>
 	</EventHandlers>
+
+	<EventHandlers type="{ShareEvent.STOP_SHARING}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStopSharingEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{ShareEvent.CHANGE_VIDEO_DISPLAY_MODE}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleVideoDisplayModeEvent" arguments="{event.fullScreen}"/>
+	</EventHandlers>
 	
 	<EventHandlers type="{ShareStartRequestResponseEvent.SHARE_START_REQUEST_RESPONSE}">
     <MethodInvoker generator="{WebRTCDeskshareManager}" method="handleShareStartRequestResponseEvent" arguments="{event}"/>

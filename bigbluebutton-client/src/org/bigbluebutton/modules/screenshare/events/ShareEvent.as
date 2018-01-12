@@ -20,7 +20,6 @@ package org.bigbluebutton.modules.screenshare.events
 {
 	import flash.events.Event;
 	import org.bigbluebutton.modules.screenshare.view.components.ScreensharePublishWindow;
-	import org.bigbluebutton.modules.screenshare.view.components.ScreenshareViewWindow;
 
 	public class ShareEvent extends Event
 	{
@@ -38,7 +37,7 @@ package org.bigbluebutton.modules.screenshare.events
 		public static const CHANGE_VIDEO_DISPLAY_MODE:String = "CHANGE VIDEO DISPLAY MODE";
 		
 		public var publishTabContent:ScreensharePublishWindow;
-		public var viewTabContent:ScreenshareViewWindow;
+		public var viewTabContent:Object;
 		public var fullScreen:Boolean;
 
 		public function ShareEvent(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
