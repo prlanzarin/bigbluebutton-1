@@ -213,12 +213,12 @@ class ScreenShareApplication(val bus: IEventsMessageBus, val jnlpFile: String,
     screenShareManager ! new StreamStoppedMessage(meetingId, streamId)
   }
 
-  def sharingStarted(meetingId: String, streamId: String, width: java.lang.Integer, height: java.lang.Integer) {
+  def sharingStarted(meetingId: String, streamId: String, width: java.lang.Integer, height: java.lang.Integer, isJavaWebStart: java.lang.Boolean) {
     if (logger.isDebugEnabled()) {
       logger.debug("Received share started on meeting=[" + meetingId
           + "] for stream=[" + streamId + "] with region=[" + width + "x" + height + "]")
     }
-    screenShareManager ! new SharingStartedMessage(meetingId, streamId, width, height)
+    screenShareManager ! new SharingStartedMessage(meetingId, streamId, width, height, isJavaWebStart)
   }
 
   def sharingStopped(meetingId: String, streamId: String) {

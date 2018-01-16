@@ -83,6 +83,7 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
     private String remoteVideoPort;
     private String sdpPath;
     private String sourceModule;
+    private String streamType;
     private VideoTranscoderObserver observer;
     private String globalVideoWidth = "640";// get this from properties (Stored in FFmpegUtils)
     private String globalVideoHeight = "480";// get this from properties
@@ -142,6 +143,8 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                     this.destinationIp = params.get(Constants.DESTINATION_IP_ADDRESS);
                     this.voiceBridge = params.get(Constants.VOICE_CONF);
                     this.callername  = params.get(Constants.CALLERNAME);
+                    this.streamType = params.get(Constants.STREAM_TYPE);
+                    this.videoStreamName = params.get(Constants.INPUT);
                     break;
 
                 case Constants.TRANSCODE_RTMP_TO_RTP:
@@ -293,12 +296,19 @@ public class VideoTranscoder extends UntypedActor implements ProcessMonitorObser
                 sdpPath = FFmpegUtils.createSDPVideoFile(callername, sourceIp, localVideoPort, FFmpegConstants.CODEC_NAME_H264, FFmpegConstants.CODEC_ID_H264, FFmpegConstants.SAMPLE_RATE_H264, voiceBridge);
                 input = sdpPath;
 
-                //Generate video stream name
-                videoStreamName = generateVideoStreamName(type);
-                // TODO make stream path dynamic by turning it into a param
-                outputLive = "rtmp://" + destinationIp + "/video-broadcast/" + meetingId + "/"
-                        + videoStreamName+" live=1";
-                output = videoStreamName;
+                switch(streamType) {
+                    case Constants.STREAM_TYPE_VIDEO:
+                        //Generate video stream name
+                        videoStreamName = generateVideoStreamName(type);
+                        outputLive = "rtmp://" + destinationIp + "/video/" + meetingId + "/"
+                                + videoStreamName + " live=1";
+                        output = videoStreamName;
+                        break;
+                    case Constants.STREAM_TYPE_DESKSHARE:
+                        outputLive = "rtmp://" + destinationIp + "/screenshare/" + meetingId + "/"
+                                + videoStreamName + " live=1";
+                        output = videoStreamName;
+                }
 
                 ffmpeg = new FFmpegCommand();
                 ffmpeg.setFFmpegPath(FFMPEG_PATH);

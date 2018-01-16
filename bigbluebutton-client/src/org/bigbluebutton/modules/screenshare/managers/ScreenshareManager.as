@@ -23,6 +23,7 @@ package org.bigbluebutton.modules.screenshare.managers {
     import org.as3commons.logging.api.getClassLogger;
     import org.bigbluebutton.core.UsersUtil;
     import org.bigbluebutton.main.events.MadePresenterEvent;
+    import org.bigbluebutton.main.events.BBBEvent;
     import org.bigbluebutton.modules.screenshare.events.IsSharingScreenEvent;
     import org.bigbluebutton.modules.screenshare.events.ShareStartRequestResponseEvent;
     import org.bigbluebutton.modules.screenshare.events.StartShareRequestFailedEvent;
@@ -35,28 +36,26 @@ package org.bigbluebutton.modules.screenshare.managers {
     import org.bigbluebutton.modules.screenshare.services.ScreenshareService;
     import org.bigbluebutton.modules.screenshare.events.UseJavaModeCommand;
     import org.bigbluebutton.modules.screenshare.utils.BrowserCheck;
-    
+
     public class ScreenshareManager {
         private static const LOGGER:ILogger = getClassLogger(ScreenshareManager);
-        
+
         private var publishWindowManager:PublishWindowManager;
         private var viewWindowManager:ViewerWindowManager;
-        private var toolbarButtonManager:ToolbarButtonManager;
         private var module:ScreenshareModule;
         private var service:ScreenshareService;
         private var globalDispatcher:Dispatcher;
         private var sharing:Boolean = false;
         private var force:Boolean = false;
         private var _option:ScreenshareOptions = null;
-        
+
         public function ScreenshareManager() {
             service = new ScreenshareService();
             globalDispatcher = new Dispatcher();
             publishWindowManager = new PublishWindowManager(service);
             viewWindowManager = new ViewerWindowManager(service);
-            toolbarButtonManager = new ToolbarButtonManager();
         }
-        
+
         public function get option():ScreenshareOptions {
             if (this._option == null) {
                 this._option = new ScreenshareOptions();
@@ -77,55 +76,51 @@ package org.bigbluebutton.modules.screenshare.managers {
             LOGGER.debug("Screenshare Module starting");
             this.module = module;
             service.handleStartModuleEvent(module);
-            
+
             if (UsersUtil.amIPresenter()) {
                 initDeskshare();
             }
         }
-        
+
         public function handleStopModuleEvent():void {
             LOGGER.debug("Screenshare Module stopping");
             publishWindowManager.stopSharing();
             viewWindowManager.stopViewing();
             service.disconnect();
         }
-        
+
         public function handleConnectionSuccessEvent():void {
             LOGGER.debug("handle Connection Success Event");
             service.checkIfPresenterIsSharingScreen();
         }
-        
+
         public function handleScreenShareStartedEvent(event:ShareStartedEvent):void {
             ScreenshareModel.getInstance().streamId = event.streamId;
             ScreenshareModel.getInstance().width = event.width;
             ScreenshareModel.getInstance().height = event.height;
             ScreenshareModel.getInstance().url = event.url;
-            
+
             handleStreamStartEvent(ScreenshareModel.getInstance().streamId, event.width, event.height);
-            
+
             var dispatcher:Dispatcher = new Dispatcher();
             dispatcher.dispatchEvent(new ViewStreamEvent(ViewStreamEvent.START));
         }
-        
+
         public function handleIsSharingScreenEvent(event:IsSharingScreenEvent):void {
             ScreenshareModel.getInstance().streamId = event.streamId;
             ScreenshareModel.getInstance().width = event.width;
             ScreenshareModel.getInstance().height = event.height;
             ScreenshareModel.getInstance().url = event.url;
             ScreenshareModel.getInstance().session = event.session
-            
-            if (UsersUtil.amIPresenter()) {
-                //        var dispatcher:Dispatcher = new Dispatcher();
-                //        dispatcher.dispatchEvent(new ViewStreamEvent(ViewStreamEvent.START));        
-            } else {
+
+            if (!UsersUtil.amIPresenter()) {
                 handleStreamStartEvent(ScreenshareModel.getInstance().streamId, event.width, event.height);
-                
             }
-            
+
             var dispatcher:Dispatcher = new Dispatcher();
             dispatcher.dispatchEvent(new ViewStreamEvent(ViewStreamEvent.START));
         }
-        
+
         private function handleStreamStartEvent(streamId:String, videoWidth:Number, videoHeight:Number):void {
             LOGGER.debug("Received start vieweing command");
             viewWindowManager.startViewing(streamId, videoWidth, videoHeight);
@@ -133,62 +128,48 @@ package org.bigbluebutton.modules.screenshare.managers {
 
         private function initDeskshare():void {
             sharing = false;
-            if (option.showButton) {
-                toolbarButtonManager.addToolbarButton();
-            }
         }
-        
+
         public function handleMadePresenterEvent(e:MadePresenterEvent):void {
             LOGGER.debug("Got MadePresenterEvent ");
             initDeskshare();
         }
-        
+
         public function handleMadeViewerEvent(e:MadePresenterEvent):void {
             LOGGER.debug("Got MadeViewerEvent ");
-            toolbarButtonManager.removeToolbarButton();
             if (sharing) {
                 service.requestStopSharing(ScreenshareModel.getInstance().streamId);
                 publishWindowManager.stopSharing();
             }
             sharing = false;
         }
-        
-        public function handleRequestStartSharingEvent():void {
-            toolbarButtonManager.startedSharing();
 
-            if (usingJava) {
-              publishWindowManager.startSharing(module.getCaptureServerUri(), module.getRoom(), module.tunnel());
-              sharing = true;
-              service.requestShareToken();
-            } else {
-              sharing = false;
-            }
+        public function handleRequestStartSharingEvent():void {
+            publishWindowManager.startSharing(module.getCaptureServerUri(), module.getRoom(), module.tunnel());
+            service.requestShareToken();
         }
-       
+
         public function handleShareStartEvent():void {
-            service.sharingStartMessage(ScreenshareModel.getInstance().session);    
+            service.sharingStartMessage(ScreenshareModel.getInstance().session);
         }
-        
+
         public function handleScreenShareClientPingMessage(event: ScreenShareClientPingMessage):void {
             service.sendClientPongMessage(event.session, event.timestamp);
         }
-        
+
         public function handleRequestPauseSharingEvent():void {
             service.requestPauseSharing(ScreenshareModel.getInstance().streamId);
         }
-        
+
         public function handleRequestRestartSharingEvent():void {
             service.requestRestartSharing();
         }
-        
+
         public function handleRequestStopSharingEvent():void {
-            if (usingJava) {
-                service.requestStopSharing(ScreenshareModel.getInstance().streamId);
-                publishWindowManager.handleShareWindowCloseEvent();
-                toolbarButtonManager.stoppedSharing();
-            }
+            service.requestStopSharing(ScreenshareModel.getInstance().streamId);
+            publishWindowManager.handleShareWindowCloseEvent();
         }
-        
+
         public function handleShareStartRequestResponseEvent(event:ShareStartRequestResponseEvent):void {
             var dispatcher:Dispatcher = new Dispatcher();
             if (event.success) {
@@ -196,20 +177,18 @@ package org.bigbluebutton.modules.screenshare.managers {
                 ScreenshareModel.getInstance().jnlp = event.jnlp;
                 ScreenshareModel.getInstance().streamId = event.streamId;
                 ScreenshareModel.getInstance().session = event.session;
-                
+
                 dispatcher.dispatchEvent(new StartShareRequestSuccessEvent(ScreenshareModel.getInstance().authToken));
             } else {
                 dispatcher.dispatchEvent(new StartShareRequestFailedEvent());
             }
         }
-        
+
         public function handleStartSharingEvent():void {
-            //toolbarButtonManager.disableToolbarButton();
-            toolbarButtonManager.startedSharing();
             publishWindowManager.startSharing(module.getCaptureServerUri(), module.getRoom(), module.tunnel());
             sharing = true;
         }
-        
+
         public function handleShareScreenEvent(fullScreen:Boolean):void {
             publishWindowManager.handleShareScreenEvent(fullScreen);
         }
@@ -224,26 +203,18 @@ package org.bigbluebutton.modules.screenshare.managers {
         }
 
         public function handleShareWindowCloseEvent():void {
-            //toolbarButtonManager.enableToolbarButton();
             publishWindowManager.handleShareWindowCloseEvent();
             sharing = false;
-            toolbarButtonManager.stoppedSharing();
         }
-        
+
         public function handleViewWindowCloseEvent():void {
             viewWindowManager.handleViewWindowCloseEvent();
         }
-        
-
 
         public function handleUseJavaModeCommand():void {
           // true to force Java screensharing to be used regardless of WebRTC settings
           force = true;
           handleRequestStartSharingEvent();
-        }
-
-        public function handleDeskshareToolbarStopEvent():void {
-          toolbarButtonManager.stoppedSharing();
         }
 
         public function handleStopViewStreamEvent():void {
@@ -255,6 +226,19 @@ package org.bigbluebutton.modules.screenshare.managers {
 
         public function handleVideoDisplayModeEvent(actualSize:Boolean):void {
             viewWindowManager.handleVideoDisplayModeEvent(actualSize);
+        }
+
+        public function handleWebRTCScreenshareStartedEvent(event:BBBEvent):void {
+            service.sharingStarted(
+                    event.payload['meetingId'],
+                    event.payload['streamId'],
+                    event.payload['width'],
+                    event.payload['height']
+            );
+        }
+
+        public function handleWebRTCScreenshareStoppedEvent(event:BBBEvent):void {
+            service.sharingStopped(event.payload['meetingId'], event.payload['streamId']);
         }
     }
 }

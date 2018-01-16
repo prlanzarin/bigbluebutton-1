@@ -176,4 +176,7 @@ public class Constants {
   public static final String TRANSCODE_ROTATE_UPSIDE_DOWN    = "transcode_rotate_upside_down";
   public static final String MODULE                          = "module";
   public static final String PROBE_RTMP                      = "probe_rtmp";
+  public static final String STREAM_TYPE                     = "stream_type";
+  public static final String STREAM_TYPE_DESKSHARE           = "stream_type_deskshare";
+  public static final String STREAM_TYPE_VIDEO               = "stream_type_video";
 }

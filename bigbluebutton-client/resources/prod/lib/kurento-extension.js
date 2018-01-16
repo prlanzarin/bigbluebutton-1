@@ -10,7 +10,8 @@ Kurento = function (
     conferenceUsername,
     internalMeetingId,
     onFail = null,
-    chromeExtension = null
+    chromeExtension = null,
+    streamId,
     ) {
 
   this.ws = null;
@@ -23,6 +24,7 @@ Kurento = function (
 
   this.voiceBridge = voiceBridge + '-SCREENSHARE';
   this.internalMeetingId = internalMeetingId;
+  this.streamId = streamId;
 
   this.vid_width = window.screen.width;
   this.vid_height = window.screen.height;
@@ -166,6 +168,22 @@ Kurento.prototype.onWSMessage = function (message) {
     case 'iceCandidate':
       this.webRtcPeer.addIceCandidate(parsedMessage.candidate);
       break;
+    case 'webRTCScreenshareStarted':
+      console.log(parsedMessage.streamId);
+      BBB.webRTCScreenshareStarted(
+          parsedMessage.meetingId,
+          parsedMessage.streamId,
+          parsedMessage.width,
+          parsedMessage.height
+      );
+      break;
+    case 'webRTCScreenshareStopped':
+      console.log(parsedMessage.streamId);
+      BBB.webRTCScreenshareStopped(
+          parsedMessage.meetingId,
+          parsedMessage.streamId
+      );
+      break;
     default:
       console.error('Unrecognized message', parsedMessage);
   }
@@ -237,7 +255,8 @@ Kurento.prototype.onOfferPresenter = function (error, offerSdp) {
     callerName : self.caller_id_name,
     sdpOffer : offerSdp,
     vh: self.vid_height,
-    vw: self.vid_width
+    vw: self.vid_width,
+    streamId: self.streamId
   };
   console.log("onOfferPresenter sending to screenshare server => " + JSON.stringify(message, null, 2));
   this.sendMessage(message);

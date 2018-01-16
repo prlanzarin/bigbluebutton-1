@@ -173,7 +173,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				LOGGER.info(JSON.stringify(logData));
 			}
 
-			public function onParentResized(width:Number, height:Number):void {
+			public function onParentResized():void {
 				onResizeEvent();
 			}
 

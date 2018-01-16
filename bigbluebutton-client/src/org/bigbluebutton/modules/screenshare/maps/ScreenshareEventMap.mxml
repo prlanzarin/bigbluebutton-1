@@ -20,35 +20,39 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 -->
 
-<EventMap xmlns:mx="http://www.adobe.com/2006/mxml" 
+<EventMap xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns="http://mate.asfusion.com/">
 
 	<mx:Script>
 		<![CDATA[
-			import org.bigbluebutton.modules.screenshare.events.IsSharingScreenEvent;
 			import mx.events.FlexEvent;
-			
+
 			import org.bigbluebutton.main.events.BBBEvent;
 			import org.bigbluebutton.main.events.MadePresenterEvent;
 			import org.bigbluebutton.modules.screenshare.events.ModuleEvent;
 			import org.bigbluebutton.modules.screenshare.events.RequestToStartSharing;
-      import org.bigbluebutton.modules.screenshare.events.RequestToRestartSharing;
+			import org.bigbluebutton.modules.screenshare.events.RequestToRestartSharing;
 			import org.bigbluebutton.modules.screenshare.events.RequestToStopSharing;
-            import org.bigbluebutton.modules.screenshare.events.RequestToPauseSharing;
+			import org.bigbluebutton.modules.screenshare.events.RequestToPauseSharing;
 			import org.bigbluebutton.modules.screenshare.events.ShareStartedEvent;
-            import org.bigbluebutton.modules.screenshare.events.ShareEvent;
-            import org.bigbluebutton.modules.screenshare.events.ShareStartEvent;
+			import org.bigbluebutton.modules.screenshare.events.ShareEvent;
+			import org.bigbluebutton.modules.screenshare.events.ShareStartEvent;
 			import org.bigbluebutton.modules.screenshare.events.ShareStartRequestResponseEvent;
-            import org.bigbluebutton.modules.screenshare.events.ScreenShareClientPingMessage;
+			import org.bigbluebutton.modules.screenshare.events.StartShareRequestSuccessEvent;
+			import org.bigbluebutton.modules.screenshare.events.ScreenShareClientPingMessage;
 			import org.bigbluebutton.modules.screenshare.events.ShareWindowEvent;
 			import org.bigbluebutton.modules.screenshare.events.StartedViewingEvent;
-			import org.bigbluebutton.modules.screenshare.events.StreamEvent;
 			import org.bigbluebutton.modules.screenshare.events.IsSharingScreenEvent;
 			import org.bigbluebutton.modules.screenshare.events.ViewWindowEvent;
-			import org.bigbluebutton.modules.screenshare.managers.ScreenshareManager;
-			import org.bigbluebutton.modules.screenshare.services.red5.ConnectionEvent;
 			import org.bigbluebutton.modules.screenshare.events.UseJavaModeCommand;
 			import org.bigbluebutton.modules.screenshare.events.DeskshareToolbarEvent;
+			import org.bigbluebutton.modules.screenshare.events.WebRTCShareWindowEvent;
+			import org.bigbluebutton.modules.screenshare.events.WebRTCStreamEvent;
+			import org.bigbluebutton.modules.screenshare.events.WebRTCViewStreamEvent;
+			import org.bigbluebutton.modules.screenshare.events.WebRTCViewWindowEvent;
+			import org.bigbluebutton.modules.screenshare.managers.WebRTCDeskshareManager;
+			import org.bigbluebutton.modules.screenshare.managers.ScreenshareManager;
+			import org.bigbluebutton.modules.screenshare.services.red5.ConnectionEvent;
 		]]>
 	</mx:Script>
 	<EventHandlers type="{FlexEvent.PREINITIALIZE}">
@@ -56,18 +60,21 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		The FlexEvent.PREINITIALIZE event is a good place for creating and initializing managers.
 		-->
 		<ObjectBuilder generator="{ScreenshareManager}"/>
+		<ObjectBuilder generator="{WebRTCDeskshareManager}"/>
 	</EventHandlers>
-		
+
 	<EventHandlers type="{ShareEvent.SHARE_SCREEN}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleShareScreenEvent" arguments="{event.fullScreen}"/>
 	</EventHandlers>
 
 	<EventHandlers type="{ShareEvent.STOP_SHARING}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleStopSharingEvent"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStopSharingEvent"/>
 	</EventHandlers>
 
 	<EventHandlers type="{ShareEvent.CHANGE_VIDEO_DISPLAY_MODE}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleVideoDisplayModeEvent" arguments="{event.fullScreen}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleVideoDisplayModeEvent" arguments="{event.fullScreen}"/>
 	</EventHandlers>
 
 	<EventHandlers type="{ShareEvent.REFRESH_SCREENSHARE_PUBLISH_TAB}">
@@ -76,81 +83,89 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 	<EventHandlers type="{BBBEvent.START_DESKSHARE}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleStartSharingEvent"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStartSharingEvent"/>
 	</EventHandlers>
 
 	<EventHandlers type="{ShareEvent.START_SHARING}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleStartSharingEvent"/>
 	</EventHandlers>
-	
-	<EventHandlers type="{BBBEvent.START_DESKSHARE}">
-		<MethodInvoker generator="{ScreenshareManager}" method="handleStartSharingEvent"/>
+
+	<EventHandlers type="{RequestToStartSharing.REQUEST_SHARE_START}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleRequestStartSharingEvent"/>
 	</EventHandlers>
-	
-  <EventHandlers type="{RequestToStartSharing.REQUEST_SHARE_START}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleRequestStartSharingEvent"/>
-  </EventHandlers>
-    
-  <EventHandlers type="{RequestToPauseSharing.REQUEST_SHARE_PAUSE}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleRequestPauseSharingEvent"/>
-  </EventHandlers>
-  
-  <EventHandlers type="{RequestToRestartSharing.REQUEST_SHARE_RESTART}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleRequestRestartSharingEvent"/>
-  </EventHandlers>
-    
-  <EventHandlers type="{ShareStartEvent.SHARE_START}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleShareStartEvent"/>
-  </EventHandlers>
-  
-  <EventHandlers type="{RequestToStopSharing.REQUEST_SHARE_STOP}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleRequestStopSharingEvent"/>
-  </EventHandlers>
-  
-  <EventHandlers type="{ShareStartRequestResponseEvent.SHARE_START_REQUEST_RESPONSE}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleShareStartRequestResponseEvent" arguments="{event}"/>
-  </EventHandlers>
-  
-  <EventHandlers type="{ScreenShareClientPingMessage.CLIENT_PING}">
-    <MethodInvoker generator="{ScreenshareManager}" method="handleScreenShareClientPingMessage" arguments="{event}"/>
-  </EventHandlers>
-  
-    
+
+	<EventHandlers type="{StartShareRequestSuccessEvent.START_SHARE_REQUEST_SUCCESS}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStartSharingEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{RequestToPauseSharing.REQUEST_SHARE_PAUSE}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleRequestPauseSharingEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{RequestToRestartSharing.REQUEST_SHARE_RESTART}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleRequestRestartSharingEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{ShareStartEvent.SHARE_START}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleShareStartEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{RequestToStopSharing.REQUEST_SHARE_STOP}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleRequestStopSharingEvent"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStopSharingEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{ShareStartRequestResponseEvent.SHARE_START_REQUEST_RESPONSE}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleShareStartRequestResponseEvent" arguments="{event}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleShareStartRequestResponseEvent" arguments="{event}"/>
+	</EventHandlers>
+
+	<EventHandlers type="{ScreenShareClientPingMessage.CLIENT_PING}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleScreenShareClientPingMessage" arguments="{event}"/>
+	</EventHandlers>
+
 	<EventHandlers type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleMadePresenterEvent" arguments="{event}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleMadePresenterEvent" arguments="{event}"/>
 	</EventHandlers>
-	
+
 	<EventHandlers type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleMadeViewerEvent" arguments="{event}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleMadeViewerEvent" arguments="{event}"/>
 	</EventHandlers>
-			
+
 	<EventHandlers type="{ShareStartedEvent.SHARE_STATED}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleScreenShareStartedEvent" arguments="{event}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleScreenShareStartedEvent" arguments="{event}"/>
 	</EventHandlers>
 
 	<EventHandlers type="{IsSharingScreenEvent.IS_SCREENSHARING}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleIsSharingScreenEvent" arguments="{event}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleIsSharingScreenEvent" arguments="{event}"/>
 	</EventHandlers>
-	
-		
-	<EventHandlers type="{ShareWindowEvent.CLOSE}">	
+
+	<EventHandlers type="{ShareWindowEvent.CLOSE}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleShareWindowCloseEvent"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStopSharingEvent"/>
 	</EventHandlers>
 
-  <EventHandlers type="{ConnectionEvent.SUCCESS}">		
-    <MethodInvoker generator="{ScreenshareManager}" method="handleConnectionSuccessEvent"/>
-  </EventHandlers>
-  
-		
+	<EventHandlers type="{ConnectionEvent.SUCCESS}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleConnectionSuccessEvent"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleConnectionSuccessEvent"/>
+	</EventHandlers>
+
 	<EventHandlers type="{ViewWindowEvent.CLOSE}">
-		<MethodInvoker generator="{ScreenshareManager}" 	method="handleViewWindowCloseEvent"/>
-	</EventHandlers>
-			
-	<EventHandlers type="{ModuleEvent.STOP}">		
-		<MethodInvoker generator="{ScreenshareManager}" method="handleStopModuleEvent"/>
+		<MethodInvoker generator="{ScreenshareManager}" method="handleViewWindowCloseEvent"/>
 	</EventHandlers>
 
-	<EventHandlers type="{ModuleEvent.START}">		
+	<EventHandlers type="{ModuleEvent.STOP}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleStopModuleEvent"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStopModuleEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{ModuleEvent.START}">
 		<MethodInvoker generator="{ScreenshareManager}" method="handleStartModuleEvent" arguments="{event.module}"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStartModuleEvent" arguments="{event.module}"/>
 	</EventHandlers>
 
 	<EventHandlers type="{UseJavaModeCommand.USE_JAVA_MODE}">
@@ -161,4 +176,39 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<MethodInvoker generator="{ScreenshareManager}" method="handleDeskshareToolbarStopEvent"/>
 	</EventHandlers>
 
+	<EventHandlers type="{WebRTCStreamEvent.STOP}" >
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStreamStoppedEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{WebRTCViewStreamEvent.START}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStreamStartEvent" arguments="{event}"/>
+	</EventHandlers>
+
+	<EventHandlers type="{WebRTCViewStreamEvent.STOP}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStreamStopEvent" arguments="{event}"/>
+	</EventHandlers>
+
+	<EventHandlers type="{WebRTCShareWindowEvent.CLOSE}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleShareWindowCloseEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{StartedViewingEvent.STARTED_VIEWING_EVENT}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleStartedViewingEvent" arguments="{event.stream}"/>
+	</EventHandlers>
+
+	<EventHandlers type="{WebRTCViewWindowEvent.CLOSE}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleViewWindowCloseEvent"/>
+	</EventHandlers>
+
+	<EventHandlers type="{UseJavaModeCommand.USE_JAVA_MODE}">
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleUseJavaModeCommand"/>
+	</EventHandlers>
+
+	<EventHandlers type="{BBBEvent.WEBRTC_SCREENSHARE_STARTED_EVENT}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleWebRTCScreenshareStartedEvent" arguments="{event}"/>
+	</EventHandlers>
+
+	<EventHandlers type="{BBBEvent.WEBRTC_SCREENSHARE_STOPPED_EVENT}">
+		<MethodInvoker generator="{ScreenshareManager}" method="handleWebRTCScreenshareStoppedEvent" arguments="{event}"/>
+	</EventHandlers>
 </EventMap>

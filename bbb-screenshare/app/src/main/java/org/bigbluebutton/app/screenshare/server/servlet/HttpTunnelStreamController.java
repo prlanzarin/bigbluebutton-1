@@ -89,7 +89,8 @@ public class HttpTunnelStreamController extends MultiActionController {
 		    screenShareApplication = getScreenShareApplication();
 			hasSessionManager = true;
 		}
-		screenShareApplication.sharingStarted(meetingId, streamId, Integer.parseInt(screen[0]), Integer.parseInt(screen[1]));
+		Boolean isJavaWebStart = true;
+		screenShareApplication.sharingStarted(meetingId, streamId, Integer.parseInt(screen[0]), Integer.parseInt(screen[1]), isJavaWebStart);
 	}	
 	
 	private void handleCaptureUpdateRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {

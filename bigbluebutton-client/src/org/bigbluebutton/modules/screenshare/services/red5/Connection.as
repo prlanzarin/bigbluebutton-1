@@ -219,7 +219,33 @@ package org.bigbluebutton.modules.screenshare.services.red5 {
                 LOGGER.error(status);
             }, message);
         }
-        
+
+        public function sharingStarted(meetingId:String, streamId:String, width:Number, height:Number):void {
+            var message:Object = new Object();
+            message["meetingId"] = meetingId;
+            message["streamId"] = streamId;
+            message["width"] = width;
+            message["height"] = height;
+
+            sendMessage("screenshare.sharingStarted", function(result:String):void { // On successful result
+                LOGGER.debug(result);
+            }, function(status:String):void { // status - On error occurred
+                LOGGER.error(status);
+            }, message);
+        }
+
+        public function sharingStopped(meetingId:String, streamId:String):void {
+            var message:Object = new Object();
+            message["meetingId"] = meetingId;
+            message["streamId"] = streamId;
+
+            sendMessage("screenshare.sharingStopped", function(result:String):void { // On successful result
+                LOGGER.debug(result);
+            }, function(status:String):void { // status - On error occurred
+                LOGGER.error(status);
+            }, message);
+        }
+
         public function setURI(p_URI:String):void {
             uri = p_URI;
         }

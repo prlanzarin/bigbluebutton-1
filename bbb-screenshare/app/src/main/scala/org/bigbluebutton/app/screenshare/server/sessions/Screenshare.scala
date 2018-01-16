@@ -104,6 +104,7 @@ class Screenshare(val sessionManager: ScreenshareManager,
   // index to increment streamId so we can support
   // start-pause-stop
   private var streamIdCount = 0
+  private var usingJavaWebStart = true
 
   private var screenShareSession: Option[String] = None
   private var currentPresenterId: Option[String]  = None
@@ -331,8 +332,14 @@ class Screenshare(val sessionManager: ScreenshareManager,
 
   private def handleSharingStartedMessage(msg: SharingStartedMessage) {
     if (log.isDebugEnabled) {
-      log.debug("Received JWS SharingStartedMessage for streamId=[" + msg.streamId + "]")
+      if (msg.isJavaWebStart) {
+        log.debug("Received JWS SharingStartedMessage for streamId=[" + msg.streamId + "]")
+      } else {
+        log.debug("Received an external app SharingStartedMessage for streamId=[" + msg.streamId + "]")
+      }
     }
+
+    usingJavaWebStart = msg.isJavaWebStart
 
     activeSession foreach { as =>
       status = RUNNING
@@ -471,6 +478,7 @@ class Screenshare(val sessionManager: ScreenshareManager,
 
     val sessionToken = genSessionToken()
     screenShareSession =  Some(sessionToken)
+    usingJavaWebStart = true
 
     val streamId = generateStreamId(sessionToken)
     val token = streamId
@@ -582,7 +590,7 @@ class Screenshare(val sessionManager: ScreenshareManager,
     if (log.isDebugEnabled) {
       log.debug("handleSessionAuditMessage session=[" + msg.session + "].")
     }
-    if (status != STOP) {
+    if (status != STOP && usingJavaWebStart) {
       if (jwsStarted(msg.session)) {
         if (isJwsStillAlive(msg.session)) {
           if (isClientStillAlive(msg.session)) {

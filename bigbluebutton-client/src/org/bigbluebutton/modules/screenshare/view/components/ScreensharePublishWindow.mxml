@@ -45,7 +45,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       import org.as3commons.logging.api.ILogger;
       import org.as3commons.logging.api.getClassLogger;
-      import org.bigbluebutton.common.Images;
       import org.bigbluebutton.common.events.LocaleChangeEvent;
       import org.bigbluebutton.core.UsersUtil;
       import org.bigbluebutton.core.managers.ReconnectionManager;
@@ -61,7 +60,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       import org.bigbluebutton.modules.screenshare.events.ShareStartEvent;
       import org.bigbluebutton.modules.screenshare.events.ShareStoppedEvent;
       import org.bigbluebutton.modules.screenshare.events.ShareWindowEvent;
-      import org.bigbluebutton.modules.screenshare.events.StartShareRequestSuccessEvent;
       import org.bigbluebutton.modules.screenshare.events.StopSharingButtonEvent;
       import org.bigbluebutton.modules.screenshare.events.ViewStreamEvent;
       import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
@@ -75,9 +73,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       public static const SCALE:Number = 5;
       private static const VID_HEIGHT_PAD:Number = 73;
       private static const VID_WIDTH_PAD:Number = 6;
-      
-      private var images:Images = new Images();
-      [Bindable] public var bbbLogo:Class = images.bbb_logo;
       
       private var connection:Connection;
       private var uri:String;
@@ -410,7 +405,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
             resourcesChanged();
             break;
           case "webRTCScreenshareState":
-            //webRTCScreensharePublishWindow.connect();
+            //webRTCDeskshareWindow.connect();
             break;
         }
       }
@@ -556,7 +551,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
     <mx:State name="webRTCScreenshareState">
       <mx:AddChild>
-        <views:WebRTCDesktopPublishWindow id="webRTCScreensharePublishWindow"
+        <views:WebRTCDeskshareWindow id="webRTCDeskshareWindow"
             height="100%"
             width="100%"/>
             <!--success="onWebRTCScreenshareSuccess"

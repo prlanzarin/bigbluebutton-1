@@ -73,6 +73,9 @@ package org.bigbluebutton.main.events {
 		public static const CANCEL_RECONNECTION_EVENT:String = "CANCEL_RECONNECTION_EVENT";
 		public static const WEBRTC_MONITOR_UPDATE_EVENT:String = "WEBRTC_MONITOR_UPDATE_EVENT";
 
+		public static const WEBRTC_SCREENSHARE_STARTED_EVENT:String = "WEBRTC_SCREENSHARE_STARTED_EVENT";
+		public static const WEBRTC_SCREENSHARE_STOPPED_EVENT:String = "WEBRTC_SCREENSHARE_STOPPED_EVENT";
+
 		public var message:String;
 		public var payload:Object = new Object();
 		

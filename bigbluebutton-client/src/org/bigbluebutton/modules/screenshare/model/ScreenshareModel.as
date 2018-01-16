@@ -6,6 +6,7 @@ package org.bigbluebutton.modules.screenshare.model {
         
         private var _isScreenSharing:Boolean = false;
         private var _stream:ScreenshareStream = new ScreenshareStream();
+        private var _usingWebRTCDeskshare:Boolean = false;
         
         public function ScreenshareModel(enforcer:SingletonEnforcer) {
             if (enforcer == null) {
@@ -78,6 +79,14 @@ package org.bigbluebutton.modules.screenshare.model {
         
         public function set session(j:String):void {
             _stream.session = j;
+        }
+
+        public function get usingWebRTCDeskshare():Boolean {
+            return _usingWebRTCDeskshare;
+        }
+
+        public function set usingWebRTCDeskshare(value:Boolean):void {
+            _usingWebRTCDeskshare = value;
         }
     }
 }

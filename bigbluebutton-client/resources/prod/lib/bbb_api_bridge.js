@@ -516,6 +516,19 @@
       }
     }
 
+    BBB.webRTCScreenshareStarted = function(mettingId, streamId, width, height) {
+      var swfObj = getSwfObj();
+      if (swfObj) {
+        swfObj.webRTCScreenshareStarted(mettingId, streamId, width, height);
+      }
+    }
+
+    BBB.webRTCScreenshareStopped = function(mettingId, streamId) {
+      var swfObj = getSwfObj();
+      if (swfObj) {
+        swfObj.webRTCScreenshareStopped(mettingId, streamId);
+      }
+    }
 
     // Third-party JS apps should use this to query if the BBB SWF file is ready to handle calls.
     BBB.isSwfClientReady = function() {

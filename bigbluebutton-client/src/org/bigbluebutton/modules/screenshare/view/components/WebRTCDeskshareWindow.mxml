@@ -55,10 +55,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.modules.screenshare.model.ScreenshareOptions;
 			import org.bigbluebutton.modules.screenshare.events.RequestToStartSharing;
 			import org.bigbluebutton.modules.screenshare.events.DeskshareToolbarEvent;
-			import org.bigbluebutton.modules.screenshare.services.red5.WebRTCConnectionEvent;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
 
-			private static const LOGGER:ILogger = getClassLogger(WebRTCDesktopPublishWindow);
+			private static const LOGGER:ILogger = getClassLogger(WebRTCDeskshareWindow);
 
 			private var connection:NetConnection;
 			private var uri:String;
