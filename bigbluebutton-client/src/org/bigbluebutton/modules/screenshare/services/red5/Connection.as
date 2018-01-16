@@ -297,7 +297,7 @@ package org.bigbluebutton.modules.screenshare.services.red5 {
             case "NetConnection.Connect.Success":
                 if (reconnecting) {
                     reconnecting = false;
-                    if (ScreenshareModel.getInstance().isSharing) {
+                    if (ScreenshareModel.getInstance().sharing) {
                         stopShareRequest(UsersUtil.getInternalMeetingID(), ScreenshareModel.getInstance().streamId)
                     }
                     

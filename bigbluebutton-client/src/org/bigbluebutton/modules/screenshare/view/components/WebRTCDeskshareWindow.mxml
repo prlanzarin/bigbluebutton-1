@@ -31,15 +31,14 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}" method="onChangedPresenter"/>
 	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}" method="onChangedPresenter"/>
 	<mate:Listener type="{LocaleChangeEvent.LOCALE_CHANGED}" method="localeChanged"/>
-	<mate:Listener type="{WebRTCPublishWindowChangeState.DISPLAY_INSTALL}" method="displayInstall"/>
-	<mate:Listener type="{WebRTCPublishWindowChangeState.DISPLAY_RETRY}" method="displayRetry"/>
-	<mate:Listener type="{WebRTCPublishWindowChangeState.DISPLAY_FALLBACK}" method="displayFallback"/>
+	<mate:Listener type="{WebRTCWindowChangeState.DISPLAY_INSTALL}" method="displayInstall"/>
+	<mate:Listener type="{WebRTCWindowChangeState.DISPLAY_RETRY}" method="displayRetry"/>
+	<mate:Listener type="{WebRTCWindowChangeState.DISPLAY_FALLBACK}" method="displayFallback"/>
 
 	<mx:Script>
 		<![CDATA[
 			import com.asfusion.mate.events.Dispatcher;
 			import flash.external.ExternalInterface;
-			import mx.core.UIComponent;
 
 			import org.as3commons.logging.api.ILogger;
 			import org.as3commons.logging.api.getClassLogger;
@@ -47,23 +46,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.common.events.LocaleChangeEvent;
 			import org.bigbluebutton.main.events.MadePresenterEvent;
 			import org.bigbluebutton.modules.screenshare.events.UseJavaModeCommand;
-			import org.bigbluebutton.modules.screenshare.events.WebRTCShareWindowEvent;
-			import org.bigbluebutton.modules.screenshare.events.StopSharingButtonEvent;
-			import org.bigbluebutton.modules.screenshare.events.WebRTCStreamEvent;
-			import org.bigbluebutton.modules.screenshare.events.WebRTCViewStreamEvent;
-			import org.bigbluebutton.modules.screenshare.events.WebRTCPublishWindowChangeState;
+			import org.bigbluebutton.modules.screenshare.events.WebRTCWindowChangeState;
 			import org.bigbluebutton.modules.screenshare.model.ScreenshareOptions;
 			import org.bigbluebutton.modules.screenshare.events.RequestToStartSharing;
-			import org.bigbluebutton.modules.screenshare.events.DeskshareToolbarEvent;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
 
 			private static const LOGGER:ILogger = getClassLogger(WebRTCDeskshareWindow);
 
-			private var connection:NetConnection;
-			private var uri:String;
-			private var useTLS:Boolean;
-			private var room:String;
-			private var streaming:Boolean = false;
 			private var globalDispatcher:Dispatcher = new Dispatcher();
 			private var _screenshareOptions:ScreenshareOptions = null;
 
@@ -100,7 +89,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private function onInstallButtonClicked():void {
 				navigateToURL(new URLRequest(screenshareOptions.chromeExtensionLink), "_blank");
-				globalDispatcher.dispatchEvent(new WebRTCPublishWindowChangeState(WebRTCPublishWindowChangeState.DISPLAY_RETRY));
+				globalDispatcher.dispatchEvent(new WebRTCWindowChangeState(WebRTCWindowChangeState.DISPLAY_RETRY));
 			}
 
 			private function onRetryButtonClicked():void {
@@ -109,7 +98,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					if (exists) {
 						globalDispatcher.dispatchEvent(new RequestToStartSharing());
 					} else {
-						globalDispatcher.dispatchEvent(new WebRTCPublishWindowChangeState(WebRTCPublishWindowChangeState.DISPLAY_FALLBACK));
+						globalDispatcher.dispatchEvent(new WebRTCWindowChangeState(WebRTCWindowChangeState.DISPLAY_FALLBACK));
 					}
 				};
 				ExternalInterface.addCallback("onSuccess", onSuccess);
@@ -117,92 +106,18 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 
 			private function onFallbackButtonClicked():void {
-				closeWindow();
 				globalDispatcher.dispatchEvent(new UseJavaModeCommand());
 			}
 
 			private function onCreationComplete():void {
-				setCurrentState("dispFullRegionControlBar"); //TODO ANTON
+				setCurrentState("dispFullRegionControlBar");
 				resourcesChanged();
 			}
 
-			public function get defaultWidth():int{
-				return this.width;
-			}
+			private function onChangedPresenter(e:Event):void {}
 
-			public function get defaultHeight():int{
-				return this.height;
-			}
-
-			public function set defaultHeight(height:int):void{
-				this.height = height;
-			}
-
-			public function set defaultWidth(width:int):void{
-				this.width = width;
-			}
-
-			/*
-			 * Implement resizeable interface.
-			 */
-			public function resetWidthAndHeight():void{/* do nothing */}
-
-			public function initWindow(connection:NetConnection, uri:String, useTLS:Boolean , room:String):void {
-				this.connection = connection;
-				this.uri = uri;
-				this.useTLS = useTLS;
-				this.room = room;
-			}
-
-			public function shareScreen(fullScreen:Boolean):void {
-				LOGGER.debug("Calling shareScreen");
-				startSharing(connection, uri, useTLS , room, fullScreen);
-			}
-
-			private function startSharing(connection:NetConnection, uri:String , useTLS:Boolean , room:String, fullScreen:Boolean):void {
-				var captureX:Number = 0;
-				var captureY:Number = 0;
-				
-			}
-
-			public function stopSharing():void{
-				if (streaming) {
-					var streamEvent:WebRTCStreamEvent = new WebRTCStreamEvent(WebRTCStreamEvent.STOP);
-					dispatchEvent(streamEvent);
-				}
-				streaming = false;
-				closeWindow();
-			}
-
-			public function stopSharingEvent(evt:StopSharingButtonEvent):void{
-				LOGGER.debug("stopSharingEvent");
-				stopSharing();
-			}
-
-			private function securityErrorHandler(event:SecurityErrorEvent):void {
-				LOGGER.debug("securityErrorHandler");
-			}
-
-			private function onAsyncError(e:AsyncErrorEvent):void{
-				LOGGER.debug("onAsyncError {0}", [e.toString()]);
-			}
-
-			private function onChangedPresenter(e:Event):void{
-				stopSharing();
-				closeWindow();
-			}
-
-			private function closeWindow():void {
-				// LOGGER.debug("Calling stopApplet in closeWindow()");
-				dispatchEvent(new WebRTCShareWindowEvent(WebRTCShareWindowEvent.CLOSE));
-			}
-
-			private function localeChanged(e:Event):void{
+			private function localeChanged(e:Event):void {
 				resourcesChanged();
-			}
-
-			private function closePublishWindow(event:WebRTCViewStreamEvent):void{
-				closeWindow();
 			}
 		]]>
 	</mx:Script>
@@ -211,12 +126,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<mx:State name="dispFullRegionControlBar">
 			<mx:AddChild relativeTo="mainElement" position="after">
 				<mx:HBox width="100%" horizontalAlign="center">
-					<mx:Button id="btnClosePublish"
+					<!--mx:Button id="btnClosePublish"
 							toolTip="{ResourceUtil.getInstance().getString('bbb.screensharePublish.stopButton.toolTip')}"
 							label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.stopButton.label')}"
 							visible="true"
-							enabled="false"
-							click="stopSharing()"/>
+							enabled="false"/-->
 				</mx:HBox>
 			</mx:AddChild>
 		</mx:State>

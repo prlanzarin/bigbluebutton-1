@@ -20,17 +20,15 @@ package org.bigbluebutton.modules.screenshare.events
 {
 	import flash.events.Event;
 
-	public class WebRTCPublishWindowChangeState extends Event
+	public class WebRTCWindowChangeState extends Event
 	{
 		public static const DISPLAY_INSTALL:String = "WebRTC Deskshare Display Install Screen";
 		public static const DISPLAY_RETRY:String = "WebRTC Deskshare Display Retry Screen";
 		public static const DISPLAY_FALLBACK:String = "WebRTC Deskshare Display Fallback Screen";
 
-		public function WebRTCPublishWindowChangeState(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
+		public function WebRTCWindowChangeState(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
 		{
 			super(type, bubbles, cancelable);
 		}
-
 	}
 }
-

@@ -4,7 +4,7 @@ package org.bigbluebutton.modules.screenshare.model {
         
         private static var instance:ScreenshareModel = null;
         
-        private var _isScreenSharing:Boolean = false;
+        private var _sharing:Boolean = false;
         private var _stream:ScreenshareStream = new ScreenshareStream();
         private var _usingWebRTCDeskshare:Boolean = false;
         
@@ -21,8 +21,12 @@ package org.bigbluebutton.modules.screenshare.model {
             return instance;
         }
         
-        public function get isSharing():Boolean {
-            return _isScreenSharing;
+        public function get sharing():Boolean {
+            return _sharing;
+        }
+
+        public function set sharing(value:Boolean):void {
+            _sharing = value;
         }
         
         public function get width():int {

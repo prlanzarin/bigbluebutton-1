@@ -49,7 +49,6 @@ package org.bigbluebutton.modules.users.services
   import org.bigbluebutton.main.model.users.events.ChangeMyRole;
   import org.bigbluebutton.main.model.users.events.StreamStoppedEvent;
   import org.bigbluebutton.main.model.users.events.UsersConnectionEvent;
-  import org.bigbluebutton.modules.screenshare.events.WebRTCViewStreamEvent;
   import org.bigbluebutton.modules.users.events.MeetingMutedEvent;
 
   public class MessageReceiver implements IMessageListener
@@ -174,9 +173,6 @@ package org.bigbluebutton.modules.users.services
         case "userEjectedFromMeeting":
           handleUserEjectedFromMeeting(message);
           break;
-        case "DeskShareRTMPBroadcastNotification":
-          handleDeskShareRTMPBroadcastNotification(message);
-          break;
         case "get_guest_policy_reply":
           handleGetGuestPolicyReply(message);
           break;
@@ -193,21 +189,6 @@ package org.bigbluebutton.modules.users.services
           handleHangingUp(message);
           break;
       }
-    }
-
-    private function handleDeskShareRTMPBroadcastNotification(msg:Object):void {
-      var event:WebRTCViewStreamEvent;
-      if (msg.broadcasting) {
-        event = new WebRTCViewStreamEvent(WebRTCViewStreamEvent.START);
-      } else {
-        event = new WebRTCViewStreamEvent(WebRTCViewStreamEvent.STOP);
-      }
-
-      event.videoWidth = msg.width;
-      event.videoHeight = msg.height;
-      event.rtmp = msg.rtmpUrl;
-
-      dispatcher.dispatchEvent(event);
     }
 
     private function handleUserEjectedFromMeeting(msg: Object):void {

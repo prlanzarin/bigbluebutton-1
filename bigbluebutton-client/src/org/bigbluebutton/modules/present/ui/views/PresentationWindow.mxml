@@ -97,6 +97,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.events.ShortcutEvent;
 			import org.bigbluebutton.main.events.PresenterStatusEvent;
 			import org.bigbluebutton.main.views.MainCanvas;
+			import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
 			import org.bigbluebutton.modules.screenshare.events.ShareEvent;
 			import org.bigbluebutton.modules.screenshare.events.RequestToPauseSharing;
 			import org.bigbluebutton.modules.screenshare.events.RequestToRestartSharing;
@@ -178,10 +179,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private var noticeSound:Sound = new noticeSoundClass() as Sound;
 
 			private var whiteboardOverlay:IBbbCanvas = null;
-			private var whiteboardAdded:Boolean = false;
-
 			private var screenshareView:ScreenshareViewWindow = null;
-
+			private var whiteboardAdded:Boolean = false;
+			
 			private function init():void{
 				presentOptions = new PresentOptions();
 			}
@@ -1049,7 +1049,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				if (UsersUtil.amIPresenter()) {
 					pollStartBtn.visible = true;
 					btnClosePublish.visible = true;
-					btnPauseScreenshare.visible = true;
+					btnPauseScreenshare.visible = !ScreenshareModel.getInstance().usingWebRTCDeskshare;
 				}
 
 				removeContextMenuItems();
@@ -1099,7 +1099,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					e.viewTabContent.setStyle("horizontalAlign","center");
 					e.viewTabContent.label = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
 
-					presenterTabs.addChild(e.viewTabContent as DisplayObject);
+					presenterTabs.addChild(e.viewTabContent);
 					selectDeskshareViewTab();
 
 					if (UsersUtil.amIPresenter()) {

@@ -28,11 +28,12 @@ package org.bigbluebutton.modules.screenshare.managers
 
 	import org.bigbluebutton.core.UsersUtil;
 	import org.bigbluebutton.core.managers.UserManager;
+	import org.bigbluebutton.main.events.BBBEvent;
 	import org.bigbluebutton.main.events.MadePresenterEvent;
+	import org.bigbluebutton.modules.screenshare.events.ShareEvent;
 	import org.bigbluebutton.modules.screenshare.events.ShareStartedEvent;
 	import org.bigbluebutton.modules.screenshare.events.UseJavaModeCommand;
-	import org.bigbluebutton.modules.screenshare.events.WebRTCViewStreamEvent;
-	import org.bigbluebutton.modules.screenshare.events.WebRTCPublishWindowChangeState;
+	import org.bigbluebutton.modules.screenshare.events.WebRTCWindowChangeState;
 	import org.bigbluebutton.modules.screenshare.model.ScreenshareOptions;
 	import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
 	import org.bigbluebutton.modules.screenshare.utils.BrowserCheck;
@@ -41,14 +42,12 @@ package org.bigbluebutton.modules.screenshare.managers
 		private static const LOGGER:ILogger = getClassLogger(WebRTCDeskshareManager);
 
 		private var globalDispatcher:Dispatcher;
-		private var sharing:Boolean = false;
-		private var usingWebRTC:Boolean = false;
-		private var chromeExtensionKey:String = null;
 		private var _options:ScreenshareOptions = null;
+		private var _chromeExtensionKey:String = null;
 
 		public function WebRTCDeskshareManager() {
-			LOGGER.debug("WebRTCDeskshareManager");
 			globalDispatcher = new Dispatcher();
+			ScreenshareModel.getInstance().usingWebRTCDeskshare = options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported();
 		}
 
 		public function get options():ScreenshareOptions {
@@ -59,14 +58,11 @@ package org.bigbluebutton.modules.screenshare.managers
 			return this._options;
 		}
 
-		public function handleStreamStoppedEvent():void {
-			LOGGER.debug("handleStreamStoppedEvent");
-			stopWebRTCDeskshare();
-		}
-
-		public function handleStreamStopEvent(args:Object):void {
-			LOGGER.debug("handleStreamStopEvent");
-			sharing = false;
+		public function get chromeExtensionKey():String {
+			if (this._chromeExtensionKey == null) {
+				this._chromeExtensionKey = options.chromeExtensionKey;
+			}
+			return this._chromeExtensionKey;
 		}
 
 		public function handleRequestStopSharingEvent():void {
@@ -74,20 +70,24 @@ package org.bigbluebutton.modules.screenshare.managers
 			stopWebRTCDeskshare();
 		}
 
+		public function handleRequestStartSharingEvent():void {
+			LOGGER.debug("handleRequestStartSharingEvent");
+			canIUseWebRTCOnThisBrowser();
+		}
+
 		private function stopWebRTCDeskshare():void {
 			LOGGER.debug("stopWebRTCDeskshare");
-			if (ExternalInterface.available) {
+			if (ScreenshareModel.getInstance().usingWebRTCDeskshare && ExternalInterface.available) {
 				ExternalInterface.call("kurentoExitScreenShare");
 			}
 		}
 
 		private function startWebRTCDeskshare():void {
 			LOGGER.debug("startWebRTCDeskshare");
-
-			if (ExternalInterface.available) {
+			if (ScreenshareModel.getInstance().usingWebRTCDeskshare && ExternalInterface.available) {
 				var videoTag:String = "localVertoVideo";
 				var onFail:Function = function(args:Object):void {
-					LOGGER.debug("WebRTCDeskshareManager::startWebRTCDeskshare - falling back to java");
+					LOGGER.debug("Falling back to Java");
 					globalDispatcher.dispatchEvent(new UseJavaModeCommand())
 				};
 				ExternalInterface.addCallback("onFail", onFail);
@@ -110,26 +110,11 @@ package org.bigbluebutton.modules.screenshare.managers
 			}
 		}
 
-		private function initDeskshare():void {
-			LOGGER.debug("initDeskshare");
-			sharing = false;
-			if (options.chromeExtensionKey) {
-				chromeExtensionKey = options.chromeExtensionKey;
-			}
-			usingWebRTC = options.tryWebRTCFirst;
-		}
-
-		public function handleMadePresenterEvent(e:MadePresenterEvent):void {
-			LOGGER.debug("handleMadePresenterEvent");
-			initDeskshare();
-		}
-
 		public function handleMadeViewerEvent(e:MadePresenterEvent):void{
 			LOGGER.debug("handleMadeViewerEvent");
-			if (sharing) {
+			if (ScreenshareModel.getInstance().sharing) {
 				stopWebRTCDeskshare();
 			}
-			sharing = false;
 		}
 
 		private function canIUseWebRTCOnThisBrowser(newOnWebRTCBrokeFailure:Function = null, newOnNoWebRTCFailure:Function = null, newOnSuccess:Function = null):void {
@@ -137,36 +122,34 @@ package org.bigbluebutton.modules.screenshare.managers
 			var onNoWebRTCFailure:Function, onWebRTCBrokeFailure:Function, onSuccess:Function;
 
 			onNoWebRTCFailure = (newOnNoWebRTCFailure != null) ? newOnNoWebRTCFailure : function(message:String):void {
-				usingWebRTC = false;
 				// send out event to fallback to Java
-				LOGGER.debug("WebRTCDeskshareManager::handleStartSharingEvent - falling back to java");
+				LOGGER.debug("Falling back to Java");
 				globalDispatcher.dispatchEvent(new UseJavaModeCommand());
 				return;
 			};
 
 			onWebRTCBrokeFailure = (newOnWebRTCBrokeFailure != null) ? newOnWebRTCBrokeFailure : function(message:String):void {
-				globalDispatcher.dispatchEvent(new WebRTCPublishWindowChangeState(WebRTCPublishWindowChangeState.DISPLAY_INSTALL));
+				globalDispatcher.dispatchEvent(new WebRTCWindowChangeState(WebRTCWindowChangeState.DISPLAY_INSTALL));
 			};
 
 			onSuccess = (newOnSuccess != null) ? newOnSuccess : function(message:String):void {
-				LOGGER.debug("WebRTCDeskshareManager::handleStartSharingEvent onSuccess");
-				usingWebRTC = true;
+				LOGGER.debug("onSuccess");
 				startWebRTCDeskshare();
 			};
 
 			if (options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported()) {
-				LOGGER.debug("WebRTCDeskshareManager::handleStartSharingEvent WebRTC Supported");
+				LOGGER.debug("WebRTC Supported");
 				if (BrowserCheck.isFirefox()) {
 					onSuccess("Firefox, lets try");
 				} else {
 					if (chromeExtensionKey != null) {
 
-						LOGGER.debug("WebRTCDeskshareManager::handleStartSharingEvent chrome extension link exists - ");
+						LOGGER.debug("Chrome extension link exists");
 						if (ExternalInterface.available) {
 
 							var success2:Function = function(exists:Boolean):void {
 								ExternalInterface.addCallback("success2", null);
-								LOGGER.debug("WebRTCDeskshareManager::handleStartSharingEvent inside onSuccess2");
+								LOGGER.debug("onSuccess2");
 								if (exists) {
 									LOGGER.debug("Chrome Extension exists");
 									onSuccess("worked");
@@ -189,54 +172,20 @@ package org.bigbluebutton.modules.screenshare.managers
 			}
 		}
 
-		public function handleStartSharingEvent():void {
-			LOGGER.debug("handleStartSharingEvent");
-			canIUseWebRTCOnThisBrowser();
+		public function handleWebRTCScreenshareStartedEvent(event:BBBEvent):void {
+			var e:ShareEvent = new ShareEvent(ShareEvent.SCREENSHARE_STARTED_EVENT);
+			e.payload.meetingId = event.payload['meetingId'];
+			e.payload.streamId = event.payload['streamId'];
+			e.payload.width = event.payload['width'];
+			e.payload.height = event.payload['height'];
+			globalDispatcher.dispatchEvent(e);
 		}
 
-		public function handleShareWindowCloseEvent():void {
-			LOGGER.debug("handleShareWindowCloseEvent");
-			sharing = false;
-			stopWebRTCDeskshare();
-		}
-
-		public function handleViewWindowCloseEvent():void {
-			LOGGER.debug("handleViewWindowCloseEvent");
-			sharing = false;
-		}
-
-		public function handleStreamStartEvent(e:WebRTCViewStreamEvent):void {
-			LOGGER.debug("handleStreamStartEvent");
-			if (sharing) return; //TODO must uncomment this for the non-webrtc desktop share
-
-			if (!options.tryWebRTCFirst || e == null || e.rtmp == null) {
-				return;
-			}
-
-			 sharing = true; //TODO must uncomment this for the non-webrtc desktop share
-		}
-
-		public function handleUseJavaModeCommand():void {
-			LOGGER.debug("handleUseJavaModeCommand");
-			usingWebRTC = false;
-		}
-
-		public function handleRequestStartSharingEvent():void {
-			LOGGER.debug("handleRequestStartSharingEvent");
-			initDeskshare();
-			handleStartSharingEvent();
-		}
-
-		public function handleScreenShareStartedEvent(event:ShareStartedEvent):void {
-			LOGGER.debug("handleScreenShareStartedEvent");
-			var dispatcher:Dispatcher = new Dispatcher();
-			dispatcher.dispatchEvent(new WebRTCViewStreamEvent(WebRTCViewStreamEvent.START));
-		}
-
-		public function handleIsSharingScreenEvent():void {
-			LOGGER.debug("handleIsSharingScreenEvent");
-			var dispatcher:Dispatcher = new Dispatcher();
-			dispatcher.dispatchEvent(new WebRTCViewStreamEvent(WebRTCViewStreamEvent.START));
+		public function handleWebRTCScreenshareStoppedEvent(event:BBBEvent):void {
+			var e:ShareEvent = new ShareEvent(ShareEvent.SCREENSHARE_STOPPED_EVENT);
+			e.payload.meetingId = event.payload['meetingId'];
+			e.payload.streamId = event.payload['streamId'];
+			globalDispatcher.dispatchEvent(e);
 		}
 	}
 }
