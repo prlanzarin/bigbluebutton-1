@@ -201,11 +201,6 @@ package org.bigbluebutton.modules.screenshare.managers {
             viewWindowManager.handleViewWindowCloseEvent();
         }
 
-        public function handleUseJavaModeCommand():void {
-          ScreenshareModel.getInstance().usingWebRTCDeskshare = false;
-          handleRequestStartSharingEvent();
-        }
-
         public function handleStopViewStreamEvent():void {
             viewWindowManager.stopViewing();
             if (UsersUtil.amIPresenter()) {

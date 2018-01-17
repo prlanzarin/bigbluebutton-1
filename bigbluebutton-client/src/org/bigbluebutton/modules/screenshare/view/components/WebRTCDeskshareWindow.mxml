@@ -20,13 +20,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 -->
 
-<mx:Box
-	xmlns:mx="http://www.adobe.com/2006/mxml"
+<mx:Box xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns:mate="http://mate.asfusion.com/"
-	backgroundColor="#C0C0C0"
 	creationComplete="onCreationComplete()"
-	verticalScrollPolicy="off" horizontalScrollPolicy="off"
-	width="100%" height="100%">
+	styleName="micSettingsWindowStyle">
 
 	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_PRESENTER_MODE}" method="onChangedPresenter"/>
 	<mate:Listener type="{MadePresenterEvent.SWITCH_TO_VIEWER_MODE}" method="onChangedPresenter"/>
@@ -55,6 +52,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private var globalDispatcher:Dispatcher = new Dispatcher();
 			private var _screenshareOptions:ScreenshareOptions = null;
+
+			private var _successCallback:Function = null;
+			private var _failCallback:Function = null;
 
 			public function get screenshareOptions():ScreenshareOptions {
 				if (this._screenshareOptions == null) {
@@ -107,6 +107,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private function onFallbackButtonClicked():void {
 				globalDispatcher.dispatchEvent(new UseJavaModeCommand());
+				closeWithFail();
 			}
 
 			private function onCreationComplete():void {
@@ -119,18 +120,38 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private function localeChanged(e:Event):void {
 				resourcesChanged();
 			}
+
+			public function set success(callback:Function):void {
+				_successCallback = callback;
+			}
+
+			public function set fail(callback:Function):void {
+				_failCallback = callback;
+			}
+
+			private function closeWithSuccess():void {
+				if (_successCallback != null) {
+					_successCallback();
+				}
+			}
+
+			private function closeWithFail():void {
+				if (_failCallback != null) {
+					_failCallback();
+				}
+			}
 		]]>
 	</mx:Script>
 
 	<mx:states>
 		<mx:State name="dispFullRegionControlBar">
 			<mx:AddChild relativeTo="mainElement" position="after">
-				<mx:HBox width="100%" horizontalAlign="center">
-					<!--mx:Button id="btnClosePublish"
-							toolTip="{ResourceUtil.getInstance().getString('bbb.screensharePublish.stopButton.toolTip')}"
-							label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.stopButton.label')}"
-							visible="true"
-							enabled="false"/-->
+				<mx:HBox width="100%" height="100%" horizontalAlign="center">
+					<mx:Text id="displayConnectingTxt"
+							width="100%"
+							textAlign="center"
+							styleName="micSettingsWindowSpeakIntoMicLabelStyle"
+							text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.connecting.text')}"/>
 				</mx:HBox>
 			</mx:AddChild>
 		</mx:State>

@@ -153,7 +153,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	</EventHandlers>
 
 	<EventHandlers type="{UseJavaModeCommand.USE_JAVA_MODE}">
-		<MethodInvoker generator="{ScreenshareManager}" method="handleUseJavaModeCommand"/>
+		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleUseJavaModeCommand"/>
 	</EventHandlers>
 
 	<EventHandlers type="{BBBEvent.WEBRTC_SCREENSHARE_STARTED_EVENT}">

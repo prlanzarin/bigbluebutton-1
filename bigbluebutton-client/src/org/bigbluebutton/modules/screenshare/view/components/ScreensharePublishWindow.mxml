@@ -100,8 +100,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       [Bindable]
       private var shareTypeProvider:Array;
-
-      [Bindable] private var enableWebRTCScreenshare:Boolean;
       
       private function init():void {
         baseIndex = options.baseTabIndex;
@@ -109,8 +107,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       private function onCreationComplete():void {
         options.parseOptions();
-
-        enableWebRTCScreenshare = options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported();
 
         var fullOS:String = Capabilities.os;
         if (fullOS.indexOf("Windows") != -1) {
@@ -137,7 +133,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
           startBtn.visible = startBtn.includeInLayout = false;
         }
 
-        if (!enableWebRTCScreenshare) {
+        if (!ScreenshareModel.getInstance().usingWebRTCDeskshare) {
           useJavaWebStart();
         } else {
           useWebRTCScreenshare();
@@ -397,6 +393,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         dispatchEvent(new ShareEvent(ShareEvent.REFRESH_SCREENSHARE_PUBLISH_TAB));
       }
 
+      private function onWebRTCDeskshareSuccess():void {
+        LOGGER.debug("onWebRTCDeskshareSuccess, do nothing");
+      }
+
+      private function onWebRTCDeskshareFail():void {
+        LOGGER.debug("onWebRTCDeskshareFail, changing to JWS");
+        useJavaWebStart();
+      }
+
       override public function setCurrentState(stateName:String, playTransition:Boolean = true):void {
         LOGGER.debug("Setting current state to " + stateName);
         super.setCurrentState(stateName, playTransition);
@@ -411,12 +416,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       }
 
       private function useWebRTCScreenshare():void {
-        //ScreenshareModel.getInstance().usingWebRTCScreenshare = true;
         setCurrentState("webRTCScreenshareState");
       }
 
       private function useJavaWebStart():void {
-        //ScreenshareModel.getInstance().usingWebRTCScreenshare = false;
         setCurrentState("javaWebStartState");
       }
 
@@ -553,9 +556,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       <mx:AddChild>
         <views:WebRTCDeskshareWindow id="webRTCDeskshareWindow"
             height="100%"
-            width="100%"/>
-            <!--success="onWebRTCScreenshareSuccess"
-            fail="onWebRTCScreenshareFail"/-->
+            width="100%"
+            success="onWebRTCDeskshareSuccess"
+            fail="onWebRTCDeskshareFail"/>
       </mx:AddChild>
     </mx:State>
   </mx:states>

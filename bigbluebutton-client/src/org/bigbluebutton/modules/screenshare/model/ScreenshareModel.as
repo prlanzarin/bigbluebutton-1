@@ -1,12 +1,16 @@
 package org.bigbluebutton.modules.screenshare.model {
     
+    import org.bigbluebutton.modules.screenshare.model.ScreenshareOptions;
+    import org.bigbluebutton.modules.screenshare.utils.BrowserCheck;
+
     public class ScreenshareModel {
         
         private static var instance:ScreenshareModel = null;
         
         private var _sharing:Boolean = false;
         private var _stream:ScreenshareStream = new ScreenshareStream();
-        private var _usingWebRTCDeskshare:Boolean = false;
+        private var _options:ScreenshareOptions = null;
+        private var _usingWebRTCDeskshare:Boolean = options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported();
         
         public function ScreenshareModel(enforcer:SingletonEnforcer) {
             if (enforcer == null) {
@@ -19,6 +23,14 @@ package org.bigbluebutton.modules.screenshare.model {
                 instance = new ScreenshareModel(new SingletonEnforcer());
             }
             return instance;
+        }
+
+        public function get options():ScreenshareOptions {
+            if (this._options == null) {
+                this._options = new ScreenshareOptions();
+                this._options.parseOptions();
+            }
+            return this._options;
         }
         
         public function get sharing():Boolean {

@@ -47,7 +47,6 @@ package org.bigbluebutton.modules.screenshare.managers
 
 		public function WebRTCDeskshareManager() {
 			globalDispatcher = new Dispatcher();
-			ScreenshareModel.getInstance().usingWebRTCDeskshare = options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported();
 		}
 
 		public function get options():ScreenshareOptions {
@@ -172,7 +171,15 @@ package org.bigbluebutton.modules.screenshare.managers
 			}
 		}
 
+		public function handleUseJavaModeCommand():void {
+			if (ScreenshareModel.getInstance().sharing) {
+				stopWebRTCDeskshare();
+			}
+			ScreenshareModel.getInstance().usingWebRTCDeskshare = false;
+		}
+
 		public function handleWebRTCScreenshareStartedEvent(event:BBBEvent):void {
+			ScreenshareModel.getInstance().sharing = true;
 			var e:ShareEvent = new ShareEvent(ShareEvent.SCREENSHARE_STARTED_EVENT);
 			e.payload.meetingId = event.payload['meetingId'];
 			e.payload.streamId = event.payload['streamId'];
@@ -186,6 +193,7 @@ package org.bigbluebutton.modules.screenshare.managers
 			e.payload.meetingId = event.payload['meetingId'];
 			e.payload.streamId = event.payload['streamId'];
 			globalDispatcher.dispatchEvent(e);
+			ScreenshareModel.getInstance().sharing = false;
 		}
 	}
 }
