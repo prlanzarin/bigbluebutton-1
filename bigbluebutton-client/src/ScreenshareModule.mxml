@@ -23,10 +23,9 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 <mx:Module xmlns:mx="http://www.adobe.com/2006/mxml"
 
            implements="org.bigbluebutton.common.IBigBlueButtonModule"
-           creationComplete="onCreationComplete()" xmlns:maps1="org.bigbluebutton.modules.screenshare.maps.*">
+           creationComplete="onCreationComplete()" xmlns:maps="org.bigbluebutton.modules.screenshare.maps.*">
 
-  <maps1:ScreenshareEventMap id="deskshareGlobalEventMap" />
-  <maps1:WebRTCDeskshareEventMap id="webRTCDeskshareEventMap" />
+  <maps:ScreenshareEventMap id="deskshareGlobalEventMap" />
 
   <mx:Script>
     <![CDATA[
@@ -87,7 +86,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       
       public function stop():void{
         LOGGER.debug("STOPPING DESKSHARE MODULE!!!");
-        var stopEvent:ModuleEvent = new ModuleEvent(ModuleEvent.STOP);				
+        var stopEvent:ModuleEvent = new ModuleEvent(ModuleEvent.STOP);
         globalDispatcher.dispatchEvent(stopEvent);
       }
       

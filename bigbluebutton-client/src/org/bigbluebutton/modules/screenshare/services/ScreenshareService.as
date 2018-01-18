@@ -104,6 +104,14 @@ package org.bigbluebutton.modules.screenshare.services {
         
         public function sendClientPongMessage(session: String, timestamp: Number):void {
             sender.sendClientPongMessage(UsersUtil.getInternalMeetingID(), session, timestamp);
-        }    
+        }
+
+        public function sharingStarted(meetingId:String, streamId:String, width:Number, height:Number):void {
+            sender.sharingStarted(meetingId, streamId, width, height);
+        }
+
+        public function sharingStopped(meetingId:String, streamId:String):void {
+            sender.sharingStopped(meetingId, streamId);
+        }
     }
 }

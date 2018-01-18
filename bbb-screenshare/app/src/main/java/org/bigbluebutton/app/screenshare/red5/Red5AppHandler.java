@@ -42,6 +42,15 @@ public class Red5AppHandler {
     app.startShareRequest(meetingId, userId, session);
   }
 
+  public void sharingStarted(String meetingId, String streamId, Integer width, Integer height) {
+    Boolean isJavaWebStart = false;
+    app.sharingStarted(meetingId, streamId, width, height, isJavaWebStart);
+  }
+
+  public void sharingStopped(String meetingId, String streamId) {
+    app.sharingStopped(meetingId, streamId);
+  }
+
   public void restartShareRequest(String meetingId, String userId) {
 
     app.restartShareRequest(meetingId, userId);

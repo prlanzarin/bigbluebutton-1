@@ -36,10 +36,14 @@ package org.bigbluebutton.modules.screenshare.events
 
 		public static const SHARE_SCREEN:String = "SHARE SCREEN";
 		public static const CHANGE_VIDEO_DISPLAY_MODE:String = "CHANGE VIDEO DISPLAY MODE";
+
+		public static const SCREENSHARE_STARTED_EVENT:String = "SCREENSHARE_STARTED_EVENT";
+		public static const SCREENSHARE_STOPPED_EVENT:String = "SCREENSHARE_STOPPED_EVENT";
 		
 		public var publishTabContent:ScreensharePublishWindow;
 		public var viewTabContent:ScreenshareViewWindow;
 		public var fullScreen:Boolean;
+		public var payload:Object = new Object();
 
 		public function ShareEvent(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
 		{

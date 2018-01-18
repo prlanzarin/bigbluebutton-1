@@ -26,16 +26,15 @@ package org.bigbluebutton.modules.screenshare.model
 		[Bindable] public var baseTabIndex:int;
 		[Bindable] public var tryWebRTCFirst:Boolean = false;
 		[Bindable] public var chromeExtensionLink:String = null;
-                [Bindable] public var chromeExtensionKey:String = null;
-    [Bindable] public var helpUrl:String;
+		[Bindable] public var chromeExtensionKey:String = null;
+		[Bindable] public var helpUrl:String;
 
 		public function parseOptions():void {
 			var vxml:XML = BBB.getConfigForModule("ScreenshareModule");
 			if (vxml != null) {
 				if (vxml.@baseTabIndex != undefined) {
 					baseTabIndex = vxml.@baseTabIndex;
-				}
-				else{
+				} else {
 					baseTabIndex = 201;
 				}
 				if (vxml.@showButton != undefined){
@@ -48,12 +47,11 @@ package org.bigbluebutton.modules.screenshare.model
 					chromeExtensionLink = vxml.@chromeExtensionLink.toString();
 				}
 				if (vxml.@chromeExtensionKey != undefined) {
-                                        chromeExtensionKey = vxml.@chromeExtensionKey.toString();
-                                }
-
-        if (vxml.@help != undefined){
-          helpUrl = vxml.@help; 
-        }
+					chromeExtensionKey = vxml.@chromeExtensionKey.toString();
+				}
+				if (vxml.@help != undefined){
+					helpUrl = vxml.@help; 
+				}
 			}
 		}
 	}

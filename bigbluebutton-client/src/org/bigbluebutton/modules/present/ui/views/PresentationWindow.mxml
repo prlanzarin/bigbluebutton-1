@@ -97,6 +97,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.events.ShortcutEvent;
 			import org.bigbluebutton.main.events.PresenterStatusEvent;
 			import org.bigbluebutton.main.views.MainCanvas;
+			import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
 			import org.bigbluebutton.modules.screenshare.events.ShareEvent;
 			import org.bigbluebutton.modules.screenshare.events.RequestToPauseSharing;
 			import org.bigbluebutton.modules.screenshare.events.RequestToRestartSharing;
@@ -316,7 +317,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				if (currentTabIndex == PRESENTATION_TAB_INDEX && slideView != null) {
 					slideView.onParentResized(parentWidth, parentHeight);
 				} else if (currentTabIndex == SCREENSHARE_VIEW_TAB_INDEX && screenshareView != null) {
-					screenshareView.onParentResized(parentWidth, parentHeight);
+					screenshareView.onParentResized();
 				}
 			}
 			
@@ -1048,7 +1049,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				if (UsersUtil.amIPresenter()) {
 					pollStartBtn.visible = true;
 					btnClosePublish.visible = true;
-					btnPauseScreenshare.visible = true;
+					btnPauseScreenshare.visible = !ScreenshareModel.getInstance().usingWebRTCDeskshare;
 				}
 
 				removeContextMenuItems();

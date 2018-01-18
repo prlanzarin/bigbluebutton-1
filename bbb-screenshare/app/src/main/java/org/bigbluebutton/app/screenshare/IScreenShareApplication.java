@@ -18,7 +18,7 @@ public interface IScreenShareApplication {
   void stopShareRequest(String meetingId, String streamId);
   void streamStarted(String meetingId, String streamId, String url);
   void streamStopped(String meetingId, String streamId);
-  void sharingStarted(String meetingId, String streamId, Integer width, Integer height);
+  void sharingStarted(String meetingId, String streamId, Integer width, Integer height, Boolean isJavaWebStart);
   void sharingStopped(String meetingId, String streamId);
   void updateShareStatus(String meetingId, String streamId, Integer seqNum);
   void userDisconnected(String meetingId, String userId);

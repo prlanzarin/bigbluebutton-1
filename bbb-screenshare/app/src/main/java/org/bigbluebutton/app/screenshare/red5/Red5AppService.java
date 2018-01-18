@@ -106,6 +106,22 @@ public class Red5AppService {
     handler.pauseShareRequest(meetingId, userId, streamId);
   }
 
+  public void sharingStarted(Map<String, Object> msg) {
+    String meetingId = Red5.getConnectionLocal().getScope().getName();
+    log.debug("Received sharingStarted for meeting=[{}]", meetingId);
+    String streamId = (String) msg.get("streamId");
+    Integer width = ((Double) msg.get("width")).intValue();
+    Integer height = ((Double) msg.get("height")).intValue();
+    handler.sharingStarted(meetingId, streamId, width, height);
+  }
+
+  public void sharingStopped(Map<String, Object> msg) {
+    String meetingId = Red5.getConnectionLocal().getScope().getName();
+    log.debug("Received sharingStopped for meeting=[{}]", meetingId);
+    String streamId = (String) msg.get("streamId");
+    handler.sharingStopped(meetingId, streamId);
+  }
+
   public void restartShareRequest(Map<String, Object> msg) {
     String meetingId = Red5.getConnectionLocal().getScope().getName();
     String userId = (String) Red5.getConnectionLocal().getAttribute("USERID");
@@ -132,7 +148,7 @@ public class Red5AppService {
   public void requestShareToken(Map<String, Object> msg) {
     Boolean record = (Boolean) msg.get("record");
     String meetingId = Red5.getConnectionLocal().getScope().getName();
-    String userId = (String) Red5.getConnectionLocal().getAttribute("USERID");
+    String userId = (String) msg.get("userId");
     Boolean tunnel = (Boolean) msg.get("tunnel");
 
     if (log.isDebugEnabled()) {

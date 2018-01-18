@@ -106,6 +106,8 @@ package org.bigbluebutton.main.api
         ExternalInterface.addCallback("webRTCMediaFail", handleWebRTCMediaFail);
         ExternalInterface.addCallback("getSessionToken", handleGetSessionToken);
         ExternalInterface.addCallback("webRTCMonitorUpdate", handleWebRTCMonitorUpdate);
+        ExternalInterface.addCallback("webRTCScreenshareStarted", handleWebRTCScreenshareStarted);
+        ExternalInterface.addCallback("webRTCScreenshareStopped", handleWebRTCScreenshareStopped);
       }
       
       // Tell out JS counterpart that we are ready.
@@ -448,6 +450,24 @@ package org.bigbluebutton.main.api
     private function handleWebRTCMonitorUpdate(results:String):void {
       var e:BBBEvent = new BBBEvent(BBBEvent.WEBRTC_MONITOR_UPDATE_EVENT);
       e.payload.results = results;
+      _dispatcher.dispatchEvent(e);
+    }
+
+    private function handleWebRTCScreenshareStarted(meetingId:String, streamId:String, width:Number, height:Number):void {
+      LOGGER.debug("handleWebRTCScreenshareStarted");
+      var e:BBBEvent = new BBBEvent(BBBEvent.WEBRTC_SCREENSHARE_STARTED_EVENT);
+      e.payload.meetingId = meetingId;
+      e.payload.streamId = streamId;
+      e.payload.width = width;
+      e.payload.height = height;
+      _dispatcher.dispatchEvent(e);
+    }
+
+    private function handleWebRTCScreenshareStopped(meetingId:String, streamId:String):void {
+      LOGGER.debug("handleWebRTCScreenshareStopped");
+      var e:BBBEvent = new BBBEvent(BBBEvent.WEBRTC_SCREENSHARE_STOPPED_EVENT);
+      e.payload.meetingId = meetingId;
+      e.payload.streamId = streamId;
       _dispatcher.dispatchEvent(e);
     }
   }

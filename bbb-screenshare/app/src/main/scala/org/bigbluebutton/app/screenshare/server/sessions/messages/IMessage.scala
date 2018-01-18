@@ -16,7 +16,7 @@ case class StreamStartedMessage(meetingId: String, streamId: String, url: String
 
 case class StreamStoppedMessage(meetingId: String, streamId: String)
 
-case class SharingStartedMessage(meetingId: String, streamId: String, width: Int, height: Int)
+case class SharingStartedMessage(meetingId: String, streamId: String, width: Int, height: Int, isJavaWebStart: Boolean)
 
 case class SharingStoppedMessage(meetingId: String, streamId: String)
 

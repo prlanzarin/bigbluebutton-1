@@ -131,6 +131,7 @@ class LiveMeeting(val mProps: MeetingProperties,
   def handleEndMeeting(msg: EndMeeting) {
     // Broadcast users the meeting will end
     outGW.send(new MeetingEnding(msg.meetingId))
+    outGW.send(new StopMeetingTranscoders(msg.meetingId))
 
     meetingModel.meetingHasEnded
     // Maybe this is not necessary since we already send it while
