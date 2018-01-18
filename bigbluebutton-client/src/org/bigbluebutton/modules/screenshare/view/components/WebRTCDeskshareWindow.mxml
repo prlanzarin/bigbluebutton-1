@@ -42,6 +42,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			import org.bigbluebutton.common.events.LocaleChangeEvent;
 			import org.bigbluebutton.main.events.MadePresenterEvent;
+			import org.bigbluebutton.modules.screenshare.events.ShareEvent;
 			import org.bigbluebutton.modules.screenshare.events.UseJavaModeCommand;
 			import org.bigbluebutton.modules.screenshare.events.WebRTCWindowChangeState;
 			import org.bigbluebutton.modules.screenshare.model.ScreenshareOptions;
@@ -110,6 +111,11 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				closeWithFail();
 			}
 
+			private function onUseWebRTCDeskshareButtonClicked():void {
+				btnUseWebRTCDeskshare.enabled = false;
+				globalDispatcher.dispatchEvent(new ShareEvent(ShareEvent.START_WEBRTC_SCREENSHARE_EVENT));
+			}
+
 			private function onCreationComplete():void {
 				setCurrentState("dispFullRegionControlBar");
 				resourcesChanged();
@@ -146,13 +152,25 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 	<mx:states>
 		<mx:State name="dispFullRegionControlBar">
 			<mx:AddChild relativeTo="mainElement" position="after">
-				<mx:HBox width="100%" height="100%" horizontalAlign="center">
-					<mx:Text id="displayConnectingTxt"
-							width="100%"
+				<mx:VBox width="100%" height="100%" horizontalAlign="center">
+					<mx:Label id="displaySelectionLabel"
+							width="70%"
 							textAlign="center"
 							styleName="micSettingsWindowSpeakIntoMicLabelStyle"
-							text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.connecting.text')}"/>
-				</mx:HBox>
+							text="{ResourceUtil.getInstance().getString('bbb.screensharePublish.selection.label')}"/>
+					<mx:HBox width="100%" height="100%" horizontalAlign="center">
+						<mx:Button id="btnUseWebRTCDeskshare"
+								label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.btnUseWebRTCDeskshare.label')}"
+								visible="true"
+								enabled="true"
+								click="onUseWebRTCDeskshareButtonClicked()"/>
+						<mx:Button id="btnUseJavaWebStart"
+								label="{ResourceUtil.getInstance().getString('bbb.screensharePublish.btnUseJavaWebStart.label')}"
+								visible="true"
+								enabled="true"
+								click="onFallbackButtonClicked()"/>
+					</mx:HBox>
+				</mx:VBox>
 			</mx:AddChild>
 		</mx:State>
 

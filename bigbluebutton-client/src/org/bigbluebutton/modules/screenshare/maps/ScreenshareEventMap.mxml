@@ -86,7 +86,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 		<MethodInvoker generator="{ScreenshareManager}" method="handleRequestStartSharingEvent"/>
 	</EventHandlers>
 
-	<EventHandlers type="{StartShareRequestSuccessEvent.START_SHARE_REQUEST_SUCCESS}">
+	<EventHandlers type="{ShareEvent.START_WEBRTC_SCREENSHARE_EVENT}">
 		<MethodInvoker generator="{WebRTCDeskshareManager}" method="handleRequestStartSharingEvent"/>
 	</EventHandlers>
 
