@@ -37,6 +37,8 @@ package org.bigbluebutton.modules.screenshare.events
 		public static const SHARE_SCREEN:String = "SHARE SCREEN";
 		public static const CHANGE_VIDEO_DISPLAY_MODE:String = "CHANGE VIDEO DISPLAY MODE";
 
+		public static const START_WEBRTC_SCREENSHARE_EVENT:String = "START_WEBRTC_SCREENSHARE_EVENT"
+
 		public static const SCREENSHARE_STARTED_EVENT:String = "SCREENSHARE_STARTED_EVENT";
 		public static const SCREENSHARE_STOPPED_EVENT:String = "SCREENSHARE_STOPPED_EVENT";
 		
