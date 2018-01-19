@@ -31,12 +31,14 @@ const propTypes = {
   presentationTitle: PropTypes.string.isRequired,
   hasUnreadMessages: PropTypes.bool.isRequired,
   beingRecorded: PropTypes.bool.isRequired,
+  isNavBarEnabled: PropTypes.string.isRequired,
 };
 
 const defaultProps = {
   presentationTitle: 'Default Room Title',
   hasUnreadMessages: false,
   beingRecorded: false,
+  isNavBarEnabled: true,
 };
 
 const openBreakoutJoinConfirmation = (breakoutURL, breakoutName, mountModal) =>
@@ -159,7 +161,7 @@ class NavBar extends Component {
     );
   }
   render() {
-    const { hasUnreadMessages, beingRecorded, isExpanded, intl } = this.props;
+    const { hasUnreadMessages, beingRecorded, isExpanded, intl, isNavBarEnabled } = this.props;
 
     const toggleBtnClasses = {};
     toggleBtnClasses[styles.btn] = true;
@@ -168,6 +170,7 @@ class NavBar extends Component {
     return (
       <div className={styles.navbar}>
         <div className={styles.left}>
+        {(isNavBarEnabled === 'true')?
           <Button
             onClick={this.handleToggleUserList}
             ghost
@@ -179,6 +182,7 @@ class NavBar extends Component {
             aria-expanded={isExpanded}
             aria-describedby="newMessage"
           />
+          : null}
           <div
             id="newMessage"
             aria-label={hasUnreadMessages ? intl.formatMessage(intlMessages.newMessages) : null}

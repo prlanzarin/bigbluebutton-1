@@ -57,6 +57,7 @@ export default withRouter(withTracker(({ location, router }) => {
     currentUserId,
     meetingId,
     getBreakoutJoinURL: Service.getBreakoutJoinURL,
+    isNavBarEnabled: Service.isNavBarEnabled(meetingId),
     presentationTitle: meetingTitle,
     hasUnreadMessages: checkUnreadMessages(),
     isBreakoutRoom: meetingIsBreakout(),
