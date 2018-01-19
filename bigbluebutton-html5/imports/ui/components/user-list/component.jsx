@@ -27,6 +27,7 @@ const propTypes = {
   toggleVoice: PropTypes.func.isRequired,
   changeRole: PropTypes.func.isRequired,
   roving: PropTypes.func.isRequired,
+  isChatEnabled: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -72,6 +73,7 @@ class UserList extends Component {
           isMeetingLocked={this.props.isMeetingLocked}
           isPublicChat={this.props.isPublicChat}
           roving={this.props.roving}
+          isChatEnabled={this.props.isChatEnabled}
         />}
       </div>
     );

@@ -12,7 +12,7 @@ const propTypes = {
     formatMessage: PropTypes.func.isRequired,
   }).isRequired,
   currentUser: PropTypes.shape({}).isRequired,
-  meeting: PropTypes.shape({}),
+  meeting: PropTypes.shape({}).isRequired,
   isBreakoutRoom: PropTypes.bool,
   getAvailableActions: PropTypes.func.isRequired,
   normalizeEmojiName: PropTypes.func.isRequired,
@@ -44,6 +44,8 @@ class UserContent extends Component {
           compact={this.props.compact}
           intl={this.props.intl}
           roving={this.props.roving}
+          isChatEnabled={this.props.isChatEnabled}
+          meeting={this.props.meeting}
         />
         <UserParticipants
           users={this.props.users}

@@ -22,6 +22,7 @@ const propTypes = {
   toggleVoice: PropTypes.func.isRequired,
   changeRole: PropTypes.func.isRequired,
   roving: PropTypes.func.isRequired,
+  isChatEnabled: PropTypes.func.isRequired,
 };
 
 const UserListContainer = (props) => {
@@ -41,6 +42,7 @@ const UserListContainer = (props) => {
     toggleVoice,
     changeRole,
     roving,
+    isChatEnabled,
   } = props;
 
   return (
@@ -60,6 +62,7 @@ const UserListContainer = (props) => {
       isMeetingLocked={isMeetingLocked}
       isPublicChat={isPublicChat}
       roving={roving}
+      isChatEnabled={isChatEnabled}
     />
   );
 };
@@ -82,4 +85,5 @@ export default withTracker(({ params }) => ({
   toggleVoice: Service.toggleVoice,
   changeRole: Service.changeRole,
   roving: Service.roving,
+  isChatEnabled: Service.isChatEnabled,
 }))(UserListContainer);

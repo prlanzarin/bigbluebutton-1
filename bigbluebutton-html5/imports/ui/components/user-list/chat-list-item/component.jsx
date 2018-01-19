@@ -40,6 +40,8 @@ const propTypes = {
   }).isRequired,
   tabIndex: PropTypes.number.isRequired,
   isPublicChat: PropTypes.func.isRequired,
+  isChatEnabled: PropTypes.func.isRequired,
+  meeting: PropTypes.shape({}).isRequired,
 };
 
 const defaultProps = {
@@ -55,6 +57,8 @@ const ChatListItem = (props) => {
     tabIndex,
     isPublicChat,
     location,
+    isChatEnabled,
+    meeting,
   } = props;
 
   let linkPath = [PRIVATE_CHAT_PATH, chat.id].join('');
@@ -64,6 +68,7 @@ const ChatListItem = (props) => {
   linkClasses[styles.active] = isCurrentChat;
 
   return (
+    isChatEnabled(meeting.meetingId)?
     <Link
       to={linkPath}
       className={cx(styles.chatListItem, linkClasses)}
@@ -95,6 +100,7 @@ const ChatListItem = (props) => {
           : null}
       </div>
     </Link>
+    : null
   );
 };
 

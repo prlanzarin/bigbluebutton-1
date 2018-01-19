@@ -15,6 +15,8 @@ const propTypes = {
   }).isRequired,
   isPublicChat: PropTypes.func.isRequired,
   roving: PropTypes.func.isRequired,
+  isChatEnabled: PropTypes.func.isRequired,
+  meeting: PropTypes.shape({}).isRequired,
 };
 
 const defaultProps = {
@@ -82,6 +84,8 @@ class UserMessages extends Component {
       openChat,
       compact,
       isPublicChat,
+      isChatEnabled,
+      meeting,
     } = this.props;
 
     let index = -1;
@@ -104,6 +108,8 @@ class UserMessages extends Component {
             openChat={openChat}
             chat={chat}
             tabIndex={-1}
+            isChatEnabled={isChatEnabled}
+            meeting={meeting}
           />
         </div>
       </CSSTransition>
@@ -131,10 +137,12 @@ class UserMessages extends Component {
     return (
       <div className={styles.messages}>
         {
+          this.props.isChatEnabled(this.props.meeting.meetingId)?
           !compact ?
             <div className={styles.smallTitle} role="banner">
               {intl.formatMessage(intlMessages.messagesTitle)}
             </div> : <hr className={styles.separator} />
+          : null
         }
         <div
           role="tabpanel"
@@ -149,6 +157,7 @@ class UserMessages extends Component {
           </div>
         </div>
       </div>
+      : null
     );
   }
 }

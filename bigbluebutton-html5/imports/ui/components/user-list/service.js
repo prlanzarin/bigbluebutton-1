@@ -297,6 +297,21 @@ const isMeetingLocked = (id) => {
   return isLocked;
 };
 
+const isChatEnabled = (id) => {
+  const meeting = Meetings.findOne({ meetingId: id });
+  let chatEnabled = true;
+
+  if (meeting.metadataProp !== 'undefined' && meeting.metadataProp.metadata.html5chat !=='undefined' && meeting.metadataProp.metadata.html5chat !== null) {
+      chatEnabled = meeting.metadataProp.metadata.html5chat;
+  }
+  else {
+    chatEnabled = Meteor.settings.public.chat.enabled;
+  }
+
+  return chatEnabled;
+}
+
+
 const setEmojiStatus = (userId) => { makeCall('setEmojiStatus', userId, 'none'); };
 
 const assignPresenter = (userId) => { makeCall('assignPresenter', userId); };
@@ -363,4 +378,5 @@ export default {
   isMeetingLocked,
   isPublicChat,
   roving,
+  isChatEnabled,
 };
