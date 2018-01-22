@@ -79,6 +79,29 @@ FREESWITCH_EXTERNAL=/opt/freeswitch/conf/sip_profiles/external.xml
 FREESWITCH_PID=/opt/freeswitch/run/freeswitch.pid
 FREESWITCH_EVENT_SOCKET=/opt/freeswitch/conf/autoload_configs/event_socket.conf.xml
 
+SYSTEMCTL_SERVICES=("
+    red5
+    tomcat7
+    nginx
+    freeswitch
+    libreoffice
+    redis-server
+    mongod
+    kurento-media-server-6.0
+    bbb-apps-akka
+    bbb-fsesl-akka
+    bbb-transcode-akka
+    bbb-rap-sanity-worker
+    bbb-rap-archive-worker
+    bbb-rap-process-worker
+    bbb-rap-publish-worker
+    bbb-record-core.timer
+    bbb-html5
+    bbb-webhooks
+    bbb-webrtc-sfu
+    mconf-recording-decrypter.timer
+")
+
 if lsb_release -d | grep -q CentOS; then
   DISTRIB_ID=centos
   SERVLET_LOGS=/usr/share/$SERVLET_CONTAINER/logs
@@ -285,140 +308,20 @@ uncomment () {
 
 stop_bigbluebutton () {
     echo "Stopping BigBlueButton"
-    if command -v systemctl >/dev/null; then
-       if [ -f /usr/lib/systemd/system/bbb-html5.service ]; then
-          HTML5="mongod bbb-html5"
-       fi
-       if [ -f /usr/lib/systemd/system/bbb-webhooks.service ]; then
-          WEBHOOKS=bbb-webhooks
-       fi
-       systemctl stop red5 tomcat7 nginx freeswitch redis-server bbb-apps-akka bbb-fsesl-akka bbb-transcode-akka bbb-rap-archive-worker.service bbb-rap-process-worker.service bbb-rap-publish-worker.service bbb-rap-sanity-worker.service bbb-record-core.timer $HTML5 $WEBHOOKS
-    else
-	/etc/init.d/monit stop
-
-	/etc/init.d/$RED5 stop
-	/etc/init.d/${SERVLET_CONTAINER} stop
-	/etc/init.d/nginx stop
-        
-	if [ -a $FREESWITCH_PID ]; then
-		$FREESWITCH_INIT_D stop
-	fi
-        
-	if [ -f /etc/init.d/bbb-office ]; then
-		/etc/init.d/bbb-office stop
-	fi
-
-	if [ -f /etc/init.d/bbb-record-core ]; then
-		/etc/init.d/bbb-record-core stop
-	fi
-
-        if [ -f /etc/init/bbb-apps-akka.conf ]; then
-                service bbb-apps-akka stop
+    for service in $SYSTEMCTL_SERVICES; do
+        if systemctl is-enabled $service > /dev/null 2>&1; then
+            systemctl stop $service
         fi
-        if [ -f /etc/init.d/bbb-apps-akka ]; then
-                /etc/init.d/bbb-apps-akka stop
-        fi
-
-        if [ -f /etc/init/bbb-fsesl-akka.conf ]; then
-                service bbb-fsesl-akka stop
-        fi
-        if [ -f /etc/init.d/bbb-fsesl-akka ]; then
-                /etc/init.d/bbb-fsesl-akka stop
-        fi
-
-        if [ -f /etc/init/bbb-transcode-akka.conf ]; then
-                service bbb-transcode-akka stop
-        fi
-        if [ -f /etc/init.d/bbb-transcode-akka ]; then
-                /etc/init.d/bbb-transcode-akka stop
-        fi
-   fi
+    done
 }
 
 start_bigbluebutton () {
     echo "Starting BigBlueButton"
-    if command -v systemctl >/dev/null; then
-       if [ -f /usr/lib/systemd/system/bbb-html5.service ]; then
-          HTML5="mongod bbb-html5"
-       fi
-       if [ -f /usr/lib/systemd/system/bbb-webhooks.service ]; then
-          WEBHOOKS=bbb-webhooks
-       fi
-       systemctl start red5 tomcat7 nginx freeswitch redis-server bbb-apps-akka bbb-fsesl-akka bbb-transcode-akka bbb-record-core.timer $HTML5 $WEBHOOKS
-    else
-	$FREESWITCH_INIT_D start
-	
-	FREESWITCH_ESL_IP=$(cat $FREESWITCH_EVENT_SOCKET | grep 'name="listen-ip"' | cut -d\" -f4  | awk '{print $1}')
-	check_no_value listen-ip $FREESWITCH_EVENT_SOCKET $FREESWITCH_ESL_IP
-
-	echo -n "Waiting for FreeSWITCH to start: "
-
-	if [ ! -z $FREESWITCH_ESL_IP ]; then
-		while ! nc -z -w 1 $FREESWITCH_ESL_IP 8021 > /dev/null; do
-			echo -n "."
-			sleep 1
-		done
-	fi
-	echo
-
-	/etc/init.d/nginx start
-	/etc/init.d/$RED5 start
-	/etc/init.d/${SERVLET_CONTAINER} start
-
-	# monit will start libreoffice and bbb-rap-worker
-	/etc/init.d/monit start
-	echo
-	echo "Note: monit will automatically start bbb-record-core and LibreOffice within 60 seconds."
-	echo
-
-	BBB_WEB=$(cat ${SERVLET_DIR}/bigbluebutton/WEB-INF/classes/bigbluebutton.properties | grep -v '#' | sed -n '/^bigbluebutton.web.serverURL/{s/.*\///;p}')
-	if [ -f /etc/init/bbb-html5.conf ]; then
-		echo -n "Waiting for Meteor (HTML5 server) to finish starting up (this may take a minute): "
-		start bbb-html5
-
-        	if ! wget -q -O - http://$BBB_WEB/html5client/check | grep running > /dev/null; then
-                    while ! wget -q -O - http://$BBB_WEB/html5client/check | grep running > /dev/null; do
-                        echo -n "."
-                        sleep 1
-                    done
-		fi
+    for service in $SYSTEMCTL_SERVICES; do
+        if systemctl is-enabled $service > /dev/null 2>&1; then
+            systemctl start $service
         fi
-
-        if [ -f /etc/init/bbb-apps-akka.conf ]; then
-                service bbb-apps-akka start
-        fi
-        if [ -f /etc/init.d/bbb-apps-akka ]; then
-                /etc/init.d/bbb-apps-akka start
-        fi
-
-        if [ -f /etc/init/bbb-fsesl-akka.conf ]; then
-                service bbb-fsesl-akka start
-        fi
-        if [ -f /etc/init.d/bbb-fsesl-akka ]; then
-                /etc/init.d/bbb-fsesl-akka start
-        fi
-
-        if [ -f /etc/init/bbb-transcode-akka.conf ]; then
-                service bbb-transcode-akka start
-        fi
-        if [ -f /etc/init.d/bbb-transcode-akka ]; then
-                /etc/init.d/bbb-transcode-akka start
-        fi
-
-
-	#
-	# At this point the red5 and servlet container applications are starting up.
-	#
-	echo -n "Waiting for BigBlueButton to finish starting up (this may take a minute): "
-
-	NGINX_IP=$(cat /etc/nginx/sites-available/bigbluebutton | grep -v '#' | sed -n '/server_name/{s/.*name[ ]*//;s/;//;p}' | cut -d' ' -f1)
-	check_no_value server_name /etc/nginx/sites-available/bigbluebutton $NGINX_IP
-
-        #if ! wget http://$BBB_WEB/bigbluebutton/api -O - --quiet | grep -q SUCCESS; then
-        #        echo "Startup unsuccessful: could not connect to http://$BBB_WEB/bigbluebutton/api"
-        #        exit 1
-	#fi
-    fi
+    done
 
         #
         # Look for Starting up context to be recently added to the log files
@@ -466,16 +369,11 @@ start_bigbluebutton () {
 }
 
 display_bigbluebutton_status () {
-    if command -v systemctl >/dev/null; then
-	units="start red5 tomcat7 nginx freeswitch redis-server libreoffice bbb-apps-akka bbb-fsesl-akka bbb-transcode-akka"
-	for unit in $units; do
-		echo "$unit: $(systemctl is-active $unit)"
-	done 
-    else
-	/etc/init.d/nginx status
-	/etc/init.d/$RED5 status
-	/etc/init.d/${SERVLET_CONTAINER} status
-    fi
+  for service in $SYSTEMCTL_SERVICES; do
+      if systemctl is-enabled $service > /dev/null 2>&1; then
+          echo "$service: $(systemctl is-active $service)"
+      fi
+  done
 }
 
 #
