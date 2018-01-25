@@ -453,8 +453,6 @@ window.getScreenConstraints = function(sendSource, callback) {
   }
   else if (isFirefox) {
     screenConstraints.video.mediaSource= "screen";
-    screenConstraints.video.width= {max: "1280"};
-    screenConstraints.video.height = {max:  "720"};
 
     console.log("getScreenConstraints for Firefox returns => ");
     console.log(screenConstraints);
@@ -463,8 +461,6 @@ window.getScreenConstraints = function(sendSource, callback) {
   }
   else if(isSafari) {
     screenConstraints.video.mediaSource= "screen";
-    screenConstraints.video.width= {max: window.screen.width};
-    screenConstraints.video.height = {max:  window.screen.vid_height};
 
     console.log("getScreenConstraints for Safari returns => ");
     console.log(screenConstraints);
@@ -504,9 +500,7 @@ window.getChromeScreenConstraints = function(callback, extensionId) {
   chrome.runtime.sendMessage(extensionId, {
     getStream: true,
     sources: [
-      "window",
-      "screen",
-      "tab"
+      "screen"
     ]},
     function(response) {
       console.log(response);
