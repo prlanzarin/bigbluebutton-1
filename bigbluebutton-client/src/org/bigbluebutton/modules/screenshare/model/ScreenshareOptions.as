@@ -28,6 +28,7 @@ package org.bigbluebutton.modules.screenshare.model
 		[Bindable] public var chromeExtensionLink:String = null;
 		[Bindable] public var chromeExtensionKey:String = null;
 		[Bindable] public var helpUrl:String;
+		[Bindable] public var enableJava:Boolean = true;
 
 		public function parseOptions():void {
 			var vxml:XML = BBB.getConfigForModule("ScreenshareModule");
@@ -50,7 +51,10 @@ package org.bigbluebutton.modules.screenshare.model
 					chromeExtensionKey = vxml.@chromeExtensionKey.toString();
 				}
 				if (vxml.@help != undefined){
-					helpUrl = vxml.@help; 
+					helpUrl = vxml.@help;
+				}
+				if (vxml.@enableJava != undefined) {
+					enableJava = (vxml.@enableJava.toString().toUpperCase() == "TRUE") ? true : false;
 				}
 			}
 		}
