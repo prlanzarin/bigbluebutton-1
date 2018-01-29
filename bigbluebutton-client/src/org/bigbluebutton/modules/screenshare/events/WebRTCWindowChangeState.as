@@ -25,6 +25,9 @@ package org.bigbluebutton.modules.screenshare.events
 		public static const DISPLAY_INSTALL:String = "WebRTC Deskshare Display Install Screen";
 		public static const DISPLAY_RETRY:String = "WebRTC Deskshare Display Retry Screen";
 		public static const DISPLAY_FALLBACK:String = "WebRTC Deskshare Display Fallback Screen";
+		public static const DISPLAY_CONNECTING:String = "WebRTC Deskshare Display Connecting Screen";
+		public static const DISPLAY_WAITING_MEDIA:String = "WebRTC Deskshare Display Waiting Media Screen";
+		public static const DISPLAY_ERROR:String = "WebRTC Deskshare Display Error Screen";
 
 		public function WebRTCWindowChangeState(type:String, bubbles:Boolean=true, cancelable:Boolean=false)
 		{

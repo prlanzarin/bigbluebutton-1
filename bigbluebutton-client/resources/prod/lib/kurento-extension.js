@@ -4,6 +4,13 @@ var isChrome = !!window.chrome && !isOpera;
 var isSafari = navigator.userAgent.indexOf("Safari") >= 0 && !isChrome;
 var kurentoHandler = null;
 
+// TODO sugestions on where to store this
+const CONNECTION_ERROR = "CONNECTION_ERROR";
+const SERVER_ERROR = "SERVER_ERROR";
+const PEER_ERROR = "PEER_ERROR";
+const SDP_ERROR = "SDP_ERROR";
+const EXTENSION_ERROR = "EXTENSION_ERROR";
+
 Kurento = function (
     tag,
     voiceBridge,
@@ -138,11 +145,11 @@ Kurento.prototype.init = function () {
     this.ws.onmessage = this.onWSMessage.bind(this);
     this.ws.onclose = (close) => {
       kurentoManager.exitScreenShare();
-      self.onFail("Websocket connection closed");
+      //self.onFail();
     };
     this.ws.onerror = (error) => {
       kurentoManager.exitScreenShare();
-      self.onFail("Websocket connection error");
+      self.onFail(CONNECTION_ERROR);
     };
     this.ws.onopen = function () {
       self.mediaCallback();
@@ -184,6 +191,10 @@ Kurento.prototype.onWSMessage = function (message) {
           parsedMessage.streamId
       );
       break;
+    case 'webRTCScreenshareError':
+      console.log(parsedMessage.error);
+      this.onFail(parsedMessage.error);
+      break;
     default:
       console.error('Unrecognized message', parsedMessage);
   }
@@ -196,36 +207,37 @@ Kurento.prototype.setRenderTag = function (tag) {
 Kurento.prototype.presenterResponse = function (message) {
   if (message.response != 'accepted') {
     var errorMsg = message.message ? message.message : 'Unknown error';
-    console.warn('Call not accepted for the following reason: ' + JSON.stringify(errorMsg, null, 2));
+    console.warn('Call not accepted for the following reason: ' + errorMsg);
     kurentoManager.exitScreenShare();
-    this.onFail(errorMessage);
+    this.onFail(SERVER_ERROR);
   } else {
     console.log("Presenter call was accepted with SDP => " + message.sdpAnswer);
     this.webRtcPeer.processAnswer(message.sdpAnswer);
   }
-}
+};
 
 Kurento.prototype.viewerResponse = function (message) {
   if (message.response != 'accepted') {
     var errorMsg = message.message ? message.message : 'Unknown error';
     console.warn('Call not accepted for the following reason: ' + errorMsg);
     kurentoManager.exitScreenShare();
-    this.onFail(errorMessage);
+    this.onFail(SERVER_ERROR);
   } else {
     console.log("Viewer call was accepted with SDP => " + message.sdpAnswer);
     this.webRtcPeer.processAnswer(message.sdpAnswer);
   }
-}
+};
 
 Kurento.prototype.serverResponse = function (message) {
   if (message.response != 'accepted') {
     var errorMsg = message.message ? message.message : 'Unknow error';
     console.warn('Call not accepted for the following reason: ' + errorMsg);
     kurentoManager.exitScreenShare();
+    this.onFail(SERVER_ERROR);
   } else {
     this.webRtcPeer.processAnswer(message.sdpAnswer);
   }
-}
+};
 
 Kurento.prototype.makeShare = function() {
   var self = this;
@@ -236,13 +248,13 @@ Kurento.prototype.makeShare = function() {
 
     this.startScreenStreamFrom();
   }
-}
+};
 
 Kurento.prototype.onOfferPresenter = function (error, offerSdp) {
   let self = this;
   if(error)  {
     console.log("Kurento.prototype.onOfferPresenter Error " + error);
-    this.onFail(error);
+    this.onFail(SDP_ERROR);
     return;
   }
 
@@ -260,7 +272,7 @@ Kurento.prototype.onOfferPresenter = function (error, offerSdp) {
   };
   console.log("onOfferPresenter sending to screenshare server => " + JSON.stringify(message, null, 2));
   this.sendMessage(message);
-}
+};
 
 Kurento.prototype.startScreenStreamFrom = function () {
   var self = this;
@@ -270,7 +282,7 @@ Kurento.prototype.startScreenStreamFrom = function () {
         status:  'failed',
         message: 'Missing Chrome Extension key',
       });
-      self.onFail();
+      self.onFail(EXTENSION_ERROR);
       return;
     }
   }
@@ -291,16 +303,16 @@ Kurento.prototype.startScreenStreamFrom = function () {
   console.log(" Peer options => " + JSON.stringify(options, null, 2));
 
   self.webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, function(error) {
-    if(error)  {
+    if (error) {
       console.log("WebRtcPeerSendonly constructor error " + JSON.stringify(error, null, 2));
-      self.onFail(error);
+      self.onFail(PEER_ERROR);
       return kurentoManager.exitScreenShare();
     }
 
     self.webRtcPeer.generateOffer(self.onOfferPresenter.bind(self));
     console.log("Generated peer offer w/ options "  + JSON.stringify(options));
   });
-}
+};
 
 Kurento.prototype.onIceCandidate = function (candidate) {
   let self = this;
@@ -314,7 +326,7 @@ Kurento.prototype.onIceCandidate = function (candidate) {
     candidate : candidate
   }
   this.sendMessage(message);
-}
+};
 
 Kurento.prototype.onViewerIceCandidate = function (candidate) {
   let self = this;
@@ -329,7 +341,7 @@ Kurento.prototype.onViewerIceCandidate = function (candidate) {
     callerName: self.caller_id_name
   }
   this.sendMessage(message);
-}
+};
 
 Kurento.prototype.setWatchVideo = function (tag) {
   this.useVideo = true;
@@ -350,7 +362,7 @@ Kurento.prototype.viewer = function () {
 
     self.webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, function(error) {
       if(error) {
-        return self.onFail(error);
+        return self.onFail(PEER_ERROR);
       }
 
       this.generateOffer(self.onOfferViewer.bind(self));
@@ -362,7 +374,7 @@ Kurento.prototype.onOfferViewer = function (error, offerSdp) {
   let self = this;
   if(error)  {
     console.log("Kurento.prototype.onOfferViewer Error " + error);
-    return this.onFail();
+    return this.onFail(SDP_ERROR);
   }
   var message = {
     id : 'viewer',
@@ -395,20 +407,20 @@ Kurento.prototype.dispose = function() {
     this.webRtcPeer.dispose();
     this.webRtcPeer = null;
   }
-}
+};
 
 Kurento.prototype.disposeScreenShare = function() {
   if (this.webRtcPeer) {
     this.webRtcPeer.dispose();
     this.webRtcPeer = null;
   }
-}
+};
 
 Kurento.prototype.sendMessage = function(message) {
   var jsonMessage = JSON.stringify(message);
   console.log('Sending message: ' + jsonMessage);
   this.ws.send(jsonMessage);
-}
+};
 
 Kurento.prototype.logger = function (obj) {
   console.log(obj);
@@ -467,7 +479,7 @@ window.getScreenConstraints = function(sendSource, callback) {
     // now invoking native getUserMedia API
     callback(null, screenConstraints);
   }
-}
+};
 
 window.kurentoInitialize = function () {
   if (window.kurentoManager == null || window.KurentoManager == undefined) {
@@ -494,7 +506,45 @@ window.kurentoWatchVideo = function () {
 window.kurentoExitVideo = function () {
   window.kurentoInitialize();
   window.kurentoManager.exitVideo();
-}
+};
+
+// a function to check whether the browser (Chrome only) is in an isIncognito
+// session. Requires 1 mandatory callback that only gets called if the browser
+// session is incognito. The callback for not being incognito is optional.
+// Attempts to retrieve the chrome filesystem API.
+window.checkIfIncognito = function(isIncognito, isNotIncognito = function () {}) {
+  isIncognito = Kurento.normalizeCallback(isIncognito);
+  isNotIncognito = Kurento.normalizeCallback(isNotIncognito);
+
+  var fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+  if (!fs) {
+    isNotIncognito();
+    return;
+  }
+  fs(window.TEMPORARY, 100, function() {isNotIncognito()}, function() {isIncognito()});
+};
+
+window.checkChromeExtInstalled = function (callback, chromeExtensionId) {
+  callback = Kurento.normalizeCallback(callback);
+
+  if (typeof chrome === "undefined" || !chrome || !chrome.runtime) {
+    // No API, so no extension for sure
+    callback(false);
+    return;
+  }
+  chrome.runtime.sendMessage(
+    chromeExtensionId,
+    { getVersion: true },
+    function (response) {
+      if (!response || !response.version) {
+        // Communication failure - assume that no endpoint exists
+        callback(false);
+        return;
+      }
+      callback(true);
+    }
+  );
+};
 
 window.getChromeScreenConstraints = function(callback, extensionId) {
   chrome.runtime.sendMessage(extensionId, {
@@ -506,4 +556,4 @@ window.getChromeScreenConstraints = function(callback, extensionId) {
       console.log(response);
       callback(response);
     });
-};;
+};
