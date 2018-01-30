@@ -55,12 +55,6 @@ function customGetStats(peer, mediaStreamTrack, callback, interval) {
                     remoteCandidate = results[res.remoteCandidateId];
                 }
             });
-            /*
-            console.log("Inbound:");
-            console.log(inbound);
-            console.log("Outbound:");
-            console.log(outbound);
-            */
             var audioStats = {
                 inboundTimestamp: inbound.timestamp,
                 packetsReceived: inbound.packetsReceived,
@@ -110,8 +104,8 @@ function customGetStats(peer, mediaStreamTrack, callback, interval) {
             mos = 1 + (0.035) * r + (0.000007) * r * (r-60) * (100-r);
 
             var intervalLossRate = 1 - (r / 100);
-            console.log("Interval loss rate: " + intervalLossRate);
-            console.log("MOS: " + mos);
+            BBBLog.debug("Interval loss rate", intervalLossRate);
+            BBBLog.debug("MOS", mos);
 
             result = {
                 audio: {
@@ -159,7 +153,7 @@ function customGetStats(peer, mediaStreamTrack, callback, interval) {
                 typeof interval != undefined && interval && setTimeout(getPrivateStats, interval || 1000);
             }
         }, function(exception) {
-            console.log("Promise rejected: " + exception.message);
+            BBBLog.error("Promise rejected", exception.message);
             callback(null);
         });
     })();
@@ -177,9 +171,9 @@ function merge(mergein, mergeto) {
 }
 
 function monitorTrackStart(peer, track, local) {
-    console.log("Starting stats monitoring on " + track.id);
+    BBBLog.info("Starting stats monitoring on", track.id);
     if (!monitoredTracks[track.id]) {
-        monitoredTracks[track.id] = function() { console.log("Still didn't have any report for this track"); };
+        monitoredTracks[track.id] = function() { BBBLog.warn("Still didn't have any report for this track"); };
         customGetStats(
             peer,
             track,
@@ -190,13 +184,13 @@ function monitorTrackStart(peer, track, local) {
                     monitoredTracks[track.id] = results.nomore;
                     results.audio.type = local? "local": "remote",
                     BBB.webRTCMonitorUpdate(JSON.stringify(results));
-                    console.log(JSON.stringify(results));
+                    BBBLog.debug(JSON.stringify(results));
                 }
             },
             2000
         );
     } else {
-        console.log("Already monitoring this track");
+        BBBLog.warn("Already monitoring this track");
     }
 }
 
@@ -204,16 +198,16 @@ function monitorTrackStop(trackId) {
     if (typeof (monitoredTracks[trackId]) === "function") {
         monitoredTracks[trackId]();
         delete monitoredTracks[trackId];
-        console.log("Track removed, monitoredTracks.length = " + Object.keys(monitoredTracks).length);
+        BBBLog.info("Track removed, monitoredTracks.length =", Object.keys(monitoredTracks).length);
     } else {
-        console.log("Track is not monitored");
+        BBBLog.info("Track is not monitored");
     }
 }
 
 function monitorTracksStart() {
     setTimeout( function() {
         if (currentSession == null) {
-            console.log("Doing nothing because currentSession is null");
+            BBBLog.warn("Doing nothing because currentSession is null");
             return;
         }
         var peer = currentSession.mediaHandler.peerConnection;
