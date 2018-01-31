@@ -35,12 +35,7 @@ package org.bigbluebutton.main.api
         
     public function warn(message:String, data: Object):void
     {
-      ExternalInterface.call("BBBLog.warning", message, data);
-    }
-    
-    public function critical(message:String, data: Object):void
-    {
-      ExternalInterface.call("BBBLog.critical", message, data);
+      ExternalInterface.call("BBBLog.warn", message, data);
     }
     
     public function log(text: String):void {
