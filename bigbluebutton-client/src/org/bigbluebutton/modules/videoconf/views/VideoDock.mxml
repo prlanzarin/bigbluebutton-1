@@ -45,14 +45,13 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.core.events.SwitchedLayoutEvent;
 			import org.bigbluebutton.main.events.ShortcutEvent;
 			import org.bigbluebutton.main.views.MainCanvas;
+			import org.bigbluebutton.modules.layout.model.LayoutModel;
 			import org.bigbluebutton.modules.videoconf.model.VideoConfOptions;
 			import org.bigbluebutton.util.i18n.ResourceUtil;
 
 			private var videoOptions:VideoConfOptions = new VideoConfOptions();
 			private var keyCombos:Object;
 			private var disp:Dispatcher = new Dispatcher();
-			
-			private var darkMode:Boolean;
 			
 			private function onCreationComplete():void {
 				hotkeyCapture();
@@ -63,6 +62,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				closeBtn.tabIndex = videoOptions.baseTabIndex+3;
 				
 				resourcesChanged(); // update the window controls once they've been created
+				onLayoutChanged();
 			}
 			
 			public function getPrefferedPosition():String {
@@ -93,11 +93,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			
 			override protected function resourcesChanged():void {
 				super.resourcesChanged();
-				if (!darkMode) {
-					this.title = ResourceUtil.getInstance().getString("bbb.videodock.title");
-				} else {
-					this.title = "";
-				}
 				
 				if (titleBarOverlay != null) {
 					titleBarOverlay.accessibilityName = ResourceUtil.getInstance().getString('bbb.videoDock.titleBar');
@@ -125,17 +120,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				}
 			}
 			
-			private function onLayoutChanged(e:SwitchedLayoutEvent):void {
-				if(e.layoutID != "bbb.layout.name.videochat"){
-					setStyle("styleNameFocus", "videoDockStyleFocus");
-					setStyle("styleNameNoFocus", "videoDockStyleNoFocus");
-					showControls = true;
-					this.title = ResourceUtil.getInstance().getString("bbb.videodock.title");
-				} else {
+			private function onLayoutChanged(e:SwitchedLayoutEvent = null):void {
+				if (LayoutModel.getInstance().usingDarkMode) {
 					setStyle("styleNameFocus", "videoDockStyleFocusChatLayout");
 					setStyle("styleNameNoFocus", "videoDockStyleNoFocusChatLayout");
-					showControls = false;
 					this.title = "";
+				} else {
+					setStyle("styleNameFocus", "videoDockStyleFocus");
+					setStyle("styleNameNoFocus", "videoDockStyleNoFocus");
+					this.title = ResourceUtil.getInstance().getString("bbb.videodock.title");
 				}
 				styleChanged("styleName");
 			}

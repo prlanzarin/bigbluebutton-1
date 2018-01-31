@@ -341,6 +341,7 @@ package org.bigbluebutton.modules.layout.managers
 			detectContainerChange = false;
 
 			if (layout != null) {
+				updateDarkMode(layout.name);
 				layout.applyToCanvas(_canvas, function():void {
 					LOGGER.debug("layout applied successfully, resetting detectContainerChange");
 					detectContainerChange = true;
@@ -351,6 +352,14 @@ package org.bigbluebutton.modules.layout.managers
 				detectContainerChange = true;
 			}
 			updateCurrentLayout(layout);
+		}
+
+		private function updateDarkMode(name:String):void {
+			if (name == "bbb.layout.name.videochat") {
+				LayoutModel.getInstance().usingDarkMode = true;
+			} else {
+				LayoutModel.getInstance().usingDarkMode = false;
+			}
 		}
 
     private function set detectContainerChange(detect:Boolean):void {
@@ -413,7 +422,9 @@ package org.bigbluebutton.modules.layout.managers
 
 		private function checkSingleWindowPermissions(window:MDIWindow):void {
 			if (!LayoutDefinition.ignoreWindow(window)) {
-				(window as CustomMdiWindow).unlocked = !_locked || UsersUtil.amIModerator() || UsersUtil.amIPresenter();
+				(window as CustomMdiWindow).unlocked =
+						!LayoutModel.getInstance().usingDarkMode &&
+						(!_locked || UsersUtil.amIModerator() || UsersUtil.amIPresenter());
 			}
 		}
 		
@@ -458,7 +469,7 @@ package org.bigbluebutton.modules.layout.managers
         _currentLayout = LayoutDefinition.getLayout(_canvas, ResourceUtil.getInstance().getString('bbb.layout.combo.customName'));
         //trace(LOG + "updateCurrentLayout - layout is NULL! Setting currentLayout = [" + _currentLayout.name + "]");
       }
-
+      checkWindowsPermissions();
 			return _currentLayout;
 		}
 
