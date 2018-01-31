@@ -135,6 +135,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			import org.bigbluebutton.main.model.LayoutOptions;
 			import org.bigbluebutton.main.model.users.Conference;
 			import org.bigbluebutton.main.model.users.events.ConnectionFailedEvent;
+			import org.bigbluebutton.modules.layout.model.LayoutModel;
 			import org.bigbluebutton.modules.phone.PhoneOptions;
 			import org.bigbluebutton.modules.phone.events.AudioSelectionWindowEvent;
 			import org.bigbluebutton.modules.phone.events.FlashMicSettingsEvent;
@@ -955,12 +956,12 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 
             private function onLayoutChanged(e:SwitchedLayoutEvent):void {
-                if (e.layoutID != "bbb.layout.name.videochat") {
-                    this.styleName = "defaultShellStyle";
-					controlBar.styleName = "defaultControlBarStyle";
+                if (LayoutModel.getInstance().usingDarkMode) {
+                    this.styleName = "darkShellStyle";
+                    controlBar.styleName = "darkControlBarStyle";
                 } else {
-					this.styleName = "darkShellStyle";
-					controlBar.styleName = "darkControlBarStyle";
+                    this.styleName = "defaultShellStyle";
+                    controlBar.styleName = "defaultControlBarStyle";
                 }
             }
 

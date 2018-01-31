@@ -11,6 +11,7 @@ package org.bigbluebutton.modules.layout.model
     private static var instance:LayoutModel = null;
     
     private var _layouts:LayoutDefinitionFile = null;
+    private var _usingDarkMode:Boolean = false;
     
     public function LayoutModel(enforcer:SingletonEnforcer)
     {
@@ -60,6 +61,14 @@ package org.bigbluebutton.modules.layout.model
     
     public function toString():String {
       return _layouts.toXml().toXMLString();
+    }
+
+    public function get usingDarkMode():Boolean {
+      return this._usingDarkMode;
+    }
+
+    public function set usingDarkMode(value:Boolean):void {
+      this._usingDarkMode = value;
     }
   }
 }
