@@ -52,6 +52,7 @@
 			tryWebRTCFirst="true"
 			chromeExtensionLink="https://chrome.google.com/webstore/detail/kurento-screenshare-test/mbfngdphjegmlbfobcblikeefpidfncb"
 			chromeExtensionKey="mbfngdphjegmlbfobcblikeefpidfncb"
+			enableJava="true"
 		/>
     
 		<module name="PhoneModule" url="http://HOST/client/PhoneModule.swf?v=VERSION" 
