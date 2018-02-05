@@ -29,8 +29,9 @@ package org.bigbluebutton.modules.screenshare.utils
 		private static const LOGGER:ILogger = getClassLogger(BrowserCheck);
 
 		public static function isWebRTCSupported():Boolean {
-			/*LOGGER.debug("isWebRTCSupported - ExternalInterface.available=[{0}], isWebRTCAvailable=[{1}]", [ExternalInterface.available, ExternalInterface.call("isWebRTCAvailable")]);*/
-			return (ExternalInterface.available && ExternalInterface.call("isWebRTCAvailable"));
+			// TODO: Right now we can only privide support for Chrome and Firefox WebRTC screen share
+			var isWebRTCAvailable:Boolean = ExternalInterface.available && ExternalInterface.call("isWebRTCAvailable");
+			return isWebRTCAvailable && (isChrome() || isFirefox());
 		}
 
 		public static function isChrome():Boolean {
