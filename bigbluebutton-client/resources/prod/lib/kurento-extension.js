@@ -78,7 +78,7 @@ KurentoManager.prototype.exitScreenShare = function () {
       this.kurentoScreenshare.ws.close();
     }
 
-    this.kurentoScreenshare.disposeScreenShare();
+    this.kurentoScreenshare.dispose();
     this.kurentoScreenshare = null;
   }
 
@@ -99,12 +99,29 @@ KurentoManager.prototype.exitVideo = function () {
       this.kurentoVideo.ws.close();
     }
 
-    this.kurentoVideo.disposeScreenShare();
+    this.kurentoVideo.dispose();
     this.kurentoVideo = null;
   }
 
   if (this.kurentoVideo) {
     this.kurentoVideo = null;
+  }
+};
+
+KurentoManager.prototype.exitAudio = function () {
+  console.log("  [exitAudio] Exiting audio");
+  if(typeof this.kurentoAudio !== 'undefined' && this.kurentoAudio) {
+    if(this.kurentoAudio.ws !== null) {
+      this.kurentoAudio.ws.onclose = function(){};
+      this.kurentoAudio.ws.close();
+    }
+
+    this.kurentoAudio.dispose();
+    this.kurentoAudio = null;
+  }
+
+  if (this.kurentoAudio) {
+    this.kurentoAudio = null;
   }
 };
 
@@ -164,10 +181,9 @@ Kurento.prototype.onWSMessage = function (message) {
   switch (parsedMessage.id) {
 
     case 'presenterResponse':
-      this.presenterResponse(parsedMessage);
-      break;
     case 'viewerResponse':
-      this.viewerResponse(parsedMessage);
+    case 'startResponse':
+      this.serverResponse(parsedMessage);
       break;
     case 'stopSharing':
       kurentoManager.exitScreenShare();
@@ -204,35 +220,23 @@ Kurento.prototype.setRenderTag = function (tag) {
   this.renderTag = tag;
 };
 
-Kurento.prototype.presenterResponse = function (message) {
-  if (message.response != 'accepted') {
-    var errorMsg = message.message ? message.message : 'Unknown error';
-    console.warn('Call not accepted for the following reason: ' + errorMsg);
-    kurentoManager.exitScreenShare();
-    this.onFail(SERVER_ERROR);
-  } else {
-    console.log("Presenter call was accepted with SDP => " + message.sdpAnswer);
-    this.webRtcPeer.processAnswer(message.sdpAnswer);
-  }
-};
-
-Kurento.prototype.viewerResponse = function (message) {
-  if (message.response != 'accepted') {
-    var errorMsg = message.message ? message.message : 'Unknown error';
-    console.warn('Call not accepted for the following reason: ' + errorMsg);
-    kurentoManager.exitScreenShare();
-    this.onFail(SERVER_ERROR);
-  } else {
-    console.log("Viewer call was accepted with SDP => " + message.sdpAnswer);
-    this.webRtcPeer.processAnswer(message.sdpAnswer);
-  }
-};
-
 Kurento.prototype.serverResponse = function (message) {
   if (message.response != 'accepted') {
-    var errorMsg = message.message ? message.message : 'Unknow error';
+    var errorMsg = message.message ? message.message : 'Unknown error';
     console.warn('Call not accepted for the following reason: ' + errorMsg);
-    kurentoManager.exitScreenShare();
+    switch (message.type) {
+      case 'screenshare':
+        if (message.role === 'presenter') {
+          kurentoManager.exitScreenShare();
+        }
+        else if (message.role === 'viewer') {
+          kurentoManager.exitVideo();
+        }
+        break;
+
+      case 'audio':
+        kurentoManager.exitAudio();
+    }
     this.onFail(SERVER_ERROR);
   } else {
     this.webRtcPeer.processAnswer(message.sdpAnswer);
@@ -292,7 +296,6 @@ Kurento.prototype.startScreenStreamFrom = function () {
   }
   self.screenConstraints.video = {};
 
-  console.log(self);
   var options = {
     localVideo: document.getElementById(this.renderTag),
     onicecandidate : self.onIceCandidate.bind(self),
@@ -398,7 +401,7 @@ Kurento.prototype.stop = function() {
   //    voiceBridge: kurentoHandler.voiceBridge
   //  }
   //  kurentoHandler.sendMessage(message);
-  //  kurentoHandler.disposeScreenShare();
+  //  kurentoHandler.dispose();
   //}
 }
 
@@ -409,12 +412,76 @@ Kurento.prototype.dispose = function() {
   }
 };
 
-Kurento.prototype.disposeScreenShare = function() {
-  if (this.webRtcPeer) {
-    this.webRtcPeer.dispose();
-    this.webRtcPeer = null;
+KurentoManager.prototype.joinAudio = function (tag) {
+  this.exitAudio();
+  var obj = Object.create(Kurento.prototype);
+  Kurento.apply(obj, arguments);
+  this.kurentoAudio= obj;
+  this.kurentoAudio.setAudio(tag);
+};
+
+Kurento.prototype.setAudio = function (tag) {
+  this.mediaCallback = this.listenOnly.bind(this);
+  this.create(tag);
+};
+
+Kurento.prototype.listenOnly = function () {
+  var self = this;
+  if (!this.webRtcPeer) {
+    var options = {
+      remoteVideo: document.getElementById(this.renderTag),
+      onicecandidate : this.onListenOnlyIceCandidate.bind(this),
+      mediaConstraints: {
+        audio:true,
+        video:false
+      }
+    }
+
+    self.webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, function(error) {
+      if(error) {
+        return self.onFail(PEER_ERROR);
+      }
+
+      this.generateOffer(self.onOfferListenOnly.bind(self));
+    });
   }
 };
+
+Kurento.prototype.onListenOnlyIceCandidate = function (candidate) {
+  let self = this;
+  console.log('On listen only ICE candidate' + JSON.stringify(candidate));
+
+  var message = {
+    id : 'iceCandidate',
+    role: 'viewer',
+    type: 'audio',
+    voiceBridge: self.voiceBridge,
+    candidate : candidate,
+    callerName: self.caller_id_name
+  }
+  this.sendMessage(message);
+};
+
+Kurento.prototype.onOfferListenOnly = function (error, offerSdp) {
+  let self = this;
+  if(error)  {
+    console.error("Kurento.prototype.onOfferListenOnly Error " + error);
+    return this.onFail(SDP_ERROR);
+  }
+
+  var message = {
+    id : 'start',
+    type: 'audio',
+    role: 'viewer',
+    voiceBridge: self.voiceBridge,
+    callerName : self.caller_id_name,
+    sdpOffer : offerSdp
+  };
+
+  console.log("onOfferViewer sending to screenshare server => " + JSON.stringify(message, null, 2));
+  this.sendMessage(message);
+};
+
 
 Kurento.prototype.sendMessage = function(message) {
   var jsonMessage = JSON.stringify(message);
@@ -507,6 +574,12 @@ window.kurentoExitVideo = function () {
   window.kurentoInitialize();
   window.kurentoManager.exitVideo();
 };
+
+window.kurentoJoinAudio = function () {
+  window.kurentoInitialize();
+  window.kurentoManager.joinAudio.apply(window.kurentoManager, arguments);
+};
+
 
 // a function to check whether the browser (Chrome only) is in an isIncognito
 // session. Requires 1 mandatory callback that only gets called if the browser
