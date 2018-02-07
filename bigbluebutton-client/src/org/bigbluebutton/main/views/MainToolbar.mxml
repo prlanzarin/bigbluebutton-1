@@ -262,8 +262,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					var logoutWindow:LogoutWindow;
 					logoutWindow = LogoutWindow(PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, LogoutWindow, true));
 
-					var newX:Number = btnLogout.x + btnLogout.width - logoutWindow.width;
-					var newY:Number = btnLogout.y + btnLogout.height + 5;
+					var newX:Number = rightHBox.x + rightHBox.width - logoutWindow.width;
+					var newY:Number = rightHBox.y + rightHBox.height + 5;
 
 					PopUpManager.centerPopUp(logoutWindow);
 
@@ -589,18 +589,15 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				height="100%"
 				horizontalAlign="right"
 				verticalAlign="middle">
-			<mx:Spacer width="50%"/>
 			<mx:HBox id="addedBtnsRight"/>
-			<mx:Button
-					id="bbbSettings"
+			<mx:Button id="bbbSettings"
 					visible="{showGuestSettingsButton}"
 					includeInLayout="{showGuestSettingsButton}"
 					toolTip="{ResourceUtil.getInstance().getString('bbb.settings.btn.toolTip')}"
 					click="onSettingsButtonClick()"
 					styleName="settingsButtonStyle"
 					height="22"/>
-			<mx:Button
-					id="btnNetwork"
+			<mx:Button id="btnNetwork"
 					styleName="bandwidthButtonStyle"
 					toolTip="dummy text"
 					click="onNetStatsButtonClick()"
@@ -621,10 +618,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.helpBtn')}"
 					accessibilityName="{ResourceUtil.getInstance().getString('bbb.micSettings.access.helpButton')}"/>
 			<mx:Button id="btnLogout"
-					label=""
 					styleName="logoutButtonStyle"
 					toolTip="{ResourceUtil.getInstance().getString('bbb.mainToolbar.logoutBtn.toolTip')}"
-					right="10"
 					click="confirmLogout()"
 					height="22"/>
 		</mx:HBox>
