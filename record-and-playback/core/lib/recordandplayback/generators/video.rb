@@ -61,7 +61,7 @@ module BigBlueButton
         :extension => 'webm',
         :parameters => [
           [ '-c:v', 'libvpx',
-            '-crf', '23', '-b:v', '60M', '-threads', '2',
+            '-crf', '34', '-b:v', '60M', '-threads', '2', '-deadline', 'good', '-cpu-used', '3',
             '-c:a', 'libvorbis',
             '-q:a', '2',
             '-f', 'webm' ]
@@ -102,7 +102,7 @@ module BigBlueButton
         :extension => 'webm',
         :parameters => [
           [ '-c:v', 'libvpx',
-            '-crf', '23', '-b:v', '60M', '-threads', '2',
+            '-crf', '34', '-b:v', '60M', '-threads', '2', '-deadline', 'good', '-cpu-used', '3',
             '-c:a', 'libvorbis',
             '-q:a', '2',
             '-f', 'webm' ]
