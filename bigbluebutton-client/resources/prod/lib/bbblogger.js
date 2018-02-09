@@ -1,32 +1,32 @@
 (function(window, undefined) {
-    var BBBLog = {};
+    var BBBLogger = {};
 
-    BBBLog.error = function() {
+    BBBLogger.error = function() {
       return Function.prototype.bind.call(console.error);
     }();
 
-    BBBLog.warn = function() {
+    BBBLogger.warn = function() {
       return Function.prototype.bind.call(console.warn);
     }();
 
-    BBBLog.info = function() {
+    BBBLogger.info = function() {
       return Function.prototype.bind.call(console.info);
     }();
 
-    BBBLog.debug = function() {};
+    BBBLogger.debug = function() {};
 
-    BBBLog.level = function(level) {
+    BBBLogger.level = function(level) {
       if (level == "debug") {
-        BBBLog.debug = function() {
+        BBBLogger.debug = function() {
           return Function.prototype.bind.call(console.debug);
         }();
       } else {
-        BBBLog.debug = function() {
+        BBBLogger.debug = function() {
           return function() {};
         }();
       }
     }
 
-    BBBLog.level("info");
-    window.BBBLog = BBBLog;
+    BBBLogger.level("info");
+    window.Logger = BBBLogger;
 })(this);
