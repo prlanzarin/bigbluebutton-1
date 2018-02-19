@@ -11,6 +11,7 @@ const PEER_ERROR = "PEER_ERROR";
 const SDP_ERROR = "SDP_ERROR";
 const EXTENSION_ERROR = "EXTENSION_ERROR";
 
+// TODO: We need some refactor here
 Kurento = function (
     tag,
     voiceBridge,
@@ -18,7 +19,10 @@ Kurento = function (
     internalMeetingId,
     onFail = null,
     chromeExtension = null,
-    streamId,
+    streamId = null,
+    userId = null,
+    userName = null,
+    onSuccess = null
     ) {
 
   this.ws = null;
@@ -32,6 +36,8 @@ Kurento = function (
   this.voiceBridge = voiceBridge + '-SCREENSHARE';
   this.internalMeetingId = internalMeetingId;
   this.streamId = streamId;
+  this.userId = userId;
+  this.userName = userName;
 
   this.vid_width = window.screen.width;
   this.vid_height = window.screen.height;
@@ -61,6 +67,15 @@ Kurento = function (
     var _this = this;
     this.onFail = function () {
       _this.logError('Default error handler');
+    };
+  }
+
+  if (onSuccess != null) {
+    this.onSuccess = Kurento.normalizeCallback(onSuccess);
+  } else {
+    var _this = this;
+    this.onSuccess = function () {
+      _this.logSuccess('Default success handler');
     };
   }
 };
@@ -209,6 +224,12 @@ Kurento.prototype.onWSMessage = function (message) {
       break;
     case 'webRTCScreenshareError':
       console.log(parsedMessage.error);
+      this.onFail(parsedMessage.error);
+      break;
+    case 'webRTCAudioSuccess':
+      this.onSuccess(parsedMessage.success);
+      break;
+    case 'webRTCAudioError':
       this.onFail(parsedMessage.error);
       break;
     default:
@@ -475,7 +496,9 @@ Kurento.prototype.onOfferListenOnly = function (error, offerSdp) {
     role: 'viewer',
     voiceBridge: self.voiceBridge,
     callerName : self.caller_id_name,
-    sdpOffer : offerSdp
+    sdpOffer : offerSdp,
+    userId: self.userId,
+    userName: self.userName
   };
 
   console.log("onOfferViewer sending to screenshare server => " + JSON.stringify(message, null, 2));
@@ -497,6 +520,9 @@ Kurento.prototype.logError = function (obj) {
   console.error(obj);
 };
 
+Kurento.prototype.logSuccess = function (obj) {
+  console.debug(obj);
+};
 
 Kurento.normalizeCallback = function (callback) {
   if (typeof callback == 'function') {
@@ -580,6 +606,10 @@ window.kurentoJoinAudio = function () {
   window.kurentoManager.joinAudio.apply(window.kurentoManager, arguments);
 };
 
+window.kurentoExitAudio = function () {
+  window.kurentoInitialize();
+  window.kurentoManager.exitAudio();
+};
 
 // a function to check whether the browser (Chrome only) is in an isIncognito
 // session. Requires 1 mandatory callback that only gets called if the browser
