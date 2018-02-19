@@ -85,7 +85,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				LOGGER.debug("AudioSelectionWindow - Share Microphone Clicked");
 				var dispatcher:Dispatcher = new Dispatcher();
 				if (browserInfo[0] == "Puffin" && String(browserInfo[2]).substr(0, 3) >= "4.6") {
-					dispatcher.dispatchEvent(new UseFlashModeCommand());	
+					dispatcher.dispatchEvent(new UseFlashModeCommand(UseFlashModeCommand.USE_FLASH_MODE));
 				}
 				else {
 					var command:JoinVoiceConferenceCommand = new JoinVoiceConferenceCommand();

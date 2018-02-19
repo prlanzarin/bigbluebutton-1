@@ -95,6 +95,7 @@ package org.bigbluebutton.modules.phone.managers
       }
       dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_ENDED));
       model.state = Constants.INITED;
+      dispatcher.dispatchEvent(new UseFlashModeCommand(UseFlashModeCommand.USE_FLASH_LISTEN_ONLY));
     }
 
     private function onWebRTCListenOnlySuccess(success:String):void {
@@ -159,7 +160,7 @@ package org.bigbluebutton.modules.phone.managers
       model.state = Constants.ECHO_TEST_FAILED;
       endEchoTest();
       
-      dispatcher.dispatchEvent(new UseFlashModeCommand());
+      dispatcher.dispatchEvent(new UseFlashModeCommand(UseFlashModeCommand.USE_FLASH_MODE));
     }
     
     private var t:Timer;
@@ -376,7 +377,7 @@ package org.bigbluebutton.modules.phone.managers
          */
         popUpDelayTimer = new Timer(100, 1);
         popUpDelayTimer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {
-          dispatcher.dispatchEvent(new UseFlashModeCommand());
+          dispatcher.dispatchEvent(new UseFlashModeCommand(UseFlashModeCommand.USE_FLASH_MODE));
         });
         popUpDelayTimer.start();
       } else {
