@@ -34,15 +34,15 @@ package org.bigbluebutton.modules.phone.managers
     private static const LOGGER:ILogger = getClassLogger(WebRTCCallManager);
     private const MAX_RETRIES:Number = 3;
     
-		private static const BROWSER_ERROR:String = "BROWSER_ERROR";
-		private static const WEBRTC_ERROR:String = "WEBRTC_ERROR";
-		private static const CONNECTION_ERROR:String = "CONNECTION_ERROR";
-		private static const SERVER_ERROR:String = "SERVER_ERROR";
-		private static const PEER_ERROR:String = "PEER_ERROR";
-		private static const SDP_ERROR:String = "SDP_ERROR";
-		private static const MEDIA_ERROR:String = "MEDIA_ERROR";
+    private static const BROWSER_ERROR:String = "BROWSER_ERROR";
+    private static const WEBRTC_ERROR:String = "WEBRTC_ERROR";
+    private static const CONNECTION_ERROR:String = "CONNECTION_ERROR";
+    private static const SERVER_ERROR:String = "SERVER_ERROR";
+    private static const PEER_ERROR:String = "PEER_ERROR";
+    private static const SDP_ERROR:String = "SDP_ERROR";
+    private static const MEDIA_ERROR:String = "MEDIA_ERROR";
 
-		private static const MEDIA_FLOWING:String = "MEDIA_FLOWING";
+    private static const MEDIA_FLOWING:String = "MEDIA_FLOWING";
 
     private var browserType:String = "unknown";
     private var browserVersion:int = 0;
