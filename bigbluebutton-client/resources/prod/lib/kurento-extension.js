@@ -3,6 +3,7 @@ var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
 var isChrome = !!window.chrome && !isOpera;
 var isSafari = navigator.userAgent.indexOf("Safari") >= 0 && !isChrome;
 var kurentoHandler = null;
+var logger = window.Logger || console;
 
 // TODO sugestions on where to store this
 const CONNECTION_ERROR = "CONNECTION_ERROR";
@@ -86,7 +87,7 @@ this.KurentoManager= function () {
 };
 
 KurentoManager.prototype.exitScreenShare = function () {
-  console.log("  [exitScreenShare] Exiting screensharing");
+  logger.info("[exitScreenShare] Exiting screenshare");
   if(typeof this.kurentoScreenshare !== 'undefined' && this.kurentoScreenshare) {
     if(this.kurentoScreenshare.ws !== null) {
       this.kurentoScreenshare.ws.onclose = function(){};
@@ -107,7 +108,7 @@ KurentoManager.prototype.exitScreenShare = function () {
 };
 
 KurentoManager.prototype.exitVideo = function () {
-  console.log("  [exitScreenShare] Exiting screensharing viewing");
+  logger.info("[exitVideo] Exiting video");
   if(typeof this.kurentoVideo !== 'undefined' && this.kurentoVideo) {
     if(this.kurentoVideo.ws !== null) {
       this.kurentoVideo.ws.onclose = function(){};
@@ -124,7 +125,7 @@ KurentoManager.prototype.exitVideo = function () {
 };
 
 KurentoManager.prototype.exitAudio = function () {
-  console.log("  [exitAudio] Exiting audio");
+  logger.info("[exitAudio] Exiting audio");
   if(typeof this.kurentoAudio !== 'undefined' && this.kurentoAudio) {
     if(this.kurentoAudio.ws !== null) {
       this.kurentoAudio.ws.onclose = function(){};
@@ -171,7 +172,7 @@ Kurento.prototype.create = function (tag) {
 Kurento.prototype.init = function () {
   var self = this;
   if("WebSocket" in window) {
-    console.log("this browser supports websockets");
+    logger.debug("[init] Websockets supported");
     this.ws = new WebSocket(this.socketUrl);
 
     this.ws.onmessage = this.onWSMessage.bind(this);
@@ -188,7 +189,7 @@ Kurento.prototype.init = function () {
     }.bind(self);
   }
   else
-    console.log("this browser does not support websockets");
+    logger.warn("[init] Websockets not supported");
 };
 
 Kurento.prototype.onWSMessage = function (message) {
@@ -207,7 +208,7 @@ Kurento.prototype.onWSMessage = function (message) {
       this.webRtcPeer.addIceCandidate(parsedMessage.candidate);
       break;
     case 'webRTCScreenshareStarted':
-      console.log(parsedMessage.streamId);
+      logger.debug("[onWSMessage] WebRTC screenshare started");
       BBB.webRTCScreenshareStarted(
           parsedMessage.meetingId,
           parsedMessage.streamId,
@@ -216,14 +217,14 @@ Kurento.prototype.onWSMessage = function (message) {
       );
       break;
     case 'webRTCScreenshareStopped':
-      console.log(parsedMessage.streamId);
+      logger.debug("[onWSMessage] WebRTC screenshare stopped");
       BBB.webRTCScreenshareStopped(
           parsedMessage.meetingId,
           parsedMessage.streamId
       );
       break;
     case 'webRTCScreenshareError':
-      console.log(parsedMessage.error);
+      logger.error("[onWSMessage]", parsedMessage.error);
       this.onFail(parsedMessage.error);
       break;
     case 'webRTCAudioSuccess':
@@ -233,7 +234,7 @@ Kurento.prototype.onWSMessage = function (message) {
       this.onFail(parsedMessage.error);
       break;
     default:
-      console.error('Unrecognized message', parsedMessage);
+      logger.warn("[onWSMessage] Unrecognized message", parsedMessage);
   }
 };
 
@@ -244,7 +245,7 @@ Kurento.prototype.setRenderTag = function (tag) {
 Kurento.prototype.serverResponse = function (message) {
   if (message.response != 'accepted') {
     var errorMsg = message.message ? message.message : 'Unknown error';
-    console.warn('Call not accepted for the following reason: ' + errorMsg);
+    logger.error("[serverResponse]", errorMsg);
     switch (message.type) {
       case 'screenshare':
         if (message.role === 'presenter') {
@@ -278,7 +279,7 @@ Kurento.prototype.makeShare = function() {
 Kurento.prototype.onOfferPresenter = function (error, offerSdp) {
   let self = this;
   if(error)  {
-    console.log("Kurento.prototype.onOfferPresenter Error " + error);
+    logger.error("[onOfferPresenter]", error);
     this.onFail(SDP_ERROR);
     return;
   }
@@ -295,7 +296,7 @@ Kurento.prototype.onOfferPresenter = function (error, offerSdp) {
     vw: self.vid_width,
     streamId: self.streamId
   };
-  console.log("onOfferPresenter sending to screenshare server => " + JSON.stringify(message, null, 2));
+  logger.debug("[onOfferPresenter]", JSON.stringify(message, null, 2));
   this.sendMessage(message);
 };
 
@@ -324,23 +325,23 @@ Kurento.prototype.startScreenStreamFrom = function () {
     sendSource : 'desktop'
   };
 
-  console.log(" Peer options => " + JSON.stringify(options, null, 2));
+  logger.debug("[startScreenStreamFrom] Options", JSON.stringify(options, null, 2));
 
   self.webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, function(error) {
     if (error) {
-      console.log("WebRtcPeerSendonly constructor error " + JSON.stringify(error, null, 2));
+      logger.error("[webRtcPeer]", JSON.stringify(error, null, 2));
       self.onFail(PEER_ERROR);
       return kurentoManager.exitScreenShare();
     }
 
     self.webRtcPeer.generateOffer(self.onOfferPresenter.bind(self));
-    console.log("Generated peer offer w/ options "  + JSON.stringify(options));
+    logger.debug("[webRtcPeer] Options", JSON.stringify(options));
   });
 };
 
 Kurento.prototype.onIceCandidate = function (candidate) {
   let self = this;
-  console.log('Local candidate' + JSON.stringify(candidate));
+  logger.debug("[onIceCandidate]", JSON.stringify(candidate));
 
   var message = {
     id : 'onIceCandidate',
@@ -354,7 +355,7 @@ Kurento.prototype.onIceCandidate = function (candidate) {
 
 Kurento.prototype.onViewerIceCandidate = function (candidate) {
   let self = this;
-  console.log('Viewer local candidate' + JSON.stringify(candidate));
+  logger.debug("[onViewerIceCandidate]", JSON.stringify(candidate));
 
   var message = {
     id : 'viewerIceCandidate',
@@ -397,7 +398,7 @@ Kurento.prototype.viewer = function () {
 Kurento.prototype.onOfferViewer = function (error, offerSdp) {
   let self = this;
   if(error)  {
-    console.log("Kurento.prototype.onOfferViewer Error " + error);
+    logger.error("[onOfferViewer]", error);
     return this.onFail(SDP_ERROR);
   }
   var message = {
@@ -410,7 +411,7 @@ Kurento.prototype.onOfferViewer = function (error, offerSdp) {
     sdpOffer : offerSdp
   };
 
-  console.log("onOfferViewer sending to screenshare server => " + JSON.stringify(message, null, 2));
+  logger.debug("[onOfferViewer]", JSON.stringify(message, null, 2));
   this.sendMessage(message);
 };
 
@@ -470,7 +471,7 @@ Kurento.prototype.listenOnly = function () {
 
 Kurento.prototype.onListenOnlyIceCandidate = function (candidate) {
   let self = this;
-  console.log('On listen only ICE candidate' + JSON.stringify(candidate));
+  logger.debug("[onListenOnlyIceCandidate]", JSON.stringify(candidate));
 
   var message = {
     id : 'iceCandidate',
@@ -486,7 +487,7 @@ Kurento.prototype.onListenOnlyIceCandidate = function (candidate) {
 Kurento.prototype.onOfferListenOnly = function (error, offerSdp) {
   let self = this;
   if(error)  {
-    console.error("Kurento.prototype.onOfferListenOnly Error " + error);
+    logger.error("[onOfferListenOnly]", error);
     return this.onFail(SDP_ERROR);
   }
 
@@ -501,14 +502,14 @@ Kurento.prototype.onOfferListenOnly = function (error, offerSdp) {
     userName: self.userName
   };
 
-  console.log("onOfferViewer sending to screenshare server => " + JSON.stringify(message, null, 2));
+  logger.debug("[onOfferListenOnly]", JSON.stringify(message, null, 2));
   this.sendMessage(message);
 };
 
 
 Kurento.prototype.sendMessage = function(message) {
   var jsonMessage = JSON.stringify(message);
-  console.log('Sending message: ' + jsonMessage);
+  logger.debug("[sendMessage]", jsonMessage);
   this.ws.send(jsonMessage);
 };
 
@@ -528,7 +529,7 @@ Kurento.normalizeCallback = function (callback) {
   if (typeof callback == 'function') {
     return callback;
   } else {
-    console.log(document.getElementById('BigBlueButton')[callback]);
+    logger.debug("[normalizeCallback]", document.getElementById('BigBlueButton')[callback]);
     return function (args) {
       document.getElementById('BigBlueButton')[callback](args);
     };
@@ -549,8 +550,7 @@ window.getScreenConstraints = function(sendSource, callback) {
       // this statement sets gets 'sourceId" and sets "chromeMediaSourceId"
       screenConstraints.video.chromeMediaSource = { exact: [sendSource]};
       screenConstraints.video.chromeMediaSourceId = sourceId;
-      console.log("getScreenConstraints for Chrome returns => ");
-      console.log(screenConstraints);
+      logger.debug("[getScreenConstraints] Chrome", screenConstraints);
       // now invoking native getUserMedia API
       callback(null, screenConstraints);
 
@@ -559,16 +559,14 @@ window.getScreenConstraints = function(sendSource, callback) {
   else if (isFirefox) {
     screenConstraints.video.mediaSource= "screen";
 
-    console.log("getScreenConstraints for Firefox returns => ");
-    console.log(screenConstraints);
+    logger.debug("[getScreenConstraints] Firefox", screenConstraints);
     // now invoking native getUserMedia API
     callback(null, screenConstraints);
   }
   else if(isSafari) {
     screenConstraints.video.mediaSource= "screen";
 
-    console.log("getScreenConstraints for Safari returns => ");
-    console.log(screenConstraints);
+    logger.debug("[getScreenConstraints] Safari", screenConstraints);
     // now invoking native getUserMedia API
     callback(null, screenConstraints);
   }
@@ -656,7 +654,6 @@ window.getChromeScreenConstraints = function(callback, extensionId) {
       "screen"
     ]},
     function(response) {
-      console.log(response);
       callback(response);
     });
 };
