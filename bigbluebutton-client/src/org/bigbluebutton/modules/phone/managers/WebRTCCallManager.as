@@ -34,6 +34,16 @@ package org.bigbluebutton.modules.phone.managers
     private static const LOGGER:ILogger = getClassLogger(WebRTCCallManager);
     private const MAX_RETRIES:Number = 3;
     
+    private static const BROWSER_ERROR:String = "BROWSER_ERROR";
+    private static const WEBRTC_ERROR:String = "WEBRTC_ERROR";
+    private static const CONNECTION_ERROR:String = "CONNECTION_ERROR";
+    private static const SERVER_ERROR:String = "SERVER_ERROR";
+    private static const PEER_ERROR:String = "PEER_ERROR";
+    private static const SDP_ERROR:String = "SDP_ERROR";
+    private static const MEDIA_ERROR:String = "MEDIA_ERROR";
+
+    private static const MEDIA_FLOWING:String = "MEDIA_FLOWING";
+
     private var browserType:String = "unknown";
     private var browserVersion:int = 0;
     private var dispatcher:Dispatcher = new Dispatcher();
@@ -61,6 +71,40 @@ package org.bigbluebutton.modules.phone.managers
           ResourceUtil.getInstance().getString("bbb.clientstatus.webrtc.title"), 
           ResourceUtil.getInstance().getString("bbb.clientstatus.webrtc.message"),
           'bbb.clientstatus.webrtc.title'));
+      }
+      ExternalInterface.addCallback("onWebRTCListenOnlyFail", onWebRTCListenOnlyFail);
+      ExternalInterface.addCallback("onWebRTCListenOnlySuccess", onWebRTCListenOnlySuccess);
+    }
+
+    private function onWebRTCListenOnlyFail(error:String):void {
+      LOGGER.debug(error);
+      switch (error) {
+        case BROWSER_ERROR:
+        case WEBRTC_ERROR:
+        case SERVER_ERROR:
+          // TODO: Probably unrecoverable error
+          break;
+        case PEER_ERROR:
+        case CONNECTION_ERROR:
+        case SDP_ERROR:
+        case MEDIA_ERROR:
+          // TODO: Probably recoverable error
+          break;
+        default:
+          // TODO: Probably unrecoverable error
+      }
+      dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_ENDED));
+      model.state = Constants.INITED;
+    }
+
+    private function onWebRTCListenOnlySuccess(success:String):void {
+      LOGGER.debug(success);
+      switch (success) {
+        case MEDIA_FLOWING:
+          model.state = Constants.ON_LISTEN_ONLY_STREAM;
+          dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_STARTED));
+          break;
+        default:
       }
     }
     
@@ -127,15 +171,24 @@ package org.bigbluebutton.modules.phone.managers
     }
     
     public function handleWebRTCCallStartedEvent():void {
-	  LOGGER.debug("setting state to IN_CONFERENCE");
-      model.state = Constants.IN_CONFERENCE;
-      dispatcher.dispatchEvent(new WebRTCJoinedVoiceConferenceEvent());
-      if(reconnecting) {
-        dispatcher.dispatchEvent(new ClientStatusEvent(ClientStatusEvent.SUCCESS_MESSAGE_EVENT,
-          ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
-          ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
-          'bbb.webrtcWarning.connection.reestablished'));
-        reconnecting = false;
+      switch (model.state) {
+        case Constants.ON_LISTEN_ONLY_STREAM:
+          LOGGER.debug(Constants.ON_LISTEN_ONLY_STREAM);
+          break;
+        default:
+          model.state = Constants.IN_CONFERENCE;
+          dispatcher.dispatchEvent(new WebRTCJoinedVoiceConferenceEvent());
+          if (reconnecting) {
+            dispatcher.dispatchEvent(
+                new ClientStatusEvent(
+                    ClientStatusEvent.SUCCESS_MESSAGE_EVENT,
+                    ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
+                    ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
+                    'bbb.webrtcWarning.connection.reestablished'
+                )
+            );
+            reconnecting = false;
+        }
       }
     }
     
@@ -157,19 +210,49 @@ package org.bigbluebutton.modules.phone.managers
 
       usingWebRTC = checkIfToUseWebRTC();
 
-      if (!usingWebRTC || !event.mic) return;
-      
-      if ((options.skipCheck && PhoneOptions.firstAudioJoin) || echoTestDone) {
+      if (!usingWebRTC) return;
+
+      if (!event.mic) {
+        joinListenOnlyWebRTC();
+      } else if ((options.skipCheck && PhoneOptions.firstAudioJoin) || echoTestDone) {
         joinVoiceConference();
       } else {
         startWebRTCEchoTest();
       }
     }
+
+    private function joinListenOnlyWebRTC():void {
+      model.state = Constants.CONNECTING_TO_LISTEN_ONLY_STREAM;
+      var audioTag:String = "remote-media";
+      var voiceBridge:String = UsersUtil.getVoiceBridge();
+      var myUserId:String = UsersUtil.getMyUserID();
+      var myUserName:String = UsersUtil.getMyUsername();
+      var internalMeetingID:String = UsersUtil.getInternalMeetingID();
+
+      ExternalInterface.call(
+          'kurentoJoinAudio',
+          audioTag,
+          voiceBridge,
+          "GLOBAL_AUDIO_" + voiceBridge,
+          internalMeetingID,
+          "onWebRTCListenOnlyFail",
+          null,
+          null,
+          myUserId,
+          myUserName,
+          "onWebRTCListenOnlySuccess"
+      );
+    }
     
     public function handleLeaveVoiceConferenceCommand():void {
       if (!usingWebRTC) return;
+      if (model.state == Constants.ON_LISTEN_ONLY_STREAM) {
+        ExternalInterface.call("kurentoExitAudio");
+        dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_ENDED));
+      } else {
+        ExternalInterface.call("leaveWebRTCVoiceConference");
+      }
       model.state = Constants.INITED;
-      ExternalInterface.call("leaveWebRTCVoiceConference");
     }
     
     public function handleUseFlashModeCommand():void {

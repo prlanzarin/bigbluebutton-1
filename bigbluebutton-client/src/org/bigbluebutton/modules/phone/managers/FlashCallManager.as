@@ -365,7 +365,7 @@
       LOGGER.debug("Handling JoinVoiceConferenceCommand.");
       switch(state) {
         case INITED:
-          if (usingFlash || !event.mic) {
+          if (usingFlash) {
             startCall(event.mic);
           } else {
             LOGGER.debug("ignoring join voice conf as usingFlash=[{0}] or eventMic=[{1}]", [usingFlash, !event.mic]);
