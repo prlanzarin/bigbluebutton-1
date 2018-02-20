@@ -129,6 +129,10 @@
         joinListenOnlyCall();
       }
     }
+
+    public function handleUseFlashListenOnlyCommand():void {
+      joinListenOnlyCall();
+    }
        
     private function joinListenOnlyCall():void {
       if (options.listenOnlyMode) {

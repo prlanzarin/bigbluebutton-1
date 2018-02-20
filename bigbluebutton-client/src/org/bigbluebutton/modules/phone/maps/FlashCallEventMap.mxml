@@ -116,6 +116,10 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
   <EventHandlers type="{UseFlashModeCommand.USE_FLASH_MODE}">        
     <MethodInvoker generator="{FlashCallManager}" method="handleUseFlashModeCommand"/>
   </EventHandlers>   
+
+  <EventHandlers type="{UseFlashModeCommand.USE_FLASH_LISTEN_ONLY}">
+    <MethodInvoker generator="{FlashCallManager}" method="handleUseFlashListenOnlyCommand"/>
+  </EventHandlers>
   
   <EventHandlers type="{BBBEvent.RECONNECT_SIP_SUCCEEDED_EVENT}">
     <MethodInvoker generator="{FlashCallManager}" method="handleReconnectSIPSucceededEvent"/>
