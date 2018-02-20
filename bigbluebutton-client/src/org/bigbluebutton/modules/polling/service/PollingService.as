@@ -29,6 +29,7 @@ package org.bigbluebutton.modules.polling.service
 	import org.bigbluebutton.modules.polling.model.SimplePoll;
 	import org.bigbluebutton.modules.present.model.Presentation;
 	import org.bigbluebutton.modules.present.model.PresentationModel;
+	import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
 
 	public class PollingService
 	{	
@@ -59,7 +60,7 @@ package org.bigbluebutton.modules.polling.service
         var date:Date = new Date();
 
         var pollId:String;
-        if(PresentationModel.getInstance().getCurrentPresentation().sharingDesktop)
+        if(ScreenshareModel.getInstance().sharing)
            pollId = "deskshare/1/" + date.time;
         else
            pollId = curPres.id + "/" + curPres.getCurrentPage().num + "/" + date.time;

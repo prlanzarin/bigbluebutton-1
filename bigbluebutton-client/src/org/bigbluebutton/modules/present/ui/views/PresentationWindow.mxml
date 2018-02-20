@@ -138,9 +138,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private static const SCREENSHARE_PUBLISH_TAB_INDEX:Number = 1;
 			private static const SCREENSHARE_VIEW_TAB_INDEX:Number = 2;
 			private var currentTabIndex:Number = PRESENTATION_TAB_INDEX;
-
-			private var sharing:Boolean = false;
-			private var paused:Boolean = false;
 			
 			[Bindable] 
 			private var thumbY:Number;
@@ -392,7 +389,6 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
       }
       
 			private function becomePresenter():void{
-				startDeskshareTabCreation();
 				setupPresenter(true);
 				addContextMenuItems();
 			}
@@ -979,9 +975,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				LOGGER.debug("Handling Presentation Tab selected");
 				currentTabIndex = PRESENTATION_TAB_INDEX;
 
-				if (sharing) {
-					stopSharing();
-				}
+				stopSharing();
 
 				if (whiteboardOverlay != null) {
 					changeWhiteboardPageOnly(PresentationModel.getInstance().getCurrentPage().id);
@@ -1009,8 +1003,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 				LOGGER.debug("Handling Desktop Publish Tab selected");
 				currentTabIndex = SCREENSHARE_PUBLISH_TAB_INDEX;
 
-				if (paused) {
-					paused = false;
+				if (ScreenshareModel.getInstance().paused) {
+					ScreenshareModel.getInstance().paused = false;
 					screenshareTab.label = ResourceUtil.getInstance().getString('bbb.screenshareView.title');
 					dispatchEvent(new RequestToRestartSharing());
 				} else {
@@ -1064,10 +1058,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 
 			private function stopSharing():void {
 				LOGGER.debug("Stopping desktop publish");
-				enableTab(SCREENSHARE_VIEW_TAB_INDEX, false);
-				if (!paused) dispatchEvent(new ShareEvent(ShareEvent.STOP_SHARING));
-				sharing = false;
-				PresentationModel.getInstance().getCurrentPresentation().sharingDesktop = false;
+				if (ScreenshareModel.getInstance().sharing) enableTab(SCREENSHARE_VIEW_TAB_INDEX, false);
+				if (!ScreenshareModel.getInstance().paused) dispatchEvent(new ShareEvent(ShareEvent.STOP_SHARING));
 			}
 
 			private function createScreensharePublishTab(e:ShareEvent):void {
@@ -1103,11 +1095,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 					selectDeskshareViewTab();
 
 					if (UsersUtil.amIPresenter()) {
-						sharing = true;
-						PresentationModel.getInstance().getCurrentPresentation().sharingDesktop = true;
 						enableTab(SCREENSHARE_PUBLISH_TAB_INDEX, false);
-					}
-					else {
+					} else {
 						enableTab(PRESENTATION_TAB_INDEX, false);
 					}
 				} else {
@@ -1161,7 +1150,7 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			}
 
 			private function pauseScreenshare():void {
-				paused = true;
+				ScreenshareModel.getInstance().paused = true;
 				screenshareTab.label = ResourceUtil.getInstance().getString('bbb.screensharePublish.restart.label');
 				dispatchEvent(new RequestToPauseSharing());
 			}

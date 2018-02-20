@@ -8,6 +8,7 @@ package org.bigbluebutton.modules.screenshare.model {
         private static var instance:ScreenshareModel = null;
         
         private var _sharing:Boolean = false;
+        private var _paused:Boolean = false;
         private var _stream:ScreenshareStream = new ScreenshareStream();
         private var _options:ScreenshareOptions = null;
         private var _usingWebRTCDeskshare:Boolean = options.tryWebRTCFirst && BrowserCheck.isWebRTCSupported();
@@ -39,6 +40,14 @@ package org.bigbluebutton.modules.screenshare.model {
 
         public function set sharing(value:Boolean):void {
             _sharing = value;
+        }
+
+        public function get paused():Boolean {
+            return _paused;
+        }
+
+        public function set paused(value:Boolean):void {
+            _paused = value;
         }
         
         public function get width():int {

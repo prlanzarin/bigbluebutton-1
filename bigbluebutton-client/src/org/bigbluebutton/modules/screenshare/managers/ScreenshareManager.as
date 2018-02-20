@@ -66,10 +66,7 @@ package org.bigbluebutton.modules.screenshare.managers {
             LOGGER.debug("Screenshare Module starting");
             this.module = module;
             service.handleStartModuleEvent(module);
-
-            if (UsersUtil.amIPresenter()) {
-                initDeskshare();
-            }
+            ScreenshareModel.getInstance().sharing = false;
         }
 
         public function handleStopModuleEvent():void {
@@ -116,22 +113,12 @@ package org.bigbluebutton.modules.screenshare.managers {
             viewWindowManager.startViewing(streamId, videoWidth, videoHeight);
         }
 
-        private function initDeskshare():void {
-            ScreenshareModel.getInstance().sharing = false;
-        }
-
-        public function handleMadePresenterEvent(e:MadePresenterEvent):void {
-            LOGGER.debug("Got MadePresenterEvent ");
-            initDeskshare();
-        }
-
         public function handleMadeViewerEvent(e:MadePresenterEvent):void {
             LOGGER.debug("Got MadeViewerEvent ");
             if (ScreenshareModel.getInstance().sharing) {
                 service.requestStopSharing(ScreenshareModel.getInstance().streamId);
-                publishWindowManager.stopSharing();
             }
-            ScreenshareModel.getInstance().sharing = false;
+            publishWindowManager.stopSharing();
         }
 
         public function handleRequestStartSharingEvent():void {
@@ -175,7 +162,6 @@ package org.bigbluebutton.modules.screenshare.managers {
         }
 
         public function handleStartSharingEvent():void {
-            ScreenshareModel.getInstance().sharing = true;
             publishWindowManager.startSharing(module.getCaptureServerUri(), module.getRoom(), module.tunnel());
         }
 
@@ -185,7 +171,6 @@ package org.bigbluebutton.modules.screenshare.managers {
 
         public function handleStopSharingEvent():void {
             publishWindowManager.stopSharing();
-            ScreenshareModel.getInstance().sharing = false;
         }
 
         public function handleRefreshScreenshareTab():void {
@@ -194,7 +179,6 @@ package org.bigbluebutton.modules.screenshare.managers {
 
         public function handleShareWindowCloseEvent():void {
             publishWindowManager.handleShareWindowCloseEvent();
-            ScreenshareModel.getInstance().sharing = false;
         }
 
         public function handleViewWindowCloseEvent():void {

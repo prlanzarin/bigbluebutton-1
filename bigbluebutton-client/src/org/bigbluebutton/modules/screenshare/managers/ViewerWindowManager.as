@@ -22,10 +22,12 @@ package org.bigbluebutton.modules.screenshare.managers {
     
     import org.as3commons.logging.api.ILogger;
     import org.as3commons.logging.api.getClassLogger;
+    import org.bigbluebutton.core.UsersUtil;
     import org.bigbluebutton.common.IBbbModuleWindow;
     import org.bigbluebutton.common.LogUtil;
     import org.bigbluebutton.common.events.CloseWindowEvent;
     import org.bigbluebutton.common.events.OpenWindowEvent;
+    import org.bigbluebutton.modules.screenshare.model.ScreenshareModel;
     import org.bigbluebutton.modules.screenshare.services.ScreenshareService;
     import org.bigbluebutton.modules.screenshare.view.components.ScreenshareViewWindow;
     import org.bigbluebutton.modules.screenshare.events.ShareEvent;
@@ -51,6 +53,7 @@ package org.bigbluebutton.modules.screenshare.managers {
             var e:ShareEvent = new ShareEvent(ShareEvent.OPEN_SCREENSHARE_VIEW_TAB);
             e.viewTabContent = window;
             globalDispatcher.dispatchEvent(e);
+            if (UsersUtil.amIPresenter()) ScreenshareModel.getInstance().sharing = true;
         }
         
         public function handleViewWindowCloseEvent():void {
@@ -62,6 +65,7 @@ package org.bigbluebutton.modules.screenshare.managers {
         private function closeWindow():void {
             var e:ShareEvent = new ShareEvent(ShareEvent.CLOSE_SCREENSHARE_VIEW_TAB);
             globalDispatcher.dispatchEvent(e);
+            ScreenshareModel.getInstance().sharing = false;
         }
         
         public function startViewing(streamId:String, videoWidth:Number, videoHeight:Number):void {
