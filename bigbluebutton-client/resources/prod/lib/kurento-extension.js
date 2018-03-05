@@ -543,6 +543,13 @@ window.getScreenConstraints = function(sendSource, callback) {
   let chromeMediaSourceId = sendSource;
   let screenConstraints = {video: {}};
 
+  // Limiting FPS to a range
+  screenConstraints.video.frameRate = {min: 10, ideal: 15, max: 20};
+
+  // Limiting max resolution to screen size
+  screenConstraints.video.height = {max: window.screen.height};
+  screenConstraints.video.width = {max: window.screen.width};
+
   if(isChrome) {
     getChromeScreenConstraints ((constraints) => {
       let sourceId = constraints.streamId;
