@@ -322,10 +322,7 @@ package org.bigbluebutton.modules.phone.managers
       logData.errorEvent = {code: event.errorCode, cause: event.cause};
       LOGGER.info(jsonXify(logData));
 
-      sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-              ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-              errorString,
-              'bbb.webrtcWarning webRTCEchoTestFailedEvent');
+      sendWebRTCAlert(errorString, 'bbb.webrtcWarning webRTCEchoTestFailedEvent');
     }
     
     public function handleWebRTCEchoTestEndedUnexpectedly():void {
@@ -339,10 +336,7 @@ package org.bigbluebutton.modules.phone.managers
       logData.message = "WebRtc Echo test ended unexpectedly.";
       LOGGER.info(jsonXify(logData));
 
-      sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-              ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-              errorString,
-              logCode);
+      sendWebRTCAlert(errorString, logCode);
     }
     
     public function handleWebRTCCallFailedEvent(event:WebRTCCallEvent):void {
@@ -380,10 +374,7 @@ package org.bigbluebutton.modules.phone.managers
           logData.errorEvent = {code: event.errorCode, cause: event.cause};
           LOGGER.info(jsonXify(logData));
           
-          sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-                  ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-                  errorString,
-                  'bbb.webrtcWarning.failedError');
+          sendWebRTCAlert(errorString, 'bbb.webrtcWarning.failedError');
         }
       }
     }
@@ -397,10 +388,7 @@ package org.bigbluebutton.modules.phone.managers
       logData.user.reason = errorString;
       LOGGER.info(jsonXify(logData));
 
-      sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-              ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-              errorString,
-              logCode);
+      sendWebRTCAlert(errorString, logCode);
     }
     
     private var popUpDelayTimer:Timer = new Timer(100, 1);
@@ -422,12 +410,14 @@ package org.bigbluebutton.modules.phone.managers
       }
     }
     
-    private function sendWebRTCAlert(title:String, message:String, error:String, logCode:String):void {
+    private function sendWebRTCAlert(error:String, logCode:String):void {
       /**
        * There is a bug in Flex SDK 4.14 where the screen stays blurry if a 
        * pop-up is opened from another pop-up. I delayed the second open to 
        * avoid this case. - Chad
        */
+      var title:String = ResourceUtil.getInstance().getString("bbb.webrtcWarning.title");
+      var message:String = ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [error]);
       popUpDelayTimer = new Timer(100, 1);
       popUpDelayTimer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {
         Alert.show(message, title, Alert.YES | Alert.NO, null, handleCallFailedUserResponse, null, Alert.YES);
