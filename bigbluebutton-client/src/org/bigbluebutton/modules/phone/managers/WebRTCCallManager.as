@@ -79,23 +79,18 @@ package org.bigbluebutton.modules.phone.managers
     private function onWebRTCListenOnlyFail(error:String):void {
       LOGGER.debug(error);
       switch (error) {
+        case CONNECTION_ERROR:
+          handleWebRTCListenOnlyDisconnect();
+          break;
         case BROWSER_ERROR:
         case WEBRTC_ERROR:
         case SERVER_ERROR:
-          // TODO: Probably unrecoverable error
-          break;
         case PEER_ERROR:
-        case CONNECTION_ERROR:
         case SDP_ERROR:
         case MEDIA_ERROR:
-          // TODO: Probably recoverable error
-          break;
         default:
-          // TODO: Probably unrecoverable error
+          listenOnlyFallback();
       }
-      dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_ENDED));
-      model.state = Constants.INITED;
-      dispatcher.dispatchEvent(new UseFlashModeCommand(UseFlashModeCommand.USE_FLASH_LISTEN_ONLY));
     }
 
     private function onWebRTCListenOnlySuccess(success:String):void {
@@ -107,6 +102,54 @@ package org.bigbluebutton.modules.phone.managers
           break;
         default:
       }
+    }
+
+    private function handleWebRTCListenOnlyDisconnect():void {
+      model.state = Constants.INITED;
+      if (!reconnecting) {
+        reconnecting = true;
+        LOGGER.debug("WebRTC listenOnly failed, attempting reconnection");
+        sendWebRTCReconnectWarningMessage();
+        reconnect.onDisconnect(joinListenOnlyWebRTC, []);
+      } else {
+        LOGGER.debug("WebRTC listenOnly reconnection failed");
+        if (reconnect.attempts < MAX_RETRIES) {
+          LOGGER.debug("Retrying, attempt " + reconnect.attempts);
+          reconnect.onConnectionAttemptFailed();
+        } else {
+          LOGGER.debug("Giving up");
+          reconnecting = false;
+          listenOnlyFallback();
+        }
+      }
+    }
+
+    private function listenOnlyFallback():void {
+      dispatcher.dispatchEvent(new WebRTCCallEvent(WebRTCCallEvent.WEBRTC_CALL_ENDED));
+      model.state = Constants.INITED;
+      dispatcher.dispatchEvent(new UseFlashModeCommand(UseFlashModeCommand.USE_FLASH_LISTEN_ONLY));
+    }
+
+    private function sendWebRTCReconnectWarningMessage():void {
+      dispatcher.dispatchEvent(
+          new ClientStatusEvent(
+              ClientStatusEvent.WARNING_MESSAGE_EVENT,
+              ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.dropped"),
+              ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reconnecting"),
+              'bbb.webrtcWarning.connection.dropped,reconnecting'
+          )
+      );
+    }
+
+    private function sendWebRTCReconnectSuccessMessage():void {
+      dispatcher.dispatchEvent(
+          new ClientStatusEvent(
+              ClientStatusEvent.SUCCESS_MESSAGE_EVENT,
+              ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
+              ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
+              'bbb.webrtcWarning.connection.reestablished'
+          )
+      );
     }
     
     private function isWebRTCSupported():Boolean {
@@ -175,19 +218,16 @@ package org.bigbluebutton.modules.phone.managers
       switch (model.state) {
         case Constants.ON_LISTEN_ONLY_STREAM:
           LOGGER.debug(Constants.ON_LISTEN_ONLY_STREAM);
+          if (reconnecting) {
+            sendWebRTCReconnectSuccessMessage();
+            reconnecting = false;
+          }
           break;
         default:
           model.state = Constants.IN_CONFERENCE;
           dispatcher.dispatchEvent(new WebRTCJoinedVoiceConferenceEvent());
           if (reconnecting) {
-            dispatcher.dispatchEvent(
-                new ClientStatusEvent(
-                    ClientStatusEvent.SUCCESS_MESSAGE_EVENT,
-                    ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
-                    ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reestablished"),
-                    'bbb.webrtcWarning.connection.reestablished'
-                )
-            );
+            sendWebRTCReconnectSuccessMessage();
             reconnecting = false;
         }
       }
@@ -282,10 +322,7 @@ package org.bigbluebutton.modules.phone.managers
       logData.errorEvent = {code: event.errorCode, cause: event.cause};
       LOGGER.info(jsonXify(logData));
 
-      sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-              ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-              errorString,
-              'bbb.webrtcWarning webRTCEchoTestFailedEvent');
+      sendWebRTCAlert(errorString, 'bbb.webrtcWarning webRTCEchoTestFailedEvent');
     }
     
     public function handleWebRTCEchoTestEndedUnexpectedly():void {
@@ -299,10 +336,7 @@ package org.bigbluebutton.modules.phone.managers
       logData.message = "WebRtc Echo test ended unexpectedly.";
       LOGGER.info(jsonXify(logData));
 
-      sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-              ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-              errorString,
-              logCode);
+      sendWebRTCAlert(errorString, logCode);
     }
     
     public function handleWebRTCCallFailedEvent(event:WebRTCCallEvent):void {
@@ -312,10 +346,7 @@ package org.bigbluebutton.modules.phone.managers
       if(!reconnecting) {
         LOGGER.debug("WebRTC call failed, attempting reconnection");
         reconnecting = true;
-        dispatcher.dispatchEvent(new ClientStatusEvent(ClientStatusEvent.WARNING_MESSAGE_EVENT,
-          ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.dropped"),
-          ResourceUtil.getInstance().getString("bbb.webrtcWarning.connection.reconnecting"),
-          'bbb.webrtcWarning.connection.dropped,reconnecting'));
+        sendWebRTCReconnectWarningMessage();
         reconnect.onDisconnect(joinVoiceConference, []);
       }
       else {
@@ -343,10 +374,7 @@ package org.bigbluebutton.modules.phone.managers
           logData.errorEvent = {code: event.errorCode, cause: event.cause};
           LOGGER.info(jsonXify(logData));
           
-          sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-                  ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-                  errorString,
-                  'bbb.webrtcWarning.failedError');
+          sendWebRTCAlert(errorString, 'bbb.webrtcWarning.failedError');
         }
       }
     }
@@ -360,10 +388,7 @@ package org.bigbluebutton.modules.phone.managers
       logData.user.reason = errorString;
       LOGGER.info(jsonXify(logData));
 
-      sendWebRTCAlert(ResourceUtil.getInstance().getString("bbb.webrtcWarning.title"),
-              ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [errorString]),
-              errorString,
-              logCode);
+      sendWebRTCAlert(errorString, logCode);
     }
     
     private var popUpDelayTimer:Timer = new Timer(100, 1);
@@ -385,12 +410,14 @@ package org.bigbluebutton.modules.phone.managers
       }
     }
     
-    private function sendWebRTCAlert(title:String, message:String, error:String, logCode:String):void {
+    private function sendWebRTCAlert(error:String, logCode:String):void {
       /**
        * There is a bug in Flex SDK 4.14 where the screen stays blurry if a 
        * pop-up is opened from another pop-up. I delayed the second open to 
        * avoid this case. - Chad
        */
+      var title:String = ResourceUtil.getInstance().getString("bbb.webrtcWarning.title");
+      var message:String = ResourceUtil.getInstance().getString("bbb.webrtcWarning.message", [error]);
       popUpDelayTimer = new Timer(100, 1);
       popUpDelayTimer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {
         Alert.show(message, title, Alert.YES | Alert.NO, null, handleCallFailedUserResponse, null, Alert.YES);
