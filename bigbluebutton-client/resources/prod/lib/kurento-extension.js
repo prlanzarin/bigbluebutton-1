@@ -84,6 +84,22 @@ Kurento = function (
 this.KurentoManager= function () {
   this.kurentoVideo = null;
   this.kurentoScreenshare = null;
+  this.kurentoAudio = null;
+};
+
+KurentoManager.prototype.exit = function () {
+  logger.info("[exit] Exiting all Kurento apps");
+  if (typeof this.kurentoScreenshare !== 'undefined' && this.kurentoScreenshare) {
+    this.exitScreenShare();
+  }
+
+  if (typeof this.kurentoVideo !== 'undefined' && this.kurentoVideo) {
+    this.exitVideo();
+  }
+
+  if (typeof this.kurentoAudio !== 'undefined' && this.kurentoAudio) {
+    this.exitAudio();
+  }
 };
 
 KurentoManager.prototype.exitScreenShare = function () {
@@ -100,10 +116,6 @@ KurentoManager.prototype.exitScreenShare = function () {
 
   if (this.kurentoScreenshare) {
     this.kurentoScreenshare = null;
-  }
-
-  if(typeof this.kurentoVideo !== 'undefined' && this.kurentoVideo) {
-    this.exitVideo();
   }
 };
 
@@ -177,11 +189,11 @@ Kurento.prototype.init = function () {
 
     this.ws.onmessage = this.onWSMessage.bind(this);
     this.ws.onclose = (close) => {
-      kurentoManager.exitScreenShare();
-      //self.onFail();
+      kurentoManager.exit();
+      self.onFail(CONNECTION_ERROR);
     };
     this.ws.onerror = (error) => {
-      kurentoManager.exitScreenShare();
+      kurentoManager.exit();
       self.onFail(CONNECTION_ERROR);
     };
     this.ws.onopen = function () {
