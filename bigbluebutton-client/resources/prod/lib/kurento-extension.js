@@ -511,7 +511,8 @@ Kurento.prototype.onOfferListenOnly = function (error, offerSdp) {
     callerName : self.caller_id_name,
     sdpOffer : offerSdp,
     userId: self.userId,
-    userName: self.userName
+    userName: self.userName,
+    internalMeetingId: self.internalMeetingId
   };
 
   logger.debug("[onOfferListenOnly]", JSON.stringify(message, null, 2));
