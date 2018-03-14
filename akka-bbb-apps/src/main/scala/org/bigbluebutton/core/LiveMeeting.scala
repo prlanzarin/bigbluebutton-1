@@ -134,9 +134,7 @@ class LiveMeeting(val mProps: MeetingProperties,
     outGW.send(new StopMeetingTranscoders(msg.meetingId))
 
     meetingModel.meetingHasEnded
-    // Maybe this is not necessary since we already send it while
-    // handling meeting destroyed message in BigBlueButtonActor
-    outGW.send(new StopMeetingTranscoders(msg.meetingId))
+
     outGW.send(new MeetingEnded(msg.meetingId, mProps.recorded, mProps.voiceBridge))
   }
 
