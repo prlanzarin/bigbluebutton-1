@@ -18,6 +18,8 @@
 */
 package org.bigbluebutton.freeswitch.voice.freeswitch.response;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,10 +37,11 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
     private ConferenceMember tempMember;
     private ConferenceMemberFlags tempFlags;
     private String room;
-    private boolean inFlags = false;
+    private boolean inFlags;
     
     public XMLResponseConferenceListParser() {
         myConfrenceMembers = new ArrayList<ConferenceMember>();
+        inFlags = false;
     }
 
     public String getConferenceRoom() {
@@ -88,8 +91,6 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
     //SAX Event Handlers
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        //reset
-        inFlags = false;
         tempVal = "";
         if(qName.equalsIgnoreCase("member")) {
             //create a new instance of ConferenceMember
@@ -137,11 +138,19 @@ public class XMLResponseConferenceListParser extends DefaultHandler {
         }else if (qName.equalsIgnoreCase("uuid")) {
             tempMember.setUUID(tempVal);
         }else if (qName.equalsIgnoreCase("caller_id_name")) {
-            tempMember.setCallerIdName(tempVal);
+            try {
+                tempMember.setCallerIdName(URLDecoder.decode(tempVal, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                System.out.println(e.toString());
+            }
+        }else if (qName.equalsIgnoreCase("caller_id_number")) {
+            try {
+                tempMember.setCallerId(URLDecoder.decode(tempVal, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                System.out.println(e.toString());
+            }
         }else if (qName.equalsIgnoreCase("network_addr")) {
             tempMember.setCallerNetworkAddress(tempVal);
-        }else if (qName.equalsIgnoreCase("caller_id_number")) {
-            tempMember.setCallerId(tempVal);
         }else if (qName.equalsIgnoreCase("join_time")) {
             try {
                 tempMember.setJoinTime(Integer.parseInt(tempVal));
