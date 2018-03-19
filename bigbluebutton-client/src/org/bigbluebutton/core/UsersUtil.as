@@ -245,5 +245,9 @@ package org.bigbluebutton.core
         return sessionUtil.getSessionToken();
     }
     
+    public static function isMyCamLocked():Boolean {
+      var me:BBBUser = getUser(getMyUserID());
+      return me.disableMyCam;
+    }
   }
 }

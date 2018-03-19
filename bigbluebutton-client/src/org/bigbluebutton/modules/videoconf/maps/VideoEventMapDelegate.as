@@ -165,6 +165,7 @@ package org.bigbluebutton.modules.videoconf.maps
     }
 
     private function autoStart():void {
+      if (UsersUtil.isMyCamLocked()) return;
       if (options.skipCamSettingsCheck) {
         skipCameraSettingsCheck();
       } else {
