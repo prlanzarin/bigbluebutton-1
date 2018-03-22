@@ -229,15 +229,17 @@ function startLoadingBar() {
   console.log("==Hide playback content");
   $("#playback-content").css('visibility', 'hidden');
   Pace.once('done', function() {
-    $("#loading-error").css('height','0');
-    console.log("==Show playback content");
-    $("#playback-content").css('visibility', 'visible');
+    document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'page'}));
   });
   Pace.start();
 }
 
 function runPopcorn() {
   console.log("** Running popcorn");
+
+  $("#loading-error").css('height','0');
+  console.log("==Show playback content");
+  $("#playback-content").css('visibility', 'visible');
 
   getMetadata();
 
@@ -678,6 +680,7 @@ var svgReady = false;
 var videoReady = false;
 var audioReady = false;
 var deskshareReady = false;
+var pageReady = false;
 
 var svgobj = document.createElement('object');
 svgobj.setAttribute('data', shapes_svg);
@@ -699,11 +702,14 @@ document.addEventListener('media-ready', function(event) {
     case 'svg':
       svgReady = true;
       break;
+    case 'page':
+      pageReady = true;
+      break;
     default:
       console.log('unhandled media-ready event: ' + event.detail);
   }
 
-  if ((audioReady || videoReady) && deskshareReady && svgReady) {
+  if ((audioReady || videoReady) && deskshareReady && svgReady && pageReady) {
     runPopcorn();
 
     if (firstLoad) initPopcorn();
