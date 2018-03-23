@@ -461,7 +461,7 @@ function setSync() {
        });
 
 
-       allMedias[i].on("canplaythrough", function() {
+       allMedias[i].on("canplay", function() {
           if(syncing || masterVideoSeeked) {
               var allMediasAreReady = true;
               for(i = 0; i < allMedias.length ; i++)
@@ -484,7 +484,7 @@ function sync() {
      if(secondaryMedias[i].media.readyState > 1) {
         secondaryMedias[i].pause();
 
-        //set the current time will fire a "canplaythrough" event to tell us that the video can be played...
+        //set the current time will fire a "canplay" event to tell us that the video can be played...
         secondaryMedias[i].currentTime(primaryMedia.currentTime());
      }
   }
