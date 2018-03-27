@@ -46,21 +46,27 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
 			private static const LOGGER:ILogger = getClassLogger(WebRTCAudioStatus);
 
 			private var webRTCAudioStatusHistory:ArrayCollection = new ArrayCollection([0, 0]);
+			private var _phoneOptions:PhoneOptions = null;
 
-			private function onCreationComplete():void {
+			private function onCreationComplete():void {}
+
+			private function get phoneOptions():PhoneOptions {
+				if (this._phoneOptions == null) {
+					this._phoneOptions = new PhoneOptions();
+				}
+				return this._phoneOptions;
 			}
 
 			private function handleWebRTCCallStartedEvent(event:WebRTCCallEvent):void {
-				var phoneOptions:PhoneOptions = new PhoneOptions();
 				if (phoneOptions.showWebRTCStats) {
 					this.visible = this.includeInLayout = true;
 				}
 			}
 
 			private function handleWebRTCCallEndedEvent(event:WebRTCCallEvent):void {
-				var phoneOptions:PhoneOptions = new PhoneOptions();
 				if (phoneOptions.showWebRTCStats) {
 					this.visible = this.includeInLayout = false;
+					audioStatus.source = null;
 				}
 			}
 
