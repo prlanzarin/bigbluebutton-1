@@ -348,7 +348,7 @@ load_video = function(){
 
    document.getElementById("video-area").appendChild(video);
 
-   Popcorn("#video").on("canplayall", function() {
+   Popcorn("#video").on("canplay", function() {
       console.log("==Video loaded");
       document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'video'}));
    });
@@ -387,7 +387,7 @@ load_audio = function() {
    document.getElementById("audio-area").appendChild(audio);
 
    //remember: audio id is 'video'
-   Popcorn("#video").on("canplayall", function() {
+   Popcorn("#video").on("canplay", function() {
       console.log("==Audio loaded");
       document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'audio'}));
    });
@@ -408,7 +408,7 @@ load_deskshare_video = function () {
 
    setSync();
 
-   Popcorn("#deskshare-video").on("canplayall", function() {
+   Popcorn("#deskshare-video").on("canplay", function() {
       console.log("==Deskshare video loaded");
       document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'deskshare'}));
    });
@@ -461,7 +461,7 @@ function setSync() {
        });
 
 
-       allMedias[i].on("canplaythrough", function() {
+       allMedias[i].on("canplay", function() {
           if(syncing || masterVideoSeeked) {
               var allMediasAreReady = true;
               for(i = 0; i < allMedias.length ; i++)
@@ -484,7 +484,7 @@ function sync() {
      if(secondaryMedias[i].media.readyState > 1) {
         secondaryMedias[i].pause();
 
-        //set the current time will fire a "canplaythrough" event to tell us that the video can be played...
+        //set the current time will fire a "canplay" event to tell us that the video can be played...
         secondaryMedias[i].currentTime(primaryMedia.currentTime());
      }
   }

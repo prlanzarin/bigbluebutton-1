@@ -228,10 +228,8 @@ function handlePresentationAreaContent(time) {
 function startLoadingBar() {
   console.log("==Hide playback content");
   $("#playback-content").css('visibility', 'hidden');
-  Pace.once('done', function() {
-    $("#loading-error").css('height','0');
-    console.log("==Show playback content");
-    $("#playback-content").css('visibility', 'visible');
+  Pace.on('done', function() {
+    document.dispatchEvent(new CustomEvent('media-ready', {'detail': 'page'}));
   });
   Pace.start();
 }
@@ -679,6 +677,10 @@ var videoReady = false;
 var audioReady = false;
 var deskshareReady = false;
 
+var isPlaybackReady = function() {
+ return (audioReady || videoReady) && deskshareReady && svgReady;
+}
+
 var svgobj = document.createElement('object');
 svgobj.setAttribute('data', shapes_svg);
 svgobj.setAttribute('height', '100%');
@@ -699,11 +701,21 @@ document.addEventListener('media-ready', function(event) {
     case 'svg':
       svgReady = true;
       break;
+    case 'page':
+      if (isPlaybackReady()) {
+        $("#loading-error").css('height','0');
+        console.log("==Show playback content");
+        $("#playback-content").css('visibility', 'visible');
+      } else {
+        console.warn("==Missing some objects");
+        Pace.restart();
+      }
+      break;
     default:
       console.log('unhandled media-ready event: ' + event.detail);
   }
 
-  if ((audioReady || videoReady) && deskshareReady && svgReady) {
+  if (isPlaybackReady()) {
     runPopcorn();
 
     if (firstLoad) initPopcorn();
