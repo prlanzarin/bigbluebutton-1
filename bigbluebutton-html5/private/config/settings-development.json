@@ -81,7 +81,8 @@
       "enableScreensharing": false,
       "enableVideo": false,
       "enableVideoStats": false,
-      "enableListenOnly": false
+      "enableListenOnly": false,
+      "mirrorLocalCamera": false
     },
 
     "acl": {
@@ -343,9 +344,9 @@
       }
     },
     "clientLog": [
-      { 
-        "target": "server", 
-        "level": "info" 
+      {
+        "target": "server",
+        "level": "info"
       }
     ]
   },

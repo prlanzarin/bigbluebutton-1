@@ -19,6 +19,8 @@ const intlMessages = defineMessages({
   },
 });
 
+const MIRROR_CAMERA = Meteor.settings.public.kurento.mirrorLocalCamera;
+
 class VideoListItem extends Component {
   constructor(props) {
     super(props);
@@ -96,9 +98,10 @@ class VideoListItem extends Component {
 
   render() {
     const { showStats, stats } = this.state;
-    const { user } = this.props;
+    const { user, mirrorLocalCamera } = this.props;
 
     const availableActions = this.getAvailableActions();
+    const scale = MIRROR_CAMERA && user.isCurrent ? "scale(-1, 1)" : "scale(1, 1)";
 
     return (
       <div className={cx({
@@ -113,6 +116,7 @@ class VideoListItem extends Component {
           muted={user.isCurrent}
           autoPlay
           playsInline
+          style = {{ transform : scale }}
         />
         <div className={styles.info}>
           <Dropdown className={styles.dropdown}>
