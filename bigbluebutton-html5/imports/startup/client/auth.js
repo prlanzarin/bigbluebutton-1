@@ -17,7 +17,7 @@ export function joinRouteHandler(nextState, replace, callback) {
     replace({ pathname: '/error/404' });
     callback();
   }
-  
+
   // Old credentials stored in memory were being used when joining a new meeting
   Auth.clearCredentials();
 
@@ -66,7 +66,7 @@ export function joinRouteHandler(nextState, replace, callback) {
           const key = Object.keys(data).shift();
 
           const handledHTML5Parameters = [
-            'html5recordingbot'
+            'html5basepath',
           ];
           if (handledHTML5Parameters.indexOf(key) === -1) {
             return acc;
@@ -90,7 +90,7 @@ export function joinRouteHandler(nextState, replace, callback) {
         sessionToken, fullname, externUserID, confname,
       );
 
-      const path = deviceInfo.type().isPhone ? '/' : '/users';
+      const path = deviceInfo.type().isPhone ? '/' : _validateBasePath(customData.html5basepath);
       const userInfo = window.navigator;
 
       // Browser information is sent once on startup
@@ -155,6 +155,18 @@ function _addReconnectObservable() {
       lastStatus = Meteor.status().status;
     }
   });
+}
+
+function _validateBasePath(path) {
+  switch(path) {
+    case '/':
+    case '/users':
+    case '/chat/public':
+      return path;
+    default:
+      return '/users';
+  }
+
 }
 
 export function authenticatedRouteHandler(nextState, replace, callback) {
