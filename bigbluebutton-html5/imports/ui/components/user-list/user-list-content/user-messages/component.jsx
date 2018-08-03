@@ -5,6 +5,7 @@ import { defineMessages } from 'react-intl';
 import cx from 'classnames';
 import { styles } from '/imports/ui/components/user-list/user-list-content/styles';
 import ChatListItem from './../../chat-list-item/component';
+import SessionStorage from '/imports/ui/services/storage/session';
 
 const propTypes = {
   openChats: PropTypes.arrayOf(String).isRequired,
@@ -128,13 +129,17 @@ class UserMessages extends Component {
       compact,
     } = this.props;
 
+    const disableChat = SessionStorage.getItem('metadata').html5disablechat || false;
+
     return (
       <div className={styles.messages}>
         {
-          !compact ?
-            <h2 className={styles.smallTitle}>
-              {intl.formatMessage(intlMessages.messagesTitle)}
-            </h2> : <hr className={styles.separator} />
+          !disableChat ?
+            !compact ?
+              <h2 className={styles.smallTitle}>
+                {intl.formatMessage(intlMessages.messagesTitle)}
+              </h2> : <hr className={styles.separator} />
+          : null
         }
         <div
           role="tabpanel"

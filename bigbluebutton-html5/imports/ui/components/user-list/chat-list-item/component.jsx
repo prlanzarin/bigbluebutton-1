@@ -7,6 +7,7 @@ import { styles } from './styles';
 import ChatAvatar from './chat-avatar/component';
 import ChatIcon from './chat-icon/component';
 import ChatUnreadCounter from './chat-unread-messages/component';
+import SessionStorage from '/imports/ui/services/storage/session';
 
 const intlMessages = defineMessages({
   titlePublic: {
@@ -65,41 +66,44 @@ const ChatListItem = (props) => {
   const isCurrentChat = chat.id === openChat;
   const linkClasses = {};
   linkClasses[styles.active] = isCurrentChat;
+  const disableChat = SessionStorage.getItem('metadata').html5disablechat || false;
 
   return (
-    <Link
-      data-test="publicChatLink"
-      to={linkPath}
-      className={cx(styles.chatListItem, linkClasses)}
-      role="button"
-      aria-expanded={isCurrentChat}
-      tabIndex={tabIndex}
-      accessKey={isPublicChat(chat) ? TOGGLE_CHAT_PUB_AK : null}
-    >
-      <div className={styles.chatListItemLink}>
-        <div className={styles.chatIcon}>
-          {chat.icon ?
-            <ChatIcon icon={chat.icon} />
-            :
-            <ChatAvatar
-              isModerator={chat.isModerator}
-              color={chat.color}
-              name={chat.name.toLowerCase().slice(0, 2)}
-            />}
+    !disableChat?
+      <Link
+        data-test="publicChatLink"
+        to={linkPath}
+        className={cx(styles.chatListItem, linkClasses)}
+        role="button"
+        aria-expanded={isCurrentChat}
+        tabIndex={tabIndex}
+        accessKey={isPublicChat(chat) ? TOGGLE_CHAT_PUB_AK : null}
+      >
+        <div className={styles.chatListItemLink}>
+          <div className={styles.chatIcon}>
+            {chat.icon ?
+              <ChatIcon icon={chat.icon} />
+              :
+              <ChatAvatar
+                isModerator={chat.isModerator}
+                color={chat.color}
+                name={chat.name.toLowerCase().slice(0, 2)}
+              />}
+          </div>
+          <div className={styles.chatName}>
+            {!compact ?
+              <span className={styles.chatNameMain}>
+                {isPublicChat(chat) ? intl.formatMessage(intlMessages.titlePublic) : chat.name}
+              </span> : null}
+          </div>
+          {(chat.unreadCounter > 0) ?
+            <ChatUnreadCounter
+              counter={chat.unreadCounter}
+            />
+            : null}
         </div>
-        <div className={styles.chatName}>
-          {!compact ?
-            <span className={styles.chatNameMain}>
-              {isPublicChat(chat) ? intl.formatMessage(intlMessages.titlePublic) : chat.name}
-            </span> : null}
-        </div>
-        {(chat.unreadCounter > 0) ?
-          <ChatUnreadCounter
-            counter={chat.unreadCounter}
-          />
-          : null}
-      </div>
-    </Link>
+      </Link>
+    : null
   );
 };
 
