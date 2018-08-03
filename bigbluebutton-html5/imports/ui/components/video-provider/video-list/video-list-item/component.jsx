@@ -98,7 +98,7 @@ class VideoListItem extends Component {
 
   render() {
     const { showStats, stats } = this.state;
-    const { user, mirrorLocalCamera } = this.props;
+    const { user } = this.props;
 
     const availableActions = this.getAvailableActions();
     const scale = MIRROR_CAMERA && user.isCurrent ? "scale(-1, 1)" : "scale(1, 1)";
