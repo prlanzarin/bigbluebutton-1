@@ -10,6 +10,7 @@ const JoinVideoOptionsContainer = (props) => {
   const {
     hasVideoStream,
     isDisabled,
+    isSoftcapLocked,
     intl,
     mountModal,
     ...restProps
@@ -19,7 +20,7 @@ const JoinVideoOptionsContainer = (props) => {
 
   return (
     <JoinVideoButton {...{
-      mountVideoPreview, hasVideoStream, isDisabled, ...restProps,
+      mountVideoPreview, hasVideoStream, isDisabled, isSoftcapLocked, ...restProps,
     }}
     />
   );
@@ -28,4 +29,6 @@ const JoinVideoOptionsContainer = (props) => {
 export default withModalMounter(injectIntl(withTracker(() => ({
   hasVideoStream: VideoService.hasVideoStream(),
   isDisabled: VideoService.isDisabled() || !Meteor.status().connected,
+  isSoftcapLocked: VideoService.isSoftcapLocked(),
 }))(JoinVideoOptionsContainer)));
+

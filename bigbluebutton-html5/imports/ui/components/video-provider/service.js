@@ -16,12 +16,15 @@ import logger from '/imports/startup/client/logger';
 const CAMERA_PROFILES = Meteor.settings.public.kurento.cameraProfiles;
 const MULTIPLE_CAMERAS = Meteor.settings.public.app.enableMultipleCameras;
 const SKIP_VIDEO_PREVIEW = Meteor.settings.public.kurento.skipVideoPreview;
-
 const SFU_URL = Meteor.settings.public.kurento.wsUrl;
 const ROLE_MODERATOR = Meteor.settings.public.user.role_moderator;
 const ROLE_VIEWER = Meteor.settings.public.user.role_viewer;
 const ENABLE_NETWORK_MONITORING = Meteor.settings.public.networkMonitoring.enableNetworkMonitoring;
 const MIRROR_WEBCAM = Meteor.settings.public.app.mirrorOwnWebcam;
+const {
+  cameras: CAMERA_SOFT_CAP,
+  moderatorsIgnoreCap: MODERATORS_IGNORE_CAP,
+} = Meteor.settings.public.kurento.meetingCamerasSoftCap;
 
 const TOKEN = '_';
 
@@ -365,7 +368,10 @@ class VideoService {
   isDisabled() {
     const { viewParticipantsWebcams } = Settings.dataSaving;
 
-    return this.isUserLocked() || this.isConnecting || !viewParticipantsWebcams;
+    return this.isUserLocked()
+      || this.isConnecting
+      || !viewParticipantsWebcams
+      || this.isSoftcapLocked();
   }
 
   getRole(isLocal) {
@@ -405,6 +411,25 @@ class VideoService {
   monitor(conn) {
     if (ENABLE_NETWORK_MONITORING) monitorVideoConnection(conn);
   }
+
+  amIModerator() {
+    return Users.findOne({ userId: Auth.userID },
+      { fields: { role: 1 } }).role === ROLE_MODERATOR;
+  }
+
+  getNumberOfPublishers() {
+    return VideoStreams.find({ meetingId: Auth.meetingID }).count();
+  }
+
+  isSoftcapLocked() {
+    // Soft cap trigger: 0 means unlimited. Won't apply to people that are
+    // already sharing. There's an option in settings to make mods ignore
+    // the cap. Only then run the number of pubs. query and compare to cap.
+    return CAMERA_SOFT_CAP > 0
+      && !this.isConnected
+      && !(this.amIModerator() && MODERATORS_IGNORE_CAP)
+      && this.getNumberOfPublishers() >= CAMERA_SOFT_CAP;
+  }
 }
 
 const videoService = new VideoService();
@@ -436,4 +461,5 @@ export default {
   onBeforeUnload: () => videoService.onBeforeUnload(),
   notify: message => notify(message, 'error', 'video'),
   updateNumberOfDevices: devices => videoService.updateNumberOfDevices(devices),
+  isSoftcapLocked: () => videoService.isSoftcapLocked(),
 };

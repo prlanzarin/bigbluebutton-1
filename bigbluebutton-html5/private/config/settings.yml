@@ -139,6 +139,11 @@ public:
     enableListenOnly: true
     autoShareWebcam: false
     skipVideoPreview: false
+    # Camera sharing soft cap, applied per meeting
+    meetingCamerasSoftCap:
+      # 0 means unlimited
+      cameras: 0
+      moderatorsIgnoreCap: false
   pingPong:
     clearUsersInSeconds: 180
     pongTimeInSeconds: 15
