@@ -7,6 +7,8 @@ import { defineMessages, injectIntl, intlShape } from 'react-intl';
 import { styles } from './styles';
 import { validIOSVersion } from '/imports/ui/components/app/service';
 
+const CAMERA_SOFT_CAP = Meteor.settings.public.kurento.meetingCamerasSoftCap.cameras;
+
 const intlMessages = defineMessages({
   joinVideo: {
     id: 'app.video.joinVideo',
@@ -28,12 +30,17 @@ const intlMessages = defineMessages({
     id: 'app.iOSWarning.label',
     description: 'message indicating to upgrade ios version',
   },
+  cameraSoftcapReached: {
+    id: 'app.video.cameraSoftcapReached',
+    description: 'video soft cap reached label',
+  },
 });
 
 const propTypes = {
   intl: intlShape.isRequired,
   hasVideoStream: PropTypes.bool.isRequired,
   isDisabled: PropTypes.bool.isRequired,
+  isSoftcapLocked: PropTypes.bool.isRequired,
   mountVideoPreview: PropTypes.func.isRequired,
 };
 
@@ -41,8 +48,10 @@ const JoinVideoButton = ({
   intl,
   hasVideoStream,
   isDisabled,
+  isSoftcapLocked,
   mountVideoPreview,
 }) => {
+  // FIXME maybe straighten some of this stuff and move them to a service.
   const exitVideo = () => hasVideoStream && !VideoService.isMultipleCamerasEnabled();
 
   const handleOnClick = () => {
@@ -57,14 +66,33 @@ const JoinVideoButton = ({
     }
   };
 
-  const label = exitVideo() ?
-    intl.formatMessage(intlMessages.leaveVideo) :
-    intl.formatMessage(intlMessages.joinVideo);
+  const getButtonLabel = () => {
+    if (exitVideo()) {
+      return intl.formatMessage(intlMessages.leaveVideo);
+    }
+
+    // If the button is disabled it's either due to lock settings or the
+    // camera soft cap. Fetch the appropriate label.
+    if (isDisabled) {
+      if (isSoftcapLocked) {
+        const softCapLabel = intl.formatMessage(intlMessages.cameraSoftcapReached,
+          { 0: CAMERA_SOFT_CAP });
+        VideoService.notify(softCapLabel);
+
+        return `${intl.formatMessage(intlMessages.videoLocked)}. ${softCapLabel}`;
+      }
+      return intl.formatMessage(intlMessages.videoLocked);
+    }
+
+    return intl.formatMessage(intlMessages.joinVideo);
+  };
+
+  const buttonLabel = getButtonLabel();
 
   return (
     <Button
       data-test="joinVideo"
-      label={isDisabled ? intl.formatMessage(intlMessages.videoLocked) : label}
+      label={buttonLabel}
       className={cx(styles.button, hasVideoStream || styles.btn)}
       onClick={handleOnClick}
       hideLabel
