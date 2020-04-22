@@ -77,7 +77,6 @@ const JoinVideoButton = ({
       if (isSoftcapLocked) {
         const softCapLabel = intl.formatMessage(intlMessages.cameraSoftcapReached,
           { 0: CAMERA_SOFT_CAP });
-        VideoService.notify(softCapLabel);
 
         return `${intl.formatMessage(intlMessages.videoLocked)}. ${softCapLabel}`;
       }
