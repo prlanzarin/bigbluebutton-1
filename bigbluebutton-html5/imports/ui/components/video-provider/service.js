@@ -23,6 +23,7 @@ const {
   cameras: CAMERA_SOFT_CAP,
   moderatorsIgnoreCap: MODERATORS_IGNORE_CAP,
 } = Meteor.settings.public.kurento.meetingCamerasSoftCap;
+const CAMERA_QUALITY_THRESHOLDS = Meteor.settings.public.kurento.cameraQualityThresholds.thresholds || [];
 
 const TOKEN = '_';
 
@@ -376,6 +377,104 @@ class VideoService {
       && !(this.amIModerator() && MODERATORS_IGNORE_CAP)
       && this.getNumberOfPublishers() >= CAMERA_SOFT_CAP;
   }
+
+  isProfileBetter (newProfileId, originalProfileId) {
+    return CAMERA_PROFILES.findIndex(({ id }) => id === newProfileId)
+      > CAMERA_PROFILES.findIndex(({ id }) => id === originalProfileId);
+  }
+
+  applyBitrate (peer, bitrate) {
+    const peerConnection = peer.peerConnection;
+    if ('RTCRtpSender' in window
+      && 'setParameters' in window.RTCRtpSender.prototype
+      && 'getParameters' in window.RTCRtpSender.prototype) {
+      peerConnection.getSenders().forEach(sender => {
+        const { track } = sender;
+        if (track && track.kind === 'video') {
+          const parameters = sender.getParameters();
+          if (!parameters.encodings) {
+            parameters.encodings = [{}];
+          }
+
+          parameters.encodings[0].maxBitrate = bitrate * 1000;
+          sender.setParameters(parameters)
+            .then(() => {
+              logger.info({
+                logCode: 'video_provider_bitratechange',
+                extraInfo: { bitrate },
+              }, `Bitrate changed: ${bitrate}`);
+            })
+            .catch(error => {
+              logger.warn({
+                logCode: 'video_provider_bitratechange_failed',
+                extraInfo: { bitrate, errorMessage: error.message, errorCode: error.code },
+              }, `Bitrate change failed.`);
+            });
+        }
+      })
+    }
+  }
+
+  applyCameraProfile (peer, profileId) {
+    const profile = CAMERA_PROFILES.find(targetProfile => targetProfile.id === profileId);
+
+    if (!profile) {
+      logger.warn({
+        logCode: 'video_provider_noprofile',
+        extraInfo: { profileId },
+      }, `Apply failed: no camera profile found.`);
+      return;
+    }
+
+    // Profile is currently applied or it's better than the original user's profile,
+    // skip
+    if (peer.currentProfileId === profileId
+      || this.isProfileBetter(profileId, peer.originalProfileId)) {
+      return;
+    }
+
+    const { bitrate, constraints } = profile;
+
+    if (bitrate) {
+      this.applyBitrate(peer, bitrate);
+    }
+
+    if (constraints && typeof constraints.video === 'object') {
+      peer.peerConnection.getSenders().forEach(sender => {
+        const { track } = sender;
+        if (track && track.kind === 'video' && typeof track.applyConstraints  === 'function') {
+          track.applyConstraints(constraints.video)
+            .then(() => {
+              logger.info({
+                logCode: 'video_provider_profile_applied',
+                extraInfo: { profileId },
+              }, `New camera profile applied: ${profileId}`);
+              peer.currentProfileId = profileId;
+            })
+            .catch(error => {
+              logger.warn({
+                logCode: 'video_provider_profile_apply_failed',
+                extraInfo: { errorName: error.name, errorCode: error.code },
+              }, 'Error applying camera profile');
+            });
+        }
+      });
+    }
+  }
+
+  getThreshold (numberOfPublishers) {
+    let targetThreshold = { threshold: 0, profile: 'original' };
+    let finalThreshold = { threshold: 0, profile: 'original' };
+
+    for(let mapIndex = 0; mapIndex < CAMERA_QUALITY_THRESHOLDS.length; mapIndex++) {
+      targetThreshold = CAMERA_QUALITY_THRESHOLDS[mapIndex];
+      if (targetThreshold.threshold <= numberOfPublishers) {
+        finalThreshold = targetThreshold;
+      }
+    }
+
+    return finalThreshold;
+  }
 }
 
 const videoService = new VideoService();
@@ -406,4 +505,6 @@ export default {
   onBeforeUnload: () => videoService.onBeforeUnload(),
   notify: message => notify(message, 'error', 'video'),
   isSoftcapLocked: () => videoService.isSoftcapLocked(),
+  applyCameraProfile: (peer, newProfile) => videoService.applyCameraProfile(peer, newProfile),
+  getThreshold: (numberOfPublishers) => videoService.getThreshold(numberOfPublishers),
 };

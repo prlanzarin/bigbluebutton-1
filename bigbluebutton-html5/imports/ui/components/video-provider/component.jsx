@@ -11,6 +11,8 @@ import {
 import { tryGenerateIceCandidates } from '/imports/utils/safari-webrtc';
 import logger from '/imports/startup/client/logger';
 
+const CAMERA_QUALITY_THRESHOLDS_ENABLED = Meteor.settings.public.kurento.cameraQualityThresholds.enabled;
+
 const CAMERA_SHARE_FAILED_WAIT_TIME = 15000;
 const MAX_CAMERA_SHARE_FAILED_WAIT_TIME = 60000;
 const PING_INTERVAL = 15000;
@@ -209,6 +211,19 @@ class VideoProvider extends Component {
     VideoService.onBeforeUnload();
   }
 
+  updateThreshold (numberOfPublishers) {
+    const { threshold, profile } = VideoService.getThreshold(numberOfPublishers);
+    if (profile) {
+      const publishers = Object.values(this.webRtcPeers)
+        .filter(peer => peer.isPublisher)
+        .forEach(peer => {
+          // 0 means no threshold in place. Reapply original one if needed
+          let profileToApply = (threshold === 0) ? peer.originalProfileId : profile;
+          VideoService.applyCameraProfile(peer, profileToApply)
+        });
+    }
+  }
+
   updateStreams(streams) {
     const streamsCameraIds = streams.map(s => s.cameraId);
     const streamsConnected = Object.keys(this.webRtcPeers);
@@ -223,6 +238,10 @@ class VideoProvider extends Component {
     });
 
     streamsToDisconnect.forEach(cameraId => this.stopWebRTCPeer(cameraId));
+
+    if (CAMERA_QUALITY_THRESHOLDS_ENABLED) {
+      this.updateThreshold(streamsCameraIds.length);
+    }
   }
 
   ping() {
@@ -461,6 +480,10 @@ class VideoProvider extends Component {
         peer.started = false;
         peer.attached = false;
         peer.didSDPAnswered = false;
+        peer.isPublisher = isLocal;
+        peer.originalProfileId = profileId;
+        peer.currentProfileId = profileId;
+
         if (peer.inboundIceQueue == null) {
           peer.inboundIceQueue = [];
         }
