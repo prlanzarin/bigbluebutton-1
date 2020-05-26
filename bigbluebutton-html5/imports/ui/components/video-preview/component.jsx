@@ -378,7 +378,7 @@ class VideoPreview extends Component {
 
   displayInitialPreview(deviceId) {
     const { changeWebcam } = this.props;
-    const availableProfiles = CAMERA_PROFILES;
+    const availableProfiles = CAMERA_PROFILES.filter(p => !p.hidden);
 
     this.setState({
       webcamDeviceId: deviceId,
