@@ -60,6 +60,7 @@ const intlMessages = defineMessages({
 });
 
 const ALLOW_FULLSCREEN = Meteor.settings.public.app.allowFullscreen;
+const MOBILE_HOVER_TIMEOUT = 5000;
 
 class ScreenshareComponent extends React.Component {
   static renderScreenshareContainerInside(mainText) {
@@ -77,6 +78,8 @@ class ScreenshareComponent extends React.Component {
       autoplayBlocked: false,
       isStreamHealthy: false,
       switched: false,
+      // Volume control hover toolbar
+      showHoverToolBar: false,
     };
 
     this.onLoadedData = this.onLoadedData.bind(this);
@@ -90,6 +93,7 @@ class ScreenshareComponent extends React.Component {
 
     this.isMobile = isMobile() || isTablet();
     this.volume = getVolume();
+    this.mobileHoverSetTimeout = null;
   }
 
   componentDidMount() {
@@ -271,12 +275,36 @@ class ScreenshareComponent extends React.Component {
     );
   }
 
+  renderMobileVolumeControlOverlay () {
+    return (
+      <span
+        className={styles.mobileControlsOverlay}
+        key="mobile-overlay-screenshare"
+        ref={(ref) => { this.overlay = ref; }}
+        onTouchStart={() => {
+          clearTimeout(this.mobileHoverSetTimeout);
+          this.setState({ showHoverToolBar: true });
+        }}
+        onTouchEnd={() => {
+          this.mobileHoverSetTimeout = setTimeout(
+            () => this.setState({ showHoverToolBar: false }),
+            MOBILE_HOVER_TIMEOUT,
+          );
+        }}
+      />
+    );
+  }
+
   renderVolumeSlider() {
-    const mobileHoverToolBarStyle = styles.showMobileHoverToolbar;
+    const { showHoverToolBar } = this.state;
+    const mobileHoverToolBarStyle = showHoverToolBar
+      ? styles.showMobileHoverToolbar
+      : styles.dontShowMobileHoverToolbar;
     const desktopHoverToolBarStyle = styles.hoverToolbar;
     const hoverToolbarStyle = this.isMobile ? mobileHoverToolBarStyle : desktopHoverToolBarStyle;
-    return (
-      <div className={hoverToolbarStyle}>
+
+    return [(
+      <div className={hoverToolbarStyle} key='hover-toolbar-screenshare'>
         <VolumeSlider
           volume={getVolume()}
           muted={getVolume() === 0}
@@ -284,7 +312,9 @@ class ScreenshareComponent extends React.Component {
           onMuted={this.handleOnMuted}
         />
       </div>
-    );
+      ),
+      (this.isMobile) && this.renderMobileVolumeControlOverlay(),
+    ];
   }
 
   renderVideo(switched) {
