@@ -14,7 +14,7 @@ class ScreenshareBroker extends BaseBroker {
     role,
     options = {},
   ) {
-    super(SFU_COMPONENT_NAME, wsUrl);
+    super(SFU_COMPONENT_NAME, { wsUrl });
     this.voiceBridge = voiceBridge;
     this.userId = userId;
     this.internalMeetingId = internalMeetingId;
@@ -186,7 +186,7 @@ class ScreenshareBroker extends BaseBroker {
           this.sendStartReq();
         }
 
-        const localStream = this.webRtcPeer.peerConnection.getLocalStreams()[0];
+        const localStream = this.getLocalStreams()[0];
 
         localStream.getVideoTracks()[0].onended = () => {
           this.webRtcPeer.peerConnection.onconnectionstatechange = null;

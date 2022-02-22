@@ -14,7 +14,7 @@ class ListenOnlyBroker extends BaseBroker {
     role,
     options = {},
   ) {
-    super(SFU_COMPONENT_NAME, wsUrl);
+    super(SFU_COMPONENT_NAME, { wsUrl });
     this.voiceBridge = voiceBridge;
     this.userId = userId;
     this.internalMeetingId = internalMeetingId;

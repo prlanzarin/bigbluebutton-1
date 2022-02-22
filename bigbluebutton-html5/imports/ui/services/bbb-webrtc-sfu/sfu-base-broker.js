@@ -16,16 +16,22 @@ class BaseBroker {
     return error;
   }
 
-  constructor(sfuComponent, wsUrl) {
+  constructor(sfuComponent, {
+    // Specify a WebSocket URL if there's not pre-created WS
+    wsUrl,
+    // Specify the ws optional parameter if there's a pre-created WS
+    ws,
+  }) {
     this.wsUrl = wsUrl;
+    this.ws = ws;
     this.sfuComponent = sfuComponent;
-    this.ws = null;
     this.webRtcPeer = null;
     this.pingInterval = null;
     this.started = false;
-    this.signallingTransportOpen = false;
+    this.signallingTransportEstablished = false;
     this.logCodePrefix = `${this.sfuComponent}_broker`;
     this.peerConfiguration = {};
+    this._requestQueue = [];
 
     this.onbeforeunload = this.onbeforeunload.bind(this);
     window.addEventListener('beforeunload', this.onbeforeunload);
@@ -37,6 +43,11 @@ class BaseBroker {
 
   get started () {
     return this._started;
+  }
+
+  getLocalStreams() {
+    if (this.webRtcPeer == null) return [];
+    return this.webRtcPeer.peerConnection.getLocalStreams();
   }
 
   onbeforeunload () {
@@ -63,17 +74,19 @@ class BaseBroker {
     // To be implemented by inheritors
   }
 
+  isWsOpen() {
+    return this.ws && (this.ws.readyState === WebSocket.OPEN);
+  }
+
   openWSConnection () {
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(this.wsUrl);
+      if (this.ws == null) this.ws = new WebSocket(this.wsUrl);
 
       this.ws.onmessage = this.onWSMessage.bind(this);
-
       this.ws.onclose = () => {
         // 1301: "WEBSOCKET_DISCONNECTED",
         this.onerror(BaseBroker.assembleError(1301));
       };
-
       this.ws.onerror = (error) => {
         logger.error({
           logCode: `${this.logCodePrefix}_websocket_error`,
@@ -83,7 +96,7 @@ class BaseBroker {
           }
         }, 'WebSocket connection to SFU failed');
 
-        if (this.signallingTransportOpen) {
+        if (this.signallingTransportEstablished) {
           // 1301: "WEBSOCKET_DISCONNECTED", transport was already open
           this.onerror(BaseBroker.assembleError(1301));
         } else {
@@ -95,16 +108,36 @@ class BaseBroker {
       };
 
       this.ws.onopen = () => {
+        // Resend queued messages that happened when socket was not connected
         this.pingInterval = setInterval(this.ping.bind(this), PING_INTERVAL_MS);
-        this.signallingTransportOpen = true;
+        this.signallingTransportEstablished = true;
+
+        while (this._requestQueue.length > 0) {
+          this.sendMessage(this.wsQueue.pop());
+        }
+
         return resolve();
       };
     });
   }
 
-  sendMessage (message) {
-    const jsonMessage = JSON.stringify(message);
-    this.ws.send(jsonMessage);
+  sendMessage(message) {
+    if (this.isWsOpen()) {
+      const jsonMessage = JSON.stringify(message);
+      this.ws.send(jsonMessage, (error) => {
+        if (error) {
+          logger.error({
+            logCode: `${this.logCodePrefix}_ws_send_error`,
+            extraInfo: {
+              errorMessage: error.message || error.name || 'Unknown error',
+              sfuComponent: this.sfuComponent,
+            },
+          }, 'Failed to send SFU request via WS');
+        }
+      });
+    } else {
+      this._requestQueue.push(message);
+    }
   }
 
   ping () {
@@ -274,6 +307,7 @@ class BaseBroker {
 
     this.disposePeer();
     this.started = false;
+    this._requestQueue = [];
 
     logger.debug({
       logCode: `${this.logCodePrefix}_stop`,
