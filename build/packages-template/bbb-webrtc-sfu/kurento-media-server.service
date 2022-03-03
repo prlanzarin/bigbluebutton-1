@@ -1,17 +1,18 @@
 [Unit]
-Description=Kurento Media Server daemon
-After=network.target
+Description=Kurento Media Server (Docker)
+After=docker.service
+Requires=docker.service
 
 [Service]
-UMask=0002
-Environment=KURENTO_LOGS_PATH=/var/log/kurento-media-server
-User=kurento
-Group=kurento
-LimitNOFILE=1000000
-ExecStartPre=-/bin/rm -f /var/kurento/.cache/gstreamer-1.5/registry.x86_64.bin
-ExecStart=/usr/bin/kurento-media-server --gst-debug-level=3 --gst-debug="3,Kurento*:4,kms*:4,KurentoWebSocketTransport:5"
-Type=simple
-PIDFile=/var/run/kurento-media-server.pid
+ExecStartPre=-/usr/bin/docker exec %n stop
+ExecStartPre=-/usr/bin/docker rm %n
+ExecStartPre=/usr/bin/docker pull mconf/kurento:6.16.0-bionic-1
+ExecStart=/usr/bin/docker run --rm --name %n \
+  -v /var/kurento:/var/kurento \
+  -v /var/log/kurento-media-server:/var/log/kurento-media-server \
+  --network=host \
+  --env-file /etc/bigbluebutton/kurento.env \
+  mconf/kurento:6.16.0-bionic-1
 Restart=always
 
 [Install]
