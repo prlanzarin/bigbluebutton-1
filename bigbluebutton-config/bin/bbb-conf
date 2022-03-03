@@ -168,6 +168,7 @@ if [ -f $KURENTO_ETC_CONFIG ]; then
 else
     KURENTO_CONFIG=$(yq r $KURENTO_DEFAULT_CONFIG)
 fi
+KMS_ETC_CONFIG=/etc/bigbluebutton/kurento.env
 
 BBB_WEB_CONFIG="$SERVLET_DIR/WEB-INF/classes/bigbluebutton.properties"
 BBB_WEB_ETC_CONFIG="/etc/bigbluebutton/bbb-web.properties"
@@ -610,6 +611,18 @@ while [ $# -gt 0 ]; do
                 echo
                 exit 0
             fi
+        fi
+        shift; shift
+        continue
+    fi
+
+    # $2 is an IPv4
+    if [ "$1" = "--configure-defaults" -o "$1" = "-configure-defaults" ]; then
+        DEFAULT_IPV4="${2}"
+        if [ -z "$DEFAULT_IPV4" ]; then
+            DEFAULT_IPV4=IP
+            echo "Default IP: $IP"
+            exit 0
         fi
         shift; shift
         continue
@@ -1839,4 +1852,25 @@ fi
 if [ $WATCH ]; then
     need_root
     watch -n 2 "top -n 1 -b | head -n 5; echo; bbb-conf --network; bbb-conf --debug"
+fi
+
+#
+# Sets Kurento's EXTERNAL_IPV4 environment variable
+# Also checks whether /etc/bigbluebutton/kurento.env exists; creates it if not
+# $1 -- IP(v4)
+#
+set_kurento_ipv4() {
+    need_root
+    if get_properties_value EXTERNAL_IPV4 "$KMS_ETC_CONFIG" > /dev/null ; then
+        change_var_value "$KMS_ETC_CONFIG" EXTERNAL_IPV4 "$1"
+    else
+        echo "EXTERNAL_IPV4=$1" >> "$KMS_ETC_CONFIG"
+    fi
+}
+
+#
+# Set actual IPv4 as specified in --configure-defaults
+#
+if [[ $DEFAULT_IPV4 ]]; then
+    set_kurento_ipv4 $DEFAULT_IPV4
 fi
