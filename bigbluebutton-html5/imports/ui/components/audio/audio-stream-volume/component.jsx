@@ -1,12 +1,20 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import logger from '/imports/startup/client/logger';
+import Styled from './styles';
+import {
+  getAudioConstraints,
+} from '/imports/api/audio/client/bridge/service';
 
 const propTypes = {
   low: PropTypes.number,
   optimum: PropTypes.number,
   high: PropTypes.number,
   deviceId: PropTypes.string,
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+  stream: PropTypes.object,
 };
 
 const defaultProps = {
@@ -14,6 +22,7 @@ const defaultProps = {
   optimum: 0.05,
   high: 0.3,
   deviceId: undefined,
+  stream: null,
 };
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -45,8 +54,11 @@ class AudioStreamVolume extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { deviceId: nextDeviceId } = this.props;
-    if (prevProps.deviceId !== nextDeviceId) {
+    const { deviceId: nextDeviceId, stream: nextStream } = this.props;
+    const shouldRecreateAudioContext = (prevProps.deviceId !== nextDeviceId)
+      || (prevProps.stream?.id !== nextStream?.id);
+
+    if (shouldRecreateAudioContext) {
       this.closeAudioContext().then(() => {
         this.setState({
           slow: 0,
@@ -77,33 +89,28 @@ class AudioStreamVolume extends Component {
   }
 
   createAudioContext() {
-    this.audioContext = new AudioContext();
-    this.scriptProcessor = this.audioContext.createScriptProcessor(2048, 1, 1);
-    this.scriptProcessor.onaudioprocess = this.handleAudioProcess;
-    this.source = null;
+    const { stream } = this.props;
 
-    const constraints = {
-      audio: true,
-    };
-
-    const { deviceId } = this.props;
-
-    if (deviceId) {
-      constraints.audio = {
-        deviceId,
-      };
+    if (stream) {
+      this.audioContext = new AudioContext();
+      this.scriptProcessor = this.audioContext.createScriptProcessor(2048, 1, 1);
+      this.scriptProcessor.onaudioprocess = this.handleAudioProcess;
+      this.source = null;
+      this.handleConnectStreamToProcessor(stream);
     }
-
-    return navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then(this.handleConnectStreamToProcessor)
-      .catch(this.handleError);
   }
 
   closeAudioContext() {
+    if (!this.audioContext) return Promise.resolve();
+
+    // Early override of the meter state callback to avoid re-renders while
+    // unmounting
+    if (this.scriptProcessor) {
+      this.scriptProcessor.onaudioprocess = null;
+    }
+
     return this.audioContext.close().then(() => {
       this.audioContext = null;
-      this.scriptProcessor = null;
       this.source = null;
     });
   }
@@ -116,7 +123,7 @@ class AudioStreamVolume extends Component {
     const { slow } = this.state;
 
     return (
-      <meter
+      <Styled.VolumeMeter
         {...props}
         min={0}
         max={high * 1.25}
