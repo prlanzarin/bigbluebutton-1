@@ -2,7 +2,7 @@ import { Tracker } from 'meteor/tracker';
 
 import Auth from '/imports/ui/services/auth';
 import VoiceUsers from '/imports/api/voice-users';
-import SIPBridge from '/imports/api/audio/client/bridge/sip';
+import SIPBridge from '/imports/api/audio/client/bridge/sipjs-bridge';
 import SFUAudioBridge from '/imports/api/audio/client/bridge/sfu-audio-bridge';
 import logger from '/imports/startup/client/logger';
 import { notify } from '/imports/ui/services/notification';

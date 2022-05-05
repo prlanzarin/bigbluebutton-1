@@ -518,7 +518,7 @@ public:
         # name:  The name of the bridge
         - name: sipjs
           # path: the bridge file path, relative to /imports/api/audio/client
-          path: 'bridge/sip'
+          path: 'bridge/sipjs-bridge'
         - name: fullaudio
           path: 'bridge/sfu-audio-bridge'
     stunTurnServersFetchAddress: '/bigbluebutton/api/stuns'
