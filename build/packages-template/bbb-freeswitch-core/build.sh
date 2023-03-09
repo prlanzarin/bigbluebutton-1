@@ -78,13 +78,12 @@ ldconfig
 cd $BUILDDIR/freeswitch
 
 patch -p0 < $BUILDDIR/floor.patch
-patch -p0 --ignore-whitespace < $BUILDDIR/audio.patch       # Provisional patch for https://github.com/signalwire/freeswitch/pull/1531
 
-./bootstrap.sh 
+./bootstrap.sh
 
 ./configure --disable-core-odbc-support --disable-core-pgsql-support \
     --without-python --without-erlang --without-java \
-    --prefix=/opt/freeswitch 
+    --prefix=/opt/freeswitch
 
 # Overrides for generating debug version
 #   --prefix=/opt/freeswitch CFLAGS="-Wno-error -Og -ggdb" CXXFLAGS="-Wno-error -Og -ggdb"
