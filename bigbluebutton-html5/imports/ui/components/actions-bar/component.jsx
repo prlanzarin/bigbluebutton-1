@@ -1,10 +1,8 @@
 import React, { PureComponent } from 'react';
-import CaptionsButtonContainer from '/imports/ui/components/captions/button/container';
 import deviceInfo from '/imports/utils/deviceInfo';
 import Styled from './styles';
 import ActionsDropdown from './actions-dropdown/container';
 import AudioCaptionsButtonContainer from '/imports/ui/components/audio/captions/button/container';
-import CaptionsReaderMenuContainer from '/imports/ui/components/captions/reader-menu/container';
 import ScreenshareButtonContainer from '/imports/ui/components/actions-bar/screenshare/container';
 import AudioControlsContainer from '../audio/audio-controls/container';
 import JoinVideoOptionsContainer from '../video-provider/video-button/container';
@@ -40,7 +38,6 @@ class ActionsBar extends PureComponent {
       isSharedNotesPinned,
       hasScreenshare,
       stopExternalVideoShare,
-      isCaptionsAvailable,
       isMeteorConnected,
       isPollingEnabled,
       isSelectRandomUserEnabled,
@@ -86,24 +83,6 @@ class ActionsBar extends PureComponent {
             showPushLayout,
           }}
           />
-          {isCaptionsAvailable
-            ? (
-              <>
-                <CaptionsButtonContainer {...{ intl, 
-                  setIsOpen: this.setCaptionsReaderMenuModalIsOpen,}} />
-                {
-                  isCaptionsReaderMenuModalOpen ? <CaptionsReaderMenuContainer
-                    {...{
-                      onRequestClose: () => this.setCaptionsReaderMenuModalIsOpen(false),
-                      priority: "low",
-                      setIsOpen: this.setCaptionsReaderMenuModalIsOpen,
-                      isOpen: isCaptionsReaderMenuModalOpen,
-                    }}
-                  /> : null
-                }
-              </>
-            )
-            : null}
           { !deviceInfo.isMobile
             ? (
               <AudioCaptionsButtonContainer />

@@ -11,7 +11,6 @@ import Meetings, {
 } from '/imports/api/meetings';
 import Logger from '/imports/startup/server/logger';
 import { initPads } from '/imports/api/pads/server/helpers';
-import { initCaptions } from '/imports/api/captions/server/helpers';
 import { addAnnotationsStreamer } from '/imports/api/annotations/server/streamer';
 import { addCursorStreamer } from '/imports/api/cursor/server/streamer';
 import { addExternalVideoStreamer } from '/imports/api/external-videos/server/streamer';
@@ -264,9 +263,6 @@ export default async function addMeeting(meeting) {
       Logger.info(`Added meeting id=${meetingId}`);
       if (newMeeting.meetingProp.disabledFeatures.indexOf('sharedNotes') === -1) {
         initPads(meetingId);
-      }
-      if (newMeeting.meetingProp.disabledFeatures.indexOf('captions') === -1) {
-        await initCaptions(meetingId);
       }
     } else if (numberAffected) {
       Logger.info(`Upserted meeting id=${meetingId}`);

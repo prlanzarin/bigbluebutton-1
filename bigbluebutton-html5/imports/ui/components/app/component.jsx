@@ -21,7 +21,6 @@ import StatusNotifier from '/imports/ui/components/status-notifier/container';
 import ManyWebcamsNotifier from '/imports/ui/components/video-provider/many-users-notify/container';
 import AudioCaptionsSpeechContainer from '/imports/ui/components/audio/captions/speech/container';
 import UploaderContainer from '/imports/ui/components/presentation/presentation-uploader/container';
-import CaptionsSpeechContainer from '/imports/ui/components/captions/speech/container';
 import RandomUserSelectContainer from '/imports/ui/components/common/modal/random-user/container';
 import ScreenReaderAlertContainer from '../screenreader-alert/container';
 import NewWebcamContainer from '../webcam/container';
@@ -330,31 +329,6 @@ class App extends Component {
       && (isPhone || isLayeredView.matches);
   }
 
-  renderCaptions() {
-    const {
-      captions,
-      captionsStyle,
-    } = this.props;
-
-    if (!captions) return null;
-
-    return (
-      <Styled.CaptionsWrapper
-        role="region"
-        style={
-          {
-            position: 'absolute',
-            left: captionsStyle.left,
-            right: captionsStyle.right,
-            maxWidth: captionsStyle.maxWidth,
-          }
-        }
-      >
-        {captions}
-      </Styled.CaptionsWrapper>
-    );
-  }
-
   renderAudioCaptions() {
     const {
       audioCaptions,
@@ -583,11 +557,9 @@ class App extends Component {
                 layoutType={selectedLayout}
               />
             ) : null}
-          {this.renderCaptions()}
           <AudioCaptionsSpeechContainer />
           {this.renderAudioCaptions()}
           <UploaderContainer />
-          <CaptionsSpeechContainer />
           <BreakoutRoomInvitation />
           <AudioContainer {...{
             isAudioModalOpen,

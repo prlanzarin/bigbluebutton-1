@@ -6,8 +6,6 @@ import Meetings, { LayoutMeetings } from '/imports/api/meetings';
 import AudioCaptionsLiveContainer from '/imports/ui/components/audio/captions/live/container';
 import AudioCaptionsService from '/imports/ui/components/audio/captions/service';
 import { notify } from '/imports/ui/services/notification';
-import CaptionsContainer from '/imports/ui/components/captions/live/container';
-import CaptionsService from '/imports/ui/components/captions/service';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import deviceInfo from '/imports/utils/deviceInfo';
 import UserInfos from '/imports/api/users-infos';
@@ -278,7 +276,6 @@ export default withTracker(() => {
   const isPresenter = currentUser?.presenter;
 
   return {
-    captions: CaptionsService.isCaptionsActive() ? <CaptionsContainer /> : null,
     audioCaptions: AudioCaptionsService.getAudioCaptions() ? <AudioCaptionsLiveContainer /> : null,
     fontSize: getFontSize(),
     hasBreakoutRooms: getBreakoutRooms().length > 0,

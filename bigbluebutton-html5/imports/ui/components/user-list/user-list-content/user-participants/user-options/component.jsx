@@ -4,8 +4,6 @@ import { defineMessages, injectIntl } from 'react-intl';
 import LockViewersContainer from '/imports/ui/components/lock-viewers/container';
 import GuestPolicyContainer from '/imports/ui/components/waiting-users/guest-policy/container';
 import CreateBreakoutRoomContainer from '/imports/ui/components/actions-bar/create-breakout-room/container';
-import CaptionsService from '/imports/ui/components/captions/service';
-import WriterMenuContainer from '/imports/ui/components/captions/writer-menu/container';
 import BBBMenu from '/imports/ui/components/common/menu/component';
 import Styled from './styles';
 import { getUserNamesLink } from '/imports/ui/components/user-list/service';
@@ -102,14 +100,6 @@ const intlMessages = defineMessages({
     id: 'app.actionsBar.actionsDropdown.saveUserNames',
     description: 'Save user name feature description',
   },
-  captionsLabel: {
-    id: 'app.actionsBar.actionsDropdown.captionsLabel',
-    description: 'Captions menu toggle label',
-  },
-  captionsDesc: {
-    id: 'app.actionsBar.actionsDropdown.captionsDesc',
-    description: 'Captions menu toggle description',
-  },
   savedNamesListTitle: {
     id: 'app.userList.userOptions.savedNames.title',
     description: '',
@@ -140,24 +130,20 @@ class UserOptions extends PureComponent {
     this.createBreakoutId = uniqueId('list-item-');
     this.learningDashboardId = uniqueId('list-item-');
     this.saveUsersNameId = uniqueId('list-item-');
-    this.captionsId = uniqueId('list-item-');
     this.state = {
       isCreateBreakoutRoomModalOpen: false,
       isGuestPolicyModalOpen: false,
       isInvitation: false,
-      isWriterMenuModalOpen: false,
       isLockViewersModalOpen: false,
     }
 
     this.handleCreateBreakoutRoomClick = this.handleCreateBreakoutRoomClick.bind(this);
-    this.handleCaptionsClick = this.handleCaptionsClick.bind(this);
     this.onCreateBreakouts = this.onCreateBreakouts.bind(this);
     this.onInvitationUsers = this.onInvitationUsers.bind(this);
     this.renderMenuItems = this.renderMenuItems.bind(this);
     this.onSaveUserNames = this.onSaveUserNames.bind(this);
     this.setCreateBreakoutRoomModalIsOpen = this.setCreateBreakoutRoomModalIsOpen.bind(this);
     this.setGuestPolicyModalIsOpen = this.setGuestPolicyModalIsOpen.bind(this);
-    this.setWriterMenuModalIsOpen = this.setWriterMenuModalIsOpen.bind(this);
     this.setLockViewersModalIsOpen = this.setLockViewersModalIsOpen.bind(this);
   }
 
@@ -192,11 +178,6 @@ class UserOptions extends PureComponent {
   handleCreateBreakoutRoomClick(isInvitation) {
     this.setState({isInvitation})
     return this.setCreateBreakoutRoomModalIsOpen(true);
-  }
-
-  handleCaptionsClick() {
-    const { mountModal } = this.props;
-    mountModal(<CaptionsWriterMenu />);
   }
 
   renderMenuItems() {
@@ -297,16 +278,6 @@ class UserOptions extends PureComponent {
         });
       }
 
-      if (amIModerator && CaptionsService.isCaptionsEnabled()) {
-        this.menuItems.push({
-          icon: 'closed_caption',
-          label: intl.formatMessage(intlMessages.captionsLabel),
-          description: intl.formatMessage(intlMessages.captionsDesc),
-          key: this.captionsId,
-          onClick: this.handleCaptionsClick,
-          dataTest: 'writeClosedCaptions',
-        });
-      }
       if (amIModerator) {
         if (isLearningDashboardEnabled()) {
           this.menuItems.push({
@@ -350,10 +321,6 @@ class UserOptions extends PureComponent {
     })
   }
 
-  setWriterMenuModalIsOpen(value) {
-    this.setState({isWriterMenuModalOpen: value});
-  }
-  
   setLockViewersModalIsOpen(value) {
     this.setState({isLockViewersModalOpen: value});
   }
@@ -361,8 +328,7 @@ class UserOptions extends PureComponent {
   render() {
     const { intl, isRTL, isBreakoutRecordable } = this.props;
     const { isCreateBreakoutRoomModalOpen, isInvitation,
-            isGuestPolicyModalOpen, isWriterMenuModalOpen,
-            isLockViewersModalOpen } = this.state;
+            isGuestPolicyModalOpen, isLockViewersModalOpen } = this.state;
 
     return (
       <>
@@ -395,8 +361,6 @@ class UserOptions extends PureComponent {
           CreateBreakoutRoomContainer, {isBreakoutRecordable, isInvitation})}
         {this.renderModal(isGuestPolicyModalOpen, this.setGuestPolicyModalIsOpen, "low", 
           GuestPolicyContainer)}
-        {this.renderModal(isWriterMenuModalOpen, this.setWriterMenuModalIsOpen, "low", 
-          WriterMenuContainer)}
         {this.renderModal(isLockViewersModalOpen, this.setLockViewersModalIsOpen, "low", 
           LockViewersContainer)}
       </>

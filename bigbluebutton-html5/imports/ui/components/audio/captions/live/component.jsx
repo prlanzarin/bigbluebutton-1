@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import UserContainer from './user/container';
 
-const CAPTIONS_CONFIG = Meteor.settings.public.captions;
+const CAPTION_CLEAR_TIME = Meteor.settings.public.app.audioCaptions.clearTime;
 
 class LiveCaptions extends PureComponent {
   constructor(props) {
@@ -23,7 +23,7 @@ class LiveCaptions extends PureComponent {
       }
     } else {
       this.resetTimer();
-      this.timer = setTimeout(() => this.setState({ clear: true }), CAPTIONS_CONFIG.time);
+      this.timer = setTimeout(() => this.setState({ clear: true }), CAPTION_CLEAR_TIME);
     }
   }
 

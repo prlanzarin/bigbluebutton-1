@@ -115,7 +115,6 @@ const updateInterimTranscript = (id, transcript, locale) => {
 };
 
 const updateFinalTranscript = (id, transcript, locale) => {
-  throttledTranscriptUpdate.cancel();
   updateTranscript(id, transcript, locale, true);
 };
 

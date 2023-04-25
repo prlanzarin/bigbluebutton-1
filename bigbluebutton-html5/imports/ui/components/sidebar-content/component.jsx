@@ -5,7 +5,6 @@ import { ACTIONS, PANELS } from '../layout/enums';
 import ChatContainer from '/imports/ui/components/chat/container';
 import NotesContainer from '/imports/ui/components/notes/container';
 import PollContainer from '/imports/ui/components/poll/container';
-import CaptionsContainer from '/imports/ui/components/captions/container';
 import BreakoutRoomContainer from '/imports/ui/components/breakout-room/container';
 import WaitingUsersPanel from '/imports/ui/components/waiting-users/container';
 import Styled from './styles';
@@ -143,7 +142,6 @@ const SidebarContent = (props) => {
           isToSharedNotesBeShow={sidebarContentPanel === PANELS.SHARED_NOTES}
         />
       )}
-      {sidebarContentPanel === PANELS.CAPTIONS && <CaptionsContainer />}
       {sidebarContentPanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
       {sidebarContentPanel === PANELS.WAITING_USERS && <WaitingUsersPanel />}
       {sidebarContentPanel === PANELS.POLL && (

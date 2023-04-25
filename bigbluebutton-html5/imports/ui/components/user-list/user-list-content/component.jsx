@@ -4,7 +4,6 @@ import Styled from './styles';
 import UserParticipantsContainer from './user-participants/container';
 import UserMessagesContainer from './user-messages/container';
 import UserNotesContainer from './user-notes/container';
-import UserCaptionsContainer from './user-captions/container';
 import WaitingUsersContainer from './waiting-users/container';
 import UserPollsContainer from './user-polls/container';
 import BreakoutRoomContainer from './breakout-room/container';
@@ -33,7 +32,6 @@ class UserContent extends PureComponent {
     return (
       <Styled.Content data-test="userListContent">
         {isChatEnabled() ? <UserMessagesContainer /> : null}
-        {currentUser.role === ROLE_MODERATOR ? <UserCaptionsContainer /> : null}
         <UserNotesContainer />
         {showWaitingRoom && currentUser.role === ROLE_MODERATOR
           ? (

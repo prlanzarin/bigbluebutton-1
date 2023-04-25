@@ -11,7 +11,6 @@ import ActionsBar from './component';
 import Service from './service';
 import UserListService from '/imports/ui/components/user-list/service';
 import ExternalVideoService from '/imports/ui/components/external-video-player/service';
-import CaptionsService from '/imports/ui/components/captions/service';
 import { layoutSelectOutput, layoutDispatch } from '../layout/context';
 import { isVideoBroadcasting } from '/imports/ui/components/screenshare/service';
 import { isExternalVideoEnabled, isPollingEnabled, isPresentationEnabled } from '/imports/ui/services/features';
@@ -59,7 +58,6 @@ export default withTracker(() => ({
   isSharingVideo: Service.isSharingVideo(),
   isSharedNotesPinned: Service.isSharedNotesPinned(),
   hasScreenshare: isVideoBroadcasting(),
-  isCaptionsAvailable: CaptionsService.isCaptionsAvailable(),
   isMeteorConnected: Meteor.status().connected,
   isPollingEnabled: isPollingEnabled() && isPresentationEnabled(),
   isSelectRandomUserEnabled: SELECT_RANDOM_USER_ENABLED,

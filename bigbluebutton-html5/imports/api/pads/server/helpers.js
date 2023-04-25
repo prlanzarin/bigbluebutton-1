@@ -3,13 +3,11 @@ import { Meteor } from 'meteor/meteor';
 import Logger from '/imports/startup/server/logger';
 
 const NOTES_CONFIG = Meteor.settings.public.notes;
-const CAPTIONS_CONFIG = Meteor.settings.public.captions;
 const REDIS_CONFIG = Meteor.settings.private.redis;
 const CHANNEL = REDIS_CONFIG.channels.toAkkaApps;
 const TOKEN = '$';
 
 const models = {
-  CAPTIONS: CAPTIONS_CONFIG.id,
   NOTES: NOTES_CONFIG.id,
 };
 
