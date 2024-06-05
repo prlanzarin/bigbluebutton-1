@@ -5,7 +5,6 @@ import {
 } from 'react-intl';
 import { useMutation } from '@apollo/client';
 import Styled from './styles';
-import PermissionsOverlay from '../permissions-overlay/component';
 import AudioSettings from '../audio-settings/component';
 import EchoTest from '../echo-test/component';
 import Help from '../help/component';
@@ -21,6 +20,7 @@ import {
   muteAway,
 } from '/imports/ui/components/audio/audio-graphql/audio-controls/input-stream-live-selector/service';
 import Session from '/imports/ui/services/storage/in-memory';
+import logger from '/imports/startup/client/logger';
 
 const propTypes = {
   intl: PropTypes.shape({
@@ -39,10 +39,11 @@ const propTypes = {
   isConnected: PropTypes.bool.isRequired,
   isUsingAudio: PropTypes.bool.isRequired,
   isListenOnly: PropTypes.bool.isRequired,
+  isMuted: PropTypes.bool.isRequired,
+  toggleMuteMicrophoneSystem: PropTypes.func.isRequired,
   inputDeviceId: PropTypes.string,
   outputDeviceId: PropTypes.string,
   formattedDialNum: PropTypes.string.isRequired,
-  showPermissionsOvelay: PropTypes.bool.isRequired,
   listenOnlyMode: PropTypes.bool.isRequired,
   joinFullAudioImmediately: PropTypes.bool,
   forceListenOnlyAttendee: PropTypes.bool.isRequired,
@@ -72,6 +73,14 @@ const propTypes = {
   }).isRequired,
   getTroubleshootingLink: PropTypes.func.isRequired,
   away: PropTypes.bool,
+  doGUM: PropTypes.func.isRequired,
+  hasMicrophonePermission: PropTypes.func.isRequired,
+  permissionStatus: PropTypes.string,
+  liveChangeInputDevice: PropTypes.func.isRequired,
+  content: PropTypes.string,
+  unmuteOnExit: PropTypes.bool,
+  supportsTransparentListenOnly: PropTypes.bool.isRequired,
+  getAudioConstraints: PropTypes.func.isRequired,
 };
 
 const intlMessages = defineMessages({
@@ -116,7 +125,7 @@ const intlMessages = defineMessages({
     description: 'Title for the echo test',
   },
   settingsTitle: {
-    id: 'app.audioModal.settingsTitle',
+    id: 'app.audio.audioSettings.titleLabel',
     description: 'Title for the audio modal',
   },
   helpTitle: {
@@ -139,6 +148,10 @@ const intlMessages = defineMessages({
     id: 'app.audioModal.autoplayBlockedDesc',
     description: 'Message for autoplay audio block',
   },
+  findingDevicesTitle: {
+    id: 'app.audio.audioSettings.findingDevicesTitle',
+    description: 'Message for finding audio devices',
+  },
 });
 
 const AudioModal = ({
@@ -148,6 +161,8 @@ const AudioModal = ({
   audioLocked,
   isUsingAudio,
   isListenOnly,
+  isMuted,
+  toggleMuteMicrophoneSystem,
   autoplayBlocked,
   closeModal,
   isEchoTest,
@@ -174,19 +189,27 @@ const AudioModal = ({
   notify,
   formattedTelVoice,
   handleAllowAutoplay,
-  showPermissionsOvelay,
   isIE,
   isOpen,
   priority,
   setIsOpen,
   getTroubleshootingLink,
   away = false,
+  doGUM,
+  getAudioConstraints,
+  hasMicrophonePermission,
+  liveChangeInputDevice,
+  content: initialContent,
+  supportsTransparentListenOnly,
+  unmuteOnExit = false,
+  permissionStatus = null,
 }) => {
-  const [content, setContent] = useState(null);
+  const [content, setContent] = useState(initialContent);
   const [hasError, setHasError] = useState(false);
   const [disableActions, setDisableActions] = useState(false);
   const [errorInfo, setErrorInfo] = useState(null);
   const [autoplayChecked, setAutoplayChecked] = useState(false);
+  const [findingDevices, setFindingDevices] = useState(false);
   const [setAway] = useMutation(SET_AWAY);
   const voiceToggle = useToggleVoice();
 
@@ -257,6 +280,55 @@ const AudioModal = ({
     });
   };
 
+  const handleGUMFailure = (error) => {
+    const { MIC_ERROR } = AudioError;
+
+    logger.error({
+      logCode: 'audio_gum_failed',
+      extraInfo: {
+        errorMessage: error.message,
+        errorName: error.name,
+      },
+    }, `Audio gUM failed: ${error.name}`);
+
+    setContent('help');
+    setDisableActions(false);
+    setHasError(true);
+    setErrorInfo({
+      errCode: error?.name === 'NotAllowedError'
+        ? MIC_ERROR.NO_PERMISSION
+        : 0,
+      errMessage: error?.name || 'NotAllowedError',
+    });
+  };
+
+  const checkMicrophonePermission = (options) => {
+    setFindingDevices(true);
+
+    return hasMicrophonePermission(options)
+      .then((hasPermission) => {
+        // null means undetermined, so we don't want to show the error modal
+        // and let downstream components figure it out
+        if (hasPermission === true || hasPermission === null) {
+          return hasPermission;
+        }
+
+        handleGUMFailure(new DOMException(
+          'Permissions API says denied',
+          'NotAllowedError',
+        ));
+
+        return false;
+      })
+      .catch((error) => {
+        handleGUMFailure(error);
+        return null;
+      })
+      .finally(() => {
+        setFindingDevices(false);
+      });
+  };
+
   const handleGoToAudioOptions = () => {
     setContent(null);
     setHasError(true);
@@ -318,13 +390,18 @@ const AudioModal = ({
     });
   };
 
-  const handleJoinLocalEcho = (inputStream) => {
+  const handleAudioSettingsConfirmation = (inputStream) => {
     // Reset the modal to a connecting state - this kind of sucks?
     // prlanzarin Apr 04 2022
     setContent(null);
     if (inputStream) changeInputStream(inputStream);
-    handleJoinMicrophone();
-    disableAwayMode();
+
+    if (!isConnected) {
+      handleJoinMicrophone();
+      disableAwayMode();
+    } else {
+      closeModal();
+    }
   };
 
   const skipAudioOptions = () => (isConnecting || (forceListenOnlyAttendee && !autoplayChecked))
@@ -333,7 +410,6 @@ const AudioModal = ({
 
   const renderAudioOptions = () => {
     const hideMicrophone = forceListenOnlyAttendee || audioLocked;
-
     const arrow = isRTL ? '←' : '→';
     const dialAudioLabel = `${intl.formatMessage(intlMessages.audioDialTitle)} ${arrow}`;
 
@@ -400,40 +476,46 @@ const AudioModal = ({
     />
   );
 
+  const handleBack = () => {
+    if (isConnecting || isConnected || skipAudioOptions()) {
+      closeModal();
+    } else {
+      handleGoToAudioOptions();
+    }
+  };
+
   const renderAudioSettings = () => {
+    const { animations } = getSettingsSingletonInstance().application;
     const confirmationCallback = !localEchoEnabled
       ? handleRetryGoToEchoTest
-      : handleJoinLocalEcho;
-
-    const handleGUMFailure = (error) => {
-      const code = error?.name === 'NotAllowedError'
-        ? AudioError.MIC_ERROR.NO_PERMISSION
-        : 0;
-      setContent('help');
-      setErrorInfo({
-        errCode: code,
-        errMessage: error?.name || 'NotAllowedError',
-      });
-      setDisableActions(false);
-    };
+      : handleAudioSettingsConfirmation;
 
     return (
       <AudioSettings
-        handleBack={handleGoToAudioOptions}
+        animations={animations}
+        handleBack={handleBack}
         handleConfirmation={confirmationCallback}
         handleGUMFailure={handleGUMFailure}
         joinEchoTest={joinEchoTest}
         changeInputDevice={changeInputDevice}
+        liveChangeInputDevice={liveChangeInputDevice}
         changeOutputDevice={changeOutputDevice}
         isConnecting={isConnecting}
         isConnected={isConnected}
-        isEchoTest={isEchoTest}
+        isMuted={isMuted}
+        toggleMuteMicrophoneSystem={toggleMuteMicrophoneSystem}
         inputDeviceId={inputDeviceId}
         outputDeviceId={outputDeviceId}
         withVolumeMeter={showVolumeMeter}
         withEcho={localEchoEnabled}
         produceStreams={localEchoEnabled || showVolumeMeter}
         notify={notify}
+        unmuteOnExit={unmuteOnExit}
+        doGUM={doGUM}
+        getAudioConstraints={getAudioConstraints}
+        checkMicrophonePermission={checkMicrophonePermission}
+        supportsTransparentListenOnly={supportsTransparentListenOnly}
+        toggleVoice={voiceToggle}
       />
     );
   };
@@ -445,9 +527,19 @@ const AudioModal = ({
       message: errorInfo?.errMessage,
     };
 
+    const _joinListenOnly = () => {
+      // Erase the content state so that the modal transitions to the connecting
+      // state if the user chooses listen only
+      setContent(null);
+      handleJoinListenOnly();
+    };
+
     return (
       <Help
-        handleBack={handleGoToAudioOptions}
+        isConnected={isConnected}
+        handleBack={handleBack}
+        handleJoinListenOnly={_joinListenOnly}
+        handleRetryMic={handleGoToAudioSettings}
         audioErr={audioErr}
         isListenOnly={isListenOnly}
         troubleshootingLink={getTroubleshootingLink(errorInfo?.errCode)}
@@ -495,6 +587,17 @@ const AudioModal = ({
   const renderContent = () => {
     const { animations } = getSettingsSingletonInstance().application;
 
+    if (findingDevices && content === null) {
+      return (
+        <Styled.Connecting role="alert">
+          <span data-test="findingDevicesLabel">
+            {intl.formatMessage(intlMessages.findingDevicesTitle)}
+          </span>
+          <Styled.ConnectingAnimation animations={animations} />
+        </Styled.Connecting>
+      );
+    }
+
     if (skipAudioOptions()) {
       return (
         <Styled.Connecting role="alert">
@@ -505,6 +608,7 @@ const AudioModal = ({
         </Styled.Connecting>
       );
     }
+
     return content ? contents[content].component() : renderAudioOptions();
   };
 
@@ -512,16 +616,22 @@ const AudioModal = ({
     if (!isUsingAudio) {
       if (forceListenOnlyAttendee || audioLocked) {
         handleJoinListenOnly();
-        return;
-      }
+      } else if (!listenOnlyMode) {
+        if (joinFullAudioImmediately) {
+          checkMicrophonePermission({ doGUM: true, permissionStatus })
+            .then((hasPermission) => {
+              // No permission - let the Help screen be shown as it's triggered
+              // by the checkMicrophonePermission function
+              if (hasPermission === false) return;
 
-      if (joinFullAudioImmediately && !listenOnlyMode) {
-        handleJoinMicrophone();
-        return;
-      }
+              // Permission is granted or undetermined, so we can proceed
+              handleJoinMicrophone();
+            });
 
-      if (!listenOnlyMode) {
-        handleGoToEchoTest();
+          return;
+        }
+
+        checkMicrophonePermission({ doGUM: false, permissionStatus }).then(handleGoToEchoTest);
       }
     }
   }, [
@@ -551,11 +661,10 @@ const AudioModal = ({
   let title = content
     ? intl.formatMessage(contents[content].title)
     : intl.formatMessage(intlMessages.audioChoiceLabel);
-  title = !skipAudioOptions() ? title : null;
+  title = !skipAudioOptions() && !findingDevices ? title : null;
 
   return (
     <>
-      {showPermissionsOvelay ? <PermissionsOverlay closeModal={closeModal} /> : null}
       <Styled.AudioModal
         modalName="AUDIO"
         onRequestClose={closeModal}
