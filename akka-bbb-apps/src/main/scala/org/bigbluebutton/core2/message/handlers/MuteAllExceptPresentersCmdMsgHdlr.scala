@@ -7,6 +7,7 @@ import org.bigbluebutton.core2.MeetingStatus2x
 import org.bigbluebutton.core.apps.{ PermissionCheck, RightsManagementTrait }
 import org.bigbluebutton.core.db.NotificationDAO
 import org.bigbluebutton.core2.message.senders.MsgBuilder
+import org.bigbluebutton.core.apps.voice.VoiceApp
 
 trait MuteAllExceptPresentersCmdMsgHdlr extends RightsManagementTrait {
   this: MeetingActor =>
@@ -86,16 +87,7 @@ trait MuteAllExceptPresentersCmdMsgHdlr extends RightsManagementTrait {
   }
 
   def muteUserInVoiceConf(vu: VoiceUserState, mute: Boolean): Unit = {
-    val routing = Routing.addMsgToClientRouting(MessageTypes.BROADCAST_TO_MEETING, props.meetingProp.intId, vu.intId)
-    val envelope = BbbCoreEnvelope(MuteUserInVoiceConfSysMsg.NAME, routing)
-    val header = BbbCoreHeaderWithMeetingId(MuteUserInVoiceConfSysMsg.NAME, props.meetingProp.intId)
-
-    val body = MuteUserInVoiceConfSysMsgBody(props.voiceProp.voiceConf, vu.voiceUserId, mute)
-    val event = MuteUserInVoiceConfSysMsg(header, body)
-    val msgEvent = BbbCommonEnvCoreMsg(envelope, event)
-
-    outGW.send(msgEvent)
-
+    VoiceApp.muteUserInVoiceConf(liveMeeting, outGW, vu.intId, mute)
   }
 
 }

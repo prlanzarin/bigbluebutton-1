@@ -115,44 +115,42 @@ object VoiceApp extends SystemConfiguration {
   )(implicit context: ActorContext): Unit = {
     for {
       mutedUser <- VoiceUsers.userMuted(liveMeeting.voiceUsers, voiceUserId, muted)
-    } yield {
-      if (!muted) {
-        // Make sure lock settings are in effect (ralam dec 6, 2019)
-        LockSettingsUtil.enforceLockSettingsForVoiceUser(
-          mutedUser,
+      } yield {
+        if (!muted) {
+          // Make sure lock settings are in effect (ralam dec 6, 2019)
+          LockSettingsUtil.enforceLockSettingsForVoiceUser(
+            mutedUser,
+            liveMeeting,
+            outGW
+          )
+        }
+
+        // Ask for the audio channel to be switched to listen only mode
+        // if the user is muted, otherwise switch back to normal mode
+        // This is only effective if the "transparent listen only" mode is active
+        // for the target user.
+        toggleListenOnlyMode(
           liveMeeting,
-          outGW
+          outGW,
+          mutedUser.intId,
+          mutedUser.callerNum,
+          muted,
+          toggleListenOnlyAfterMuteTimer
         )
+        // If the user is muted or unmuted with an unheld channel, broadcast
+        // the event right away.
+        // If the user is unmuted, but channel is held, we need to wait for the
+        // channel to be active again to broadcast the event. See
+        // VoiceApp.handleChannelHoldChanged for this second case.
+        if (muted || (!muted && !mutedUser.hold)) {
+          broadcastUserMutedVoiceEvtMsg(
+            liveMeeting.props.meetingProp.intId,
+            mutedUser,
+            liveMeeting.props.voiceProp.voiceConf,
+            outGW
+          )
+        }
       }
-
-      // Ask for the audio channel to be switched to listen only mode
-      // if the user is muted, otherwise switch back to normal mode
-      // This is only effective if the "transparent listen only" mode is active
-      // for the target user.
-      toggleListenOnlyMode(
-        liveMeeting,
-        outGW,
-        mutedUser.intId,
-        mutedUser.callerNum,
-        muted,
-        toggleListenOnlyAfterMuteTimer
-      )
-
-      // If the user is muted or unmuted with an unheld channel, broadcast
-      // the event right away.
-      // If the user is unmuted, but channel is held, we need to wait for the 
-      // channel to be active again to broadcast the event. See
-      // VoiceApp.handleChannelHoldChanged for this second case.
-      if (muted || (!muted && !mutedUser.hold)) {
-        broadcastUserMutedVoiceEvtMsg(
-          liveMeeting.props.meetingProp.intId,
-          mutedUser,
-          liveMeeting.props.voiceProp.voiceConf,
-          outGW
-        )
-      }
-
-    }
   }
 
   def processUserStatusVoiceConfEvtMsg(
@@ -627,5 +625,49 @@ object VoiceApp extends SystemConfiguration {
         }
       case _ =>
     }
+  }
+
+  def muteUserInVoiceConf(
+    liveMeeting:  LiveMeeting,
+    outGW:        OutMsgRouter,
+    userId:       String,
+    muted:         Boolean
+  )(implicit context: ActorContext): Unit = {
+    for {
+      u <- VoiceUsers.findWithIntId(
+        liveMeeting.voiceUsers,
+        userId
+      )
+      } yield {
+        if (u.muted != muted) {
+          val muteEvent = MsgBuilder.buildMuteUserInVoiceConfSysMsg(
+            liveMeeting.props.meetingProp.intId,
+            liveMeeting.props.voiceProp.voiceConf,
+            u.voiceUserId,
+            muted
+          )
+
+          // If we're unmuting, trigger a channel unhold -> toggle listen only
+          // mode -> unmute
+          if (!muted) {
+            holdChannelInVoiceConf(
+              liveMeeting,
+              outGW,
+              u.uuid,
+              muted
+            )
+            toggleListenOnlyMode(
+              liveMeeting,
+              outGW,
+              u.intId,
+              u.callerNum,
+              muted,
+              0
+            )
+          }
+
+          outGW.send(muteEvent)
+        }
+      }
   }
 }
