@@ -218,6 +218,10 @@ export const getMediaElementDimensions = () => {
   };
 };
 
+export const setStreamEnabled = (enabled) => {
+  screenShareBridge.setStreamEnabled(enabled);
+}
+
 export const setVolume = (volume) => {
   screenShareBridge.setVolume(volume);
 };
@@ -429,6 +433,7 @@ export default {
   getCameraAsContentDeviceId,
   setBridge,
   setOutputDeviceId,
+  setStreamEnabled,
   useCameraAsContentDeviceIdType,
   useIsSharing,
   useSharingContentType,
