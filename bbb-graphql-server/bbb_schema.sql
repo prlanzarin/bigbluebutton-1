@@ -711,6 +711,7 @@ CREATE TABLE "user_voice" (
 	"joined" boolean,
 	"listenOnly" boolean,
 	"muted" boolean,
+	"deafened" boolean,
 	"spoke" boolean,
 	"talking" boolean,
 	"floor" boolean,
