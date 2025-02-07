@@ -15,6 +15,7 @@ import { joinListenOnly } from './service';
 import Styled from './styles';
 import InputStreamLiveSelectorContainer from './input-stream-live-selector/component';
 import { UPDATE_ECHO_TEST_RUNNING } from './queries';
+import useIsAudioConnected from '/imports/ui/components/audio/audio-graphql/hooks/useIsAudioConnected';
 
 const intlMessages = defineMessages({
   joinAudio: {
@@ -140,7 +141,6 @@ export const AudioControlsContainer: React.FC = () => {
     voice: u.voice,
     away: u.away,
   }));
-
   const { data: currentMeeting } = useMeeting((m: Partial<Meeting>) => ({
     lockSettings: m.lockSettings,
   }));
@@ -150,8 +150,9 @@ export const AudioControlsContainer: React.FC = () => {
   // so we doesn't broke the client that uses the value directly
   // and I can use it to make my component reactive
 
+  const isConnected = useIsAudioConnected();
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
-  const isConnected = useReactiveVar(AudioManager._isConnected.value) as boolean;
+  const isDeafened = useReactiveVar(AudioManager._isDeafened.value) as boolean;
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
   const isConnecting = useReactiveVar(AudioManager._isConnecting.value) as boolean;
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
@@ -163,7 +164,7 @@ export const AudioControlsContainer: React.FC = () => {
 
   return (
     <AudioControls
-      inAudio={!!currentUser.voice ?? false}
+      inAudio={(!!currentUser.voice && !isDeafened) ?? false}
       isConnected={isConnected}
       disabled={isConnecting || isHangingUp}
       isEchoTest={isEchoTest}

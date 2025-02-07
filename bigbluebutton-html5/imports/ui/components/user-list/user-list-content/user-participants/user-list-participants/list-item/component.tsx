@@ -228,6 +228,7 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings, index }
 
   const Settings = getSettingsSingletonInstance();
   const animations = Settings?.application?.animations;
+  const withVoice = voiceUser?.joined && !voiceUser?.deafened;
 
   return (
     <Styled.UserItemContents id={`user-index-${index}`} tabIndex={-1} data-test={(user.userId === Auth.userID) ? 'userListItemCurrent' : 'userListItem'} role="listitem">
@@ -240,8 +241,8 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings, index }
         talking={voiceUser?.talking}
         muted={voiceUser?.muted}
         listenOnly={voiceUser?.listenOnly}
-        voice={voiceUser?.joined}
-        noVoice={!voiceUser?.joined}
+        voice={withVoice}
+        noVoice={!withVoice}
         color={user.color}
         whiteboardAccess={hasWhiteboardAccess}
         animations={animations}
