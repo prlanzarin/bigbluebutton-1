@@ -1,9 +1,9 @@
 package org.bigbluebutton.core.db
 
 import slick.jdbc.PostgresProfile.api._
-import org.bigbluebutton.common2.msgs.AudioGroupParticipant
+import org.bigbluebutton.common2.msgs.MediaGroupParticipant
 
-case class AudioGroupUserDbModel(
+case class MediaGroupUserDbModel(
     groupId:         String,
     meetingId:       String,
     userId:          String,
@@ -11,25 +11,25 @@ case class AudioGroupUserDbModel(
     active:          Boolean
 )
 
-class AudioGroupUserDbTableDef(tag: Tag) extends Table[AudioGroupUserDbModel](tag, None, "user_audioGroup") {
+class MediaGroupUserDbTableDef(tag: Tag) extends Table[MediaGroupUserDbModel](tag, None, "user_mediaGroup") {
   val groupId = column[String]("groupId", O.PrimaryKey)
   val meetingId = column[String]("meetingId", O.PrimaryKey)
   val userId = column[String]("userId", O.PrimaryKey)
   val participantType = column[String]("participantType")
   val active = column[Boolean]("active")
   override def * = (groupId, meetingId, userId, participantType, active) <>
-    (AudioGroupUserDbModel.tupled, AudioGroupUserDbModel.unapply)
+    (MediaGroupUserDbModel.tupled, MediaGroupUserDbModel.unapply)
 }
 
-object AudioGroupUserDAO {
-  def insert(meetingId: String, groupId: String, agp: AudioGroupParticipant) = {
-    AudioGroupUserDAO.insertUser(meetingId, groupId, agp.id, agp.participantType, agp.active)
+object MediaGroupUserDAO {
+  def insert(meetingId: String, groupId: String, mgp: MediaGroupParticipant, participantType: String) = {
+    MediaGroupUserDAO.insertUser(meetingId, groupId, mgp.userId, participantType, mgp.active)
   }
 
   def insertUser(meetingId: String, groupId: String, userId: String, participantType: String, active: Boolean) = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef].insertOrUpdate(
-        AudioGroupUserDbModel(
+      TableQuery[MediaGroupUserDbTableDef].insertOrUpdate(
+        MediaGroupUserDbModel(
           userId = userId,
           groupId = groupId,
           meetingId = meetingId,
@@ -40,20 +40,20 @@ object AudioGroupUserDAO {
     )
   }
 
-  def update(meetingId: String, groupId: String, agp: AudioGroupParticipant) = {
+  def update(meetingId: String, groupId: String, mgp: MediaGroupParticipant, participantType: String) = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef]
+      TableQuery[MediaGroupUserDbTableDef]
         .filter(_.meetingId === meetingId)
         .filter(_.groupId === groupId)
-        .filter(_.userId === agp.id)
-        .map(nagp => (nagp.active, nagp.participantType))
-        .update((agp.active, agp.participantType))
+        .filter(_.userId === mgp.userId)
+        .map(nmgp => (nmgp.active, nmgp.participantType))
+        .update((mgp.active, participantType))
     )
   }
 
   def delete(meetingId: String, groupId: String, userId: String) = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef]
+      TableQuery[MediaGroupUserDbTableDef]
         .filter(_.meetingId === meetingId)
         .filter(_.groupId === groupId)
         .filter(_.userId === userId)
@@ -63,7 +63,7 @@ object AudioGroupUserDAO {
 
   def deleteAll(meetingId: String, groupId: String) = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef]
+      TableQuery[MediaGroupUserDbTableDef]
         .filter(_.meetingId === meetingId)
         .filter(_.groupId === groupId)
         .delete
@@ -72,7 +72,7 @@ object AudioGroupUserDAO {
 
   def deleteAll(meetingId: String) = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef]
+      TableQuery[MediaGroupUserDbTableDef]
         .filter(_.meetingId === meetingId)
         .delete
     )
@@ -80,13 +80,13 @@ object AudioGroupUserDAO {
 
   def deleteAll() = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef].delete
+      TableQuery[MediaGroupUserDbTableDef].delete
     )
   }
 
   def getActiveUsers(meetingId: String, groupId: String) = {
     DatabaseConnection.enqueue(
-      TableQuery[AudioGroupUserDbTableDef]
+      TableQuery[MediaGroupUserDbTableDef]
         .filter(_.meetingId === meetingId)
         .filter(_.groupId === groupId)
         .filter(_.active === true)
