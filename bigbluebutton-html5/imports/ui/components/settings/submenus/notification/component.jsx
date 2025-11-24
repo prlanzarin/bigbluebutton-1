@@ -1,5 +1,6 @@
 import React from 'react';
 import { defineMessages, injectIntl } from 'react-intl';
+import AudioManager from '/imports/ui/services/audio-manager';
 import BaseMenu from '../base/component';
 import SubMenusStyle from '../styles';
 import Styled from './styles';
@@ -41,6 +42,10 @@ const intlMessages = defineMessages({
     id: 'app.submenu.notification.raiseHandLabel',
     description: 'label for raise hand emoji notifications',
   },
+  muteUnmuteLabel: {
+    id: 'app.submenu.notification.muteUnmuteLabel',
+    description: 'label for mute/unmute audio notifications',
+  },
 });
 
 class NotificationMenu extends BaseMenu {
@@ -63,6 +68,7 @@ class NotificationMenu extends BaseMenu {
     } = this.props;
 
     const { settings } = this.state;
+    const isLiveKit = AudioManager.bridge?.bridgeName === 'livekit';
 
     return (
       <div>
@@ -185,6 +191,40 @@ class NotificationMenu extends BaseMenu {
               </Styled.FormElementRight>
             </Styled.Col>
           </Styled.Row>
+          {isLiveKit ? (
+            <Styled.Row>
+              <Styled.Col>
+                <Styled.Label aria-hidden>
+                  {intl.formatMessage(intlMessages.muteUnmuteLabel)}
+                </Styled.Label>
+              </Styled.Col>
+              <Styled.Col>
+                <Styled.FormElementRight>
+                  {displaySettingsStatus(settings.muteUnmuteAudioAlerts)}
+                  <SubMenusStyle.MaterialSwitch
+                    checked={settings.muteUnmuteAudioAlerts}
+                    onChange={() => this.handleToggle('muteUnmuteAudioAlerts')}
+                    inputProps={{
+                      'aria-label': `${intl.formatMessage(intlMessages.muteUnmuteLabel)} ${intl.formatMessage(intlMessages.audioAlertLabel)} - ${displaySettingsStatus(settings.muteUnmuteAudioAlerts, true)}`,
+                    }}
+                  />
+                </Styled.FormElementRight>
+              </Styled.Col>
+              <Styled.Col>
+                <Styled.FormElementRight>
+                  {displaySettingsStatus(false)}
+                  <SubMenusStyle.MaterialSwitch
+                    checked={false}
+                    onChange={() => { }}
+                    disabled
+                    inputProps={{
+                      'aria-label': `${intl.formatMessage(intlMessages.muteUnmuteLabel)} ${intl.formatMessage(intlMessages.pushAlertLabel)}`,
+                    }}
+                  />
+                </Styled.FormElementRight>
+              </Styled.Col>
+            </Styled.Row>
+          ) : null}
 
           {isModerator && showGuestNotification ? (
             <Styled.Row>

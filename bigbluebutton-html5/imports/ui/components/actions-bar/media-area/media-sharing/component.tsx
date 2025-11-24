@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
-import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
+import SvgIcon from '@mui/material/SvgIcon';
+import { btnDefaultColor, colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 import CoPresentIcon from '@mui/icons-material/CoPresent';
 import KEYS from '/imports/utils/keys';
 import { useIsScreenGloballyBroadcasting, screenshareHasEnded } from '/imports/ui/components/screenshare/service';
@@ -35,7 +36,6 @@ interface MediaSharingModalProps {
   isSharingVideo: boolean;
   allowExternalVideo: boolean;
   stopExternalVideoShare: () => void;
-  setPresentationFitToWidth: (fitToWidth: boolean) => void;
   isMobile: boolean;
   isRTL: boolean;
 }
@@ -136,13 +136,17 @@ const MediaSharingModal: React.FC<MediaSharingModalProps> = ({
   isSharingVideo,
   allowExternalVideo,
   stopExternalVideoShare,
-  setPresentationFitToWidth,
   isMobile,
   isRTL,
 }) => {
   const actionsBarStyle = layoutSelectOutput((i: Output) => i.actionBar);
   const { screenIsShared: isScreenGloballyBroadcasting } = useIsScreenGloballyBroadcasting();
   const [currentView, setCurrentView] = useState<'main' | 'presentation' | 'externalVideo' | 'cameraAsContent'>('main');
+
+  const handleClose = () => {
+    setCurrentView('main');
+    onClose();
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -158,11 +162,6 @@ const MediaSharingModal: React.FC<MediaSharingModalProps> = ({
 
   const handleBackClick = () => {
     setCurrentView('main');
-  };
-
-  const handleClose = () => {
-    setCurrentView('main');
-    onClose();
   };
 
   const handlePresentationClick = () => {
@@ -214,24 +213,38 @@ const MediaSharingModal: React.FC<MediaSharingModalProps> = ({
               color={hasCameraAsContent ? 'primary' : 'default'}
               text={intl.formatMessage(intlMessages.shareCameraAsContent)}
               icon={<Icon iconName="video" />}
+              tooltip={intl.formatMessage(intlMessages.shareCameraAsContent)}
               onClick={handleCameraAsContentClick}
             />
           )}
           {mediaAreaItems
             .filter((item) => item.allowed && item.type === MediaAreaItemType.OPTION)
-            .map((item) => (
-              <MediaButton
-                key={item.id}
-                dataTest={item.dataTest}
-                color="default"
-                text={item.label || ''}
-                icon={item.icon ? <Icon iconName={item.icon} /> : undefined}
-                onClick={() => {
-                  if (item.onClick) item.onClick();
-                  handleClose();
-                }}
-              />
-            ))}
+            .map((item: MediaButtonPluginItem) => {
+              const icon = item?.icon;
+              const builtInIcon = icon && typeof icon === 'object' && !Array.isArray(icon) && 'iconName' in icon;
+
+              return (
+                <MediaButton
+                  key={item.id}
+                  dataTest={item.dataTest}
+                  color="default"
+                  text={item.label || ''}
+                  icon={builtInIcon ? (
+                    <Icon iconName={icon?.iconName || ''} />
+                  ) : (
+                    <SvgIcon fontSize="large" sx={{ color: btnDefaultColor }}>
+                      {/* @ts-ignore */}
+                      {icon?.svgContent}
+                    </SvgIcon>
+                  )}
+                  tooltip={item.tooltip}
+                  onClick={() => {
+                    if (item.onClick) item.onClick();
+                    handleClose();
+                  }}
+                />
+              );
+            })}
         </Styled.MediaGrid>
       );
     }
@@ -247,7 +260,6 @@ const MediaSharingModal: React.FC<MediaSharingModalProps> = ({
         <PresentationUploaderContainer
           amIPresenter={amIPresenter}
           onActionCompleted={handleBackClick}
-          setPresentationFitToWidth={setPresentationFitToWidth}
         />
       );
     } else if (currentView === 'externalVideo') {

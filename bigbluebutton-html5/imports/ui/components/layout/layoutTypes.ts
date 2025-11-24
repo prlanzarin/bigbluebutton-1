@@ -154,7 +154,7 @@ interface ScreenShare {
     zIndex?: number;
 }
 
-interface SharedNotes {
+export interface SharedNotes {
     browserHeight?: number;
     browserWidth?: number;
     isPinned?: boolean;
@@ -196,6 +196,8 @@ interface SidebarContentHorizontalResizer {
 interface Widget {
     name: string;
     icon: string;
+    uuid?: string;
+    pluginName?: string;
 }
 
 export interface NativeWidget extends Widget {}

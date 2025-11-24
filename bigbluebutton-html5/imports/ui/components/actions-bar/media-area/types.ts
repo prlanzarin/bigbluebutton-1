@@ -1,10 +1,12 @@
 import { IntlShape } from 'react-intl';
 import { MediaAreaItemType } from 'bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/media-area-item/enums';
+import { MediaAreaIconType } from 'bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/media-area-item/types';
 
 export interface MediaButtonPluginItem {
   type: MediaAreaItemType;
   id: string;
-  icon?: string;
+  icon?: MediaAreaIconType;
+  tooltip?: string;
   label?: string;
   onClick?: () => void;
   allowed: boolean;
@@ -19,7 +21,6 @@ export interface MediaAreaContainerProps {
   isSharingVideo: boolean;
   stopExternalVideoShare: () => void;
   isMeteorConnected: boolean;
-  setPresentationFitToWidth: (fitToWidth: boolean) => void;
   hasPresentation: boolean;
 }
 
@@ -38,7 +39,6 @@ export interface MediaAreaProps {
   isSharingVideo: boolean;
   mediaAreaItems: MediaButtonPluginItem[];
   isPresentationManagementDisabled?: boolean;
-  setPresentationFitToWidth: (fitToWidth: boolean) => void;
   isMobile: boolean;
   isRTL: boolean;
 }
