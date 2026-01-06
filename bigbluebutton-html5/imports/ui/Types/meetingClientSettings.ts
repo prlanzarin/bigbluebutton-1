@@ -652,6 +652,7 @@ export interface LiveKitAudioSettings {
   publishOptions?: TrackPublishOptions
   unpublishOnMute?: boolean
   unpublishAfterMuteMs?: number
+  useLiveKitAudioState?: boolean
 }
 
 export interface LiveKitSettings {
