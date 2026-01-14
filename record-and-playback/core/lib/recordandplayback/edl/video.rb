@@ -825,6 +825,9 @@ module BigBlueButton
           tile_offset_x = (2 * ((layout_area[:width] - (tiles_h * tile_width)) / 4).floor)
           tile_offset_y = (2 * ((layout_area[:height] - (tiles_v * tile_height)) / 4).floor)
 
+          tiles_pad_x = ( ( layout_area[:width] - tile_width * tiles_h ).to_f / 2 ).floor.to_i
+          tiles_pad_y = ( ( layout_area[:height] - tile_height * tiles_v ).to_f / 2 ).floor.to_i
+
           tile_x = 0
           tile_y = 0
 
@@ -986,7 +989,7 @@ module BigBlueButton
 
           # Overlay this area on top of the input video
           ffmpeg_filter << "[#{layout_area[:name]}];\n"
-          ffmpeg_filter << "[#{layout_area[:name]}_in][#{layout_area[:name]}]overlay=x=#{layout_area[:x]}:y=#{layout_area[:y]}"
+          ffmpeg_filter << "[#{layout_area[:name]}_in][#{layout_area[:name]}]overlay=x=#{layout_area[:x] + tiles_pad_x}:y=#{layout_area[:y] + tiles_pad_y}"
         end
 
         # As a safety measure, crop anything that might have made the frame too large.
