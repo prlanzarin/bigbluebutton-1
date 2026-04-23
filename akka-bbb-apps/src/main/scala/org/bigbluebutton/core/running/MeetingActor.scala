@@ -478,7 +478,7 @@ class MeetingActor(
         updateModeratorsPresence()
 
       case m: UserJoinedVoiceConfEvtMsg =>
-        handleUserJoinedVoiceConfEvtMsg(m)
+        state = handleUserJoinedVoiceConfEvtMsg(m, state)
         updateVoiceUserLastActivity(m.body.voiceUserId)
       case m: LogoutAndEndMeetingCmdMsg => usersApp.handleLogoutAndEndMeetingCmdMsg(m, state)
       case m: SetRecordingStatusCmdMsg =>
@@ -578,14 +578,14 @@ class MeetingActor(
       case m: DestroyMediaGroupReqMsg =>
         state = mediaGroupHdlrs.handle(m, state, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
-      case m: GetMediaGroupsReqMsg                 => state = mediaGroupHdlrs.handle(m, state, liveMeeting, msgBus)
+      case m: GetMediaGroupsReqMsg => state = mediaGroupHdlrs.handle(m, state, liveMeeting, msgBus)
       case m: SetUserMediaGroupStateReqMsg =>
         state = mediaGroupHdlrs.handle(m, state, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
 
       // Voice
-      case m: UserLeftVoiceConfEvtMsg              => handleUserLeftVoiceConfEvtMsg(m)
-      case m: UserMutedInVoiceConfEvtMsg           => handleUserMutedInVoiceConfEvtMsg(m)
+      case m: UserLeftVoiceConfEvtMsg    => handleUserLeftVoiceConfEvtMsg(m)
+      case m: UserMutedInVoiceConfEvtMsg => handleUserMutedInVoiceConfEvtMsg(m)
       case m: UserTalkingInVoiceConfEvtMsg =>
         updateVoiceUserLastActivity(m.body.voiceUserId)
         handleUserTalkingInVoiceConfEvtMsg(m)
