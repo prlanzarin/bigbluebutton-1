@@ -100,9 +100,13 @@ We think FreeSWITCH is an amazing piece of software for handling audio.
 
 FreeSWITCH provides the voice conferencing capability in BigBlueButton. Users are able to join the voice conference through the headset. Users joining through Google Chrome, Mozilla Firefox, (or other WebRTC compatible browsers) are able to take advantage of higher quality audio by connecting using WebRTC. FreeSWITCH can also be [integrated with VOIP providers](/administration/customize#add-a-phone-number-to-the-conference-bridge) so that users who are not able to join using the headset will be able to call in using their phone.
 
+### LiveKit
+
+[LiveKit](https://livekit.io/) is the default media server, handling audio, camera video, and screen sharing through a single WebRTC SFU. It replaces the mixed FreeSWITCH (audio) plus mediasoup (video) topology with a unified stack. The LiveKit controller module in bbb-webrtc-sfu performs token generation, permission handling, webhook processing, and bbb-webrtc-recorder (capture) orchestration.
+
 ### Mediasoup and WebRTC-SFU
 
-Mediasoup is a media server that implements an SFU model. It is responsible for streaming of webcams, listen-only audio, and screensharing. The WebRTC-SFU acts as the media controller handling negotiations and to manage the media streams.
+Mediasoup is a media server that implements an SFU model. It remains available as an alternative media bridge for streaming of webcams, listen-only audio, and screensharing. The WebRTC-SFU acts as the media controller handling negotiations and to manage the media streams.
 
 ### Joining a voice conference
 
