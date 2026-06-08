@@ -2,7 +2,7 @@ import { initializePages, linkIssue } from '../core/helpers';
 import { test } from '../core/setup/fixtures';
 import { Layouts } from './layouts';
 
-test.describe.parallel('Layout', { tag: '@flaky-3.1' }, () => {
+test.describe.parallel('Layout', { tag: ['@flaky-3.1', '@media'] }, () => {
   let layouts: Layouts;
 
   test.beforeEach(async ({ browser, context }, testInfo) => {
