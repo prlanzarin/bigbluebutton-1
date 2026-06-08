@@ -618,6 +618,7 @@ export const elements = {
   webcamItemTalkingUser: 'div[data-test="webcamItemTalkingUser"]',
   webcamSettingsModal: 'div[data-test="webcamSettingsModal"]',
   dropdownWebcamButton: 'div[data-test="dropdownWebcamButton"]',
+  webcamUserStatus: 'div[data-test="webcamUserStatus"]',
   webcamMirroredVideoPreview: 'video[data-test="mirroredVideoPreview"]',
   resizeWebcamHandler: 'div#cameraDock + div > div[style*="user-select: none"]',
 
