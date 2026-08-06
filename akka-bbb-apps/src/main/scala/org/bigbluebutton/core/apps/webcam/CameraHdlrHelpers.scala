@@ -4,7 +4,7 @@ import org.bigbluebutton.common2.msgs._
 import org.bigbluebutton.LockSettingsUtil
 import org.bigbluebutton.SystemConfiguration
 import org.bigbluebutton.core.apps.{ PermissionCheck, RightsManagementTrait }
-import org.bigbluebutton.core.models.{ Users2x, Webcams, WebcamStream }
+import org.bigbluebutton.core.models.{ GlobalCameraCapState, Users2x, Webcams, WebcamStream }
 import org.bigbluebutton.core.running.{ LiveMeeting, OutMsgRouter }
 import org.bigbluebutton.core2.MeetingStatus2x
 
@@ -124,7 +124,15 @@ object CameraHdlrHelpers extends SystemConfiguration with RightsManagementTrait 
       case _                    => true
     }
 
-    (meetingCap || userCap)
+    // Counts the streams still awaiting an ejection ack: they are gone in a few
+    // hundred milliseconds, and admitting a camera against a slot that is only
+    // about to free up puts the server straight back over budget.
+    val globalCap = GlobalCameraCapState.getAllowance(liveMeeting.globalCameraCapState) match {
+      case None            => false
+      case Some(allowance) => cameras >= allowance
+    }
+
+    (meetingCap || userCap || globalCap)
   }
 
   def stopBroadcastedCam(
@@ -148,6 +156,7 @@ object CameraHdlrHelpers extends SystemConfiguration with RightsManagementTrait 
 
     if (Webcams.hasWebcamStream(liveMeeting.webcams, streamId)) {
       if (Webcams.isPublisher(liveMeeting.webcams, userId, streamId)) {
+        GlobalCameraCapState.clearPendingEjection(liveMeeting.globalCameraCapState, streamId)
         for {
           _ <- Webcams.removeWebcamStream(liveMeeting.webcams, streamId)
         } yield broadcastEvent(meetingId, userId, streamId)

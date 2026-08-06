@@ -103,5 +103,7 @@ case class WebcamStream(
     contentType:   String,
     hasAudio:      Boolean,
     showAsContent: Boolean,
-    subscribers:   Set[String]
+    subscribers:   Set[String],
+    // Publish order, so a camera cap can drop the newest streams first.
+    startedAt: Long = System.currentTimeMillis()
 )
