@@ -351,6 +351,9 @@ export const elements = {
   callModeratorSentToast: 'Moderators have been notified.',
   callModeratorCooldownToast: 'Please wait before calling the moderators again.',
   requestingModeratorAssistance: 'is requesting moderator assistance.',
+  globalCameraCapEnforcedToast: 'Your camera was turned off because the server reached its capacity',
+  globalCameraCapEnforcedModeratorToast: 'were turned off because the server reached its capacity',
+  globalCameraCapLiftedToast: 'Camera sharing is available again',
   // Icons
   unmuteIcon: `${baseBbbIcon}unmute`,
   listenOnlyIcon: `${baseBbbIcon}listen`,

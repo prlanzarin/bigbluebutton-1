@@ -46,6 +46,10 @@ export const constants = {
   enforcePresentationOnly: 'enforceLayout=PRESENTATION_ONLY',
   enforceParticipantsAndChatOnly: 'enforceLayout=PARTICIPANTS_AND_CHAT_ONLY',
   enforceMediaOnly: 'enforceLayout=MEDIA_ONLY',
+  // Asks the server for a stricter server-wide camera cap. Only honoured when
+  // bbb-apps-akka.conf has globalCameraCap.enabled and .allowCreateOverride on.
+  globalCameraCapTwo: 'globalCameraCap=2',
+  globalCameraCapThree: 'globalCameraCap=3',
   groups:
     'groups=[{"id":"1","name":"Room 1","roster":["1235"]},{"id":"2","name":"Room 2","roster":["2333","2335"]},{"id":"3","roster":[]}]',
   // Custom Parameters
