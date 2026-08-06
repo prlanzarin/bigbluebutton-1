@@ -130,10 +130,13 @@ export const useStatus = () => {
 export const useDisableReason = () => {
   const videoLocked = useIsCamSharingLocked();
   const hasCapReached = useHasCapReached();
+  const globalCapReached = useIsGlobalCapReached();
   const hasVideoStream = useHasVideoStream();
   const connected = useReactiveVar(ConnectionStatus.getConnectedStatusVar());
+  // Key order is the precedence order - the first truthy one wins.
   const locks = {
     videoLocked,
+    globalCamCapReached: globalCapReached && !hasVideoStream,
     camCapReached: hasCapReached && !hasVideoStream,
     disconnected: !connected,
   };
@@ -194,6 +197,8 @@ export const useInfo = () => {
 export const useHasCapReached = () => {
   const { data: meeting } = useMeeting((m) => ({
     meetingCameraCap: m.meetingCameraCap,
+    effectiveCameraCap: m.effectiveCameraCap,
+    globalCameraCapActive: m.globalCameraCapActive,
     usersPolicies: m.usersPolicies,
   }));
   const videoStreamsCount = useVideoStreamsCount();
@@ -204,13 +209,28 @@ export const useHasCapReached = () => {
     meeting?.usersPolicies === undefined
     || meeting?.meetingCameraCap === undefined
   ) return true;
-  const { meetingCameraCap } = meeting;
+  const { meetingCameraCap, globalCameraCapActive } = meeting;
   const { userCameraCap } = meeting.usersPolicies;
 
-  const meetingCap = meetingCameraCap !== 0 && videoStreamsCount >= (meetingCameraCap as number);
+  // effectiveCameraCap already folds the meeting's own cap together with its share
+  // of the server-wide one, so whichever is stricter is the number here.
+  const effectiveCap = meeting.effectiveCameraCap ?? meetingCameraCap;
+  const meetingCap = effectiveCap !== 0 && videoStreamsCount >= effectiveCap;
   const userCap = userCameraCap !== 0 && localVideoStreamsCount >= userCameraCap;
 
-  return meetingCap || userCap;
+  return !!globalCameraCapActive || meetingCap || userCap;
+};
+
+// Whether the server-wide cap - rather than the meeting's own limit - is what
+// stands in the way, so the camera button can say which. Decided server-side: a
+// viewer's camera rows are row-filtered under webcamsOnlyForModerator, so counting
+// them here would under-report and leave the button enabled on a full server.
+export const useIsGlobalCapReached = () => {
+  const { data: meeting } = useMeeting((m) => ({
+    globalCameraCapActive: m.globalCameraCapActive,
+  }));
+
+  return !!meeting?.globalCameraCapActive;
 };
 
 export const useDisableCam = () => {

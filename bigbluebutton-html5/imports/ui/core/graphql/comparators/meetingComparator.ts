@@ -33,6 +33,8 @@ export const meetingComparator = <T>(
   if ((aData.learningDashboardAccessToken ?? '') !== (bData.learningDashboardAccessToken ?? '')) return false;
   if ((aData.maxPinnedCameras ?? 0) !== (bData.maxPinnedCameras ?? 0)) return false;
   if ((aData.meetingCameraCap ?? 0) !== (bData.meetingCameraCap ?? 0)) return false;
+  if ((aData.effectiveCameraCap ?? 0) !== (bData.effectiveCameraCap ?? 0)) return false;
+  if ((aData.globalCameraCapActive ?? false) !== (bData.globalCameraCapActive ?? false)) return false;
   if ((aData.cameraBridge ?? '') !== (bData.cameraBridge ?? '')) return false;
   if ((aData.screenShareBridge ?? '') !== (bData.screenShareBridge ?? '')) return false;
   if ((aData.audioBridge ?? '') !== (bData.audioBridge ?? '')) return false;

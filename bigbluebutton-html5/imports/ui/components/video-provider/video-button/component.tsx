@@ -44,6 +44,10 @@ const intlMessages = defineMessages({
     id: 'app.video.connecting',
     description: 'video connecting label',
   },
+  globalCamCapReached: {
+    id: 'app.video.globalCamCapReached',
+    description: 'server-wide camera cap label',
+  },
   camCapReached: {
     id: 'app.video.meetingCamCapReached',
     description: 'meeting camera cap label',
