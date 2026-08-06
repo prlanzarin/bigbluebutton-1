@@ -659,6 +659,7 @@ public class MeetingService implements MessageListener {
     logData.put("webcamsOnlyForModerator", m.getWebcamsOnlyForModerator());
     logData.put("multiUserWhiteboardEnabled", m.getMultiUserWhiteboardEnabled());
     logData.put("meetingCameraCap", m.getMeetingCameraCap());
+    logData.put("globalCameraCap", m.getGlobalCameraCap());
     logData.put("userCameraCap", m.getUserCameraCap());
     logData.put("maxPinnedCameras", m.getMaxPinnedCameras());
     logData.put("cameraBridge", m.getCameraBridge());
@@ -679,7 +680,7 @@ public class MeetingService implements MessageListener {
     gw.createMeeting(m.getInternalId(), m.getExternalId(), m.getParentMeetingId(), m.getName(), m.isRecord(),
             m.getTelVoice(), m.getDuration(), m.getAutoStartRecording(), m.getAllowStartStopRecording(),
             m.getSharedNotesInitialContentJson(), m.getSharedNotesInitialContentMarkdown(), m.getSharedNotesEditor(), m.getRecordFullDurationMedia(),
-            m.getWebcamsOnlyForModerator(), m.getMultiUserWhiteboardEnabled(), m.getMeetingCameraCap(), m.getUserCameraCap(), m.getMaxPinnedCameras(),
+            m.getWebcamsOnlyForModerator(), m.getMultiUserWhiteboardEnabled(), m.getMeetingCameraCap(), m.getGlobalCameraCap(), m.getUserCameraCap(), m.getMaxPinnedCameras(),
             m.getCameraBridge(),
             m.getScreenShareBridge(),
             m.getAudioBridge(),
@@ -906,6 +907,10 @@ public class MeetingService implements MessageListener {
       params.put(ApiParams.MEETING_ID, message.meetingId);
       params.put(ApiParams.PARENT_MEETING_ID, message.parentMeetingId);
       params.put(ApiParams.IS_BREAKOUT, "true");
+      // Breakouts are part of their parent's tenancy for the server-wide camera
+      // cap, so the request has to travel with them - otherwise it disappears the
+      // moment the parent meeting ends and the rooms carry on.
+      params.put(ApiParams.GLOBAL_CAMERA_CAP, parentMeeting.getGlobalCameraCap().toString());
       params.put(ApiParams.SEQUENCE, message.sequence.toString());
       params.put(ApiParams.FREE_JOIN, message.freeJoin.toString());
       params.put(ApiParams.SHARED_NOTES_EDITOR, message.sharedNotesEditor);
