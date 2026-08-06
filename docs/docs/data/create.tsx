@@ -362,6 +362,13 @@ const createEndpointTableData = [
     "description": (<>Setting to <code className="language-plaintext highlighter-rouge">0</code> will disable this threshold. Defines the max number of webcams a meeting can have simultaneously. (added 2.5.0)</>)
   },
   {
+    "name": "globalCameraCap",
+    "required": false,
+    "type": "Number",
+    "default": 0,
+    "description": (<>Asks the server for a stricter <i>server-wide</i> camera sharing cap, across all meetings. The server applies the lowest value requested by any live meeting, so this can only tighten the cap and never relax it — a single meeting requesting a low value constrains every other meeting on the server for as long as it runs. Requires <code className="language-plaintext highlighter-rouge">globalCameraCap.allowCreateOverride</code> in <code className="language-plaintext highlighter-rouge">bbb-apps-akka.conf</code>, which is disabled by default; ignored otherwise. Setting to <code className="language-plaintext highlighter-rouge">0</code> expresses no opinion. (added 4.0)</>)
+  },
+  {
     "name": "meetingExpireIfNoUserJoinedInMinutes",
     "required": false,
     "type": "Number",

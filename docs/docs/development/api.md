@@ -131,6 +131,7 @@ Updated in 3.0:
 Updated in 4.0:
 
 - **create**
+  - **Added parameter:** `globalCameraCap` (integer, default `0` = no opinion) — asks the server for a *stricter* server-wide camera-publisher cap. The server takes the minimum across live meetings and its own `globalCameraCap.max`, so a meeting can only tighten the cap, never relax it. Ignored unless `globalCameraCap.allowCreateOverride` is enabled in `bbb-apps-akka.conf`. Complements the per-meeting `meetingCameraCap`, which is unchanged.
   - **Added parameters:** `requireUserConsentBeforeUnmuting` (only relevant when `allowModsToUnmuteUsers=true`; when `true`, the user is shown a consent dialog before a moderator can unmute them), `lockSettingsPresenterPolicy` (controls the "Request to Present" policy; one of `moderatorOnly`, `requireApproval` (default), `freeForAll`).
   - **Added options:** Parameter `disabledFeatures` supports new options: `multiFunctionalMode` (the auxiliary/dual sidebar panel) and `pinChatMessage`.
   - **Removed parameter:** `lockSettingsDisableNote` (singular); use `lockSettingsDisableNotes` (plural) instead.

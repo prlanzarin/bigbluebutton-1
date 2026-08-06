@@ -316,6 +316,31 @@ Webcams will be moved when mouse is released. (Note: When only one webcam is sha
 
     - The webcam sharing should stop and no other user should keep seeing your webcam sharing
 
+### Server-wide camera cap [(Automated)](https://github.com/bigbluebutton/bigbluebutton/blob/v4.0.x-release/bigbluebutton-tests/playwright/webcam/globalCameraCap.spec.ts)
+
+Requires `globalCameraCap.enabled` and `globalCameraCap.allowCreateOverride` in `/etc/bigbluebutton/bbb-apps-akka.conf`, with `max` set to 3.
+
+1. Create meeting A with `globalCameraCap=3` and have two attendees share their webcams.
+
+2. Create meeting B with `globalCameraCap=3` and share one webcam in it. The server now holds 3 of its 3 allowed cameras.
+
+3. Have a third user in meeting A try to share a webcam.
+
+    - The camera button should be disabled
+    - Its label should say camera sharing is limited because the server is at capacity, not that the meeting reached its limit
+
+4. Create meeting C with `globalCameraCap=2`, which lowers the server-wide budget under the cameras already running.
+
+    - Meeting A, which holds the most cameras, should lose one; meeting B should keep its webcam
+    - The camera stopped in meeting A should be the most recently started one
+    - That user should see a notification explaining the server stopped their camera
+    - Moderators of meeting A should see a notification counting the stopped cameras
+
+5. End meeting C and wait out `globalCameraCap.releaseDelay` (30 seconds by default).
+
+    - The user whose camera was stopped should be told sharing is available again
+    - No webcam should be restarted automatically
+
 ### Pin/Unpin webcams [(Automated)](https://github.com/bigbluebutton/bigbluebutton/blob/v3.0.x-release/bigbluebutton-tests/playwright/webcam/webcam.spec.js)
 
 1. Join meeting with at least 3 webcams.
