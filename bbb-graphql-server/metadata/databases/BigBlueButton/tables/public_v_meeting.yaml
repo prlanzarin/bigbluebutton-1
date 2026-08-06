@@ -177,6 +177,8 @@ select_permissions:
         - logoutUrl
         - maxPinnedCameras
         - meetingCameraCap
+        - effectiveCameraCap
+        - globalCameraCapActive
         - cameraBridge
         - screenShareBridge
         - audioBridge
@@ -212,6 +214,8 @@ select_permissions:
         - isBreakout
         - loginUrl
         - logoutUrl
+        - effectiveCameraCap
+        - globalCameraCapActive
         - maxPinnedCameras
         - meetingCameraCap
         - meetingId

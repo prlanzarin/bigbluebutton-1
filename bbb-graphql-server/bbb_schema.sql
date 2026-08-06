@@ -27,6 +27,10 @@ create unlogged table "meeting" (
 	"disabledFeatures" varchar[],
 	"meetingCameraCap" integer,
 	"maxPinnedCameras" integer,
+	--cameras this meeting may publish right now: its own cap, or the share of the
+	--server-wide cap akka assigned it. 0 = unlimited unless "globalCameraCapActive".
+	"effectiveCameraCap" integer NOT NULL DEFAULT 0,
+	"globalCameraCapActive" boolean NOT NULL DEFAULT false,
 	"cameraBridge" varchar(30),
 	"screenShareBridge" varchar(30),
 	"audioBridge" varchar(30),

@@ -20,6 +20,13 @@ case class MeetingBridgesDbModel(
   audioBridge: String
 )
 
+// Grouped rather than flattened so the MeetingDbModel projection keeps headroom
+// under Slick's 22-column tuple ceiling.
+case class MeetingCameraCapDbModel(
+  effectiveCameraCap: Int,
+  globalCameraCapActive: Boolean
+)
+
 case class MeetingDbModel(
     meetingId:                             String,
     extId:                                 String,
@@ -28,6 +35,7 @@ case class MeetingDbModel(
     disabledFeatures:                      List[String],
     meetingCameraCap:                      Int,
     maxPinnedCameras:                     Int,
+    cameraCap:                             MeetingCameraCapDbModel,
     bridges:                               MeetingBridgesDbModel,
     notifyRecordingIsOn:                   Boolean,
     presentationUploadExternalDescription: String,
@@ -52,6 +60,7 @@ class MeetingDbTableDef(tag: Tag) extends Table[MeetingDbModel](tag, None, "meet
     disabledFeatures,
     meetingCameraCap,
     maxPinnedCameras,
+    cameraCap,
     bridges,
     notifyRecordingIsOn,
     presentationUploadExternalDescription,
@@ -73,6 +82,11 @@ class MeetingDbTableDef(tag: Tag) extends Table[MeetingDbModel](tag, None, "meet
   val disabledFeatures = column[List[String]]("disabledFeatures")
   val meetingCameraCap = column[Int]("meetingCameraCap")
   val maxPinnedCameras = column[Int]("maxPinnedCameras")
+  val effectiveCameraCap = column[Int]("effectiveCameraCap")
+  val globalCameraCapActive = column[Boolean]("globalCameraCapActive")
+
+  val cameraCap = (effectiveCameraCap, globalCameraCapActive) <> (MeetingCameraCapDbModel.tupled, MeetingCameraCapDbModel.unapply)
+
   val cameraBridge = column[String]("cameraBridge")
   val screenShareBridge = column[String]("screenShareBridge")
   val audioBridge = column[String]("audioBridge")
@@ -111,6 +125,10 @@ object MeetingDAO {
           disabledFeatures = meetingProps.meetingProp.disabledFeatures.toList,
           meetingCameraCap = meetingProps.meetingProp.meetingCameraCap,
           maxPinnedCameras = meetingProps.meetingProp.maxPinnedCameras,
+          cameraCap = MeetingCameraCapDbModel(
+            effectiveCameraCap = meetingProps.meetingProp.meetingCameraCap,
+            globalCameraCapActive = false
+          ),
           bridges = MeetingBridgesDbModel(
             cameraBridge = meetingProps.meetingProp.cameraBridge,
             screenShareBridge = meetingProps.meetingProp.screenShareBridge,
@@ -181,6 +199,15 @@ object MeetingDAO {
         .filter(_.meetingId in subqueryBreakoutRooms)
         .map(u => u.durationInSeconds)
         .update(newDurationInSeconds)
+    )
+  }
+
+  def updateCameraCapState(meetingId: String, effectiveCameraCap: Int, globalCameraCapActive: Boolean) = {
+    DatabaseConnection.enqueue(
+      TableQuery[MeetingDbTableDef]
+        .filter(_.meetingId === meetingId)
+        .map(a => (a.effectiveCameraCap, a.globalCameraCapActive))
+        .update((effectiveCameraCap, globalCameraCapActive))
     )
   }
 

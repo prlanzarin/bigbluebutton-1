@@ -12,6 +12,7 @@
 - `customLogoUrl`
 - `disabledFeatures`
 - `durationInSeconds`
+- `effectiveCameraCap`
 - `endWhenNoModerator`
 - `endWhenNoModeratorDelayInMinutes`
 - `ended`
@@ -20,6 +21,7 @@
 - `endedByUserName`
 - `endedReasonCode`
 - `extId`
+- `globalCameraCapActive`
 - `isBreakout`
 - `loginUrl`
 - `logoutUrl`
