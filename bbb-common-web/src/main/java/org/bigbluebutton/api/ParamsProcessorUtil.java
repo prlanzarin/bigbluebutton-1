@@ -100,6 +100,9 @@ public class ParamsProcessorUtil {
     private int learningDashboardCleanupDelayInMinutes;
     private boolean webcamsOnlyForModerator;
     private Integer defaultMeetingCameraCap = 0;
+    // Not a bbb-web property: the server-wide ceiling lives in bbb-apps-akka.conf, and a
+    // second settable default here would look authoritative without being it. 0 = unset.
+    private Integer defaultGlobalCameraCap = 0;
     private Integer defaultUserCameraCap = 0;
     private Integer defaultMaxPinnedCameras = 3;
     private boolean defaultMuteOnStart = false;
@@ -837,6 +840,18 @@ public class ParamsProcessorUtil {
             }
         }
 
+        // A meeting may only ask the server to be stricter than it already is; akka
+        // takes the minimum across live meetings and its own configured ceiling.
+        Integer globalCameraCap = defaultGlobalCameraCap;
+        if (!StringUtils.isEmpty(params.get(ApiParams.GLOBAL_CAMERA_CAP))) {
+            try {
+                Integer globalCameraCapParam = Integer.parseInt(params.get(ApiParams.GLOBAL_CAMERA_CAP));
+                if (globalCameraCapParam >= 0) globalCameraCap = globalCameraCapParam;
+            } catch (NumberFormatException e) {
+                log.warn("Invalid param [globalCameraCap] for meeting=[{}]", internalMeetingId);
+            }
+        }
+
         Integer userCameraCap = defaultUserCameraCap;
         if (!StringUtils.isEmpty(params.get(ApiParams.USER_CAMERA_CAP))) {
             try {
@@ -1003,6 +1018,7 @@ public class ParamsProcessorUtil {
                 .withWebcamsOnlyForModerator(webcamsOnlyForMod)
                 .withMultiUserWhiteboardEnabled(multiUserWhiteboardEnabled)
                 .withMeetingCameraCap(meetingCameraCap)
+                .withGlobalCameraCap(globalCameraCap)
                 .withUserCameraCap(userCameraCap)
                 .withMaxPinnedCameras(maxPinnedCameras)
                 .withCameraBridge(cameraBridge)

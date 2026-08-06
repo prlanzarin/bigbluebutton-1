@@ -133,6 +133,7 @@ class BbbWebApiGWApp(
                     webcamsOnlyForModerator: java.lang.Boolean,
                     multiUserWhiteboardEnabled: java.lang.Boolean,
                     meetingCameraCap: java.lang.Integer,
+                    globalCameraCap:  java.lang.Integer,
                     userCameraCap:    java.lang.Integer,
                     maxPinnedCameras: java.lang.Integer,
                     cameraBridge:       String,
@@ -189,18 +190,19 @@ class BbbWebApiGWApp(
       extId = extMeetingId,
       intId = meetingId,
       meetingCameraCap = meetingCameraCap.intValue(),
+      globalCameraCap = globalCameraCap.intValue(),
       sharedNotesInitialContentJson = sharedNotesInitialContentJsonVector,
       sharedNotesInitialContentMarkdown = sharedNotesInitialContentMarkdown,
       sharedNotesEditor = sharedNotesEditor,
       maxPinnedCameras = maxPinnedCameras.intValue(),
-      cameraBridge,
-      screenShareBridge,
-      audioBridge,
+      cameraBridge = cameraBridge,
+      screenShareBridge = screenShareBridge,
+      audioBridge = audioBridge,
       isBreakout = isBreakout.booleanValue(),
-      disabledFeaturesAsVector,
-      notifyRecordingIsOn,
-      presentationUploadExternalDescription,
-      presentationUploadExternalUrl
+      disabledFeatures = disabledFeaturesAsVector,
+      notifyRecordingIsOn = notifyRecordingIsOn,
+      presentationUploadExternalDescription = presentationUploadExternalDescription,
+      presentationUploadExternalUrl = presentationUploadExternalUrl
     )
 
     val durationProps = DurationProps(

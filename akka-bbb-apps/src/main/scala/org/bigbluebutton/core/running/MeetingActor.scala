@@ -22,7 +22,7 @@ import org.bigbluebutton.core.apps.audiocaptions.AudioCaptionsApp2x
 import org.bigbluebutton.core.apps.timer.TimerApp2x
 import org.bigbluebutton.core.apps.presentation.PresentationApp2x
 import org.bigbluebutton.core.apps.users.UsersApp2x
-import org.bigbluebutton.core.apps.webcam.WebcamApp2x
+import org.bigbluebutton.core.apps.webcam.{ GlobalCameraCapHdlr, WebcamApp2x }
 import org.bigbluebutton.core.apps.whiteboard.WhiteboardApp2x
 import org.bigbluebutton.core.bus._
 import org.bigbluebutton.core.models.{ Users2x, VoiceUsers, _ }
@@ -101,7 +101,8 @@ class MeetingActor(
   with DestroyMeetingSysCmdMsgHdlr
   with ChangeLockSettingsInMeetingCmdMsgHdlr
   with ClientToServerLatencyTracerMsgHdlr
-  with UserActivitySignCmdMsgHdlr {
+  with UserActivitySignCmdMsgHdlr
+  with GlobalCameraCapHdlr {
 
   object CheckVoiceRecordingInternalMsg
   object SyncVoiceUserStatusInternalMsg
@@ -220,6 +221,11 @@ class MeetingActor(
   initSharedNotes(liveMeeting)
   initTimer(liveMeeting)
 
+  // Register with the server-wide camera arbiter before anyone can share: a
+  // meeting created onto a full server is otherwise unconstrained until its first
+  // housekeeping tick, and lets cameras through in the meantime.
+  reportCameraDemand()
+
   /** *****************************************************************/
   // Helper to create fake users for testing (ralam jan 5, 2018)
   //object FakeTestData extends FakeTestData
@@ -327,6 +333,7 @@ class MeetingActor(
     case msg: BreakoutRoomEndedInternalMsg         => state = handleBreakoutRoomEndedInternalMsg(msg, state)
     case msg: SendMessageToBreakoutRoomInternalMsg => state = handleSendMessageToBreakoutRoomInternalMsg(msg, state, liveMeeting, msgBus)
     case msg: CapturePresentationReqInternalMsg    => presentationPodsApp.handle(msg, state, liveMeeting, msgBus)
+    case msg: SetGlobalCameraAllowanceInternalMsg  => handleSetGlobalCameraAllowance(msg)
 
     case _                                         => // do nothing
   }
@@ -513,7 +520,11 @@ class MeetingActor(
       case m: SetUserClientSettingsReqMsg  => usersApp.handleSetUserClientSettingsReqMsg(m)
       case m: SetUserEchoTestRunningReqMsg => usersApp.handleSetUserEchoTestRunningReqMsg(m)
       case m: GenerateLiveKitTokenRespMsg  => handleGenerateLiveKitTokenRespMsg(m)
-      case m: LiveKitParticipantLeftEvtMsg => handleLiveKitParticipantLeftEvtMsg(m)
+      case m: LiveKitParticipantLeftEvtMsg =>
+        handleLiveKitParticipantLeftEvtMsg(m)
+        // Drops webcam streams without going through the camera stop handlers, so
+        // the freed slot would otherwise stay counted until the next 5s tick.
+        reportCameraDemand()
       case m: UpdateLiveKitParticipantPermissionsRespMsg =>
         handleUpdateLiveKitParticipantPermissionsRespMsg(m)
       case m: EjectUserFromVoiceConfRespMsg => handleEjectUserFromVoiceConfRespMsg(m)
@@ -818,9 +829,11 @@ class MeetingActor(
       case m: UserBroadcastCamStartMsg =>
         webcamApp2x.handle(m, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
+        reportCameraDemand()
       case m: UserBroadcastCamStopMsg =>
         webcamApp2x.handle(m, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
+        reportCameraDemand()
       case m: SetCamShowAsContentReqMsg =>
         webcamApp2x.handle(m, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
@@ -828,7 +841,9 @@ class MeetingActor(
       case m: GetCamSubscribePermissionReqMsg  => webcamApp2x.handle(m, liveMeeting, msgBus)
       case m: CamStreamSubscribedInSfuEvtMsg   => webcamApp2x.handle(m, liveMeeting, msgBus)
       case m: CamStreamUnsubscribedInSfuEvtMsg => webcamApp2x.handle(m, liveMeeting, msgBus)
-      case m: CamBroadcastStoppedInSfuEvtMsg   => webcamApp2x.handle(m, liveMeeting, msgBus)
+      case m: CamBroadcastStoppedInSfuEvtMsg =>
+        webcamApp2x.handle(m, liveMeeting, msgBus)
+        reportCameraDemand()
       case m: EjectUserCamerasCmdMsg           => webcamApp2x.handle(m, liveMeeting, msgBus)
       case m: GetWebcamsOnlyForModeratorReqMsg => webcamApp2x.handle(m, liveMeeting, msgBus)
       case m: UpdateWebcamsOnlyForModeratorCmdMsg =>
@@ -891,6 +906,7 @@ class MeetingActor(
   private def handleMeetingTasksExecutor(): Unit = {
     clearExpiredReactionEmojis()
     endTimedOutBreakoutRooms()
+    reportCameraDemand()
   }
 
   private def handleCheckPresentationConversions(): MeetingState2x = {

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 
 import scala.util.{ Failure, Success, Try }
 import com.typesafe.config.ConfigFactory
+import org.bigbluebutton.core.models.GlobalCameraCapConfig
 
 trait SystemConfiguration {
   val config = ConfigFactory.load()
@@ -65,6 +66,8 @@ trait SystemConfiguration {
     "voiceConf.floorControl.floorSwitchCooldown",
     java.util.concurrent.TimeUnit.MILLISECONDS
   )).getOrElse(500L)
+
+  lazy val globalCameraCap: GlobalCameraCapConfig = GlobalCameraCapConfig.fromConfig(config)
 
   lazy val recordingChapterBreakLengthInMinutes = Try(config.getInt("recording.chapterBreakLengthInMinutes")).getOrElse(0)
 

@@ -1920,6 +1920,28 @@ If you are adding this to a join-url you need to URI encode the string (see a sa
 
 Step-by-step instructions for how to configure logs from clients to be logged in a server log file are located in [Administration -> Configuration Files](/administration/configuration-files#logs-sent-directly-from-the-client)
 
+
+### Server-wide camera cap
+
+The caps above bound a single meeting. `bbb-apps-akka.conf` carries a complementary server-wide cap
+on the number of camera publishers across *all* meetings on a server, so a set of individually
+compliant meetings can no longer overload it together. It is disabled by default.
+
+| Key | Description | Value | Default |
+| --- | --- | --- | --- |
+| `globalCameraCap.enabled` | Master switch | true/false | false |
+| `globalCameraCap.max` | Maximum simultaneous camera publishers across every meeting | Integer (0=no static ceiling) | 0 |
+| `globalCameraCap.minPerMeeting` | Cameras a *publishing* meeting keeps under pressure; does not reserve capacity for a meeting that has not shared yet | Integer | 1 |
+| `globalCameraCap.evaluationInterval` | How often the cap is recomputed | Duration (min 1 second) | 5 seconds |
+| `globalCameraCap.releaseDelay` | How long a relaxed cap must hold before it applies; tightening is always immediate | Duration | 30 seconds |
+| `globalCameraCap.loadSmoothingFactor` | EWMA weight of each host CPU/memory sample | 0.01-1.0 | 0.3 |
+| `globalCameraCap.allowCreateOverride` | Whether the `globalCameraCap` create parameter is honoured. A caller can only make the cap *stricter*, but that still lets one meeting constrain the whole server | true/false | false |
+| `globalCameraCap.loadThresholds` | Load-driven ceilings, `{ cpu, memory, max }`. An entry applies when either measurement reaches its threshold and the lowest applicable `max` wins. Entries without a positive `max` are ignored | Array | two entries |
+
+Host CPU and memory are read from the machine bbb-apps-akka runs on, which on a standard
+single-server install is also where the media stack runs. In a split or containerised deployment
+those figures describe the wrong machine - leave the load thresholds empty there and use `max`.
+
 ### Other configuration changes
 
 #### Extract the shared secret

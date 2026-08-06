@@ -4,6 +4,8 @@ const MEETING_SUBSCRIPTION = gql`
   subscription MeetingSubscription {
       meeting {
         durationInSeconds
+        effectiveCameraCap
+        globalCameraCapActive
         lockSettings {
           disableCam
           disableMic

@@ -124,6 +124,34 @@ case class UserClosedAllGraphqlConnectionsInternalMsg(userId: String) extends In
 case class UserEstablishedGraphqlConnectionInternalMsg(userId: String, clientType: String, isMobile: Boolean) extends InMessage
 
 /**
+ * Sent by MeetingActor to GlobalCameraCapActor whenever its publisher count moves,
+ * so the server-wide budget is split over current demand rather than a poll's worth
+ * of stale counts.
+ */
+case class MeetingCameraCountInternalMsg(
+    meetingId:       String,
+    parentMeetingId: String,
+    cameras:         Int,
+    requestedCap:    Int
+) extends InMessage
+
+/** Sent by BigBlueButtonActor so the cap actor can drop a meeting from its accounting. */
+case class MeetingGoneInternalMsg(meetingId: String) extends InMessage
+
+/**
+ * Sent by GlobalCameraCapActor to a MeetingActor with the number of cameras that
+ * meeting may currently publish. `allowance` is None when the server imposes no
+ * limit on it. `budgetRelaxed` says whether the server-wide budget itself grew,
+ * which is not the same as this meeting's allowance growing - trimming a meeting
+ * raises its own allowance without the server having recovered any capacity.
+ */
+case class SetGlobalCameraAllowanceInternalMsg(
+    meetingId:     String,
+    allowance:     Option[Int],
+    budgetRelaxed: Boolean
+) extends InMessage
+
+/**
  * API endpoint /userInfo to provide User Session Variables messages
  */
 case class GetUserApiMsg(sessionToken: String)

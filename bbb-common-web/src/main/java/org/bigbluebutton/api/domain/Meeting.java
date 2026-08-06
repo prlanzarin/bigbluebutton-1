@@ -79,6 +79,7 @@ public class Meeting {
 	private boolean webcamsOnlyForModerator = false;
 	private boolean multiUserWhiteboardEnabled = false;
 	private Integer meetingCameraCap = 0;
+	private Integer globalCameraCap = 0;
 	private Integer userCameraCap = 0;
 	private Integer maxPinnedCameras = 0;
 	private String dialNumber;
@@ -185,6 +186,7 @@ public class Meeting {
         webcamsOnlyForModerator = builder.webcamsOnlyForModerator;
         multiUserWhiteboardEnabled = builder.multiUserWhiteboardEnabled;
         meetingCameraCap = builder.meetingCameraCap;
+        globalCameraCap = builder.globalCameraCap;
         userCameraCap = builder.userCameraCap;
         maxPinnedCameras = builder.maxPinnedCameras;
         duration = builder.duration;
@@ -727,6 +729,10 @@ public class Meeting {
         return meetingCameraCap;
     }
 
+    public Integer getGlobalCameraCap() {
+        return globalCameraCap;
+    }
+
     public Integer getUserCameraCap() {
         return userCameraCap;
     }
@@ -1052,6 +1058,7 @@ public class Meeting {
         private boolean webcamsOnlyForModerator;
         private boolean multiUserWhiteboardEnabled;
         private Integer meetingCameraCap;
+        private Integer globalCameraCap;
         private Integer userCameraCap;
         private Integer maxPinnedCameras;
     	private String moderatorPass;
@@ -1176,6 +1183,11 @@ public class Meeting {
 
         public Builder withMeetingCameraCap(Integer cap) {
             this.meetingCameraCap = cap;
+            return this;
+        }
+
+        public Builder withGlobalCameraCap(Integer cap) {
+            this.globalCameraCap = cap;
             return this;
         }
 

@@ -31,4 +31,5 @@ class LiveMeeting(
 ) {
   val audioFloorManager = new AudioFloorManager(props.meetingProp.intId)
   val voiceUserReconciler = new VoiceUserReconciler(props.meetingProp.intId)
+  val globalCameraCapState = new GlobalCameraCapState
 }

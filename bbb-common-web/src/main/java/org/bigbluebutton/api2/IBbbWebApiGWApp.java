@@ -27,6 +27,7 @@ public interface IBbbWebApiGWApp {
                      Boolean webcamsOnlyForModerator,
                      Boolean multiUserWhiteboardEnabled,
                      Integer meetingCameraCap,
+                     Integer globalCameraCap,
                      Integer userCameraCap,
                      Integer maxPinnedCameras,
                      String cameraBridge,

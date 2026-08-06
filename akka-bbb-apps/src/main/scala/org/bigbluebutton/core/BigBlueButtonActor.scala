@@ -46,6 +46,14 @@ class BigBlueButtonActor(
 
   private val meetings = new RunningMeetings
 
+  // Server-wide camera arbiter. Meetings report to it over the InternalEventBus;
+  // only meeting removal has to be pushed from here, since creation never touches
+  // that bus.
+  private val globalCameraCapActor =
+    if (globalCameraCap.enabled) {
+      Some(context.actorOf(GlobalCameraCapActor.props(eventBus), GlobalCameraCapActor.Name))
+    } else None
+
   private case class SessionTokenInfo(
       meetingId: String,
       userId:    String,
@@ -243,6 +251,10 @@ class BigBlueButtonActor(
 
       bbbMsgBus.unsubscribe(m.actorRef, m.props.meetingProp.intId)
       bbbMsgBus.unsubscribe(m.actorRef, m.props.voiceProp.voiceConf)
+
+      // Drop the meeting's demand now: the actor itself lives on for another
+      // 2.5s and would otherwise keep holding a share of the camera budget.
+      globalCameraCapActor.foreach(_ ! MeetingGoneInternalMsg(msg.meetingId))
 
       // Delay sending DisconnectAllUsers to allow messages to reach the client
       // before the connections are closed.
