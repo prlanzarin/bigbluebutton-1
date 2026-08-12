@@ -21,7 +21,7 @@ import type { Stream, StreamItem, VideoItem } from './types';
 import { VIDEO_TYPES } from './enums';
 import BBBVideoStream from '/imports/ui/services/webrtc-base/bbb-video-stream';
 import {
-  liveKitRoom,
+  liveKitRoomRegistry,
   lkToggleMuteCameras,
 } from '/imports/ui/services/livekit';
 import { getLiveKitStats } from '/imports/ui/services/livekit/stats';
@@ -550,11 +550,12 @@ class VideoService {
     );
 
     try {
-      const lkStats = await getLiveKitStats({
-        room: liveKitRoom,
+      const primaryRoom = liveKitRoomRegistry.getPrimary();
+      const lkStats = primaryRoom ? await getLiveKitStats({
+        room: primaryRoom,
         kind: 'video',
         source: Track.Source.Camera,
-      });
+      }) : [];
       lkStats.forEach((stat) => {
         // @ts-expect-error -> Untyped object.
         const { id, type: statType, kind } = stat;

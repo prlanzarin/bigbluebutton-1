@@ -22,7 +22,13 @@ import {
   doGUM,
   isWasmProcessingEnabled,
 } from '/imports/api/audio/client/bridge/service';
-import { liveKitRoom, LK_FATAL_ERROR_EVENT } from '/imports/ui/services/livekit';
+import {
+  liveKitRoomRegistry,
+  LK_FATAL_ERROR_EVENT,
+  PRIMARY_KEY,
+  type LiveKitFatalErrorDetail,
+  type MembershipKey,
+} from '/imports/ui/services/livekit';
 import { getLiveKitStats } from '/imports/ui/services/livekit/stats';
 import MediaStreamUtils from '/imports/utils/media-stream-utils';
 import { isWasmProcessorSupported } from '/imports/ui/components/audio/audio-processor/service';
@@ -60,7 +66,26 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
   public _originalStream: MediaStream | null;
 
-  private readonly liveKitRoom: Room;
+  // Audio output (sink) id, written by AudioManager; applied to every
+  // registry room, including rooms that connect later.
+  public outputDeviceId: string | null;
+
+  private primaryRoom: Room | undefined;
+
+  private secondaryRoom: Room | undefined;
+
+  private activeMicRoom: Room | undefined;
+
+  // Membership key of activeMicRoom, tracked so fatal-publish errors can be
+  // dispatched keyed to the exact room BaseLiveKitRoom is publishing to.
+  private activeMicRoomKey: MembershipKey;
+
+  private currentMicTrack: MediaStreamTrack | undefined;
+
+  // Mic-switch generation: each room switch captures the gen and abandons
+  // after any async procedure if superseded, so interleaved room switches
+  // never land a publish on a stale room.
+  private micSwitchGeneration: number;
 
   private readonly role: string;
 
@@ -102,7 +127,13 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
     this.callback = () => {
       logger.warn('LiveKitAudioBridge: callback not set');
     };
-    this.liveKitRoom = liveKitRoom;
+    this.primaryRoom = liveKitRoomRegistry.getPrimary();
+    this.activeMicRoom = this.primaryRoom;
+    this.activeMicRoomKey = PRIMARY_KEY;
+    this.secondaryRoom = undefined;
+    this.currentMicTrack = undefined;
+    this.micSwitchGeneration = 0;
+    this.outputDeviceId = null;
     this.publishQueue = [];
     this.isProcessingPublishQueue = false;
     // eslint-disable-next-line no-underscore-dangle
@@ -187,9 +218,159 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
     return this._originalStream;
   }
 
+  private resolvePrimaryRoom(): Room | undefined {
+    if (!this.primaryRoom) {
+      this.primaryRoom = liveKitRoomRegistry.getPrimary();
+      if (this.primaryRoom && !this.activeMicRoom) {
+        this.activeMicRoom = this.primaryRoom;
+      }
+    }
+
+    return this.primaryRoom;
+  }
+
+  async attachSecondaryRoom(secondaryRoom: Room, membershipKey: MembershipKey): Promise<void> {
+    this.secondaryRoom = secondaryRoom;
+    await this.setActiveMicRoom(this.secondaryRoom, membershipKey);
+    await this.applyOutputDeviceToRoom(secondaryRoom);
+  }
+
+  async detachSecondaryRoom(): Promise<void> {
+    this.secondaryRoom = undefined;
+    await this.setActiveMicRoom(this.resolvePrimaryRoom(), PRIMARY_KEY);
+  }
+
+  private async setActiveMicRoom(
+    target: Room | undefined,
+    targetKey: MembershipKey,
+  ): Promise<void> {
+    if (!target || target === this.activeMicRoom) return;
+
+    this.micSwitchGeneration += 1;
+    const generation = this.micSwitchGeneration;
+    const previous = this.activeMicRoom;
+    const hadMic = this.isInMicrophoneAudio();
+
+    this.activeMicRoom = target;
+    this.activeMicRoomKey = targetKey;
+
+    // Rehome audio observers so mute defenses act on the room the mic now lives in.
+    this.rehomeMicObservers(previous, target);
+
+    // Only a live mic is migrated betwen rooms when switching (see
+    // isInMicrophoneAudio); otherwise, just switch rooms.
+    if (previous && hadMic) {
+      try {
+        // Unpublish WITHOUT stopping the track so the same MediaStreamTrack can
+        // be republished into the new room without gUM
+        const pub = previous.localParticipant.getTrackPublication(Track.Source.Microphone);
+
+        if (pub?.track) await previous.localParticipant.unpublishTrack(pub.track, false);
+      } catch (error) {
+        logger.warn({
+          logCode: 'lk_audio_unpublish_on_switch_failed',
+          extraInfo: {
+            errorMessage: (error as Error).message,
+            errorName: (error as Error).name,
+            errorStack: (error as Error).stack,
+            bridge: this.bridgeName,
+            role: this.role,
+          },
+        }, 'LiveKit: unpublish-on-switch failed');
+      }
+    }
+
+    // Generation superseded - abandon
+    if (this.micSwitchGeneration !== generation) return;
+
+    if (!hadMic) {
+      logger.debug({
+        logCode: 'livekit_audio_mic_switch_no_active_mic',
+        extraInfo: {
+          bridge: this.bridgeName,
+          role: this.role,
+          activeMicRoomKey: this.activeMicRoomKey,
+          inputDeviceId: this.inputDeviceId,
+        },
+      }, 'LiveKit: mic-room switch recorded target without publishing (not in microphone audio)');
+      return;
+    }
+
+    try {
+      // force=true supersedes any pending publish so the switch always lands.
+      await this.publish(this.originalStream, true);
+
+      // Generation superseded - abandon
+      if (this.micSwitchGeneration !== generation) return;
+
+      this.reinforceMuteState('mic_room_switch');
+    } catch (error) {
+      logger.error({
+        logCode: 'lk_audio_publish_on_switch_failed',
+        extraInfo: {
+          errorMessage: (error as Error).message,
+          errorName: (error as Error).name,
+          errorStack: (error as Error).stack,
+          bridge: this.bridgeName,
+          role: this.role,
+        },
+      }, 'LiveKit: publish-on-switch failed');
+
+      if (this.micSwitchGeneration === generation) this.handleFatalPublishError(error as Error);
+    }
+  }
+
+  private async applyOutputDeviceToRoom(room: Room): Promise<void> {
+    const deviceId = this.outputDeviceId;
+
+    if (!deviceId) return;
+
+    try {
+      await LiveKitAudioBridge.waitForSpecificRoomConnection(room);
+      await room.switchActiveDevice('audiooutput', deviceId, true);
+    } catch (error) {
+      logger.warn({
+        logCode: 'livekit_audio_output_device_room_apply_failed',
+        extraInfo: {
+          bridge: this.bridgeName,
+          role: this.role,
+          deviceId,
+          errorMessage: (error as Error).message,
+          errorName: (error as Error).name,
+          errorStack: (error as Error).stack,
+        },
+      }, 'LiveKit: failed to apply output device to room');
+    }
+  }
+
+  private static waitForSpecificRoomConnection(room: Room): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (room.state === ConnectionState.Connected) {
+        resolve();
+
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        room.off(RoomEvent.Connected, onRoomConnected);
+        reject(new Error('Room connection timeout'));
+      }, ROOM_CONNECTION_TIMEOUT);
+      const onRoomConnected = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+
+      room.once(RoomEvent.Connected, onRoomConnected);
+    });
+  }
+
   private getLocalMicTrackPubs(): LocalTrackPublication[] {
+    const room = this.activeMicRoom ?? this.resolvePrimaryRoom();
+
+    if (!room) return [];
+
     return Array.from(
-      this.liveKitRoom.localParticipant.audioTrackPublications.values(),
+      room.localParticipant.audioTrackPublications.values(),
     ).filter((publication) => publication.source === Track.Source.Microphone);
   }
 
@@ -455,7 +636,11 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
       },
     }, `LiveKit: reinforcing muted state on local audio track - ${reason}`);
 
-    this.liveKitRoom.localParticipant.setMicrophoneEnabled(false).catch((error) => {
+    const micRoom = this.activeMicRoom ?? this.resolvePrimaryRoom();
+
+    if (!micRoom) return;
+
+    micRoom.localParticipant.setMicrophoneEnabled(false).catch((error) => {
       logger.error({
         logCode: 'livekit_audio_mute_reinforce_error',
         extraInfo: {
@@ -471,32 +656,48 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
   }
 
   private observeLiveKitEvents(): void {
-    if (!this.liveKitRoom) return;
+    const primary = this.resolvePrimaryRoom();
+    const micRoom = this.activeMicRoom ?? primary;
 
-    this.removeLiveKitObservers();
-    this.liveKitRoom.on(RoomEvent.TrackSubscribed, this.handleTrackSubscribed);
-    this.liveKitRoom.on(RoomEvent.TrackUnsubscribed, this.handleTrackUnsubscribed);
-    this.liveKitRoom.on(RoomEvent.TrackSubscriptionFailed, this.handleTrackSubscriptionFailed);
-    this.liveKitRoom.on(RoomEvent.TrackSubscriptionStatusChanged, this.handleTrackSubscriptionStatusChanged);
-    this.liveKitRoom.localParticipant.on(ParticipantEvent.TrackMuted, this.handleLocalTrackMuted);
-    this.liveKitRoom.localParticipant.on(ParticipantEvent.TrackUnmuted, this.handleLocalTrackUnmuted);
-    this.liveKitRoom.localParticipant.on(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
-    this.liveKitRoom.localParticipant.on(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
-    this.liveKitRoom.on(RoomEvent.Reconnected, this.handleRoomReconnected);
+    if (primary) this.attachStaticObservers(primary);
+    if (micRoom) this.attachMicObservers(micRoom);
   }
 
-  private removeLiveKitObservers(): void {
-    if (!this.liveKitRoom) return;
+  private attachStaticObservers(room: Room): void {
+    room.off(RoomEvent.TrackSubscribed, this.handleTrackSubscribed);
+    room.off(RoomEvent.TrackUnsubscribed, this.handleTrackUnsubscribed);
+    room.off(RoomEvent.TrackSubscriptionFailed, this.handleTrackSubscriptionFailed);
+    room.off(RoomEvent.TrackSubscriptionStatusChanged, this.handleTrackSubscriptionStatusChanged);
+    room.on(RoomEvent.TrackSubscribed, this.handleTrackSubscribed);
+    room.on(RoomEvent.TrackUnsubscribed, this.handleTrackUnsubscribed);
+    room.on(RoomEvent.TrackSubscriptionFailed, this.handleTrackSubscriptionFailed);
+    room.on(RoomEvent.TrackSubscriptionStatusChanged, this.handleTrackSubscriptionStatusChanged);
+  }
 
-    this.liveKitRoom.off(RoomEvent.TrackSubscribed, this.handleTrackSubscribed);
-    this.liveKitRoom.off(RoomEvent.TrackUnsubscribed, this.handleTrackUnsubscribed);
-    this.liveKitRoom.off(RoomEvent.TrackSubscriptionFailed, this.handleTrackSubscriptionFailed);
-    this.liveKitRoom.off(RoomEvent.TrackSubscriptionStatusChanged, this.handleTrackSubscriptionStatusChanged);
-    this.liveKitRoom.localParticipant.off(ParticipantEvent.TrackMuted, this.handleLocalTrackMuted);
-    this.liveKitRoom.localParticipant.off(ParticipantEvent.TrackUnmuted, this.handleLocalTrackUnmuted);
-    this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
-    this.liveKitRoom.localParticipant.off(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
-    this.liveKitRoom.off(RoomEvent.Reconnected, this.handleRoomReconnected);
+  // Listeners that must track wherever the local mic is published (mute
+  // defenses + publish logging).
+  private attachMicObservers(room: Room): void {
+    this.detachMicObservers(room);
+    room.on(RoomEvent.Reconnected, this.handleRoomReconnected);
+    room.localParticipant.on(ParticipantEvent.TrackMuted, this.handleLocalTrackMuted);
+    room.localParticipant.on(ParticipantEvent.TrackUnmuted, this.handleLocalTrackUnmuted);
+    room.localParticipant.on(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
+    room.localParticipant.on(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
+  }
+
+  private detachMicObservers(room: Room): void {
+    room.off(RoomEvent.Reconnected, this.handleRoomReconnected);
+    room.localParticipant.off(ParticipantEvent.TrackMuted, this.handleLocalTrackMuted);
+    room.localParticipant.off(ParticipantEvent.TrackUnmuted, this.handleLocalTrackUnmuted);
+    room.localParticipant.off(ParticipantEvent.LocalTrackPublished, this.handleLocalTrackPublished);
+    room.localParticipant.off(ParticipantEvent.LocalTrackUnpublished, this.handleLocalTrackUnpublished);
+  }
+
+  private rehomeMicObservers(previous: Room | undefined, target: Room): void {
+    if (previous === target) return;
+    if (previous) this.detachMicObservers(previous);
+
+    this.attachMicObservers(target);
   }
 
   private handleFatalPublishError(error: Error): void {
@@ -513,10 +714,12 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
       },
     }, 'LiveKit: fatal audio publish error detected, triggering reconnection');
 
-    // Handled in /ui/components/livekit/component (BBBLiveKitRoom)
-    window.dispatchEvent(new CustomEvent(LK_FATAL_ERROR_EVENT, {
-      detail: { error, source: 'audio' },
-    }));
+    const detail: LiveKitFatalErrorDetail = {
+      key: this.activeMicRoomKey,
+      source: 'audio',
+      error,
+    };
+    window.dispatchEvent(new CustomEvent(LK_FATAL_ERROR_EVENT, { detail }));
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -807,7 +1010,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
           if (track) await track.restartTrack(getAudioConstraints({ deviceId }));
         } else {
-          const switched = await liveKitRoom.switchActiveDevice('audioinput', deviceId, true);
+          const switched = await (this.activeMicRoom ?? this.resolvePrimaryRoom())?.switchActiveDevice('audioinput', deviceId, true);
 
           // This is a soft failure - the browser may have decided simply not to switch
           // with no error. Go figure. Log it and throw so that it bubbles up to the user.
@@ -1014,22 +1217,48 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
       // Track is published and unmuted - mute it
       // The handleLocalTrackMuted callback will handle the debounced unpublish
-      this.liveKitRoom.localParticipant.setMicrophoneEnabled(false).catch(handleMuteError);
+      this.activeMicRoom?.localParticipant.setMicrophoneEnabled(false).catch(handleMuteError);
     }
   }
 
   async changeOutputDevice(deviceId: string): Promise<void> {
-    try {
-      const switched = await this.liveKitRoom.switchActiveDevice(
-        'audiooutput',
-        deviceId,
-        true,
-      );
+    this.outputDeviceId = deviceId;
 
-      if (!switched) throw new Error('Failed to switch audio output device');
+    const primary = this.resolvePrimaryRoom();
 
+    if (!primary) {
+      logger.warn({
+        logCode: 'livekit_audio_change_output_no_room',
+        extraInfo: { bridge: this.bridgeName, role: this.role, deviceId },
+      }, 'LiveKit: changeOutputDevice called but primary room unavailable');
+      return;
+    }
+
+    await Promise.all(liveKitRoomRegistry.getRooms().map(async (room) => {
+      try {
+        const switched = await room.switchActiveDevice('audiooutput', deviceId, true);
+
+        // Primary room device switch is authoritative (failures surface to end user).
+        // Secondaries are best-effort.
+        if (!switched && room === primary) throw new Error('Failed to switch audio output device');
+      } catch (error) {
+        if (room === primary) throw error;
+
+        logger.warn({
+          logCode: 'livekit_audio_change_output_device_secondary_error',
+          extraInfo: {
+            errorMessage: (error as Error).message,
+            errorName: (error as Error).name,
+            errorStack: (error as Error).stack,
+            bridge: this.bridgeName,
+            role: this.role,
+            deviceId,
+          },
+        }, 'LiveKit: change audio output device failed on secondary room');
+      }
+    })).then(() => {
       const activeDevices = Array.from(
-        this.liveKitRoom.localParticipant.activeDeviceMap.entries(),
+        primary.localParticipant.activeDeviceMap.entries(),
       );
 
       logger.debug({
@@ -1041,7 +1270,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
           activeDevices,
         },
       }, 'LiveKit: audio output device changed');
-    } catch (error) {
+    }).catch((error) => {
       logger.error({
         logCode: 'livekit_audio_change_output_device_error',
         extraInfo: {
@@ -1055,13 +1284,17 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
       }, 'LiveKit: change audio output device failed');
 
       throw error;
-    }
+    });
   }
 
   private hasMicrophoneTrack(): boolean {
     const tracks = this.getLocalMicTrackPubs();
 
     return tracks.length > 0;
+  }
+
+  private isInMicrophoneAudio(): boolean {
+    return !!this.currentMicTrack && this.inputDeviceId !== 'listen-only';
   }
 
   private async processPublishQueue(): Promise<void> {
@@ -1340,6 +1573,21 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
         }, 'LiveKit: audio stream is inactive, fallback');
       }
 
+      const micRoom = this.activeMicRoom ?? this.resolvePrimaryRoom();
+
+      if (!micRoom) {
+        logger.warn({
+          logCode: 'livekit_audio_publish_no_room',
+          extraInfo: { bridge: this.bridgeName, role: this.role },
+        }, 'LiveKit: doPublish called but no active mic room available');
+
+        return;
+      }
+
+      // A room switch may still be establishing the target room's WebRTC conn
+      // when this runs. Wait for room conn here.
+      await LiveKitAudioBridge.waitForSpecificRoomConnection(micRoom);
+
       if (inputStream && inputStream.active) {
         // Get tracks from the stream and publish them. Map into an array of
         // Promise objects and wait for all of them to resolve.
@@ -1354,11 +1602,11 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
         }, 'LiveKit: publishing audio track with stream');
         const trackPublishers = inputStream.getAudioTracks()
           .map((track) => {
-            return this.liveKitRoom.localParticipant.publishTrack(track, publishOptions);
+            return micRoom.localParticipant.publishTrack(track, publishOptions);
           });
         await Promise.all(trackPublishers);
       } else {
-        await this.liveKitRoom.localParticipant.setMicrophoneEnabled(
+        await micRoom.localParticipant.setMicrophoneEnabled(
           true,
           constraints,
           publishOptions,
@@ -1374,6 +1622,10 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
           },
         }, 'LiveKit: published audio track without stream');
       }
+
+      // Track the published mic track for room switching
+      const micPub = micRoom.localParticipant.getTrackPublication(Track.Source.Microphone);
+      this.currentMicTrack = micPub?.track?.mediaStreamTrack ?? undefined;
 
       this.audioPublished();
     } catch (error) {
@@ -1403,11 +1655,12 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
     if (!micTrackPublications || micTrackPublications.length === 0) return;
 
+    const micRoom = this.activeMicRoom ?? this.resolvePrimaryRoom();
     const unpublishers = micTrackPublications.map((publication: LocalTrackPublication) => {
-      if (publication?.track && publication?.source === Track.Source.Microphone) {
-        const stopOnUnpublish = liveKitRoom?.options?.stopLocalTrackOnUnpublish ?? false;
+      if (publication?.track && publication?.source === Track.Source.Microphone && micRoom) {
+        const stopOnUnpublish = micRoom.options?.stopLocalTrackOnUnpublish ?? false;
 
-        return this.liveKitRoom.localParticipant.unpublishTrack(publication.track, stopOnUnpublish);
+        return micRoom.localParticipant.unpublishTrack(publication.track, stopOnUnpublish);
       }
 
       return Promise.resolve();
@@ -1424,6 +1677,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
           unpublishedTracks,
         },
       }, 'LiveKit: audio track unpublish executed');
+      this.currentMicTrack = undefined;
     } catch (error) {
       logger.error({
         logCode: 'livekit_audio_unpublish_error',
@@ -1441,13 +1695,20 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
   private waitForRoomConnection(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.liveKitRoom.state === ConnectionState.Connected) {
+      const room = this.resolvePrimaryRoom();
+
+      if (!room) {
+        reject(new Error('Primary room not available'));
+        return;
+      }
+
+      if (room.state === ConnectionState.Connected) {
         resolve();
         return;
       }
 
       const timeout = setTimeout(() => {
-        this.liveKitRoom.off(RoomEvent.Connected, onRoomConnected);
+        room.off(RoomEvent.Connected, onRoomConnected);
         reject(new Error('Room connection timeout'));
       }, ROOM_CONNECTION_TIMEOUT);
       const onRoomConnected = () => {
@@ -1455,7 +1716,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
         resolve();
       };
 
-      this.liveKitRoom.once(RoomEvent.Connected, onRoomConnected);
+      room.once(RoomEvent.Connected, onRoomConnected);
     });
   }
 
@@ -1464,11 +1725,14 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
     return null;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   async getStats(additionalStatsTypes = []):
     Promise<{ transportStats: object, [key: string]: string | number | object | unknown }> {
+    const room = this.resolvePrimaryRoom();
+
+    if (!room) return this.parseStats({ stats: {}, additionalStatsTypes });
+
     const stats = await getLiveKitStats({
-      room: liveKitRoom,
+      room,
       kind: 'audio',
       source: Track.Source.Microphone,
       aggregateInbound: true,
@@ -1549,7 +1813,12 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
   }
 
   exitAudio(): Promise<boolean> {
-    return this.liveKitRoom.localParticipant.setMicrophoneEnabled(false)
+    const micRoom = this.activeMicRoom ?? this.resolvePrimaryRoom();
+    const disableMic = micRoom
+      ? micRoom.localParticipant.setMicrophoneEnabled(false)
+      : Promise.resolve(false);
+
+    return disableMic
       .then(() => this.unpublish())
       .then(() => {
         logger.info({
@@ -1576,6 +1845,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
       })
       .finally(() => {
         this.originalStream = null;
+        this.currentMicTrack = undefined;
         this.isPublishPending = false;
         this.audioEnded();
       });

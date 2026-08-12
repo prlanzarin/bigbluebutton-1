@@ -34,6 +34,7 @@ import createUseSubscription from '/imports/ui/core/hooks/createUseSubscription'
 import AudioManager from '/imports/ui/services/audio-manager';
 import { useAutoplayState } from '/imports/ui/components/livekit/autoplay-modal/hooks';
 import useWhoIsUnmuted from '/imports/ui/core/hooks/useWhoIsUnmuted';
+import { useHasActiveNonPrimaryMembership } from '/imports/ui/components/livekit/memberships-manager/hooks';
 
 const PARTICIPANTS_UPDATE_FILTER = [
   RoomEvent.ParticipantConnected,
@@ -75,7 +76,7 @@ const getSelectiveSubscriptionConfig = () => {
  * @returns A map of participant IDs to their last spoke timestamp
  */
 const useParticipantsLastSpokeAt = (
-  liveKitRoom: Room,
+  liveKitRoom: Room | undefined,
 ): Map<string, number> => {
   const speakingParticipants = useSpeakingParticipants();
   const participantsLastSpokeAtMap = useRef<Map<string, number>>(new Map());
@@ -107,12 +108,13 @@ const useParticipantsLastSpokeAt = (
   }, [speakingParticipants]);
 
   useEffect(() => {
+    if (!liveKitRoom) return undefined;
     liveKitRoom.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
 
     return () => {
       liveKitRoom.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
     };
-  }, [handleParticipantDisconnected]);
+  }, [liveKitRoom, handleParticipantDisconnected]);
 
   return participantLastSpokeAt;
 };
@@ -281,12 +283,16 @@ export const useMediaSenders = (
   }, [data, remoteParticipants, deafened, mediaType]);
 };
 
-export const useMediaSubscriptions = (liveKitRoom: Room) => {
+export const useMediaSubscriptions = (liveKitRoom: Room | undefined) => {
   const [autoplayState] = useAutoplayState(liveKitRoom);
   /* eslint no-underscore-dangle: 0 */
   // @ts-ignore
   const willinglyDeafened = useReactiveVar(AudioManager._isDeafened.value) as boolean;
-  const deafened = willinglyDeafened || !autoplayState.canPlayAudio;
+  // While the user is in a non-primary LK room (e.g., listening to a
+  // breakout), the primary room must be effectively deafened. That may change in the
+  // future (prlanzarin)
+  const hasActiveSecondary = useHasActiveNonPrimaryMembership();
+  const deafened = willinglyDeafened || !autoplayState.canPlayAudio || hasActiveSecondary;
   const remoteParticipants = useRemoteParticipants({
     updateOnlyOn: PARTICIPANTS_UPDATE_FILTER,
   });
