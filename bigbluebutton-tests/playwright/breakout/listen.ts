@@ -250,7 +250,8 @@ export class Listen extends Join {
 
     const roomOptions1 = this.modPage.page.locator(e.roomOptions1);
 
-    const optionsVisible = await roomOptions1.waitFor({ state: 'visible', timeout: ELEMENT_WAIT_TIME })
+    const optionsVisible = await roomOptions1
+      .waitFor({ state: 'visible', timeout: ELEMENT_WAIT_TIME })
       .then(() => true)
       .catch(() => false);
     if (optionsVisible) return;
@@ -607,7 +608,8 @@ export class Listen extends Join {
   // eslint-disable-next-line class-methods-use-this
   private async dismissAudioModalIfPresent(testPage: Page): Promise<void> {
     const modal = testPage.page.locator(e.audioModal);
-    const modalVisible = await modal.waitFor({ state: 'visible', timeout: ELEMENT_WAIT_TIME })
+    const modalVisible = await modal
+      .waitFor({ state: 'visible', timeout: ELEMENT_WAIT_TIME })
       .then(() => true)
       .catch(() => false);
     if (modalVisible) {
