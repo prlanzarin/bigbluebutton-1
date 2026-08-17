@@ -152,11 +152,13 @@ const BaseLiveKitRoom: React.FC<BaseLiveKitRoomProps> = ({
 
   useEffect(() => {
     if (logLevel !== undefined) setLogLevel(logLevel);
+  }, [logLevel]);
 
+  useEffect(() => {
     return () => {
       room.disconnect();
     };
-  }, [room, logLevel]);
+  }, [room]);
 
   useEffect(() => {
     if (!token
