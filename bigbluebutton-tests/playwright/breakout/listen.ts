@@ -1,4 +1,4 @@
-import { expect, type Page as PlaywrightPage, type TestInfo } from '@playwright/test';
+import { type ConsoleMessage, expect, type Page as PlaywrightPage, type TestInfo } from '@playwright/test';
 
 import { connectMicrophone } from '../audio/util';
 import {
@@ -460,24 +460,51 @@ export class Listen extends Join {
     const { assignedSequence } = await this.setup();
     await this.connectModMicrophone();
 
-    // Listen first to the attendee's room, then switch to the OTHER (empty) room.
-    const firstRoom = await this.listenToRoom(assignedSequence);
-    const otherSequence = assignedSequence === 1 ? 2 : 1;
-    const secondRoom = await this.resolveBreakout(otherSequence);
+    // A publish abandoned by a superseding mic-room switch must never escalate
+    // into a reconnect of the CURRENT room; watch for the fatal-publish
+    // reconnect path across the whole switch sequence.
+    const fatalReconnects: string[] = [];
+    const onConsole = (msg: ConsoleMessage) => {
+      if (msg.text().includes('livekit_audio_fatal_publish_error_reconnect')) {
+        fatalReconnects.push(msg.text());
+      }
+    };
+    this.modPage.page.on('console', onConsole);
 
-    // Trigger listen on the other room while still listening to the first.
-    await this.openRoomListenMenu(otherSequence);
+    try {
+      // Listen first to the attendee's room, then switch to the OTHER (empty) room.
+      const firstRoom = await this.listenToRoom(assignedSequence);
+      const otherSequence = assignedSequence === 1 ? 2 : 1;
+      const secondRoom = await this.resolveBreakout(otherSequence);
 
-    // Single-active rule: memberships converge to EXACTLY ONE breakout-listen
-    // row (the second room) and there must never be two concurrent rows.
-    await this.expectSingleActiveConvergence(secondRoom.meetingId, secondRoom.shortName, ELEMENT_WAIT_EXTRA_LONG_TIME);
+      // Trigger listen on the other room while still listening to the first.
+      await this.openRoomListenMenu(otherSequence);
 
-    // The toast switches to the second room and the first room toast is gone.
-    await this.expectListenToast(secondRoom.shortName);
-    await this.modPage.wasRemoved(
-      `${e.breakoutListenToast}[data-room-name="${firstRoom.shortName}"]`,
-      'the first room listen toast should be replaced by the second room toast',
-    );
+      // Single-active rule: memberships converge to EXACTLY ONE breakout-listen
+      // row (the second room) and there must never be two concurrent rows.
+      await this.expectSingleActiveConvergence(
+        secondRoom.meetingId,
+        secondRoom.shortName,
+        ELEMENT_WAIT_EXTRA_LONG_TIME,
+      );
+
+      // The toast switches to the second room and the first room toast is gone.
+      await this.expectListenToast(secondRoom.shortName);
+      await this.modPage.wasRemoved(
+        `${e.breakoutListenToast}[data-room-name="${firstRoom.shortName}"]`,
+        'the first room listen toast should be replaced by the second room toast',
+      );
+
+      // The audio session survived the switches (no fatal-publish escalation
+      // reconnected the primary): the muted-mic control is still mounted.
+      await this.modPage.hasElement(
+        e.unmuteMicButton,
+        'the moderator audio session should remain intact after switching listens',
+      );
+      expect(fatalReconnects, 'no fatal-publish reconnect should fire during listen switches').toHaveLength(0);
+    } finally {
+      this.modPage.page.off('console', onConsole);
+    }
   }
 
   async adversarialNonexistentTarget(): Promise<void> {
