@@ -63,6 +63,11 @@ const BreakoutListenRoom: React.FC<BreakoutListenRoomProps> = ({ membership }) =
     [returnToMain],
   );
 
+  const handleTerminalDisconnect = useCallback(
+    () => returnToMain('terminal_disconnect'),
+    [returnToMain],
+  );
+
   // Leaving audio must end the listen too, or the server-side membership
   // strands the user 'in' the breakout with no audio session.
   useEffect(() => {
@@ -84,6 +89,7 @@ const BreakoutListenRoom: React.FC<BreakoutListenRoomProps> = ({ membership }) =
         membershipKey={breakoutListenKey(membership.roomName)}
         attachToAudioBridge
         onReconnectExhausted={handleReconnectExhausted}
+        onTerminalDisconnect={handleTerminalDisconnect}
       />
       <BreakoutTransferNotificationContainer membership={membership} />
     </>
