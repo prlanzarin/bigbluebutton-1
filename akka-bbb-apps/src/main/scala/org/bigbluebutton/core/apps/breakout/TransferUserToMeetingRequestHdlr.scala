@@ -140,7 +140,8 @@ trait TransferUserToMeetingRequestHdlr extends HandlerHelpers with RightsManagem
       purpose = "breakout-listen",
       grant = grant,
       metadata = metadata,
-      token = None
+      token = None,
+      mintNonce = System.nanoTime()
     )
     LiveKitMemberships.add(liveMeeting.liveKitMemberships, membership)
 
@@ -169,22 +170,25 @@ trait TransferUserToMeetingRequestHdlr extends HandlerHelpers with RightsManagem
       metadata
     )
     outGW.send(req)
-    scheduleLiveKitMintTimeout(userId, toMeetingId)
+    scheduleLiveKitMintTimeout(userId, toMeetingId, membership.mintNonce)
     log.info("livekitTransferIntoMeeting: enqueued LK transfer for user={} toMeetingId={}", userId, toMeetingId)
   }
 
-  private def scheduleLiveKitMintTimeout(userId: String, roomName: String): Unit = {
+  private def scheduleLiveKitMintTimeout(userId: String, roomName: String, mintNonce: Long): Unit = {
     import context.dispatcher
     context.system.scheduler.scheduleOnce(
       10.seconds,
       self,
-      LiveKitMintTimeoutInternalMsg(userId, roomName)
+      LiveKitMintTimeoutInternalMsg(userId, roomName, mintNonce)
     )
   }
 
   def handleLiveKitMintTimeoutInternalMsg(msg: LiveKitMintTimeoutInternalMsg): Unit = {
     LiveKitMemberships.findByUserAndRoom(liveMeeting.liveKitMemberships, msg.userId, msg.roomName) match {
-      case Some(m) if m.purpose == "breakout-listen" && m.token.isEmpty =>
+      // The nonce check pins the timeout to the membership that armed it: a
+      // return + re-listen to the same room creates a new membership that a
+      // stale timeout must not clear.
+      case Some(m) if m.purpose == "breakout-listen" && m.token.isEmpty && m.mintNonce == msg.mintNonce =>
         log.warning(
           "handleLiveKitMintTimeoutInternalMsg: token mint timed out, clearing LK membership user={} roomName={}",
           msg.userId, msg.roomName
