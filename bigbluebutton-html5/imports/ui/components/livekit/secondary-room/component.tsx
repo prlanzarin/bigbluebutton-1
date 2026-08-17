@@ -54,6 +54,7 @@ const SecondaryLiveKitRoom: React.FC<SecondaryLiveKitRoomProps> = ({
   const url = meetingSettings.public.media?.livekit?.url ?? `wss://${window.location.hostname}/livekit`;
   const logLevel = meetingSettings.public.media?.livekit?.logLevel ?? LogLevel.warn;
   const roomOptions = meetingSettings.public.media?.livekit?.roomOptions ?? DEFAULT_ROOM_OPTIONS;
+  const reconnectOnFatalFailures = meetingSettings.public.media?.livekit?.reconnectOnFatalFailures ?? true;
 
   const key: MembershipKey = membershipKey ?? `${membership.purpose}:${membership.roomName}`;
 
@@ -106,7 +107,7 @@ const SecondaryLiveKitRoom: React.FC<SecondaryLiveKitRoomProps> = ({
       audio={false}
       video={false}
       withAutoSubscribe
-      reconnectOnFatalFailures
+      reconnectOnFatalFailures={reconnectOnFatalFailures}
       logPrefix={`livekit_secondary_${membership.roomName}`}
       maxConnAttempts={SECONDARY_RECONNECT_ATTEMPTS}
       onReconnectExhausted={onReconnectExhausted}
