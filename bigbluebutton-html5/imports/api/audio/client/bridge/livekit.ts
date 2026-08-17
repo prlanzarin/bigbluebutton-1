@@ -82,6 +82,10 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
   private currentMicTrack: MediaStreamTrack | undefined;
 
+  private joinInFlight: boolean;
+
+  private pendingMicSwitch: { room: Room; key: MembershipKey } | null;
+
   // Mic-switch generation: each room switch captures the gen and abandons
   // after any async procedure if superseded, so interleaved room switches
   // never land a publish on a stale room.
@@ -132,6 +136,8 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
     this.activeMicRoomKey = PRIMARY_KEY;
     this.secondaryRoom = undefined;
     this.currentMicTrack = undefined;
+    this.joinInFlight = false;
+    this.pendingMicSwitch = null;
     this.micSwitchGeneration = 0;
     this.outputDeviceId = null;
     this.publishQueue = [];
@@ -231,13 +237,53 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
   async attachSecondaryRoom(secondaryRoom: Room, membershipKey: MembershipKey): Promise<void> {
     this.secondaryRoom = secondaryRoom;
-    await this.setActiveMicRoom(this.secondaryRoom, membershipKey);
+
+    // A mic-room switch during an in-flight join re-points the mic before the
+    // session exists and can strand the join (reload-mid-listen mounts the
+    // secondary while audio auto-rejoins). Defer the switch; joinAudio applies
+    // it once the session is up.
+    if (this.joinInFlight) {
+      this.pendingMicSwitch = { room: secondaryRoom, key: membershipKey };
+    } else {
+      await this.setActiveMicRoom(this.secondaryRoom, membershipKey);
+    }
+
     await this.applyOutputDeviceToRoom(secondaryRoom);
   }
 
   async detachSecondaryRoom(): Promise<void> {
     this.secondaryRoom = undefined;
-    await this.setActiveMicRoom(this.resolvePrimaryRoom(), PRIMARY_KEY);
+    const primaryRoom = this.resolvePrimaryRoom();
+
+    if (this.joinInFlight) {
+      if (primaryRoom) this.pendingMicSwitch = { room: primaryRoom, key: PRIMARY_KEY };
+      return;
+    }
+
+    await this.setActiveMicRoom(primaryRoom, PRIMARY_KEY);
+  }
+
+  // Runs a mic-room switch that was deferred because a join was in flight.
+  private async applyPendingMicSwitch(): Promise<void> {
+    const pending = this.pendingMicSwitch;
+    this.pendingMicSwitch = null;
+
+    if (!pending) return;
+
+    try {
+      await this.setActiveMicRoom(pending.room, pending.key);
+    } catch (error) {
+      logger.error({
+        logCode: 'livekit_audio_pending_mic_switch_failed',
+        extraInfo: {
+          errorMessage: (error as Error).message,
+          errorName: (error as Error).name,
+          errorStack: (error as Error).stack,
+          bridge: this.bridgeName,
+          role: this.role,
+        },
+      }, 'LiveKit: deferred mic-room switch failed');
+    }
   }
 
   private async setActiveMicRoom(
@@ -1759,6 +1805,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
     } = options;
 
     try {
+      this.joinInFlight = true;
       await this.waitForRoomConnection();
       this.originalStream = inputStream;
       this.shouldBeMuted = muted;
@@ -1780,6 +1827,9 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
         },
       }, `LiveKit: activate audio failed: ${(error as Error).message}`);
       throw error;
+    } finally {
+      this.joinInFlight = false;
+      await this.applyPendingMicSwitch();
     }
   }
 
@@ -1855,6 +1905,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
         this.originalStream = null;
         this.currentMicTrack = undefined;
         this.isPublishPending = false;
+        this.pendingMicSwitch = null;
         this.audioEnded();
       });
   }
