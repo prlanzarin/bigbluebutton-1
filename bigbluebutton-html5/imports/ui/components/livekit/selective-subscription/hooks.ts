@@ -389,8 +389,10 @@ export const useMediaSubscriptions = (liveKitRoom: Room | undefined) => {
           const participant = participantsById.get(participantId);
           if (participant) {
             participant.audioTrackPublications.forEach((publication) => {
-              // Screen share audio is always subscribed regardless of group membership
-              if (publication.source === Track.Source.ScreenShareAudio) return;
+              // Screen share audio is always subscribed regardless of group
+              // membership - except while deafened (incl. an active non-primary
+              // membership), when the primary room must go fully silent.
+              if (publication.source === Track.Source.ScreenShareAudio && !deafened) return;
 
               const { trackSid } = publication;
 
@@ -412,8 +414,9 @@ export const useMediaSubscriptions = (liveKitRoom: Room | undefined) => {
     });
 
     // Force-subscribe any screen share audio not already handled by the
-    // desired-subscription pass above.
+    // desired-subscription pass above - unless deafened (see above).
     pendingScreenShareAudio.forEach(({ publication, participantId }) => {
+      if (deafened) return;
       if (!publication.isSubscribed && !desiredSubscriptions.has(participantId)) {
         publication.setSubscribed(true);
         logger.debug({
