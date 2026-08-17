@@ -132,7 +132,10 @@ trait TransferUserToMeetingRequestHdlr extends HandlerHelpers with RightsManagem
       // Audio only transfer for now - matches FS behavior.
       canPublishSources = List(MicrophoneTrackSource)
     )
-    val metadata = buildLiveKitParticipantMetadata(liveMeeting)
+    val metadata = buildLiveKitParticipantMetadata(
+      toMeetingId,
+      breakoutFound.map(_.voiceConf).getOrElse("")
+    )
     val roomRef = LiveKitRoomRef(toMeetingId, "breakout-listen")
     val membership = LiveKitMembership(
       userId = userId,
