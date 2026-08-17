@@ -504,9 +504,12 @@ export class Listen extends Join {
     // Adversarial: transfer from the parent meeting to the SAME parent meeting.
     await this.fireTransfer(parentMeetingId, parentMeetingId);
 
-    // The primary membership must survive (no self-delete) and the moderator
-    // must NOT be kicked from audio.
+    // The primary membership must survive (no self-delete), no listen-in state
+    // may be created for the parent meeting, and the moderator must NOT be
+    // kicked from audio.
     await this.expectPrimaryMembershipStable(this.modPage.page, ELEMENT_WAIT_LONGER_TIME);
+    await this.expectNoBreakoutListenRowStable(this.modPage.page, ELEMENT_WAIT_TIME);
+    await this.modPage.wasRemoved(e.breakoutListenToast, 'a self-transfer must not raise a listen-in toast');
     await this.modPage.hasElement(e.audioDropdownMenu, 'moderator should not be kicked from audio by a self-transfer');
   }
 
@@ -528,7 +531,17 @@ export class Listen extends Join {
   }
 
   private async fireTransfer(fromMeetingId: string, toMeetingId: string): Promise<void> {
-    await runMutation(this.modPage.page, stringVarMutation(TRANSFER_MUTATION, { fromMeetingId, toMeetingId }));
+    const result = await runMutation(
+      this.modPage.page,
+      stringVarMutation(TRANSFER_MUTATION, { fromMeetingId, toMeetingId }),
+    );
+
+    // Positive control: the adversarial cases assert on the ABSENCE of server
+    // state, so a mutation that never reached akka (renamed action, unregistered
+    // role, rejected input) would satisfy them without testing anything. The
+    // action is fire-and-forget, so acceptance is all that can be asserted here
+    // - the rejection itself is asserted through the resulting state.
+    expect(result.errors, 'the transfer mutation must be accepted by the server').toEqual([]);
   }
 
   // eslint-disable-next-line class-methods-use-this
