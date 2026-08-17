@@ -118,7 +118,7 @@ export class Listen extends Join {
     return rows.filter((row) => row.purpose === BREAKOUT_LISTEN_PURPOSE);
   }
 
-  //-- Suite primitives --
+  // -- Suite primitives --
 
   // Moderator creates two default breakout rooms with the attendee randomly
   // assigned to one of them; the attendee joins that room with a microphone and
