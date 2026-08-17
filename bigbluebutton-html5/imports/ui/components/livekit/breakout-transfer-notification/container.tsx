@@ -20,12 +20,12 @@ interface BreakoutTransferNotificationContainerProps {
 
 const intlMessages = defineMessages({
   unknownRoom: {
-    id: 'app.livekit.breakoutTransfer.unknownRoom',
+    id: 'app.createBreakoutRoom.listen.unknownRoom',
     description: 'Fallback when the breakout room name cannot be resolved',
     defaultMessage: 'Unknown room',
   },
   title: {
-    id: 'app.livekit.breakoutTransfer.title',
+    id: 'app.createBreakoutRoom.listen.title',
     description: 'Listen-in toast title',
   },
   breakoutRoom: {

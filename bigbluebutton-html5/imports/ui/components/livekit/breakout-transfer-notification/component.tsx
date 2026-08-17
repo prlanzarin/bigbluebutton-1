@@ -10,15 +10,15 @@ interface BreakoutTransferToastContentProps {
 
 const intlMessages = defineMessages({
   description: {
-    id: 'app.livekit.breakoutTransfer.description',
+    id: 'app.createBreakoutRoom.listen.description',
     description: 'Description shown inside the LK breakout-transfer toast',
   },
   terminateLabel: {
-    id: 'app.livekit.breakoutTransfer.terminateLabel',
+    id: 'app.createBreakoutRoom.listen.terminateLabel',
     description: 'Label for the breakout transfer terminate button',
   },
   terminateAria: {
-    id: 'app.livekit.breakoutTransfer.terminateAriaLabel',
+    id: 'app.createBreakoutRoom.listen.terminateAriaLabel',
     description: 'Aria label for the breakout transfer terminate button',
   },
 });
