@@ -1574,6 +1574,11 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
   }
 
   private async doPublish(inputStream: MediaStream | null): Promise<void> {
+    // Bind fatal-error handling to the switch state this publish started
+    // under: a mic-room switch superseding us mid-await means the failure
+    // belongs to an abandoned room, and dispatching would reconnect the
+    // CURRENT room instead.
+    const switchGeneration = this.micSwitchGeneration;
     // If the stream is already published, skip the publish
     // This prevents unnecessary unpublish/publish cycles when doPublish is called directly
     if (inputStream && this.isTrackPublishedWithStream(inputStream)) {
@@ -1703,7 +1708,19 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
       }, 'LiveKit: failed to publish audio track');
 
       if (LiveKitAudioBridge.isFatalPublishError(error as Error)) {
-        this.handleFatalPublishError(error as Error);
+        if (this.micSwitchGeneration === switchGeneration) {
+          this.handleFatalPublishError(error as Error);
+        } else {
+          logger.warn({
+            logCode: 'livekit_audio_stale_fatal_publish_skip',
+            extraInfo: {
+              errorMessage: (error as Error).message,
+              errorName: (error as Error).name,
+              bridge: this.bridgeName,
+              role: this.role,
+            },
+          }, 'LiveKit: fatal publish error on a superseded mic-room switch, skipping reconnect');
+        }
       }
 
       throw error;
