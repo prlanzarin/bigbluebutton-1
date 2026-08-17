@@ -397,14 +397,22 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
       const timeout = setTimeout(() => {
         room.off(RoomEvent.Connected, onRoomConnected);
+        room.off(RoomEvent.Reconnected, onRoomConnected);
         reject(new Error('Room connection timeout'));
       }, ROOM_CONNECTION_TIMEOUT);
       const onRoomConnected = () => {
         clearTimeout(timeout);
+        room.off(RoomEvent.Connected, onRoomConnected);
+        room.off(RoomEvent.Reconnected, onRoomConnected);
         resolve();
       };
 
+      // An SDK resume/restart completes with Reconnected (state stays
+      // Reconnecting throughout) - Connected only fires for fresh connects.
+      // Without it, a publish during a transient reconnect stalls the serial
+      // publish queue until the timeout.
       room.once(RoomEvent.Connected, onRoomConnected);
+      room.once(RoomEvent.Reconnected, onRoomConnected);
     });
   }
 
