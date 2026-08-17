@@ -1912,6 +1912,9 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
         this.currentMicTrack = undefined;
         this.isPublishPending = false;
         this.pendingMicSwitch = null;
+        this.activeMicRoom = this.resolvePrimaryRoom();
+        this.activeMicRoomKey = PRIMARY_KEY;
+        this.secondaryRoom = undefined;
         this.audioEnded();
       });
   }
