@@ -580,7 +580,7 @@ export default class LiveKitScreenshareBridge {
       source: Track.Source.ScreenShare,
       aggregateInbound: true,
       aggregateOutbound: true,
-    }) : [];
+    }) : new Map();
     return BridgeService.parseStats({
       stats,
       additionalStatsTypes,

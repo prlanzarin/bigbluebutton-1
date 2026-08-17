@@ -555,9 +555,8 @@ class VideoService {
         room: primaryRoom,
         kind: 'video',
         source: Track.Source.Camera,
-      }) : [];
+      }) : new Map();
       lkStats.forEach((stat) => {
-        // @ts-expect-error -> Untyped object.
         const { id, type: statType, kind } = stat;
 
         if (statsToFilter.includes(statType) && (!kind || kind === 'video')) {
