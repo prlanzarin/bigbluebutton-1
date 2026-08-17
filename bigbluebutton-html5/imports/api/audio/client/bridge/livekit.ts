@@ -1789,7 +1789,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
     Promise<{ transportStats: object, [key: string]: string | number | object | unknown }> {
     const room = this.resolvePrimaryRoom();
 
-    if (!room) return this.parseStats({ stats: new Map(), additionalStatsTypes });
+    if (!room) return this.parseStats({ stats: new Map<string, unknown>(), additionalStatsTypes });
 
     const stats = await getLiveKitStats({
       room,

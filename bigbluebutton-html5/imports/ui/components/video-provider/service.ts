@@ -550,12 +550,11 @@ class VideoService {
     );
 
     try {
-      const primaryRoom = liveKitRoomRegistry.getPrimary();
-      const lkStats = primaryRoom ? await getLiveKitStats({
-        room: primaryRoom,
+      const lkStats = await getLiveKitStats({
+        room: liveKitRoomRegistry.getPrimary(),
         kind: 'video',
         source: Track.Source.Camera,
-      }) : new Map();
+      });
       lkStats.forEach((stat) => {
         const { id, type: statType, kind } = stat;
 
