@@ -24,6 +24,14 @@ const intlMessages = defineMessages({
     description: 'Fallback when the breakout room name cannot be resolved',
     defaultMessage: 'Unknown room',
   },
+  title: {
+    id: 'app.livekit.breakoutTransfer.title',
+    description: 'Listen-in toast title',
+  },
+  breakoutRoom: {
+    id: 'app.createBreakoutRoom.room',
+    description: 'Default breakout room name',
+  },
 });
 
 // Persistent indicator while the moderator is listening to a breakout.
@@ -41,7 +49,13 @@ const BreakoutTransferNotificationContainer: React.FC<BreakoutTransferNotificati
   const breakoutRoom = (breakoutData?.breakoutRoom ?? []).find(
     (b) => b.breakoutRoomMeetingId === breakoutId,
   );
-  const breakoutName = breakoutRoom?.shortName ?? intl.formatMessage(intlMessages.unknownRoom);
+  let breakoutName = intl.formatMessage(intlMessages.unknownRoom);
+
+  if (breakoutRoom) {
+    breakoutName = breakoutRoom.isDefaultName
+      ? intl.formatMessage(intlMessages.breakoutRoom, { roomNumber: breakoutRoom.sequence })
+      : breakoutRoom.shortName;
+  }
 
   const handleReturnToParent = useCallback(() => {
     if (!parentMeetingId) return;
@@ -81,10 +95,7 @@ const BreakoutTransferNotificationContainer: React.FC<BreakoutTransferNotificati
   }, []);
 
   useEffect(() => {
-    const message = intl.formatMessage(
-      { id: 'app.livekit.breakoutTransfer.title' },
-      { roomName: breakoutName },
-    );
+    const message = intl.formatMessage(intlMessages.title, { roomName: breakoutName });
     const content = (
       <BreakoutTransferToastContent
         onReturnToParent={() => handleReturnRef.current()}
