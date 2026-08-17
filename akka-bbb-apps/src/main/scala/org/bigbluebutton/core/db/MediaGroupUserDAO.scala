@@ -54,6 +54,10 @@ object MediaGroupUserDAO {
           SELECT 1 FROM "mediaGroup"
           WHERE "meetingId" = ${meetingId} AND "groupId" = ${groupId}
         )
+        AND EXISTS (
+          SELECT 1 FROM "user"
+          WHERE "meetingId" = ${meetingId} AND "userId" = ${userId}
+        )
         ON CONFLICT ("meetingId", "userId", "groupId")
         DO UPDATE SET "sender" = EXCLUDED."sender", "receiver" = EXCLUDED."receiver", "active" = EXCLUDED."active"
       """
