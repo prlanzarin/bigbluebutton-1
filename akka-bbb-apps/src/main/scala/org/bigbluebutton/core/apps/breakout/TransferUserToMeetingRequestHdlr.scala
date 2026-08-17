@@ -114,7 +114,7 @@ trait TransferUserToMeetingRequestHdlr extends HandlerHelpers with RightsManagem
     // Auto switch: clear any previous breakout-listen membership first.
     val existingMemberships = LiveKitMemberships.findByUserAndPurpose(liveMeeting.liveKitMemberships, userId, "breakout-listen")
 
-    existingMemberships.find(_.roomName != toMeetingId).foreach { m =>
+    existingMemberships.filter(_.roomName != toMeetingId).foreach { m =>
       log.warning("livekitTransferIntoMeeting: found existing listen-in membership for user={} breakout={}, cleaning up", userId, m.roomName)
       livekitClearTransferredUser(userId, m.roomName)
     }
