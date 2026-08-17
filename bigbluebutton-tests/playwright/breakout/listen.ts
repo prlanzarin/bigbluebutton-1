@@ -396,7 +396,10 @@ export class Listen extends Join {
     // A client reload must not tear down the server-side breakout-listen membership
     // (ie persist between reconns/rejoins)
     await this.modPage.page.reload();
-    await isApolloClientExposed(this.modPage.page, ELEMENT_WAIT_LONGER_TIME);
+    expect(
+      await isApolloClientExposed(this.modPage.page, ELEMENT_WAIT_LONGER_TIME),
+      'Apollo client should be re-exposed after the reload',
+    ).toBe(true);
     await this.expectExactlyOneBreakoutListenRow(room.meetingId);
 
     // Finish the reload (dismiss the re-shown audio modal) and confirm the toast
