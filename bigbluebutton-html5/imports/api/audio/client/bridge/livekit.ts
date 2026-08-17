@@ -361,8 +361,6 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
           role: this.role,
         },
       }, 'LiveKit: publish-on-switch failed');
-
-      if (this.micSwitchGeneration === generation) this.handleFatalPublishError(error as Error);
     }
   }
 
