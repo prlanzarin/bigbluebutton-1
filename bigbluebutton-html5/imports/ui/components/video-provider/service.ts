@@ -556,7 +556,7 @@ class VideoService {
         source: Track.Source.Camera,
       });
       lkStats.forEach((stat) => {
-        const { id, type: statType, kind } = stat;
+        const { id, type: statType, kind } = stat as { id: string; type: string; kind?: string };
 
         if (statsToFilter.includes(statType) && (!kind || kind === 'video')) {
           stats[id] = { [statType]: stat };
