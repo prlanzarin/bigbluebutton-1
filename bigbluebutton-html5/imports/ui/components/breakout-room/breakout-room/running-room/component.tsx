@@ -488,7 +488,7 @@ const RunningBreakoutRoom: React.FC<RunningBreakoutRoomProps> = ({
                           label: isListening
                             ? intl.formatMessage(intlMessages.stopListeningToRoom)
                             : intl.formatMessage(intlMessages.listenToRoom),
-                          dataTest: 'listenToBreakoutRoomButton',
+                          dataTest: `listenToBreakoutRoomButton${breakout.sequence}`,
                           onClick: () => handleListenToRoom(breakout),
                         },
                       ]}
