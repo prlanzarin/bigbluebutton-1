@@ -48,7 +48,7 @@ const initListen = async (
   return listen;
 };
 
-test.describe('Listen to breakout room', { tag: ['@ci', '@media'] }, () => {
+test.describe('Listen to breakout room', { tag: ['@ci'] }, () => {
   test('moderator listens to a breakout, is heard, and returns to main', async ({
     browser,
     context,

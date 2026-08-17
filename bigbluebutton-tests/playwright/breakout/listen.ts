@@ -27,7 +27,7 @@ const NONEXISTENT_MEETING_ID = 'nonexistent-meeting-id-e2e';
 // Debounce for mute-toggle clicks (see client's input-stream-live-selector/service.ts).
 const MUTE_TOGGLE_DEBOUNCE = 500;
 // Apollo probe throttling
-const PROBE_SAMPLE_INTERVAL = 150;
+const PROBE_SAMPLE_INTERVAL = 500;
 
 // Reads the breakout rooms of the parent meeting. `breakoutRoomMeetingId` is the
 // internal meetingId used as the roomName of a breakout-listen membership row,
@@ -242,9 +242,7 @@ export class Listen extends Join {
   private async openRoomListenMenu(sequence: number): Promise<void> {
     await this.ensureRoomOptionsVisible();
     await this.modPage.waitAndClick(this.roomOptionsSelector(sequence));
-    // The listen item is kept mounted for every room's menu; click the one in the
-    // menu that is currently open (the only visible instance).
-    await this.modPage.getVisibleLocator(e.listenToBreakoutRoomButton).click({ timeout: ELEMENT_WAIT_TIME });
+    await this.modPage.waitAndClick(`li[data-test="listenToBreakoutRoomButton${sequence}"]`);
   }
 
   private async ensureRoomOptionsVisible(): Promise<void> {
@@ -252,7 +250,10 @@ export class Listen extends Join {
 
     const roomOptions1 = this.modPage.page.locator(e.roomOptions1);
 
-    if (await roomOptions1.isVisible({ timeout: ELEMENT_WAIT_TIME }).catch(() => false)) return;
+    const optionsVisible = await roomOptions1.waitFor({ state: 'visible', timeout: ELEMENT_WAIT_TIME })
+      .then(() => true)
+      .catch(() => false);
+    if (optionsVisible) return;
 
     await this.modPage.waitAndClick(e.breakoutRoomSidebarButton);
     await expect(roomOptions1, 'breakout running-room options should be visible').toBeVisible({
@@ -606,7 +607,10 @@ export class Listen extends Join {
   // eslint-disable-next-line class-methods-use-this
   private async dismissAudioModalIfPresent(testPage: Page): Promise<void> {
     const modal = testPage.page.locator(e.audioModal);
-    if (await modal.isVisible({ timeout: ELEMENT_WAIT_TIME }).catch(() => false)) {
+    const modalVisible = await modal.waitFor({ state: 'visible', timeout: ELEMENT_WAIT_TIME })
+      .then(() => true)
+      .catch(() => false);
+    if (modalVisible) {
       await testPage.waitAndClick(e.closeModal);
       await expect(modal, 'audio modal should close after the reload').toBeHidden({
         timeout: ELEMENT_WAIT_LONGER_TIME,

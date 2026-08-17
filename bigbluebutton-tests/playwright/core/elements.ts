@@ -151,7 +151,7 @@ export const elements = {
   breakoutMessageInput: 'input[data-test="messageInput"]',
   callModeratorButton: 'button[data-test="callModeratorButton"]',
   returnToMainSessionButton: 'button[data-test="returnToMainSessionButton"]',
-  listenToBreakoutRoomButton: 'li[data-test="listenToBreakoutRoomButton"]',
+  listenToBreakoutRoomButton: 'li[data-test^="listenToBreakoutRoomButton"]',
   breakoutTransferReturnButton: 'button[data-test="breakoutTransferReturnButton"]',
   breakoutListenToast: 'div[data-test="breakoutListenToast"]',
 
