@@ -1294,7 +1294,15 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
   }
 
   private isInMicrophoneAudio(): boolean {
-    return !!this.currentMicTrack && this.inputDeviceId !== 'listen-only';
+    if (this.inputDeviceId === 'listen-only') return false;
+
+    // Track presence alone is not a reliable "in mic audio" signal during room
+    // transitions: a room dying under the bridge (e.g. a breakout deleted
+    // server-side mid-listen) kills the published track before the switch-back
+    // runs. Fall back to session intent - an unmuted session holding an input
+    // stream is still in microphone audio even if its track just died, and the
+    // publish path re-acquires a capture for inactive streams.
+    return !!this.currentMicTrack || (!this.shouldBeMuted && !!this.originalStream);
   }
 
   private async processPublishQueue(): Promise<void> {
