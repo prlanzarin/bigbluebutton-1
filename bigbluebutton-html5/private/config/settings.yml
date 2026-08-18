@@ -921,6 +921,10 @@ public:
       #                imports/ui/components/audio/audio-processor/providers/:
       #                  - bbba: none. Every constraint below is honored as configured.
       #                    (providers/bbba.js)
+      #                  - workadventureDtln: forces noiseSuppression: false. The
+      #                    package's docs ask consumers to disable the browser's own
+      #                    noiseSuppression so it doesn't double-process the signal
+      #                    alongside the DTLN model. (providers/workadventureDtln.js)
       audioWasmProcessing:
         enabled: false
         provider: bbba
