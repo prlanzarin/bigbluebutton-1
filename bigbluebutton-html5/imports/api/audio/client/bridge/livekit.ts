@@ -15,7 +15,6 @@ import {
 import Auth from '/imports/ui/services/auth';
 import BaseAudioBridge from './base';
 import logger from '/imports/startup/client/logger';
-import browserInfo from '/imports/utils/browserInfo';
 import {
   getAudioConstraints,
   filterSupportedConstraints,
@@ -25,13 +24,11 @@ import {
 import { liveKitRoom, LK_FATAL_ERROR_EVENT } from '/imports/ui/services/livekit';
 import { getLiveKitStats } from '/imports/ui/services/livekit/stats';
 import MediaStreamUtils from '/imports/utils/media-stream-utils';
-import { isWasmProcessorSupported } from '/imports/ui/components/audio/audio-processor/service';
 
 const BRIDGE_NAME = 'livekit';
 const SENDRECV_ROLE = 'sendrecv';
 const PUBLISH_OP = 'publish';
 const UNPUBLISH_OP = 'unpublish';
-const IS_CHROME = browserInfo.isChrome;
 const ROOM_CONNECTION_TIMEOUT = 15000;
 const DEFAULT_UNPUBLISH_AFTER_MUTE_MS = 5000;
 
@@ -1525,15 +1522,55 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
 
       const matchConstraints = filterSupportedConstraints(constraints);
 
-      if (IS_CHROME || isWasmProcessorSupported()) {
-        // @ts-ignore
-        matchConstraints.deviceId = this.inputDeviceId;
-        const stream = await doGUM({ audio: matchConstraints });
-        await this.setInputStream(stream, { deviceId: this.inputDeviceId, force: true });
-      } else {
-        this.inputStream?.getAudioTracks()
-          .forEach((track) => track.applyConstraints(matchConstraints));
+      if (this.inputDeviceId) {
+        // exact, as getAudioConstraints does everywhere else. doGUM will handle
+        // fallbacks if necessary.
+        // @ts-ignore - deviceId is a valid MediaTrackConstraints member
+        matchConstraints.deviceId = { exact: this.inputDeviceId };
       }
+
+      const newStream = await doGUM({ audio: matchConstraints });
+      const newAudioTrack = newStream?.getAudioTracks()[0];
+      const localTrack = this.publicationTrack;
+
+      if (!newStream || !newAudioTrack) {
+        throw new Error('LiveKit: no audio track acquired for constraint update');
+      }
+
+      // replaceTrack needs an active RTCRtpSender; a publication without a attached
+      // track would throw (and that may happen). Treat as unpublished.
+      if (!localTrack?.sender) {
+        // Nothing published, swap the stream only.
+        await this.setInputStream(newStream, { deviceId: this.inputDeviceId, force: true });
+        return;
+      }
+
+      const previousStream = this.originalStream;
+      // Inherit the mute state of the previous track
+      newAudioTrack.enabled = !localTrack.isMuted;
+
+      try {
+        await localTrack.replaceTrack(newAudioTrack);
+      } catch (replaceError) {
+        // This is not really recoverable. The previous pub should still be working,
+        // though - so bubble the error up.
+        MediaStreamUtils.stopMediaStreamTracks(newStream);
+        throw replaceError;
+      }
+
+      this.originalStream = newStream;
+      logger.debug({
+        logCode: 'livekit_audio_constraints_replace_track',
+        extraInfo: {
+          bridge: this.bridgeName,
+          role: this.role,
+          inputDeviceId: this.inputDeviceId,
+          constraints: matchConstraints,
+          newStreamData: MediaStreamUtils.getMediaStreamLogData(newStream),
+          previousStreamData: MediaStreamUtils.getMediaStreamLogData(previousStream),
+          wasmProcessingEnabled: isWasmProcessingEnabled(),
+        },
+      }, 'LiveKit: audio constraints applied via replaceTrack');
     } catch (error) {
       logger.error({
         logCode: 'livekit_audio_constraint_error',
