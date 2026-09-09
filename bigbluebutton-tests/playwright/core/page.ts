@@ -299,7 +299,7 @@ export class Page {
     await this.waitForSelector(e.webcamMirroredVideoContainer, VIDEO_LOADING_WAIT_TIME);
     await this.waitForSelector(e.leaveVideo, VIDEO_LOADING_WAIT_TIME);
     await this.wasRemoved(
-      e.webcamConnecting,
+      e.webcamOwnStreamConnecting,
       'should stop showing the webcam sharing element after full connection',
       VIDEO_LOADING_WAIT_TIME,
     );

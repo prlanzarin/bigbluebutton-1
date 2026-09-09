@@ -665,6 +665,10 @@ export const elements = {
   webcamContainer: 'video[data-test="videoContainer"]',
   webcamVideoItem: 'div[data-test="webcamVideoItem"]',
   webcamStreamItem: 'div[data-test="webcamVideoItem"][data-video-type="stream"]',
+  // Own camera tile only: an unmuted mic-only user's audio-only tile carries
+  // the same placeholder for as long as they are in the meeting.
+  webcamOwnStreamConnecting:
+    'div[data-test="webcamVideoItem"]:has(video[data-current-user-stream="true"]) div[data-test="webcamConnecting"]',
   webcamVideoList: 'div[data-test="webcamVideoList"]',
   overflowTile: 'div[data-test="overflowTile"]',
   videoDropdownMenu: 'button[data-test="videoDropdownMenu"]',
