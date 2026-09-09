@@ -662,6 +662,7 @@ export const elements = {
   startCameraAsContent: 'button[data-test="StartCameraAsContent"]',
   closeIcon: 'svg[data-testid="CloseIcon"]',
   webcamConnecting: 'div[data-test="webcamConnecting"]',
+  webcamConnectingSqueezed: 'div[data-test="webcamConnectingSqueezed"]',
   webcamContainer: 'video[data-test="videoContainer"]',
   webcamVideoItem: 'div[data-test="webcamVideoItem"]',
   webcamStreamItem: 'div[data-test="webcamVideoItem"][data-video-type="stream"]',

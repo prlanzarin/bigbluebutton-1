@@ -26,6 +26,7 @@ import {
 } from './floorProbe';
 import {
   exposeLiveKitRoom,
+  exposePeerConnections,
   getAudioPublisherIdentities,
   getLocalMicState,
   getRemoteAudioStates,
@@ -406,10 +407,12 @@ export interface ReconnectionFixture {
   modPage: Page;
   viewerPage: Page;
   viewerUserId: string;
+  modUserId: string;
   // Raw console text from the viewer page. Log codes are deliberately not
   // collected: they only reach the console in a DETAILED_LOGS build, so an
   // assertion on one passes vacuously against a packaged client.
   viewerLogLines: string[];
+  modLogLines: string[];
   cutGraphql: () => Promise<void>;
   restoreGraphql: () => void;
   // Resolves once the client logs its GraphQL connection status back to
@@ -427,7 +430,19 @@ export interface ReconnectionFixture {
   // left alone, which is what separates a media outage from a network outage.
   cutLiveKitSignal: () => Promise<void>;
   restoreLiveKitSignal: () => void;
+  // Swallows the viewer's SDP answers while everything else, pings included,
+  // flows: the server's next subscriber offer goes unanswered on a live
+  // socket and it closes the participant after 15 s (NEGOTIATE_FAILED).
+  dropLiveKitAnswers: () => void;
+  passLiveKitAnswers: () => void;
+  // Positive control for dropLiveKitAnswers: how many answers were swallowed.
+  droppedAnswerCount: () => number;
 }
+
+// A SignalRequest whose oneof is `answer` (field 2, length-delimited) starts
+// with tag byte 0x12; the SDK sends signalling as binary protobuf frames.
+const isSignalAnswerFrame = (message: string | Buffer): boolean =>
+  typeof message !== 'string' && message.length > 0 && message[0] === 0x12;
 
 // Moderator (server-state probe + audio witness) and a viewer publishing an
 // unmuted mic, in separate contexts so offline emulation can target the viewer.
@@ -436,12 +451,16 @@ export interface ReconnectionFixture {
 export const initReconnectionScenario = async (
   browser: Browser,
   testInfo: TestInfo,
-  options: { webcam?: boolean } = {},
+  options: { webcam?: boolean; modWebcam?: boolean } = {},
 ): Promise<ReconnectionFixture> => {
   const modContext = await browser.newContext();
   const audio = new Audio(browser, modContext);
   const modRawPage = await modContext.newPage();
   await exposeLiveKitRoom(modRawPage);
+  const modLogLines: string[] = [];
+  modRawPage.on('console', (msg) => {
+    modLogLines.push(msg.text());
+  });
   await audio.initModPage(modRawPage, { testInfo, createModules: APOLLO_CLIENT_SETTINGS_MODULE });
   const { modPage } = audio;
   // A skip here would take the whole matrix with it and report green; the
@@ -451,6 +470,7 @@ export const initReconnectionScenario = async (
   const viewerContext = await browser.newContext();
   const viewerRawPage = await viewerContext.newPage();
   await exposeLiveKitRoom(viewerRawPage);
+  await exposePeerConnections(viewerRawPage);
 
   const viewerLogLines: string[] = [];
   viewerRawPage.on('console', (msg) => {
@@ -481,6 +501,8 @@ export const initReconnectionScenario = async (
 
   let stallSignal = false;
   let blockSignal = false;
+  let dropAnswers = false;
+  let droppedAnswers = 0;
   const liveSignalSockets = new Set<WebSocketRoute>();
   await viewerRawPage.routeWebSocket(/\/livekit\/rtc/, (ws) => {
     if (blockSignal) {
@@ -490,7 +512,12 @@ export const initReconnectionScenario = async (
     const server = ws.connectToServer();
     liveSignalSockets.add(ws);
     ws.onMessage((message) => {
-      if (!stallSignal) server.send(message);
+      if (stallSignal) return;
+      if (dropAnswers && isSignalAnswerFrame(message)) {
+        droppedAnswers += 1;
+        return;
+      }
+      server.send(message);
     });
     server.onMessage((message) => {
       if (!stallSignal) ws.send(message);
@@ -515,15 +542,19 @@ export const initReconnectionScenario = async (
   await connectMicrophone(viewerPage);
   await ensureUnmuted(viewerPage);
   if (options.webcam) await viewerPage.shareWebcam();
+  if (options.modWebcam) await modPage.shareWebcam();
 
   const viewerUserId = await getOwnUserId(viewerPage.page);
+  const modUserId = await getOwnUserId(modPage.page);
 
   return {
     audio,
     modPage,
     viewerPage,
     viewerUserId,
+    modUserId,
     viewerLogLines,
+    modLogLines,
     cutGraphql: async () => {
       blockGraphql = true;
       cutAtLine = viewerLogLines.length;
@@ -554,6 +585,13 @@ export const initReconnectionScenario = async (
     restoreLiveKitSignal: () => {
       blockSignal = false;
     },
+    dropLiveKitAnswers: () => {
+      dropAnswers = true;
+    },
+    passLiveKitAnswers: () => {
+      dropAnswers = false;
+    },
+    droppedAnswerCount: () => droppedAnswers,
   };
 };
 

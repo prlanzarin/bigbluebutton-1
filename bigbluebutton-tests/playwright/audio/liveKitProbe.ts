@@ -263,3 +263,105 @@ export const forceRoomReconnect = (page: PlaywrightPage): Promise<void> =>
 
     await room.simulateScenario('full-reconnect');
   }, LK_NOT_EXPOSED_ERR_MSG);
+
+type PeerWindow = Window & { bbbPeerConnections?: RTCPeerConnection[] };
+
+// Keeps every RTCPeerConnection the page builds, so a spec can reach the
+// media path the SDK never exposes. Must be installed before the page loads.
+export const exposePeerConnections = (page: PlaywrightPage): Promise<void> =>
+  page.addInitScript(() => {
+    const w = window as PeerWindow;
+    const registry: RTCPeerConnection[] = [];
+    w.bbbPeerConnections = registry;
+    window.RTCPeerConnection = new Proxy(window.RTCPeerConnection, {
+      construct(target, args, newTarget) {
+        const pc = Reflect.construct(target, args, newTarget) as RTCPeerConnection;
+        registry.push(pc);
+        return pc;
+      },
+    });
+  });
+
+// Closes the peer connection(s) the page receives on (LiveKit's subscriber,
+// the side with recvonly transceivers) under the SDK, with no signalling:
+// the SDK notices nothing until the server's ICE failure timeout (~15 s)
+// forces a reconnect. Returns how many were closed.
+export const killSubscriberMedia = (page: PlaywrightPage): Promise<number> =>
+  page.evaluate(() => {
+    const w = window as PeerWindow;
+    if (!w.bbbPeerConnections) throw new Error('RTCPeerConnection is not wrapped - the test must opt in before load');
+    const subscribers = w.bbbPeerConnections.filter(
+      (pc) => pc.connectionState !== 'closed' && pc.getTransceivers().some((t) => t.currentDirection === 'recvonly'),
+    );
+    subscribers.forEach((pc) => pc.close());
+    return subscribers.length;
+  });
+
+export interface CameraResubscription {
+  sid: string;
+  // livekit-client wraps every subscribe in a new track object; the receiver
+  // (and its MediaStreamTrack, which the bridge's watch is keyed on) comes
+  // back the same only when the server reused the transceiver. Compared by
+  // identity: the track id is derived from the sid either way.
+  sameSdkTrack: boolean;
+  sameReceiver: boolean;
+  sameMediaStreamTrack: boolean;
+  sameTrackId: boolean;
+}
+
+// Unsubscribes and re-subscribes the owner's camera on the same peer
+// connection, and reports what came back.
+export const resubscribeRemoteCamera = (
+  page: PlaywrightPage,
+  ownerUserId: string,
+  timeoutMs: number,
+): Promise<CameraResubscription> =>
+  page.evaluate(
+    async ({ owner, limit }) => {
+      type Pub = TestRemotePublication & {
+        trackName: string;
+        setSubscribed: (subscribed: boolean) => void;
+      };
+      type Room = {
+        remoteParticipants: Map<string, { videoTrackPublications: Map<string, Pub> }>;
+        once: (event: string, cb: (...args: unknown[]) => void) => void;
+      };
+      const room = (window as TestWindow).liveKitRoom as unknown as Room | undefined;
+      if (!room) throw new Error('window.liveKitRoom is not exposed');
+      let pub: Pub | undefined;
+      room.remoteParticipants.forEach((participant) =>
+        participant.videoTrackPublications.forEach((candidate) => {
+          if (candidate.source === 'camera' && candidate.trackName.startsWith(owner)) pub = candidate;
+        }),
+      );
+      if (!pub || !pub.track) throw new Error('the owner has no subscribed camera');
+      const before = pub.track;
+      const beforeMediaTrack = before.mediaStreamTrack;
+      const beforeReceiver = before.receiver;
+      const sid = pub.trackSid ?? '';
+      const on = (event: string) =>
+        new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error(`${event} did not follow within ${limit} ms`)), limit);
+          room.once(event, (_track: unknown, publication: unknown) => {
+            if ((publication as { trackSid?: string }).trackSid !== sid) return;
+            clearTimeout(timer);
+            resolve();
+          });
+        });
+      const unsubscribed = on('trackUnsubscribed');
+      pub.setSubscribed(false);
+      await unsubscribed;
+      const subscribed = on('trackSubscribed');
+      pub.setSubscribed(true);
+      await subscribed;
+      const after = pub.track;
+      return {
+        sid,
+        sameSdkTrack: after === before,
+        sameReceiver: !!after?.receiver && after.receiver === beforeReceiver,
+        sameMediaStreamTrack: !!after?.mediaStreamTrack && after.mediaStreamTrack === beforeMediaTrack,
+        sameTrackId: after?.mediaStreamTrack?.id === beforeMediaTrack?.id,
+      };
+    },
+    { owner: ownerUserId, limit: timeoutMs },
+  );
