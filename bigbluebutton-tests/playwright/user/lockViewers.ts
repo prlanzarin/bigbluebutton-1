@@ -30,6 +30,15 @@ export class LockViewers extends MultiUsers {
     await this.modPage.closeAllToastNotifications();
     await this.userPage.hasElementCount(e.webcamContainer, 1, 'should display one webcam container for the attendee');
 
+    // The lock stops the attendee's camera server-side, and the client only
+    // sees the camera go away - the same thing a lost media session looks
+    // like. Being told the webcam was interrupted here would be wrong.
+    const attendeeToasts = await this.userPage.page.locator(e.smallToastMsg).allTextContents();
+    expect(
+      attendeeToasts.filter((text) => text.includes('Your webcam stream has been interrupted')),
+      'a locked attendee should not be told their webcam was interrupted',
+    ).toEqual([]);
+
     await this.initUserPage2();
     await this.userPage2.hasElementDisabled(
       e.joinVideo,
