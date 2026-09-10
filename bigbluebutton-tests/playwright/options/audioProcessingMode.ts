@@ -1,9 +1,9 @@
 import { Page as PlaywrightPage } from '@playwright/test';
 
+import { Audio } from '../audio/audio';
 import { connectMicrophone } from '../audio/util';
 import { elements as e } from '../core/elements';
 import { ClientSettingsOverrides } from '../core/page';
-import { MultiUsers } from '../user/multiusers';
 
 export type CapturedAudioConstraint = boolean | string | { exact?: boolean; ideal?: boolean };
 
@@ -95,7 +95,7 @@ export function showAudioFiltersOverride(enabled: boolean): ClientSettingsOverri
   };
 }
 
-export class AudioProcessingMode extends MultiUsers {
+export class AudioProcessingMode extends Audio {
   private wasmRequestUrls: string[] = [];
 
   // 'advanced' overrides the real getUserMedia constraints to the same
